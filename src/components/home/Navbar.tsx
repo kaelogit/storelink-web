@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { 
   LayoutDashboard, Menu, X, ChevronDown, 
   Wand2, ImageMinus, History, Zap, 
@@ -25,15 +25,21 @@ const PlayStoreIcon = () => (
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { scrollY } = useScroll();
 
+  // ⚡️ SCROLL TRIGGER: Turns white only after 1000px (End of Hero Orbit)
   useMotionValueEvent(scrollY, "change", (latest) => {
-    setScrolled(latest > 20);
+    setScrolled(latest > 1425);
   });
+
+  // 🦎 THE CHAMELEON LOGIC
+  const isHome = pathname === '/';
+  const isTransparent = isHome && !scrolled;
 
   // 🔎 SEARCH HANDLER
   const handleSearch = (e: React.FormEvent) => {
@@ -46,34 +52,43 @@ export default function Navbar() {
 
   return (
     <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
-        scrolled 
-          ? 'bg-white/90 backdrop-blur-xl border-b border-gray-200/50 shadow-sm py-2' 
-          : 'bg-white border-b border-transparent py-4'
+      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ease-out ${
+        !isTransparent
+          ? 'bg-white/90 backdrop-blur-xl border-b border-gray-200/50 shadow-sm py-3' 
+          : 'bg-slate-950/30 backdrop-blur-md border-b border-white/5 py-5' // 🌌 Deep Space Glass
       }`}
     >
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto px-6 h-12 flex items-center justify-between gap-4">
         
         {/* LOGO */}
         <Link href="/" className="flex items-center gap-2.5 z-50 group shrink-0">
-           <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center border border-emerald-100 group-hover:bg-emerald-100 transition-colors">
-              <LayoutDashboard className="text-emerald-600" size={22}/>
+           <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all duration-300 ${
+             isTransparent 
+                ? 'bg-white/5 border-white/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]' // 🟢 Glowing Green on Dark
+                : 'bg-emerald-50 border-emerald-100 text-emerald-600 group-hover:bg-emerald-100'
+           }`}>
+              <LayoutDashboard size={22}/>
            </div>
-           {/* ✅ FIXED: Removed "hidden sm:block" so it shows on mobile too */}
-           <span className="font-display font-bold text-xl tracking-tight text-slate-900">StoreLink.</span>
+           <span className={`font-display font-bold text-xl tracking-tight transition-colors duration-300 ${
+             isTransparent ? 'text-white' : 'text-slate-900'
+           }`}>StoreLink.</span>
         </Link>
 
         {/* 🔎 DESKTOP SEARCH BAR */}
-        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-sm relative">
+        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-sm relative transition-all duration-300">
            <div className="relative w-full">
               <input 
                 type="text" 
                 placeholder="Search shops or products..." 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-10 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-full text-sm font-bold text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-all placeholder:font-medium placeholder:text-slate-400"
+                className={`w-full h-10 pl-10 pr-4 rounded-full text-sm font-bold focus:outline-none transition-all placeholder:font-medium ${
+                    isTransparent
+                        ? 'bg-white/5 border border-white/10 text-white placeholder:text-white/50 focus:bg-white/10 focus:border-white/30 backdrop-blur-md shadow-inner'
+                        : 'bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
+                }`}
               />
-              <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" strokeWidth={2.5} />
+              <Search size={16} className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors ${isTransparent ? 'text-white/50' : 'text-slate-400'}`} strokeWidth={2.5} />
            </div>
         </form>
 
@@ -86,7 +101,11 @@ export default function Navbar() {
                 onMouseEnter={() => setActiveMenu('selling')}
                 onMouseLeave={() => setActiveMenu(null)}
             >
-                <button className={`flex items-center gap-1.5 text-sm font-bold transition-colors ${activeMenu === 'selling' ? 'text-emerald-600' : 'text-slate-600'}`}>
+                <button className={`flex items-center gap-1.5 text-sm font-bold transition-colors duration-300 ${
+                    isTransparent 
+                        ? 'text-white hover:text-emerald-400 drop-shadow-md' // ✨ Bright White with Shadow
+                        : (activeMenu === 'selling' ? 'text-emerald-600' : 'text-slate-600')
+                }`}>
                     <span className="hidden lg:inline">Selling</span> Tools <ChevronDown size={14} className={`transition-transform duration-300 ${activeMenu === 'selling' ? 'rotate-180' : ''}`}/>
                 </button>
 
@@ -97,7 +116,7 @@ export default function Navbar() {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 8, scale: 0.98 }}
                             transition={{ duration: 0.2 }}
-                            className="absolute top-full right-0 w-[300px] bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mt-2"
+                            className="absolute top-full right-0 w-[300px] bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mt-4"
                         >
                             <div className="grid gap-1">
                                 <DropdownItem icon={<Wand2 size={18} className="text-purple-600"/>} title="AI Writer" desc="Generate viral descriptions." href="/tools/ai" />
@@ -116,7 +135,11 @@ export default function Navbar() {
                 onMouseEnter={() => setActiveMenu('shopping')}
                 onMouseLeave={() => setActiveMenu(null)}
             >
-                <button className={`flex items-center gap-1.5 text-sm font-bold transition-colors ${activeMenu === 'shopping' ? 'text-emerald-600' : 'text-slate-600'}`}>
+                <button className={`flex items-center gap-1.5 text-sm font-bold transition-colors duration-300 ${
+                    isTransparent 
+                        ? 'text-white hover:text-emerald-400 drop-shadow-md' 
+                        : (activeMenu === 'shopping' ? 'text-emerald-600' : 'text-slate-600')
+                }`}>
                     Shopping <ChevronDown size={14} className={`transition-transform duration-300 ${activeMenu === 'shopping' ? 'rotate-180' : ''}`}/>
                 </button>
 
@@ -127,7 +150,7 @@ export default function Navbar() {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 8, scale: 0.98 }}
                             transition={{ duration: 0.2 }}
-                            className="absolute top-full right-0 w-[300px] bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mt-2"
+                            className="absolute top-full right-0 w-[300px] bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mt-4"
                         >
                             <div className="grid gap-1">
                                 <DropdownItem icon={<PlayCircle size={18} className="text-red-500"/>} title="Video Shopping" desc="Watch Reels and buy." href="/shop/video" />
@@ -139,8 +162,8 @@ export default function Navbar() {
                 </AnimatePresence>
             </div>
 
-            <Link href="/pricing" className="px-3 text-sm font-bold text-slate-600 hover:text-emerald-600 transition-colors hidden lg:block">Pricing</Link>
-            <Link href="/safety" className="px-3 text-sm font-bold text-slate-600 hover:text-emerald-600 transition-colors hidden lg:block">Safety</Link>
+            <Link href="/pricing" className={`px-3 text-sm font-bold transition-colors duration-300 hidden lg:block ${isTransparent ? 'text-white hover:text-emerald-400 drop-shadow-md' : 'text-slate-600 hover:text-emerald-600'}`}>Pricing</Link>
+            <Link href="/safety" className={`px-3 text-sm font-bold transition-colors duration-300 hidden lg:block ${isTransparent ? 'text-white hover:text-emerald-400 drop-shadow-md' : 'text-slate-600 hover:text-emerald-600'}`}>Safety</Link>
 
         </nav>
 
@@ -148,9 +171,13 @@ export default function Navbar() {
         <div className="hidden md:flex items-center shrink-0">
           <Link 
             href="/download"
-            className="group flex items-center gap-3 bg-emerald-50 hover:bg-emerald-100 text-emerald-950 px-5 h-10 rounded-xl font-bold text-xs transition-all active:scale-95 border border-emerald-100 hover:border-emerald-200"
+            className={`group flex items-center gap-3 px-5 h-10 rounded-xl font-bold text-xs transition-all active:scale-95 border ${
+                isTransparent
+                    ? 'bg-white/10 text-white border-white/20 hover:bg-white/20 backdrop-blur-md shadow-lg'
+                    : 'bg-emerald-50 text-emerald-950 border-emerald-100 hover:bg-emerald-100'
+            }`}
           >
-            <div className="flex items-center gap-2 text-emerald-800">
+            <div className={`flex items-center gap-2 transition-colors ${isTransparent ? 'text-emerald-400' : 'text-emerald-800'}`}>
                <AppleIcon />
                <PlayStoreIcon />
             </div>
@@ -160,14 +187,20 @@ export default function Navbar() {
 
         {/* MOBILE TRIGGER */}
         <div className="flex items-center gap-3 md:hidden">
-             {/* Mobile Search Icon Trigger */}
-             <button onClick={() => router.push('/explore')} className="p-2 text-slate-600 bg-slate-50 rounded-lg">
+             <button 
+                onClick={() => router.push('/explore')} 
+                className={`p-2 rounded-lg transition-colors ${
+                    isTransparent ? 'text-white bg-white/10 backdrop-blur-md' : 'text-slate-600 bg-slate-50'
+                }`}
+             >
                 <Search size={20} />
              </button>
 
              <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
-              className="p-2 text-slate-900 bg-slate-50 rounded-lg active:bg-slate-100"
+              className={`p-2 rounded-lg transition-colors ${
+                  isTransparent ? 'text-white bg-white/10 backdrop-blur-md' : 'text-slate-900 bg-slate-50 active:bg-slate-100'
+              }`}
              >
                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
              </button>
@@ -184,7 +217,6 @@ export default function Navbar() {
             className="md:hidden bg-white border-b border-gray-100 overflow-hidden absolute top-full left-0 right-0 shadow-xl"
           >
               <div className="px-6 py-6 space-y-8 max-h-[85vh] overflow-y-auto">
-                
                 {/* 🔎 MOBILE SEARCH BAR */}
                 <form onSubmit={handleSearch} className="relative">
                     <input 
@@ -237,7 +269,6 @@ export default function Navbar() {
                      <span>Download App</span>
                   </Link>
                 </div>
-
               </div>
           </motion.div>
         )}
