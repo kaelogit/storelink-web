@@ -2,188 +2,172 @@
 
 import { motion } from 'framer-motion';
 import { 
-  X, Check, 
-  Layers, Smartphone, PenTool, 
+  Layers, Smartphone, 
+  PenTool, Scissors, 
   ShieldAlert, ShieldCheck, 
   Users, ShoppingBag, 
-  Scissors 
+  Sparkles, Zap, ArrowRight 
 } from 'lucide-react';
+import Link from 'next/link';
 
-const features = [
+// 🍱 The Bento Data
+const bentoItems = [
   {
-    title: "The Platform",
-    old: {
-      title: "App Juggling",
-      desc: "Post on IG. Negotiate on WhatsApp. Confirm on Bank App.",
-      icon: Layers
-    },
-    new: {
-      title: "The Super-App",
-      desc: "Index, Reels, Storyrow, Chat, and Payments. One ecosystem.",
-      icon: Smartphone
-    }
+    id: 'platform',
+    colSpan: 'md:col-span-2', // Big Card
+    bg: 'bg-white',
+    title: "The Super App Ecosystem",
+    desc: "Stop juggling WhatsApp, Instagram, and Bank Apps. We combined them all into one operating system.",
+    icon: Layers,
+    accent: "emerald", // Green Icon
+    visual: (
+      <div className="absolute right-0 bottom-0 w-3/4 h-3/4 bg-gradient-to-tl from-emerald-50 to-transparent opacity-50 rounded-tl-full pointer-events-none" />
+    )
   },
   {
-    title: "Content Creation",
-    old: {
-      title: "Manual Grunt Work",
-      desc: "Struggling with messy backgrounds and writing long captions.",
-      icon: PenTool
-    },
-    new: {
-      title: "AI & Studio Tools",
-      desc: "Instant 'Remove BG'. Gemini AI writes the sales copy for you.",
-      icon: Scissors
-    }
+    id: 'ai',
+    colSpan: 'md:col-span-1', // Tall Card
+    // 🟣 GEMINI UPGRADE: Rich, Deep Gradient
+    bg: 'bg-gradient-to-bl from-purple-600 via-violet-600 to-indigo-900', 
+    title: "Gemini AI Studio",
+    desc: "Bad at writing captions? Our AI writes viral descriptions and removes messy backgrounds instantly.",
+    icon: Sparkles,
+    accent: "white", // White Text/Icon
+    visual: (
+      <>
+        {/* Top Right Light Source (The Magic) */}
+        <div className="absolute -right-6 -top-6 w-40 h-40 bg-purple-400 rounded-full blur-[60px] opacity-50 pointer-events-none mix-blend-overlay" />
+        {/* Bottom Left Deep Shadow (The Depth) */}
+        <div className="absolute -left-6 -bottom-6 w-40 h-40 bg-indigo-500 rounded-full blur-[60px] opacity-40 pointer-events-none mix-blend-overlay" />
+      </>
+    )
   },
   {
-    title: "Safety",
-    old: {
-      title: "The Trust Standoff",
-      desc: "Sellers fear 'Pay on Delivery'. Buyers fear 'Bank Transfer'.",
-      icon: ShieldAlert
-    },
-    new: {
-      title: "Funds Secured",
-      desc: "We hold the money. Both sides are 100% protected.",
-      icon: ShieldCheck
-    }
+    id: 'safety',
+    colSpan: 'md:col-span-1', // Standard Card
+    bg: 'bg-white',
+    title: "Escrow Protection",
+    desc: "No more 'What I ordered vs What I got'. We hold the funds until you are happy.",
+    icon: ShieldCheck,
+    accent: "blue",
+    visual: (
+      <div className="absolute right-4 bottom-4 text-blue-50 opacity-20 pointer-events-none">
+        <ShieldCheck size={120} />
+      </div>
+    )
   },
   {
-    title: "Community",
-    old: {
-      title: "Lonely Transactions",
-      desc: "Buying in silence. No trends, no social proof, no connection.",
-      icon: ShoppingBag
-    },
-    new: {
-      title: "Curations & Trends",
-      desc: "Show off 'Curations'. Likes drive trends. Follow your vendors.",
-      icon: Users
-    }
+    id: 'community',
+    colSpan: 'md:col-span-2', // Wide Card
+    bg: 'bg-slate-900', // Dark Card for Contrast
+    title: "Social Commerce",
+    desc: "Don't just buy in silence. Follow vendors, like trends, and share your 'Curations' with the community.",
+    icon: Users,
+    accent: "white", // White text on dark
+    visual: (
+      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10 pointer-events-none" />
+    )
   }
 ];
 
 export default function Comparison() {
   return (
-    <section className="py-20 md:py-32 bg-slate-50/50 overflow-hidden">
-      <div className="max-w-6xl mx-auto px-5 md:px-6">
+    <section className="py-24 bg-slate-50 relative overflow-hidden">
+      
+      {/* Background Decor (Subtle Light Blobs) */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+         <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-emerald-100/50 rounded-full blur-[100px]" />
+         <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-100/50 rounded-full blur-[100px]" />
+      </div>
+
+      {/* 📐 LAYOUT: max-w-5xl keeps the grid centered and tight on laptops */}
+      <div className="max-w-5xl mx-auto px-6 relative z-10">
         
         {/* Section Header */}
-        <div className="text-center mb-16 md:mb-24">
+        <div className="max-w-3xl mx-auto text-center mb-16">
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 text-xs font-bold uppercase tracking-wider mb-6"
+          >
+            <Zap size={14} className="text-amber-500 fill-amber-500" />
+            Why We Built This
+          </motion.div>
+          
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="text-3xl md:text-5xl font-display font-bold text-slate-900 mb-6 tracking-tight"
+            transition={{ delay: 0.1 }}
+            className="text-4xl md:text-5xl font-display font-bold text-slate-900 mb-6 tracking-tight"
           >
-            Not just an App. <br className="hidden md:block" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">
-              A Whole New Way.
-            </span>
+            It's not just an App. <br />
+            It's an <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500"> Upgrade.</span>
           </motion.h2>
+          
           <motion.p 
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-base md:text-lg text-slate-500 max-w-xl mx-auto leading-relaxed"
+            transition={{ delay: 0.2 }}
+            className="text-lg text-slate-500 leading-relaxed"
           >
-            We combined the social discovery of Instagram with the infrastructure of Amazon. 
-          </motion.p>
+We bridged the gap between social connection and secure transaction, creating the first true OS for the social economy.          </motion.p>
         </div>
 
-        {/* The Comparison Grid */}
-        <div className="relative space-y-8 md:space-y-12">
-          
-          {/* Central Divider (Desktop) */}
-          <div className="absolute left-1/2 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-slate-200 to-transparent hidden md:block" />
-
-          {features.map((item, index) => (
-            <motion.div 
-              key={index}
-              initial={{ opacity: 0, y: 50 }} // Desktop: Comes from bottom
+        {/* 🍱 THE BENTO GRID */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[minmax(250px,auto)]">
+          {bentoItems.map((item, i) => (
+            <motion.div
+              key={item.id}
+              initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-50px" }}
-              transition={{ duration: 0.6, delay: index * 0.1, ease: "easeOut" }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-12 items-center relative group"
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1, duration: 0.5 }}
+              className={`${item.colSpan} group relative rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border ${
+                item.bg.includes('slate-900') ? 'border-slate-800 text-white' : 
+                item.bg.includes('gradient') ? 'border-purple-500/20 text-white' : 
+                'border-slate-100 text-slate-900'
+              }`}
             >
+              {/* Card Background Color/Texture */}
+              <div className={`absolute inset-0 ${item.bg} transition-colors duration-300`} />
               
-              {/* Category Label (Mobile) */}
-              <div className="md:hidden text-center text-[10px] font-black uppercase tracking-widest text-slate-300 mb-1">
-                {item.title}
+              {/* Visual Element (Blobs/Icons) */}
+              {item.visual}
+
+              {/* Content */}
+              <div className="relative z-10 p-8 h-full flex flex-col justify-between">
+                
+                {/* Icon Header */}
+                <div className="mb-4">
+                  <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110 ${
+                    item.accent === 'emerald' ? 'bg-emerald-100 text-emerald-600' :
+                    item.accent === 'blue' ? 'bg-blue-100 text-blue-600' :
+                    // White accent (used for Purple card & Dark card)
+                    'bg-white/20 text-white backdrop-blur-md'
+                  }`}>
+                    <item.icon size={24} strokeWidth={2} />
+                  </div>
+                  <h3 className="text-2xl font-bold tracking-tight mb-2 group-hover:translate-x-1 transition-transform">{item.title}</h3>
+                  <p className={`text-sm font-medium leading-relaxed max-w-sm ${item.accent === 'white' ? 'text-white/80' : 'text-slate-500'}`}>
+                    {item.desc}
+                  </p>
+                </div>
+
+                {/* Interactive Arrow (Only visible on hover) */}
+                <div className={`flex items-center gap-2 text-sm font-bold opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 ${
+                   item.accent === 'white' ? 'text-white' : 'text-emerald-600'
+                }`}>
+                  Learn more <ArrowRight size={16} />
+                </div>
+
               </div>
-
-              {/* LEFT: THE OLD WAY */}
-              <div className="relative">
-                 {/* Mobile Animation Hook: Slide form Left */}
-                 <motion.div 
-                    initial={{ x: -20, opacity: 0 }}
-                    whileInView={{ x: 0, opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: 0.1 }}
-                    className="p-6 pl-16 rounded-2xl bg-white border border-slate-200/60 shadow-[0_2px_10px_-4px_rgba(0,0,0,0.05)] md:text-right h-full relative overflow-hidden"
-                 >
-                    {/* Badge (Corrected: Absolute Left) */}
-                    <div className="absolute top-6 left-6 opacity-100 transition-opacity">
-                       <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
-                          <X size={14} strokeWidth={3} />
-                       </div>
-                    </div>
-                    
-                    <div className="flex flex-col md:items-end gap-3 z-10 relative">
-                      <div className="flex items-center gap-2 text-slate-400 mb-1 justify-end">
-                         <span className="text-[10px] font-bold uppercase tracking-wider md:hidden">The Old Way</span>
-                         <item.old.icon size={18} />
-                      </div>
-                      <h3 className="text-lg font-bold text-slate-700">{item.old.title}</h3>
-                      <p className="text-sm text-slate-500 leading-relaxed font-medium">{item.old.desc}</p>
-                    </div>
-                 </motion.div>
-              </div>
-
-
-              {/* RIGHT: THE STORELINK WAY */}
-              <div className="relative">
-                 {/* Mobile Animation Hook: Slide form Right */}
-                 <motion.div 
-                    initial={{ x: 20, opacity: 0 }}
-                    whileInView={{ x: 0, opacity: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: 0.2 }}
-                    className="p-6 pr-16 rounded-2xl bg-[#0f172a] border border-emerald-500/20 shadow-[0_10px_40px_-10px_rgba(16,185,129,0.15)] text-white h-full relative overflow-hidden group-hover:border-emerald-500/40 transition-colors"
-                 >
-                    {/* Ambient Glow */}
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-
-                    {/* Badge (Corrected: Absolute Right) */}
-                    <div className="absolute top-6 right-6 opacity-100 transition-opacity">
-                       <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shadow-lg shadow-emerald-500/30">
-                          <Check size={14} strokeWidth={4} />
-                       </div>
-                    </div>
-
-                    <div className="flex flex-col items-start gap-3 z-10 relative">
-                      <div className="flex items-center gap-2 text-emerald-400 mb-1">
-                         <item.new.icon size={18} />
-                         <span className="text-[10px] font-bold uppercase tracking-wider md:hidden text-emerald-500/80">The StoreLink Way</span>
-                      </div>
-                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                        {item.new.title}
-                      </h3>
-                      <p className="text-slate-400 text-sm leading-relaxed">{item.new.desc}</p>
-                    </div>
-                 </motion.div>
-              </div>
-
-              {/* VS Badge (Desktop Center) */}
-              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 hidden md:flex items-center justify-center w-8 h-8 bg-slate-50 border border-slate-200 rounded-full z-20">
-                <span className="text-[10px] font-black text-slate-300">VS</span>
-              </div>
-
             </motion.div>
           ))}
         </div>
+
       </div>
     </section>
   );

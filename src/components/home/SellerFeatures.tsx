@@ -2,195 +2,226 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Sparkles, Scissors, ArrowRight, Wand2, CheckCircle2, Cpu } from 'lucide-react';
+import { Sparkles, Scissors, ArrowRight, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
+// ✅ REAL IMAGES: Pointing to your local public/images folder
+const IMAGE_WITH_BG = "/tomford-bg.png"; 
+const IMAGE_NO_BG = "/tomford-white.png";
+
 export default function SellerFeatures() {
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isProcessed, setIsProcessed] = useState(false);
   const [textStep, setTextStep] = useState(0);
 
-  // Ghostwriter Logic
+  // 🤖 Ghostwriter Logic (Tom Ford Example)
   const textSequences = [
-    { label: "Original:", text: "Black shoe for sale" },
-    { label: "Gemini AI:", text: "Stealth Matte Finish: The Ultimate Urban Explorer Stride." }
+    { label: "Original Input:", text: "Perfume for sale" },
+    { label: "Gemini AI Output:", text: "Tom Ford Oud Minérale. A rare blend of aquatic accord and oud wood. 100ml Eau de Parfum. Condition: Sealed." }
   ];
 
+  // The "Loop" - Toggles every 4 seconds
   useEffect(() => {
     const interval = setInterval(() => {
-      setIsProcessing(prev => !prev);
+      setIsProcessed(prev => !prev);
       setTextStep(prev => (prev === 0 ? 1 : 0));
-    }, 4000);
+    }, 4000); 
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <section className="py-32 bg-white overflow-hidden relative">
+    <section className="py-32 bg-white relative overflow-hidden">
+      
       {/* Background Decor */}
-      <div className="absolute top-0 right-0 w-1/4 h-full bg-slate-50 skew-x-12 translate-x-20 -z-10" />
-
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.02]" />
+      
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center relative z-10">
         
-        {/* 1. LEFT SIDE: Feature Details */}
-        <div className="lg:pl-12 order-2 lg:order-1">
+        {/* 1. LEFT SIDE: The Pitch */}
+        <div className="lg:pl-8 order-2 lg:order-1">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="mb-12"
+            className="mb-10"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-[0.2em] mb-6">
-              <Cpu size={14} />
-              The AI Engine
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 border border-purple-100 text-purple-700 text-[10px] font-black uppercase tracking-wider mb-6">
+              <Sparkles size={14} />
+              Powered by Gemini 2.5
             </div>
             
             <h2 className="text-4xl md:text-6xl font-display font-bold text-slate-900 mb-6 leading-[1.1]">
               Pro Listings. <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
                 Zero Effort.
               </span>
             </h2>
-            <p className="text-lg text-slate-600 leading-relaxed font-medium">
-              We integrated Gemini AI and Studio Vision directly into your camera. List high-converting products from your living room.
+            <p className="text-lg text-slate-500 leading-relaxed font-medium max-w-md">
+              Take a picture, and our AI handles the rest. It removes the background, enhances the lighting, and writes the sales copy instantly.
             </p>
           </motion.div>
 
+          {/* Active Features List */}
           <div className="space-y-4">
-            {/* Feature 1 Card */}
-            <div className={`p-6 rounded-3xl border transition-all duration-500 ${textStep === 1 ? 'border-purple-200 bg-purple-50/30 shadow-xl shadow-purple-500/5 scale-[1.02]' : 'border-slate-100 bg-white opacity-60'}`}>
+            
+            {/* Feature 1: AI Writer */}
+            <motion.div 
+                animate={{ scale: textStep === 1 ? 1.02 : 1, borderColor: textStep === 1 ? '#a855f7' : '#e2e8f0' }}
+                className="p-6 rounded-3xl border bg-white shadow-sm transition-all duration-500"
+            >
               <div className="flex items-start gap-5">
-                <div className="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-purple-200">
-                  <Sparkles size={24} fill="white" />
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors duration-500 ${textStep === 1 ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-400'}`}>
+                  <Sparkles size={24} fill={textStep === 1 ? "currentColor" : "none"} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-slate-900 mb-1">Gemini AI Copywriter</h3>
-                  <p className="text-slate-600 text-sm font-medium">Auto-generates SEO descriptions that actually sell. No more writer's block.</p>
+                  <h3 className={`text-lg font-bold mb-1 transition-colors ${textStep === 1 ? 'text-purple-900' : 'text-slate-900'}`}>Gemini Copywriter</h3>
+                  <p className="text-slate-500 text-sm leading-relaxed">Auto-generates SEO descriptions that actually sell. No more writer's block.</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            {/* Feature 2 Card */}
-            <div className={`p-6 rounded-3xl border transition-all duration-500 ${isProcessing ? 'border-emerald-200 bg-emerald-50/30 shadow-xl shadow-emerald-500/5 scale-[1.02]' : 'border-slate-100 bg-white opacity-60'}`}>
+            {/* Feature 2: Magic Studio */}
+            <motion.div 
+                animate={{ scale: isProcessed ? 1.02 : 1, borderColor: isProcessed ? '#10b981' : '#e2e8f0' }}
+                className="p-6 rounded-3xl border bg-white shadow-sm transition-all duration-500"
+            >
               <div className="flex items-start gap-5">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-emerald-200">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-colors duration-500 ${isProcessed ? 'bg-emerald-500 text-white' : 'bg-slate-100 text-slate-400'}`}>
                   <Scissors size={24} />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-slate-900 mb-1">Magic Studio Vision</h3>
-                  <p className="text-slate-600 text-sm font-medium">Removes messy backgrounds and optimizes lighting instantly.</p>
+                  <h3 className={`text-lg font-bold mb-1 transition-colors ${isProcessed ? 'text-emerald-900' : 'text-slate-900'}`}>Magic Studio Vision</h3>
+                  <p className="text-slate-500 text-sm leading-relaxed">Computer Vision removes messy backgrounds and standardizes your catalog.</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
+
           </div>
 
-          <div className="mt-12">
-             <Link href="/download" className="group inline-flex items-center gap-3 text-slate-900 font-black text-lg">
-                Explore the AI Suite
-                <div className="w-10 h-10 rounded-full bg-slate-900 text-white flex items-center justify-center group-hover:translate-x-2 transition-transform">
-                    <ArrowRight size={20} />
-                </div>
-             </Link>
+          <div className="mt-10 pl-2">
+              <Link href="/download" className="group inline-flex items-center gap-3 text-slate-900 font-bold text-sm uppercase tracking-wide hover:text-purple-700 transition-colors">
+                Try the Studio
+                <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
+              </Link>
           </div>
         </div>
 
-        {/* 2. RIGHT SIDE: THE MAGIC CANVAS (The Visual) */}
+        {/* 2. RIGHT SIDE: THE MAGIC CANVAS (Visual Demo) */}
         <div className="relative order-1 lg:order-2 flex justify-center">
           
-          <div className="relative w-full max-w-[500px] aspect-square rounded-[3rem] p-4">
+          <div className="relative w-full max-w-[480px] aspect-[4/5]">
             
-            {/* The Main Container */}
-            <div className="relative w-full h-full rounded-[2.5rem] bg-slate-100 overflow-hidden shadow-[0_40px_80px_-15px_rgba(0,0,0,0.1)] border-8 border-white">
+            {/* The Phone Container */}
+            <div className="absolute inset-0 rounded-[3rem] border-[8px] border-slate-900 bg-slate-900 shadow-2xl overflow-hidden z-10">
               
-              {/* Layer 1: The Raw Product (Before) */}
-              <Image 
-                src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1000" 
-                alt="Product Before" 
-                fill 
-                className="object-cover grayscale opacity-40" 
-              />
-              <div className="absolute inset-0 bg-orange-900/10 mix-blend-overlay" />
-
-              {/* Layer 2: The Clean Product (After) */}
-              <motion.div 
-                className="absolute inset-0 bg-gradient-to-br from-emerald-50 to-teal-50 overflow-hidden"
-                animate={{ 
-                  clipPath: isProcessing 
-                    ? 'inset(0% 0% 0% 0%)' 
-                    : 'inset(0% 100% 0% 0%)' 
-                }}
-                transition={{ duration: 1.5, ease: "easeInOut" }}
-              >
-                 <Image 
-                    src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1000" 
-                    alt="Product After" 
-                    fill 
-                    className="object-cover" 
-                 />
-              </motion.div>
-
-              {/* The Scanning Beam */}
-              <motion.div 
-                className="absolute top-0 bottom-0 w-1 bg-emerald-500 z-20 shadow-[0_0_30px_rgba(16,185,129,0.8)]"
-                animate={{ left: isProcessing ? '100%' : '0%' }}
-                transition={{ duration: 1.5, ease: "easeInOut" }}
-              />
-
-              {/* Intelligence HUD (Floating Tags) */}
-              <div className="absolute inset-0 z-30 pointer-events-none p-8">
-                  <motion.div 
-                    animate={{ opacity: isProcessing ? 1 : 0, scale: isProcessing ? 1 : 0.8 }}
-                    className="absolute top-10 left-10 bg-white/90 backdrop-blur-md px-4 py-2 rounded-2xl border border-emerald-100 shadow-xl flex items-center gap-2"
-                  >
-                    <CheckCircle2 size={16} className="text-emerald-500" />
-                    <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">BG Removed</span>
-                  </motion.div>
-
-                  <motion.div 
-                    animate={{ opacity: !isProcessing ? 1 : 0 }}
-                    className="absolute bottom-10 right-10 bg-slate-900/90 backdrop-blur-md px-4 py-2 rounded-2xl text-white shadow-xl flex items-center gap-2"
-                  >
-                    <div className="w-2 h-2 rounded-full bg-orange-500 animate-ping" />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Detecting Edges...</span>
-                  </motion.div>
+              {/* Top Bar */}
+              <div className="absolute top-0 left-0 right-0 h-14 bg-slate-900 z-20 flex justify-center pt-4">
+                  <div className="w-24 h-6 bg-black rounded-full" />
               </div>
+
+              {/* IMAGE LAYER */}
+              <div className="relative w-full h-3/4 bg-white overflow-hidden">
+                 
+                 {/* LAYER 1 (BOTTOM): The "Clean/No BG" Image. 
+                    This stays visible underneath everything.
+                 */}
+                 <div className="absolute inset-0 bg-white">
+                    <Image 
+                        src={IMAGE_NO_BG} 
+                        alt="Processed" 
+                        fill 
+                        className="object-cover p-8" // p-8 adds padding so the product floats nicely
+                    />
+                    {/* 3D Grid Overlay on the processed part */}
+                    <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-20 bg-[size:20px_20px]" />
+                 </div>
+
+                 {/* LAYER 2 (TOP): The "Messy/With BG" Image. 
+                    We animate the clipPath to "wipe" this layer away.
+                 */}
+                 <motion.div 
+                    className="absolute inset-0"
+                    animate={{ 
+                       // Swipe from Left to Right (Hides Layer 2 to reveal Layer 1)
+                       clipPath: isProcessed ? 'inset(0 0 0 100%)' : 'inset(0 0 0 0)' 
+                    }}
+                    transition={{ duration: 1.5, ease: "easeInOut" }}
+                 >
+                    <Image 
+                        src={IMAGE_WITH_BG} 
+                        alt="Original" 
+                        fill 
+                        className="object-cover" 
+                    />
+                    <div className="absolute inset-0 bg-black/10" />
+                 </motion.div>
+
+                 {/* LAYER 3: The Scanning Laser 
+                    Follows the edge of the wipe
+                 */}
+                 <motion.div 
+                   className="absolute top-0 bottom-0 w-0.5 bg-emerald-400 z-30 shadow-[0_0_20px_rgba(52,211,153,0.8)]"
+                   animate={{ left: isProcessed ? '100%' : '0%' }}
+                   transition={{ duration: 1.5, ease: "easeInOut" }}
+                 >
+                    <div className="absolute top-1/2 -translate-y-1/2 -left-1.5 w-4 h-4 bg-white rounded-full shadow-lg flex items-center justify-center">
+                        <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+                    </div>
+                 </motion.div>
+
+                 {/* Floating Labels */}
+                 <div className="absolute inset-0 z-40 p-6 flex flex-col justify-between pointer-events-none">
+                    <motion.div 
+                        animate={{ opacity: isProcessed ? 1 : 0, y: isProcessed ? 0 : -10 }}
+                        className="self-end bg-white/90 backdrop-blur text-emerald-700 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider shadow-sm flex items-center gap-1.5 mt-12"
+                    >
+                        <CheckCircle2 size={12} /> Background Removed
+                    </motion.div>
+                 </div>
+              </div>
+
+              {/* AI CHAT LAYER (Bottom) */}
+              <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-white rounded-t-[2rem] p-6 flex flex-col gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-20">
+                  <div className="flex items-center gap-2 mb-1">
+                      <Sparkles size={14} className="text-purple-600" />
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Gemini AI Analysis</span>
+                  </div>
+                  
+                  {/* Chat Bubbles */}
+                  <div className="space-y-3">
+                      {/* Input */}
+                      <div className="flex justify-end">
+                          <div className="bg-slate-100 text-slate-500 text-xs px-3 py-2 rounded-2xl rounded-tr-sm max-w-[80%] font-medium">
+                             {textSequences[0].text}
+                          </div>
+                      </div>
+
+                      {/* AI Response */}
+                      <div className="flex justify-start">
+                          <motion.div 
+                             key={textStep}
+                             initial={{ opacity: 0, scale: 0.95 }}
+                             animate={{ opacity: 1, scale: 1 }}
+                             className="bg-purple-50 text-slate-800 text-xs font-medium px-4 py-3 rounded-2xl rounded-tl-sm max-w-[95%] shadow-sm border border-purple-100 leading-relaxed"
+                          >
+                             {textStep === 1 ? (
+                                 <span>{textSequences[1].text}</span>
+                             ) : (
+                                 <div className="flex gap-1 items-center h-4">
+                                     <span className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce" />
+                                     <span className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce delay-75" />
+                                     <span className="w-1.5 h-1.5 bg-purple-400 rounded-full animate-bounce delay-150" />
+                                 </div>
+                             )}
+                          </motion.div>
+                      </div>
+                  </div>
+              </div>
+
             </div>
 
-            {/* THE GHOSTWRITER (Floating Over the Canvas) */}
-            <motion.div 
-              className="absolute -bottom-6 -left-10 md:-left-20 w-[300px] md:w-[380px] bg-white rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.1)] border border-slate-100 p-5 z-40"
-              initial={{ x: -50, opacity: 0 }}
-              whileInView={{ x: 0, opacity: 1 }}
-            >
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-6 h-6 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
-                   <Sparkles size={12} fill="currentColor" />
-                </div>
-                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gemini Engine</span>
-              </div>
-
-              <div className="space-y-1">
-                <p className="text-[9px] font-bold text-slate-400 uppercase">{textSequences[textStep].label}</p>
-                <motion.p 
-                  key={textStep}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className={`text-sm md:text-base font-bold leading-snug ${textStep === 1 ? 'text-slate-900' : 'text-slate-400 italic'}`}
-                >
-                  {textSequences[textStep].text}
-                </motion.p>
-              </div>
-
-              {textStep === 1 && (
-                <motion.div 
-                   initial={{ width: 0 }}
-                   animate={{ width: '100%' }}
-                   className="h-1 bg-purple-500 rounded-full mt-4" 
-                />
-              )}
-            </motion.div>
-
-            {/* Decorative Background Blob */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-emerald-100/50 rounded-full blur-[100px] -z-20" />
+            {/* Decorative Behind Blob */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-[90%] bg-purple-100/50 rounded-full blur-[80px] -z-10" />
           </div>
         </div>
 

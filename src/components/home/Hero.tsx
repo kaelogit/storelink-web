@@ -145,13 +145,13 @@ export default function Hero() {
           transition={{ delay: 0.3 }}
           className="flex flex-col sm:flex-row items-center gap-4 mb-20"
         >
-          <Link href="/download" className="group relative px-8 py-4 bg-white text-slate-950 rounded-full font-bold text-lg hover:bg-emerald-50 transition-all flex items-center gap-2 overflow-hidden">
+          <Link href="/download" className="group relative px-8 py-4 bg-white text-slate-950 rounded-[15px] font-bold text-lg hover:bg-emerald-50 transition-all flex items-center gap-2 overflow-hidden">
             <span className="relative z-10">Start Selling</span>
             <ArrowRight className="relative z-10 group-hover:translate-x-1 transition-transform" size={20} />
             <div className="absolute inset-0 bg-gradient-to-r from-emerald-200 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
           </Link>
           
-          <Link href="/explore" className="px-8 py-4 bg-white/5 border border-white/10 text-white rounded-full font-semibold hover:bg-white/10 transition-colors backdrop-blur-sm">
+          <Link href="/explore" className="px-8 py-4 bg-white/5 border border-white/10 text-white rounded-[15px] font-semibold hover:bg-white/10 transition-colors backdrop-blur-sm">
             Start Shopping
           </Link>
         </motion.div>

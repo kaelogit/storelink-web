@@ -8,6 +8,10 @@ const nextConfig = {
       },
       {
         protocol: 'https',
+        hostname: 'pngimg.com',
+      },
+      {
+        protocol: 'https',
         hostname: 'images.unsplash.com', // ✅ FIXED: Removed '/api/**' so all unsplash images work
       },
       {
