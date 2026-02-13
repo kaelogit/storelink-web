@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Play, VolumeX, Heart, MessageCircle, Share2, Smartphone } from 'lucide-react';
-import AppTrapModal from '@/components/shared/TrapModal';
+import AppTrapModal from '../../../components/ui/DownloadTrap';
 
 export default function ClientReelWrapper({ reel }: any) {
   const [trapOpen, setTrapOpen] = useState(false);

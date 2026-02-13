@@ -8,7 +8,7 @@ import {
   Layers, Package, Gem, CheckCircle, 
   UserPlus, MessageCircle, Share2, QrCode 
 } from 'lucide-react';
-import AppTrapModal from '../../components/shared/TrapModal'; // Ensure path is correct
+import AppTrapModal from '../../components/ui/DownloadTrap';
 import ShareProfileModal from '../../components/shared/ShareProfileModal'; // New Import
 
 // Helper for currency format

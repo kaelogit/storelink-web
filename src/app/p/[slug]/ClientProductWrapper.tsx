@@ -9,8 +9,7 @@ import {
   Gem, CheckCircle, Info,
   Image as ImageIcon // 2. ✅ RENAME Lucide Icon to 'ImageIcon' to avoid conflict
 } from 'lucide-react';
-import AppTrapModal from '../../../components/shared/TrapModal';
-
+import AppTrapModal from '../../../components/ui/DownloadTrap';
 // Helper
 const formatPrice = (amount: number, currency: string) => {
   return new Intl.NumberFormat('en-NG', {

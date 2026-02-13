@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Search, Zap, X, Layers, Shirt, Smartphone, Sparkles, Home, Activity, Wrench, Building2, Car, Gem, ArrowRight, Smartphone as PhoneIcon } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import WebProductCard from './WebProductCard';
-import AppTrapModal from '../../components/shared/TrapModal'; 
+import AppTrapModal from '../../components/ui/DownloadTrap';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,

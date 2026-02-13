@@ -25,7 +25,9 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
   if (!reel) return { title: 'Reel Not Found' };
 
-  const title = `Watch ${reel.seller?.display_name}'s video on StoreLink`;
+const seller: any = reel.seller;
+const sellerName = Array.isArray(seller) ? seller[0]?.display_name : seller?.display_name;
+const title = `Watch ${sellerName || 'a seller'}'s video on StoreLink`;
   const desc = reel.description || "Check out this trending product video on StoreLink.";
 
   return {
