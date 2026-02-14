@@ -22,6 +22,10 @@ const nextConfig = {
         protocol: 'https',
         hostname: 'yolqfndprzohjkrizbzu.supabase.co', // ✅ Your Supabase Storage
       },
+      {
+        protocol: 'https',
+        hostname: 'source.unsplash.com',
+      },
     ],
   },
 };

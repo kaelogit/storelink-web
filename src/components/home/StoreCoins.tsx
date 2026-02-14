@@ -62,7 +62,7 @@ export default function StoreCoins() {
               </div>
               
               <Link 
-                href="/features/loyalty" 
+                href="/shop/rewards" 
                 className="inline-flex items-center gap-3 text-white border border-white/20 bg-white/5 px-8 py-4 rounded-2xl font-bold hover:bg-white hover:text-slate-900 transition-all active:scale-95 group"
               >
                 Learn More

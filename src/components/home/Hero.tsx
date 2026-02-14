@@ -151,7 +151,7 @@ export default function Hero() {
             <div className="absolute inset-0 bg-gradient-to-r from-emerald-200 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
           </Link>
           
-          <Link href="/explore" className="px-8 py-4 bg-white/5 border border-white/10 text-white rounded-[15px] font-semibold hover:bg-white/10 transition-colors backdrop-blur-sm">
+          <Link href="/download" className="px-8 py-4 bg-white/5 border border-white/10 text-white rounded-[15px] font-semibold hover:bg-white/10 transition-colors backdrop-blur-sm">
             Start Shopping
           </Link>
         </motion.div>

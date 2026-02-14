@@ -116,7 +116,7 @@ export default function TheFeed() {
             className="flex gap-6 md:gap-10 shrink-0 px-4"
             animate={{ x: ["0%", "-33%"] }} 
             transition={{ 
-              duration: 60, // Slow & Cinematic
+              duration: 25, // ⚡️ CHANGED: Faster speed (was 60s)
               repeat: Infinity, 
               ease: "linear" 
             }}
@@ -165,14 +165,14 @@ export default function TheFeed() {
                       
                       {/* Like (Static) */}
                       <div className="flex flex-col items-center gap-1">
-                         <Heart size={28} className="text-white drop-shadow-md" strokeWidth={2} />
-                         <span className="text-white text-[10px] font-bold drop-shadow-md">{formatCount(item.likes_count)}</span>
+                          <Heart size={28} className="text-white drop-shadow-md" strokeWidth={2} />
+                          <span className="text-white text-[10px] font-bold drop-shadow-md">{formatCount(item.likes_count)}</span>
                       </div>
 
                       {/* Comment (Static) */}
                       <div className="flex flex-col items-center gap-1">
-                         <MessageCircle size={28} className="text-white drop-shadow-md" strokeWidth={2} />
-                         <span className="text-white text-[10px] font-bold drop-shadow-md">{formatCount(item.comment_count)}</span>
+                          <MessageCircle size={28} className="text-white drop-shadow-md" strokeWidth={2} />
+                          <span className="text-white text-[10px] font-bold drop-shadow-md">{formatCount(item.comment_count)}</span>
                       </div>
 
                       {/* Buy Button (Clickable -> Downloads) */}
@@ -186,62 +186,62 @@ export default function TheFeed() {
 
                       {/* Share (Static) */}
                       <div className="flex flex-col items-center gap-1">
-                         <Share2 size={26} className="text-white drop-shadow-md" strokeWidth={2} />
-                         <span className="text-white text-[10px] font-bold drop-shadow-md">Share</span>
+                          <Share2 size={26} className="text-white drop-shadow-md" strokeWidth={2} />
+                          <span className="text-white text-[10px] font-bold drop-shadow-md">Share</span>
                       </div>
                     </div>
 
                     {/* 📝 BOTTOM INFO AREA */}
                     <div className="absolute bottom-8 left-3 w-[75%] z-20 flex flex-col gap-2">
-                       <div className="flex items-center gap-2 mb-1">
-                          <div className={`w-9 h-9 rounded-[14px] overflow-hidden border-[1.5px] ${isDiamond ? 'border-purple-400' : 'border-white'} shadow-sm relative bg-slate-800`}>
-                             {item.seller?.logo_url && (
-                               <Image src={item.seller.logo_url} alt="S" fill className="object-cover" />
-                             )}
-                          </div>
-                          <div className="flex flex-col">
-                             <div className="flex items-center gap-1">
-                                <span className="text-white font-extrabold text-sm drop-shadow-md leading-none">@{item.seller?.slug}</span>
-                                {isDiamond && <Gem size={10} className="text-purple-400 fill-purple-400" />}
-                             </div>
-                             {item.seller?.location_city && (
-                                <div className="flex items-center gap-0.5 opacity-80">
-                                   <MapPin size={8} className="text-white" />
-                                   <span className="text-[9px] text-white font-bold uppercase">{item.seller.location_city}</span>
-                                </div>
-                             )}
-                          </div>
-                       </div>
+                        <div className="flex items-center gap-2 mb-1">
+                           <div className={`w-9 h-9 rounded-[14px] overflow-hidden border-[1.5px] ${isDiamond ? 'border-purple-400' : 'border-white'} shadow-sm relative bg-slate-800`}>
+                              {item.seller?.logo_url && (
+                                <Image src={item.seller.logo_url} alt="S" fill className="object-cover" />
+                              )}
+                           </div>
+                           <div className="flex flex-col">
+                              <div className="flex items-center gap-1">
+                                 <span className="text-white font-extrabold text-sm drop-shadow-md leading-none">@{item.seller?.slug}</span>
+                                 {isDiamond && <Gem size={10} className="text-purple-400 fill-purple-400" />}
+                              </div>
+                              {item.seller?.location_city && (
+                                 <div className="flex items-center gap-0.5 opacity-80">
+                                    <MapPin size={8} className="text-white" />
+                                    <span className="text-[9px] text-white font-bold uppercase">{item.seller.location_city}</span>
+                                 </div>
+                              )}
+                           </div>
+                        </div>
 
-                       <p className="text-white text-xs font-medium leading-snug line-clamp-2 drop-shadow-md opacity-90 pr-2">
-                          {item.caption || item.product?.name}
-                       </p>
+                        <p className="text-white text-xs font-medium leading-snug line-clamp-2 drop-shadow-md opacity-90 pr-2">
+                           {item.caption || item.product?.name}
+                        </p>
 
-                       {/* Glass Product Card */}
-                       <div className="mt-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-2 flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-lg bg-white/20 overflow-hidden shrink-0 relative">
-                             {thumbSource && <Image src={thumbSource} fill className="object-cover opacity-80" alt="prod" />}
-                          </div>
-                          <div className="flex flex-col justify-center min-w-0">
-                             <span className="text-white text-[10px] font-bold truncate block w-full">{item.product?.name?.toUpperCase() || 'PRODUCT'}</span>
-                             <div className="flex items-center gap-1">
-                                {isSoldOut ? (
-                                   <span className="text-[10px] font-black text-red-400">SOLD OUT</span>
-                                ) : (
-                                   <>
-                                     <span className={`text-[10px] font-black ${item.product?.is_flash_drop ? 'text-emerald-400' : 'text-emerald-400'}`}>
-                                        {formatMoney(activePrice || 0, item.product?.currency_code)}
-                                     </span>
-                                     {item.product?.is_flash_drop && <Zap size={10} className="text-yellow-400 fill-yellow-400" />}
-                                   </>
-                                )}
-                             </div>
-                          </div>
-                       </div>
+                        {/* Glass Product Card */}
+                        <div className="mt-1 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-2 flex items-center gap-3">
+                           <div className="w-8 h-8 rounded-lg bg-white/20 overflow-hidden shrink-0 relative">
+                              {thumbSource && <Image src={thumbSource} fill className="object-cover opacity-80" alt="prod" />}
+                           </div>
+                           <div className="flex flex-col justify-center min-w-0">
+                              <span className="text-white text-[10px] font-bold truncate block w-full">{item.product?.name?.toUpperCase() || 'PRODUCT'}</span>
+                              <div className="flex items-center gap-1">
+                                 {isSoldOut ? (
+                                    <span className="text-[10px] font-black text-red-400">SOLD OUT</span>
+                                 ) : (
+                                    <>
+                                      <span className={`text-[10px] font-black ${item.product?.is_flash_drop ? 'text-emerald-400' : 'text-emerald-400'}`}>
+                                         {formatMoney(activePrice || 0, item.product?.currency_code)}
+                                      </span>
+                                      {item.product?.is_flash_drop && <Zap size={10} className="text-yellow-400 fill-yellow-400" />}
+                                    </>
+                                 )}
+                              </div>
+                           </div>
+                        </div>
                     </div>
 
                     <div className="absolute bottom-8 left-0 right-0 h-[2px] bg-white/20">
-                       <div className="h-full w-[40%] bg-white" />
+                        <div className="h-full w-[40%] bg-white" />
                     </div>
                   </div>
                );

@@ -6,7 +6,7 @@ import { Sparkles, Scissors, ArrowRight, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 
-// ✅ REAL IMAGES: Pointing to your local public/images folder
+// ✅ REAL LOCAL IMAGES (Ensure these exist in public/images/)
 const IMAGE_WITH_BG = "/tomford-bg.png"; 
 const IMAGE_NO_BG = "/tomford-white.png";
 
@@ -111,14 +111,9 @@ export default function SellerFeatures() {
           
           <div className="relative w-full max-w-[480px] aspect-[4/5]">
             
-            {/* The Phone Container */}
-            <div className="absolute inset-0 rounded-[3rem] border-[8px] border-slate-900 bg-slate-900 shadow-2xl overflow-hidden z-10">
+            {/* The Canvas Container (Clean Frame, No Notch) */}
+            <div className="absolute inset-0 rounded-[2.5rem] border-[4px] border-slate-100 bg-white shadow-2xl overflow-hidden z-10 ring-1 ring-black/5">
               
-              {/* Top Bar */}
-              <div className="absolute top-0 left-0 right-0 h-14 bg-slate-900 z-20 flex justify-center pt-4">
-                  <div className="w-24 h-6 bg-black rounded-full" />
-              </div>
-
               {/* IMAGE LAYER */}
               <div className="relative w-full h-3/4 bg-white overflow-hidden">
                  
@@ -153,7 +148,7 @@ export default function SellerFeatures() {
                         fill 
                         className="object-cover" 
                     />
-                    <div className="absolute inset-0 bg-black/10" />
+                    <div className="absolute inset-0 bg-black/5" />
                  </motion.div>
 
                  {/* LAYER 3: The Scanning Laser 
@@ -181,7 +176,7 @@ export default function SellerFeatures() {
               </div>
 
               {/* AI CHAT LAYER (Bottom) */}
-              <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-white rounded-t-[2rem] p-6 flex flex-col gap-3 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] z-20">
+              <div className="absolute bottom-0 left-0 right-0 h-1/3 bg-white border-t border-slate-50 p-6 flex flex-col gap-3 z-20">
                   <div className="flex items-center gap-2 mb-1">
                       <Sparkles size={14} className="text-purple-600" />
                       <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Gemini AI Analysis</span>

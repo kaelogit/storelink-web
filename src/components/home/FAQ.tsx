@@ -53,9 +53,8 @@ export default function FAQ() {
   return (
     <section className="py-24 md:py-32 bg-slate-50 relative overflow-hidden">
       
-      {/* Background Decor */}
-      <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-slate-300 to-transparent" />
-      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-soft-light pointer-events-none"></div>
+      {/* Background Decor (Matching the Grid Theme) */}
+      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03]" />
       
       <div className="max-w-4xl mx-auto px-6 relative z-10">
         
@@ -96,7 +95,7 @@ export default function FAQ() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.05 }}
-                className={`group rounded-3xl overflow-hidden transition-all duration-300 ease-out ${
+                className={`group rounded-3xl overflow-hidden transition-all duration-500 ease-out ${
                   isOpen 
                     ? 'bg-[#0f172a] shadow-2xl shadow-emerald-900/20 scale-[1.02]' 
                     : 'bg-white border border-slate-100 hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-500/5'
@@ -122,7 +121,7 @@ export default function FAQ() {
                       initial={{ height: 0, opacity: 0 }}
                       animate={{ height: "auto", opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.3, ease: "easeOut" }} // 🔥 Speed increased here
+                      transition={{ duration: 0.4, ease: [0.04, 0.62, 0.23, 0.98] }} // ⚡️ Apple-style spring ease
                     >
                       <div className="px-6 md:px-8 pb-8 pt-0 relative z-10">
                         <div className="h-px w-full bg-slate-800 mb-6" /> {/* Separator Line */}

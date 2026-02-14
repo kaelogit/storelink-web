@@ -34,7 +34,7 @@ export default function Navbar() {
 
   // ⚡️ SCROLL TRIGGER: Turns white only after 1000px (End of Hero Orbit)
   useMotionValueEvent(scrollY, "change", (latest) => {
-    setScrolled(latest > 1425);
+    setScrolled(latest > 1440);
   });
 
   // 🦎 THE CHAMELEON LOGIC
