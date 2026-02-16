@@ -7,7 +7,6 @@ import {
   Menu, Users, Gem, MapPin, Edit3, Share2, 
   Package, Video, Layers, CheckCircle2 
 } from 'lucide-react';
-import Navbar from '../../components/home/Navbar';
 import Footer from '../../components/home/Footer';
 import Image from 'next/image';
 
@@ -41,7 +40,6 @@ export default function DownloadPage() {
 
   return (
     <main className="bg-slate-50 min-h-screen font-sans selection:bg-emerald-100 flex flex-col">
-      <Navbar />
 
       <section className="flex-1 pt-32 pb-20 relative overflow-hidden flex items-center">
         

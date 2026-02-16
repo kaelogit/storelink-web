@@ -6,7 +6,6 @@ import {
   Briefcase, ArrowRight, Terminal, 
   PenTool, LineChart, Coffee 
 } from 'lucide-react';
-import Navbar from '../../components/home/Navbar';
 import Footer from '../../components/home/Footer';
 import Link from 'next/link';
 
@@ -61,7 +60,6 @@ const PERKS = [
 export default function CareersPage() {
   return (
     <main className="bg-slate-50 min-h-screen font-sans selection:bg-emerald-100">
-      <Navbar />
 
       {/* 🚀 HERO: The Call to Adventure */}
       <section className="pt-40 pb-20 px-6 relative overflow-hidden bg-[#0f172a] text-white">

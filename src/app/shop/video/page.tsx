@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion';
 import { Play, ShoppingBag, Heart, MessageCircle, Share2, Zap, Eye, CheckCircle2 } from 'lucide-react';
-import Navbar from '../../../components/home/Navbar';
 import Footer from '../../../components/home/Footer';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -10,7 +9,6 @@ import Image from 'next/image';
 export default function VideoShoppingPage() {
   return (
     <main className="bg-[#050505] min-h-screen font-sans selection:bg-emerald-500 selection:text-white">
-      <Navbar />
 
       {/* 🎬 HERO SECTION */}
       <section className="pt-40 pb-20 px-6 relative overflow-hidden">

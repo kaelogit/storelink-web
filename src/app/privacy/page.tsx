@@ -1,12 +1,10 @@
 'use client';
 
-import Navbar from '../../components/home/Navbar';
 import Footer from '../../components/home/Footer';
 
 export default function PrivacyPage() {
   return (
     <main className="bg-slate-50 min-h-screen font-sans selection:bg-emerald-100">
-      <Navbar />
 
       <div className="max-w-4xl mx-auto pt-40 pb-24 px-6">
         

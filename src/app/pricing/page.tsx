@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, Sparkles, ShieldCheck, Gem } from 'lucide-react';
 import Link from 'next/link';
-import Navbar from '../../components/home/Navbar';
 import Footer from '../../components/home/Footer';
 
 // 💰 CONFIGURATION (Matching Mobile Logic)
@@ -46,7 +45,6 @@ export default function PricingPage() {
 
   return (
     <main className="bg-slate-50 min-h-screen font-sans selection:bg-emerald-100">
-      <Navbar />
       
       {/* 🟢 HEADER SECTION */}
       <section className="pt-40 pb-16 px-6 text-center relative overflow-hidden">

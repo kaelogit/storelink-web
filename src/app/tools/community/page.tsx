@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Heart, MessageCircle, Bell, TrendingUp, Megaphone, CheckCircle2 } from 'lucide-react';
-import Navbar from '../../../components/home/Navbar';
 import Footer from '../../../components/home/Footer';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -33,7 +32,6 @@ export default function CommunityPage() {
 
   return (
     <main className="bg-white min-h-screen font-sans selection:bg-emerald-100">
-      <Navbar />
 
       {/* 🤝 HERO: The Philosophy */}
       <section className="pt-40 pb-20 px-6 relative overflow-hidden bg-slate-50">

@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Timer, Flame, Bell, ArrowRight, TrendingUp } from 'lucide-react';
-import Navbar from '../../../components/home/Navbar';
 import Footer from '../../../components/home/Footer';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -31,7 +30,6 @@ export default function FlashDropsPage() {
 
   return (
     <main className="bg-[#050505] min-h-screen font-sans selection:bg-amber-500 selection:text-black">
-      <Navbar />
 
       {/* ⚡ HERO SECTION */}
       <section className="pt-40 pb-24 px-6 relative overflow-hidden">

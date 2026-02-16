@@ -32,7 +32,7 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('');
   const { scrollY } = useScroll();
 
-  // ⚡️ SCROLL TRIGGER: Turns white only after 1000px (End of Hero Orbit)
+  // ⚡️ SCROLL TRIGGER: Turns white only after 1440px
   useMotionValueEvent(scrollY, "change", (latest) => {
     setScrolled(latest > 1440);
   });
@@ -52,7 +52,7 @@ export default function Navbar() {
 
   return (
     <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-700 ease-out ${
+      className={`${isHome ? 'fixed' : 'relative'} top-0 left-0 right-0 z-50 transition-all duration-700 ease-out ${
         !isTransparent
           ? 'bg-white/90 backdrop-blur-xl border-b border-gray-200/50 shadow-sm py-3' 
           : 'bg-slate-950/30 backdrop-blur-md border-b border-white/5 py-5' // 🌌 Deep Space Glass
@@ -233,10 +233,10 @@ export default function Navbar() {
                 <div className="space-y-3">
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Selling Tools</p>
                   <div className="grid grid-cols-1 gap-1">
-                     <MobileLink href="/tools/ai" icon={<Wand2 size={18} className="text-purple-600"/>} text="AI Writer" onClick={() => setIsMobileMenuOpen(false)} />
-                     <MobileLink href="/tools/studio" icon={<ImageMinus size={18} className="text-blue-600"/>} text="Magic Studio" onClick={() => setIsMobileMenuOpen(false)} />
-                     <MobileLink href="/tools/stories" icon={<History size={18} className="text-orange-600"/>} text="Story Row" onClick={() => setIsMobileMenuOpen(false)} />
-                     <MobileLink href="/tools/community" icon={<Users size={18} className="text-pink-600"/>} text="Community" onClick={() => setIsMobileMenuOpen(false)} />
+                      <MobileLink href="/tools/ai" icon={<Wand2 size={18} className="text-purple-600"/>} text="AI Writer" onClick={() => setIsMobileMenuOpen(false)} />
+                      <MobileLink href="/tools/studio" icon={<ImageMinus size={18} className="text-blue-600"/>} text="Magic Studio" onClick={() => setIsMobileMenuOpen(false)} />
+                      <MobileLink href="/tools/stories" icon={<History size={18} className="text-orange-600"/>} text="Story Row" onClick={() => setIsMobileMenuOpen(false)} />
+                      <MobileLink href="/tools/community" icon={<Users size={18} className="text-pink-600"/>} text="Community" onClick={() => setIsMobileMenuOpen(false)} />
                   </div>
                 </div>
 
@@ -244,29 +244,29 @@ export default function Navbar() {
                 <div className="space-y-3">
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Shopping</p>
                   <div className="grid grid-cols-1 gap-1">
-                     <MobileLink href="/shop/video" icon={<PlayCircle size={18} className="text-red-500"/>} text="Video Shopping" onClick={() => setIsMobileMenuOpen(false)} />
-                     <MobileLink href="/shop/flash" icon={<Zap size={18} className="text-amber-500"/>} text="Flash Drops" onClick={() => setIsMobileMenuOpen(false)} />
-                     <MobileLink href="/shop/rewards" icon={<Coins size={18} className="text-emerald-500"/>} text="Store Coins" onClick={() => setIsMobileMenuOpen(false)} />
+                      <MobileLink href="/shop/video" icon={<PlayCircle size={18} className="text-red-500"/>} text="Video Shopping" onClick={() => setIsMobileMenuOpen(false)} />
+                      <MobileLink href="/shop/flash" icon={<Zap size={18} className="text-amber-500"/>} text="Flash Drops" onClick={() => setIsMobileMenuOpen(false)} />
+                      <MobileLink href="/shop/rewards" icon={<Coins size={18} className="text-emerald-500"/>} text="Store Coins" onClick={() => setIsMobileMenuOpen(false)} />
                   </div>
                 </div>
 
                 {/* General Links */}
                 <div className="space-y-3 pt-2 border-t border-gray-50">
-                   <MobileLink href="/pricing" icon={<CreditCard size={18} className="text-slate-600"/>} text="Pricing Plans" onClick={() => setIsMobileMenuOpen(false)} />
-                   <MobileLink href="/safety" icon={<ShieldCheck size={18} className="text-slate-600"/>} text="Safety & Trust" onClick={() => setIsMobileMenuOpen(false)} />
+                    <MobileLink href="/pricing" icon={<CreditCard size={18} className="text-slate-600"/>} text="Pricing Plans" onClick={() => setIsMobileMenuOpen(false)} />
+                    <MobileLink href="/safety" icon={<ShieldCheck size={18} className="text-slate-600"/>} text="Safety & Trust" onClick={() => setIsMobileMenuOpen(false)} />
                 </div>
 
                 {/* Mobile Download Action */}
                 <div className="pt-2 pb-6">
                   <Link 
-                     href="/download" 
-                     className="flex items-center justify-center gap-3 bg-emerald-50 text-emerald-900 w-full py-4 rounded-xl font-bold border border-emerald-100 hover:bg-emerald-100 transition-colors"
-                     onClick={() => setIsMobileMenuOpen(false)}
+                      href="/download" 
+                      className="flex items-center justify-center gap-3 bg-emerald-50 text-emerald-900 w-full py-4 rounded-xl font-bold border border-emerald-100 hover:bg-emerald-100 transition-colors"
+                      onClick={() => setIsMobileMenuOpen(false)}
                   >
-                     <AppleIcon />
-                     <span className="w-px h-3 bg-emerald-200"></span>
-                     <PlayStoreIcon />
-                     <span>Download App</span>
+                      <AppleIcon />
+                      <span className="w-px h-3 bg-emerald-200"></span>
+                      <PlayStoreIcon />
+                      <span>Download App</span>
                   </Link>
                 </div>
               </div>

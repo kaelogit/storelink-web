@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ChevronDown, ShoppingBag, Store, ShieldCheck, Truck, HelpCircle, ArrowRight, Minus, Plus } from 'lucide-react';
-import Navbar from '../../components/home/Navbar';
 import Footer from '../../components/home/Footer';
 import Link from 'next/link';
 
@@ -95,7 +94,6 @@ export default function HelpCenterPage() {
 
   return (
     <main className="bg-white min-h-screen font-sans selection:bg-emerald-100">
-      <Navbar />
 
       {/* 🔍 HERO: The Search Engine */}
       <section className="pt-40 pb-10 px-6 bg-slate-50 border-b border-slate-100">

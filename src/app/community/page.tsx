@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion';
 import { Users, MessageCircle, Calendar, MapPin, ArrowRight, Star } from 'lucide-react';
-import Navbar from '../../components/home/Navbar';
 import Footer from '../../components/home/Footer';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -10,7 +9,6 @@ import Image from 'next/image';
 export default function CommunityHubPage() {
   return (
     <main className="bg-white min-h-screen font-sans selection:bg-emerald-100">
-      <Navbar />
 
       {/* 🏙️ HERO: The Tribe */}
       <section className="pt-40 pb-20 px-6 bg-slate-50 border-b border-slate-100 relative overflow-hidden">

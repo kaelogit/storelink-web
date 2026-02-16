@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion';
 import { Download, FileText, Image as ImageIcon, Mail, ArrowUpRight, Copy } from 'lucide-react';
-import Navbar from '../../components/home/Navbar';
 import Footer from '../../components/home/Footer';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -42,7 +41,6 @@ export default function PressPage() {
 
   return (
     <main className="bg-slate-50 min-h-screen font-sans selection:bg-emerald-100">
-      <Navbar />
 
       {/* 📰 HERO */}
       <section className="pt-40 pb-20 px-6 bg-white border-b border-slate-100">

@@ -2,13 +2,11 @@
 
 import { motion } from 'framer-motion';
 import { ShieldCheck, Lock, ScanFace, FileWarning, CheckCircle2, AlertTriangle, Scale } from 'lucide-react';
-import Navbar from '../../components/home/Navbar';
 import Footer from '../../components/home/Footer';
 
 export default function SafetyPage() {
   return (
     <main className="bg-slate-50 min-h-screen font-sans">
-      <Navbar />
 
       {/* 🛡️ HERO: THE PROMISE */}
       <section className="pt-40 pb-20 px-6 text-center relative overflow-hidden bg-[#050505] text-white">

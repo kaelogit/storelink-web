@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { History, Clock, Link as LinkIcon, Heart, Send, Plus, X } from 'lucide-react';
-import Navbar from '../../../components/home/Navbar';
 import Footer from '../../../components/home/Footer';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -58,7 +57,6 @@ export default function StoriesPage() {
 
   return (
     <main className="bg-slate-50 min-h-screen font-sans">
-      <Navbar />
 
       {/* 🟠 HERO SECTION */}
       <section className="pt-40 pb-20 px-6 relative overflow-hidden bg-[#0f0505]">

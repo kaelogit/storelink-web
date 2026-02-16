@@ -7,12 +7,10 @@ import StoreCoins from '../components/home/StoreCoins';
 import FinalCTA from '../components/home/FinalCTA';
 import FAQ from '../components/home/FAQ';
 import Footer from '../components/home/Footer';
-import Navbar from '../components/home/Navbar';
 
 export default function Home() {
   return (
     <main className="bg-white min-h-screen">
-      <Navbar />
       <Hero />
       <Comparison />
       <SellerFeatures /> 

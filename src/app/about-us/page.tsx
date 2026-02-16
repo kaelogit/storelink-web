@@ -2,7 +2,6 @@
 
 import { motion } from 'framer-motion';
 import { Quote, TrendingUp, ShieldCheck, Users, Heart, MapPin, Linkedin } from 'lucide-react';
-import Navbar from '../../components/home/Navbar';
 import Footer from '../../components/home/Footer';
 import Image from 'next/image';
 
@@ -27,7 +26,6 @@ const EMPLOYEES = [
 export default function AboutPage() {
   return (
     <main className="bg-white min-h-screen font-sans selection:bg-emerald-100">
-      <Navbar />
 
       {/* 📜 HERO: The Origin */}
       <section className="pt-40 pb-20 px-6 relative overflow-hidden bg-slate-50">

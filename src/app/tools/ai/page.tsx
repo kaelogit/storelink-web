@@ -2,14 +2,12 @@
 
 import { motion } from 'framer-motion';
 import { Sparkles, Zap, Globe, MessageSquare, Wand2, TrendingUp, DollarSign, ScanFace, HeartHandshake, SlidersHorizontal } from 'lucide-react';
-import Navbar from '../../../components/home/Navbar';
 import Footer from '../../../components/home/Footer';
 import Link from 'next/link';
 
 export default function AIWriterPage() {
   return (
     <main className="bg-slate-50 min-h-screen font-sans">
-      <Navbar />
 
       {/* 🧠 HERO SECTION */}
       <section className="pt-40 pb-20 px-6 relative overflow-hidden bg-[#0f0a1e] text-white">
