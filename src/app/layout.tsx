@@ -29,11 +29,11 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL('https://storelink.ng'), 
   title: {
-    default: "StoreLink | The Operating System for Commerce",
+    default: "StoreLink | Ready for Discovery",
     template: "%s | StoreLink", 
   },
   description: "Commerce without fear. The first social marketplace in Africa where reputation is currency.",
-  keywords: ["StoreLink", "Social Commerce", "WhatsApp Store", "Nigeria Ecommerce", "Online Shop", "Verified Vendors"],
+  keywords: ["StoreLink", "Social Commerce", "Nigeria Ecommerce", "Online Shop", "Verified Vendors"],
   
   icons: {
     icon: [
@@ -58,7 +58,7 @@ export const metadata: Metadata = {
   },
 
   openGraph: {
-    title: "StoreLink | The Operating System for Commerce",
+    title: "StoreLink | Ready for Discovery",
     description: "Commerce without fear. The first social marketplace in Africa where reputation is currency.",
     url: 'https://storelink.ng',
     siteName: "StoreLink",
@@ -66,10 +66,11 @@ export const metadata: Metadata = {
     type: "website",
     images: [
       {
-        url: 'https://storelink.ng/og-image.jpg', 
+        url: 'https://storelink.ng/og-image.jpg', // 👈 Absolute URL
         width: 1200,
         height: 630,
         alt: "StoreLink - The Commerce Operating System",
+        type: "image/jpeg", // 👈 CRITICAL FIX: Explicitly tell FB this is a JPG
       },
     ],
   },
@@ -82,8 +83,15 @@ export const metadata: Metadata = {
     images: ['https://storelink.ng/og-image.jpg'],
   },
 
+  // 👇 Once you get your FB ID, uncomment this to remove the warning
+  /*
+  other: {
+    "fb:app_id": "YOUR_FUTURE_APP_ID",
+  },
+  */
+
   verification: {
-    google: 'R8d8mi7fxJ-XZ0yvJ0brHnx6cZZqo78BI1iGl-sDVcY' // Keep your verification
+    google: 'R8d8mi7fxJ-XZ0yvJ0brHnx6cZZqo78BI1iGl-sDVcY' 
   },
   category: 'business',
 };
@@ -100,7 +108,7 @@ export default function RootLayout({
     "name": "StoreLink",
     "url": "https://storelink.ng",
     "logo": "https://storelink.ng/icon.png",
-    "description": "The Operating System for Commerce.",
+    "description": "Ready for Discovery.",
     "contactPoint": {
       "@type": "ContactPoint",
       "contactType": "customer support",
@@ -119,7 +127,6 @@ export default function RootLayout({
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900`}>
         
         {/* 🌟 THE ATMOSPHERE LAYER 🌟 */}
-        {/* This invisible texture makes the white background feel like premium paper */}
         <div className="bg-noise" />
 
         <Navbar />
