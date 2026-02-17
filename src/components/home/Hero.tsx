@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence, useScroll, useTransform, useSpring, useMotionValue } from "framer-motion";
 import { 
   ArrowRight, ShieldCheck, Sparkles, Zap, Smartphone, 
   Search, Layers, Shirt, Sparkles as SparklesIcon, 
@@ -26,31 +26,51 @@ const CATEGORIES = [
   { label: 'Beauty', icon: SparklesIcon },
 ];
 
-// 🌟 Floating Badge Component (The "Planets")
-const FloatingBadge = ({ icon: Icon, text, delay, x, y }: any) => (
+// 🌟 Ultra-Premium Floating Badge (Glass + Glow)
+const FloatingBadge = ({ icon: Icon, text, delay, x, y, rotate }: any) => (
   <motion.div
-    initial={{ opacity: 0, y: 20 }}
+    initial={{ opacity: 0, y: 20, scale: 0.8 }}
     animate={{ 
       opacity: 1, 
-      y: [0, -10, 0], // Bobbing effect
+      y: [0, -15, 0], // Slower, smoother bobbing
+      scale: 1,
     }}
     transition={{
-      y: { duration: 4, repeat: Infinity, ease: "easeInOut", delay: delay },
+      y: { duration: 6, repeat: Infinity, ease: "easeInOut", delay: delay },
       opacity: { duration: 0.8, delay: 0.5 }
     }}
-    className="absolute hidden lg:flex items-center gap-2 px-4 py-2.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full shadow-2xl z-20"
-    style={{ left: x, top: y }}
+    className="absolute hidden lg:flex items-center gap-3 px-5 py-3 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.3)] z-20 hover:bg-white/10 transition-colors cursor-default group"
+    style={{ left: x, top: y, rotate: rotate || 0 }}
   >
-    <div className="p-1.5 bg-emerald-500/20 rounded-full">
-      <Icon size={16} className="text-emerald-400" />
+    <div className="p-2 bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 rounded-xl border border-emerald-500/20 group-hover:scale-110 transition-transform duration-300">
+      <Icon size={18} className="text-emerald-400 drop-shadow-[0_0_8px_rgba(52,211,153,0.5)]" />
     </div>
-    <span className="text-sm font-semibold text-slate-200 tracking-wide">{text}</span>
+    <span className="text-sm font-medium text-slate-200 tracking-wide group-hover:text-white transition-colors">{text}</span>
   </motion.div>
 );
 
 export default function Hero() {
   const [products, setProducts] = useState<any[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
+  
+  // 🖱️ Parallax Mouse Effect
+  const ref = useRef<HTMLDivElement>(null);
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const { clientX, clientY } = e;
+    const { innerWidth, innerHeight } = window;
+    const x = (clientX - innerWidth / 2) / 25; // Sensitivity
+    const y = (clientY - innerHeight / 2) / 25;
+    mouseX.set(x);
+    mouseY.set(y);
+  };
+
+  const springConfig = { damping: 25, stiffness: 150 };
+  const rotateX = useSpring(useTransform(mouseY, (value) => -value), springConfig);
+  const rotateY = useSpring(useTransform(mouseX, (value) => value), springConfig);
+
 
   // 1. Fetch Real Products & Inject "Hype" Metrics
   useEffect(() => {
@@ -101,80 +121,97 @@ export default function Hero() {
   const activeItem = products[activeIndex];
 
   return (
-    <section className="relative min-h-[120vh] w-full flex flex-col items-center justify-start overflow-hidden pt-32 pb-20">
+    <section 
+      ref={ref}
+      onMouseMove={handleMouseMove}
+      className="relative min-h-[110vh] w-full flex flex-col items-center justify-start overflow-hidden pt-32 pb-20 bg-[#020617]"
+    >
       
-      {/* 🌌 BACKGROUND: Deep Space Gradient */}
-      <div className="absolute inset-0 bg-slate-950 z-0">
-        <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] bg-emerald-900/40 blur-[120px] rounded-full animate-aurora" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[60%] bg-purple-900/30 blur-[120px] rounded-full animate-aurora delay-75" />
+      {/* 🌌 BACKGROUND: Deep Space Aurora */}
+      <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+        {/* Main Aurora */}
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-emerald-500/10 blur-[150px] rounded-full animate-pulse-slow" />
+        {/* Secondary Aurora */}
+        <div className="absolute bottom-[0%] right-[-10%] w-[50%] h-[50%] bg-indigo-500/10 blur-[150px] rounded-full animate-pulse-slow delay-1000" />
+        
+        {/* Stars / Dust */}
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
       </div>
 
       {/* ⚡ GRID: The "Technical" overlay */}
-      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" style={{ opacity: 0.1 }} />
+      <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center [mask-image:radial-gradient(ellipse_at_center,white,transparent_70%)] opacity-[0.15] pointer-events-none" />
 
       <div className="relative z-10 container mx-auto px-4 flex flex-col items-center text-center">
         
-        {/* 1. THE HEADLINE */}
+       
+
+        {/* 2. THE HEADLINE */}
         <motion.h1 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="text-5xl md:text-7xl lg:text-8xl font-display font-bold tracking-tighter text-white mb-6 max-w-4xl"
+          className="text-5xl md:text-7xl lg:text-8xl font-display font-bold tracking-tight text-white mb-6 max-w-5xl leading-[1.1] drop-shadow-2xl"
         >
           Commerce <br />
-          <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-200 to-white">
-            Without Fear.
+          <span className="relative whitespace-nowrap">
+            <span className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-transparent blur-xl rounded-full"></span>
+            <span className="relative text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-200 to-white">
+              Without Fear.
+            </span>
           </span>
         </motion.h1>
 
-        {/* 2. THE SUBTITLE */}
+        {/* 3. THE SUBTITLE */}
         <motion.p 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="text-lg md:text-xl text-slate-400 max-w-2xl mb-10 leading-relaxed"
+          className="text-lg md:text-xl text-slate-300 max-w-2xl mb-10 leading-relaxed font-light"
         >
-          The first social marketplace where <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-200 to-white">reputation is currency</span>. 
-          Don't just browse the catalog. Shop the feed. Discover products through shoppable reels, Verify Authenticity by watching them live. <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-emerald-200 to-white">Ready for discovery</span>. 
+          The first social marketplace where <span className="text-emerald-300 font-medium">reputation is currency</span>. 
+          Don't just browse. Shop the feed. Discover products through shoppable reels.
+          <br className="hidden md:block"/> <span className="text-white/80">Safe. Verified. Instant.</span> 
         </motion.p>
 
-        {/* 3. THE ACTION BUTTONS */}
+        {/* 4. THE ACTION BUTTONS */}
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="flex flex-col sm:flex-row items-center gap-4 mb-20"
+          className="flex flex-col sm:flex-row items-center gap-4 mb-24 z-20"
         >
-          <Link href="/download" className="group relative px-8 py-4 bg-white text-slate-950 rounded-[15px] font-bold text-lg hover:bg-emerald-50 transition-all flex items-center gap-2 overflow-hidden">
+          <Link href="/download" className="group relative w-full sm:w-auto px-8 py-4 bg-white text-slate-950 rounded-[18px] font-bold text-lg hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 overflow-hidden shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]">
             <span className="relative z-10">Start Selling</span>
             <ArrowRight className="relative z-10 group-hover:translate-x-1 transition-transform" size={20} />
-            <div className="absolute inset-0 bg-gradient-to-r from-emerald-200 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute inset-0 bg-gradient-to-r from-emerald-100 to-white opacity-0 group-hover:opacity-100 transition-opacity" />
           </Link>
           
-          <Link href="/download" className="px-8 py-4 bg-white/5 border border-white/10 text-white rounded-[15px] font-semibold hover:bg-white/10 transition-colors backdrop-blur-sm">
-            Start Shopping
+          <Link href="/explore" className="w-full sm:w-auto px-8 py-4 bg-white/5 border border-white/10 text-white rounded-[18px] font-semibold hover:bg-white/10 transition-all backdrop-blur-md flex items-center justify-center gap-2">
+            <Search size={18} className="text-slate-400" />
+            Explore Marketplace
           </Link>
         </motion.div>
 
-        {/* 4. THE "ORBIT" + LIVE PHONE (The Hybrid Centerpiece) */}
-        <div className="relative w-full max-w-5xl mx-auto h-[800px] mt-10 perspective-1000">
+        {/* 5. THE "ORBIT" + LIVE PHONE (The Hybrid Centerpiece) */}
+        <div className="relative w-full max-w-6xl mx-auto h-[800px] perspective-[2000px] group">
           
-          {/* The Central Glow */}
-          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-emerald-500/20 blur-[100px] rounded-full" />
+          {/* The Central Glow (Anchor) */}
+          <div className="absolute left-1/2 top-[30%] -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none" />
 
-          {/* 📱 THE LIVE PHONE */}
+          {/* 📱 THE LIVE PHONE (Parallax Enabled) */}
           <motion.div 
-            initial={{ opacity: 0, scale: 0.8, rotateX: 20 }}
-            animate={{ opacity: 1, scale: 1, rotateX: 0 }}
-            transition={{ duration: 1, delay: 0.4 }}
-            className="absolute left-1/2 top-0 -translate-x-1/2 z-10"
+            style={{ rotateX, rotateY, transformStyle: "preserve-3d" }}
+            initial={{ opacity: 0, scale: 0.8, y: 100 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ type: "spring", damping: 20, stiffness: 100, delay: 0.4 }}
+            className="absolute left-1/2 top-0 -translate-x-1/2 z-10 w-[340px] h-[700px]"
           >
-             <div className="relative mx-auto border-slate-800 bg-white border-[8px] rounded-[3.5rem] h-[700px] w-[340px] shadow-2xl flex flex-col overflow-hidden ring-1 ring-white/10">
+             <div className="relative w-full h-full rounded-[3.5rem] border-[8px] border-slate-900 bg-slate-900 shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] overflow-hidden ring-1 ring-white/10">
                 
                 {/* Dynamic Island */}
                 <div className="absolute top-5 left-1/2 transform -translate-x-1/2 w-[100px] h-[28px] bg-black rounded-full z-50 pointer-events-none"></div>
 
-                {/* --- REAL APP INTERFACE (RESTORED FULLY) --- */}
+                {/* --- REAL APP INTERFACE --- */}
                 <div className="w-full h-full bg-white flex flex-col relative pt-12 overflow-hidden rounded-[3rem]">
                     
                     {/* APP HEADER */}
@@ -202,9 +239,9 @@ export default function Hero() {
                                 <Zap size={16} className="text-amber-500 fill-transparent" />
                             </div>
                         </div>
-                        <div className="flex gap-2 overflow-hidden pb-2">
+                        <div className="flex gap-2 overflow-hidden pb-2 no-scrollbar">
                             {CATEGORIES.map((cat, i) => (
-                                <div key={cat.label} className={`flex items-center gap-1.5 px-3 h-[32px] rounded-[12px] border ${i === 0 ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-slate-200 text-slate-700'} flex-shrink-0 shadow-sm`}>
+                                <div key={cat.label} className={`flex items-center gap-1.5 px-3 h-[32px] rounded-[12px] border ${i === 0 ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-slate-200 text-slate-700'} flex-shrink-0 shadow-sm transition-transform active:scale-95 cursor-pointer`}>
                                     <cat.icon size={12} strokeWidth={2.5} />
                                     <span className="text-[9px] font-black tracking-wide uppercase">{cat.label}</span>
                                 </div>
@@ -212,23 +249,23 @@ export default function Hero() {
                         </div>
                     </div>
 
-                    {/* DYNAMIC FEED (RESTORED) */}
+                    {/* DYNAMIC FEED */}
                     <div className="flex-1 overflow-hidden relative px-4 pt-2 pb-24">
                        <AnimatePresence mode="wait">
                          {activeItem ? (
                            <motion.div
                              key={activeItem.id}
-                             initial={{ opacity: 0, y: 10 }}
+                             initial={{ opacity: 0, y: 20 }}
                              animate={{ opacity: 1, y: 0 }}
-                             exit={{ opacity: 0, y: -10 }}
-                             transition={{ duration: 0.4 }}
+                             exit={{ opacity: 0, y: -20, scale: 0.95 }}
+                             transition={{ duration: 0.4, ease: "easeOut" }}
                              className="flex flex-col gap-0"
                            >
                              {/* User Info */}
                              <div className="flex gap-3 mb-2 text-left">
                                 <div className={`w-11 h-11 rounded-2xl border-[1.5px] p-[2px] overflow-hidden shadow-sm flex-shrink-0 ${activeItem.seller?.subscription_plan === 'diamond' ? 'border-purple-500' : 'border-slate-200'}`}>
                                     <div className="w-full h-full rounded-[12px] overflow-hidden relative bg-slate-100">
-                                        {activeItem.seller?.logo_url && <Image src={activeItem.seller.logo_url} alt="Logo" fill className="object-cover" />}
+                                        {activeItem.seller?.logo_url && <Image src={activeItem.seller.logo_url} alt="Logo" fill className="object-cover" unoptimized/>}
                                     </div>
                                 </div>
                                 <div className="flex-1 min-w-0">
@@ -245,10 +282,6 @@ export default function Hero() {
                                             <MapPin size={10} className="text-slate-500" strokeWidth={3} />
                                             <span className="text-[9px] font-bold text-slate-500 uppercase">{activeItem.seller?.location_city || 'LAGOS'}, NG</span>
                                          </div>
-                                         <div className="flex items-center gap-1">
-                                            <Package size={10} className="text-slate-500" strokeWidth={3} />
-                                            <span className="text-[9px] font-bold text-slate-500">{activeItem.stock_quantity || 0} LEFT</span>
-                                         </div>
                                     </div>
                                 </div>
                              </div>
@@ -261,12 +294,11 @@ export default function Hero() {
                                     <div className="flex flex-col items-center gap-0.5"><MessageCircle size={22} className="text-slate-800" /><span className="text-[8px] font-black">{formatCount(activeItem.generated_comments)}</span></div>
                                     <div className="w-[36px] h-[36px] rounded-full bg-slate-900 flex items-center justify-center shadow-lg mt-2"><ShoppingBag size={16} className="text-white" /></div>
                                     <div className="flex flex-col items-center gap-0.5 mt-1"><Share2 size={22} className="text-slate-800" /></div>
-                                    <div className="flex flex-col items-center gap-0.5"><Bookmark size={22} className="text-slate-800" /><span className="text-[8px] font-black">{activeItem.generated_saves}</span></div>
                                 </div>
                                 
                                 {/* Image */}
-                                <div className="flex-1 aspect-[4/5] bg-slate-100 rounded-[20px] overflow-hidden relative border border-black/5 shadow-sm">
-                                    {activeItem.image_urls?.[0] && <Image src={activeItem.image_urls[0]} alt="Product" fill className="object-cover" />}
+                                <div className="flex-1 aspect-[4/5] bg-slate-100 rounded-[24px] overflow-hidden relative border border-black/5 shadow-sm">
+                                    {activeItem.image_urls?.[0] && <Image src={activeItem.image_urls[0]} alt="Product" fill className="object-cover" unoptimized />}
                                     {activeItem.is_flash_drop && (
                                         <div className="absolute top-3 left-3 bg-white/90 backdrop-blur px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm border border-white/50">
                                             <Zap size={10} className="text-amber-500 fill-amber-500" />
@@ -302,16 +334,16 @@ export default function Hero() {
           </motion.div>
 
           {/* 🪐 The 4 Floating Planets (Orbiting Features) */}
-          <FloatingBadge icon={ShieldCheck} text="Escrow Protection" x="5%" y="15%" delay={0} />
-          <FloatingBadge icon={Sparkles} text="Gemini AI Magic" x="78%" y="25%" delay={2} />
-          <FloatingBadge icon={Zap} text="Instant Payouts" x="10%" y="55%" delay={1} />
-          <FloatingBadge icon={Scissors} text="BG Remover" x="80%" y="60%" delay={3} />
+          <FloatingBadge icon={ShieldCheck} text="Escrow Protection" x="10%" y="15%" rotate={-5} delay={0} />
+          <FloatingBadge icon={Sparkles} text="Gemini AI Magic" x="75%" y="20%" rotate={5} delay={2} />
+          <FloatingBadge icon={Zap} text="Instant Payouts" x="5%" y="55%" rotate={3} delay={1} />
+          <FloatingBadge icon={Scissors} text="BG Remover" x="80%" y="60%" rotate={-3} delay={3} />
 
           {/* Mobile Features List */}
-           <div className="lg:hidden absolute bottom-10 left-0 right-0 flex justify-center gap-4 text-slate-500 text-xs">
-              <span className="flex items-center gap-1"><ShieldCheck size={12}/> Escrow</span>
-              <span className="flex items-center gap-1"><Sparkles size={12}/> AI</span>
-              <span className="flex items-center gap-1"><Zap size={12}/> Instant</span>
+           <div className="lg:hidden absolute bottom-10 left-0 right-0 flex justify-center gap-4 text-slate-500 text-xs z-20">
+              <span className="flex items-center gap-1"><ShieldCheck size={12} className="text-emerald-500"/> Escrow</span>
+              <span className="flex items-center gap-1"><Sparkles size={12} className="text-emerald-500"/> AI</span>
+              <span className="flex items-center gap-1"><Zap size={12} className="text-emerald-500"/> Instant</span>
            </div>
 
         </div>

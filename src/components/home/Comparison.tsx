@@ -3,93 +3,118 @@
 import { motion } from 'framer-motion';
 import { 
   Layers, ShieldCheck, 
-  Users, Sparkles, Zap, ArrowRight 
+  Users, Sparkles, Zap, ArrowRight,
+  Fingerprint, Lock
 } from 'lucide-react';
 import Link from 'next/link';
 
-// 🍱 The Bento Data with Links
+// 🍱 The Bento Data
 const bentoItems = [
   {
     id: 'platform',
     colSpan: 'md:col-span-2', 
-    bg: 'bg-white',
+    bgClass: 'bg-white',
+    borderClass: 'border-slate-200',
+    textClass: 'text-slate-900',
     title: "The Super App Ecosystem",
     desc: "Stop juggling WhatsApp, Instagram, and Bank Apps. We combined them all into one operating system.",
     icon: Layers,
-    accent: "emerald",
-    href: "/download", // 👈 The Gateway
+    accentColor: "emerald",
+    href: "/download",
     visual: (
-      <div className="absolute right-0 bottom-0 w-3/4 h-3/4 bg-gradient-to-tl from-emerald-50 to-transparent opacity-50 rounded-tl-full pointer-events-none" />
+      <div className="absolute right-0 bottom-0 w-full h-full overflow-hidden pointer-events-none opacity-30">
+         <div className="absolute right-[-10%] bottom-[-20%] w-[200px] md:w-[300px] h-[200px] md:h-[300px] rounded-full bg-gradient-to-tr from-emerald-100 to-transparent blur-3xl" />
+         <div className="absolute right-[10%] bottom-[10%] w-[100px] md:w-[150px] h-[100px] md:h-[150px] border border-slate-100 rounded-full" />
+         <div className="absolute right-[15%] bottom-[15%] w-[60px] md:w-[100px] h-[60px] md:h-[100px] border border-slate-100 rounded-full" />
+      </div>
     )
   },
   {
     id: 'ai',
     colSpan: 'md:col-span-1', 
-    bg: 'bg-gradient-to-bl from-purple-600 via-violet-600 to-indigo-900', 
+    bgClass: 'bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900', 
+    borderClass: 'border-white/10',
+    textClass: 'text-white',
     title: "Gemini AI Studio",
-    desc: "Bad at writing captions? Our AI writes viral descriptions and removes messy backgrounds instantly.",
+    desc: "Bad at writing captions? Our AI writes viral descriptions and removes backgrounds instantly.",
     icon: Sparkles,
-    accent: "white", 
-    href: "/tools/ai", // 👈 The Brain
+    accentColor: "white", 
+    href: "/tools/ai",
     visual: (
-      <>
-        <div className="absolute -right-6 -top-6 w-40 h-40 bg-purple-400 rounded-full blur-[60px] opacity-50 pointer-events-none mix-blend-overlay" />
-        <div className="absolute -left-6 -bottom-6 w-40 h-40 bg-indigo-500 rounded-full blur-[60px] opacity-40 pointer-events-none mix-blend-overlay" />
-      </>
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -right-10 -top-10 w-40 md:w-60 h-40 md:h-60 bg-purple-500/30 rounded-full blur-[60px] md:blur-[80px]" />
+        <div className="absolute -left-10 -bottom-10 w-40 md:w-60 h-40 md:h-60 bg-indigo-500/30 rounded-full blur-[60px] md:blur-[80px]" />
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-20 mix-blend-overlay" />
+      </div>
     )
   },
   {
     id: 'safety',
     colSpan: 'md:col-span-1', 
-    bg: 'bg-white',
+    bgClass: 'bg-white',
+    borderClass: 'border-slate-200',
+    textClass: 'text-slate-900',
     title: "Escrow Protection",
     desc: "No more 'What I ordered vs What I got'. We hold the funds until you are happy.",
     icon: ShieldCheck,
-    accent: "blue",
-    href: "/safety", // 👈 The Shield
+    accentColor: "blue",
+    href: "/safety", 
     visual: (
-      <div className="absolute right-4 bottom-4 text-blue-50 opacity-20 pointer-events-none">
-        <ShieldCheck size={120} />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+         <div className="absolute right-[-20%] top-[-20%] text-blue-50/50 rotate-12 transform scale-125 md:scale-150">
+           <ShieldCheck size={180} strokeWidth={0.5} />
+         </div>
+         <div className="absolute right-6 bottom-6">
+            <Lock size={24} className="text-blue-100" />
+         </div>
       </div>
     )
   },
   {
     id: 'community',
     colSpan: 'md:col-span-2', 
-    bg: 'bg-slate-900', 
+    bgClass: 'bg-slate-950', 
+    borderClass: 'border-slate-800',
+    textClass: 'text-white',
     title: "Social Commerce",
     desc: "Don't just buy in silence. Follow vendors, like trends, and share your 'Curations' with the community.",
     icon: Users,
-    accent: "white", 
-    href: "/tools/community", // 👈 The Network
+    accentColor: "white", 
+    href: "/tools/community", 
     visual: (
-      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10 pointer-events-none" />
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.07]" />
+        <div className="absolute right-0 top-0 w-1/2 h-full bg-gradient-to-l from-slate-900 to-transparent" />
+        {/* Subtle glowing dots */}
+        <div className="absolute top-1/4 right-1/4 w-1 h-1 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse" />
+        <div className="absolute bottom-1/3 right-1/3 w-1 h-1 bg-purple-400 rounded-full shadow-[0_0_8px_rgba(192,132,252,0.8)] animate-pulse delay-700" />
+      </div>
     )
   }
 ];
 
 export default function Comparison() {
   return (
-    <section className="py-24 bg-slate-50 relative overflow-hidden">
+    <section className="py-20 md:py-32 bg-slate-50 relative overflow-hidden">
       
-      {/* Background Decor */}
+      {/* Background Decor (Subtle & Clean) */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-         <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-emerald-100/50 rounded-full blur-[100px]" />
-         <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-purple-100/50 rounded-full blur-[100px]" />
+         <div className="absolute top-[10%] right-[-10%] w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-emerald-500/5 rounded-full blur-[80px] md:blur-[120px]" />
+         <div className="absolute bottom-[0%] left-[-10%] w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-indigo-500/5 rounded-full blur-[80px] md:blur-[120px]" />
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 relative z-10">
+      <div className="max-w-6xl mx-auto px-4 md:px-6 relative z-10">
         
         {/* Section Header */}
-        <div className="max-w-3xl mx-auto text-center mb-16">
+        <div className="max-w-3xl mx-auto text-center mb-12 md:mb-20">
           <motion.div 
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 text-xs font-bold uppercase tracking-wider mb-6"
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 text-[10px] md:text-[11px] font-bold uppercase tracking-widest mb-6 hover:border-emerald-200 transition-colors cursor-default"
           >
-            <Zap size={14} className="text-amber-500 fill-amber-500" />
-            Why We Built This
+            <Zap size={12} className="text-amber-500 fill-amber-500" />
+            <span>Why We Built This</span>
           </motion.div>
           
           <motion.h2 
@@ -97,10 +122,15 @@ export default function Comparison() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="text-4xl md:text-5xl font-display font-bold text-slate-900 mb-6 tracking-tight"
+            className="text-3xl md:text-5xl lg:text-6xl font-display font-bold text-slate-900 mb-4 md:mb-6 tracking-tight leading-[1.1]"
           >
             It's not just an App. <br />
-            It's an <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500"> Upgrade.</span>
+            It's an <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500 relative inline-block">
+              Upgrade.
+              <svg className="absolute w-full h-2 md:h-3 -bottom-1 left-0 text-emerald-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
+                 <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" opacity="0.4" />
+              </svg>
+            </span>
           </motion.h2>
           
           <motion.p 
@@ -108,57 +138,60 @@ export default function Comparison() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="text-lg text-slate-500 leading-relaxed"
+            className="text-base md:text-xl text-slate-500 leading-relaxed max-w-xl md:max-w-2xl mx-auto font-light"
           >
             We bridged the gap between social connection and secure transaction, creating the first true OS for the social economy.
           </motion.p>
         </div>
 
         {/* 🍱 THE BENTO GRID */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[minmax(250px,auto)]">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 auto-rows-[minmax(280px,auto)]">
           {bentoItems.map((item, i) => (
-            <Link key={item.id} href={item.href} className={`${item.colSpan} block`}>
+            <Link key={item.id} href={item.href} className={`${item.colSpan} block group h-full`}>
               <motion.div
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
-                className={`h-full group relative rounded-3xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-500 border ${
-                  item.bg.includes('slate-900') ? 'border-slate-800 text-white' : 
-                  item.bg.includes('gradient') ? 'border-purple-500/20 text-white' : 
-                  'border-slate-100 text-slate-900'
-                }`}
+                transition={{ delay: i * 0.1, duration: 0.5, ease: "easeOut" }}
+                className={`h-full relative rounded-[24px] md:rounded-[32px] overflow-hidden transition-all duration-300 border active:scale-[0.98] hover:shadow-2xl hover:shadow-slate-200/50 ${item.bgClass} ${item.borderClass} ${item.textClass}`}
               >
-                {/* Card Background Color/Texture */}
-                <div className={`absolute inset-0 ${item.bg} transition-colors duration-300`} />
-                
-                {/* Visual Element (Blobs/Icons) */}
+                {/* Visual Layer */}
                 {item.visual}
 
-                {/* Content */}
-                <div className="relative z-10 p-8 h-full flex flex-col justify-between">
+                {/* Content Layer */}
+                <div className="relative z-10 p-6 md:p-8 h-full flex flex-col justify-between">
                   
-                  {/* Icon Header */}
-                  <div className="mb-4">
-                    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-110 ${
-                      item.accent === 'emerald' ? 'bg-emerald-100 text-emerald-600' :
-                      item.accent === 'blue' ? 'bg-blue-100 text-blue-600' :
-                      // White accent (used for Purple card & Dark card)
-                      'bg-white/20 text-white backdrop-blur-md'
+                  {/* Top: Icon & Text */}
+                  <div>
+                    <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center mb-4 md:mb-6 shadow-sm ring-1 ring-inset ring-black/5 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 ${
+                      item.accentColor === 'emerald' ? 'bg-emerald-50 text-emerald-600' :
+                      item.accentColor === 'blue' ? 'bg-blue-50 text-blue-600' :
+                      'bg-white/10 text-white backdrop-blur-md ring-white/20'
                     }`}>
-                      <item.icon size={24} strokeWidth={2} />
+                      <item.icon size={24} className="md:w-[28px] md:h-[28px]" strokeWidth={1.5} />
                     </div>
-                    <h3 className="text-2xl font-bold tracking-tight mb-2 group-hover:translate-x-1 transition-transform">{item.title}</h3>
-                    <p className={`text-sm font-medium leading-relaxed max-w-sm ${item.accent === 'white' ? 'text-white/80' : 'text-slate-500'}`}>
+                    
+                    <h3 className="text-xl md:text-2xl font-bold tracking-tight mb-2 md:mb-3 group-hover:translate-x-1 transition-transform duration-300">{item.title}</h3>
+                    
+                    <p className={`text-sm md:text-base font-medium leading-relaxed max-w-sm opacity-90 ${item.accentColor === 'white' ? 'text-slate-300' : 'text-slate-500'}`}>
                       {item.desc}
                     </p>
                   </div>
 
-                  {/* Interactive Arrow (Visible on Hover) */}
-                  <div className={`flex items-center gap-2 text-sm font-bold opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 ${
-                     item.accent === 'white' ? 'text-white' : 'text-emerald-600'
+                  {/* Bottom: Action Arrow (Mobile Optimized) */}
+                  <div className={`flex items-center gap-2 text-sm font-bold mt-6 md:mt-8 transition-all duration-300 group-hover:translate-x-2 ${
+                     item.accentColor === 'white' ? 'text-white' : 'text-slate-900'
                   }`}>
-                    Learn more <ArrowRight size={16} />
+                    {/* 📱 MOBILE: Text is visible by default. DESKTOP: Hidden until hover. */}
+                    <span className="opacity-100 translate-x-0 md:opacity-0 md:-translate-x-2 md:group-hover:opacity-100 md:group-hover:translate-x-0 transition-all duration-300">
+                      Explore
+                    </span>
+                    
+                    <div className={`p-1.5 rounded-full transition-colors ${
+                        item.accentColor === 'white' ? 'bg-white/20 group-hover:bg-white text-white group-hover:text-slate-900' : 'bg-slate-100 group-hover:bg-slate-900 text-slate-900 group-hover:text-white'
+                    }`}>
+                        <ArrowRight size={16} />
+                    </div>
                   </div>
 
                 </div>
