@@ -2,7 +2,6 @@ import type { NextConfig } from "next";
 
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
-  // 1. Image Optimization Domains (Keep your existing settings)
   images: {
     remotePatterns: [
       {
@@ -23,7 +22,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'yolqfndprzohjkrizbzu.supabase.co', // ✅ Your Supabase Storage
+        hostname: 'yolqfndprzohjkrizbzu.supabase.co',
       },
       {
         protocol: 'https',
@@ -31,26 +30,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-
-  // 2. 🛡️ FORCE HEADERS (The Fix for Facebook)
-  // This explicitly tells Vercel/Browsers: "og-image.jpg IS an image, not a webpage."
-  async headers() {
-    return [
-      {
-        source: "/og-image.jpg",
-        headers: [
-          {
-            key: "Content-Type",
-            value: "image/jpeg",
-          },
-          {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
-          },
-        ],
-      },
-    ];
-  },
+  // No headers needed! Next.js handles opengraph-image.jpg automatically.
 };
 
 export default nextConfig;

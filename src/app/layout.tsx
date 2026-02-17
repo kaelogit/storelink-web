@@ -25,7 +25,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
 };
 
-// 3. Rich SEO Metadata (Makes links look expensive on WhatsApp/Twitter)
+// 3. Rich SEO Metadata
 export const metadata: Metadata = {
   metadataBase: new URL('https://storelink.ng'), 
   title: {
@@ -64,15 +64,7 @@ export const metadata: Metadata = {
     siteName: "StoreLink",
     locale: "en_NG",
     type: "website",
-    images: [
-      {
-        url: 'https://storelink.ng/og-image.jpg', // 👈 Absolute URL
-        width: 1200,
-        height: 630,
-        alt: "StoreLink - The Commerce Operating System",
-        type: "image/jpeg", // 👈 CRITICAL FIX: Explicitly tell FB this is a JPG
-      },
-    ],
+    // ✅ Next.js automatically injects opengraph-image.jpg here
   },
 
   twitter: {
@@ -80,15 +72,8 @@ export const metadata: Metadata = {
     title: "StoreLink | Commerce without Fear",
     description: "The professional way to manage and grow your social commerce business.",
     creator: '@kaelodev', 
-    images: ['https://storelink.ng/og-image.jpg'],
+    // ✅ Next.js automatically injects opengraph-image.jpg here too
   },
-
-  // 👇 Once you get your FB ID, uncomment this to remove the warning
-  /*
-  other: {
-    "fb:app_id": "YOUR_FUTURE_APP_ID",
-  },
-  */
 
   verification: {
     google: 'R8d8mi7fxJ-XZ0yvJ0brHnx6cZZqo78BI1iGl-sDVcY' 
