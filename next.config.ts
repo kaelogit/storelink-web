@@ -1,10 +1,13 @@
+import type { NextConfig } from "next";
+
 /** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
+  // 1. Image Optimization Domains (Keep your existing settings)
   images: {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'ui-avatars.com', // ✅ REQUIRED: Fixes the crash you just saw
+        hostname: 'ui-avatars.com',
       },
       {
         protocol: 'https',
@@ -12,7 +15,7 @@ const nextConfig = {
       },
       {
         protocol: 'https',
-        hostname: 'images.unsplash.com', // ✅ FIXED: Removed '/api/**' so all unsplash images work
+        hostname: 'images.unsplash.com',
       },
       {
         protocol: 'https',
@@ -27,6 +30,26 @@ const nextConfig = {
         hostname: 'source.unsplash.com',
       },
     ],
+  },
+
+  // 2. 🛡️ FORCE HEADERS (The Fix for Facebook)
+  // This explicitly tells Vercel/Browsers: "og-image.jpg IS an image, not a webpage."
+  async headers() {
+    return [
+      {
+        source: "/og-image.jpg",
+        headers: [
+          {
+            key: "Content-Type",
+            value: "image/jpeg",
+          },
+          {
+            key: "Cache-Control",
+            value: "public, max-age=31536000, immutable",
+          },
+        ],
+      },
+    ];
   },
 };
 
