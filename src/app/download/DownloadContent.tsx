@@ -40,7 +40,7 @@ export default function DownloadContent() {
   }, [intentPath]);
 
   useEffect(() => {
-    const ua: string = typeof navigator !== 'undefined' ? (navigator.userAgent || (navigator as unknown as { vendor?: string }).vendor ?? '') : '';
+    const ua: string = typeof navigator !== 'undefined' ? ((navigator.userAgent || (navigator as unknown as { vendor?: string }).vendor) ?? '') : '';
     if (/iPad|iPhone|iPod/.test(ua)) {
       setOS('ios');
     } else if (/android/i.test(ua)) {
