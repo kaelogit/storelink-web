@@ -1,20 +1,14 @@
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import ClientProductWrapper from './ClientProductWrapper';
-
-// 1. Setup Supabase
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 // --- 2. DYNAMIC SEO GENERATOR (The Money Maker) ---
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
   const slug = resolvedParams.slug;
+  const supabase = createServerClient();
 
-  // Fetch minimal data for SEO
   const { data: product } = await supabase
     .from('products')
     .select('name, description, price, currency_code, image_urls, seller_id')
@@ -69,7 +63,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 // --- 3. MAIN DATA FETCHING ---
 async function getProductData(slug: string) {
-  // A. Fetch Product
+  const supabase = createServerClient();
   const { data: product, error: productError } = await supabase
     .from('products')
     .select('*')

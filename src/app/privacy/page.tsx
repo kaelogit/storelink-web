@@ -11,7 +11,7 @@ export default function PrivacyPage() {
         {/* Header */}
         <div className="mb-16">
             <h1 className="text-4xl md:text-5xl font-display font-bold text-slate-900 mb-4">Privacy Policy</h1>
-            <p className="text-slate-500 font-bold text-xs tracking-widest uppercase">Effective Date: February 1, 2026</p>
+            <p className="text-slate-500 font-bold text-xs tracking-widest uppercase">EFFECTIVE DATE: FEBRUARY 1, 2026</p>
         </div>
 
         {/* Content */}
@@ -62,7 +62,7 @@ export default function PrivacyPage() {
             <Section title="7. YOUR RIGHTS">
                 <Bullet text="Right to Access: You can request a copy of your personal data." />
                 <Bullet text="Right to Correction: You can update your profile details in Settings." />
-                <Bullet text="Right to Deletion: You can permanently delete your account via the app Security Settings." />
+                <Bullet text="Right to Deletion: You can permanently delete your account via Settings → Delete Account in the app." />
             </Section>
 
         </div>

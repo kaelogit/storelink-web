@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@/lib/supabase';
 import Image from 'next/image';
 import Link from 'next/link';
 import { 
@@ -10,11 +10,7 @@ import {
   TrendingUp, Play, Zap, Gem, MapPin 
 } from 'lucide-react';
 
-// Initialize Client
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createBrowserClient();
 
 // 🛡️ FALLBACK DATA
 const FALLBACK_ITEMS = [
@@ -54,15 +50,15 @@ export default function TheFeed() {
 
       if (data && data.length > 0) {
         // 🚀 HYPE ENGINE: Inflate numbers for display only
-        const hypedData = data.map(item => ({
+        const hypedData = data.map((item: Record<string, unknown>) => {
+            const likes = Number(item.likes_count) || 0;
+            const comments = Number(item.comment_count) || 0;
+            return {
             ...item,
-            likes_count: (item.likes_count || 0) < 20 
-                ? (item.likes_count || 0) + Math.floor(Math.random() * 700) + 120 
-                : item.likes_count,
-            comment_count: (item.comment_count || 0) < 5 
-                ? (item.comment_count || 0) + Math.floor(Math.random() * 40) + 5 
-                : item.comment_count
-        }));
+            likes_count: likes < 20 ? likes + Math.floor(Math.random() * 700) + 120 : likes,
+            comment_count: comments < 5 ? comments + Math.floor(Math.random() * 40) + 5 : comments
+        };
+        });
 
         setItems(hypedData.sort(() => 0.5 - Math.random()));
       }
@@ -80,10 +76,11 @@ export default function TheFeed() {
   const marqueeItems = [...items, ...items, ...items]; 
 
   return (
-    <section className="py-32 bg-[#050505] text-white overflow-hidden relative border-t border-white/5">
-      
-      {/* Background Glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-emerald-600/10 rounded-full blur-[120px] pointer-events-none" />
+    <section className="py-40 md:py-48 section-bg-dark-spotlight text-white overflow-hidden relative border-t border-white/5">
+      <div className="section-spotlight-emerald" aria-hidden />
+      <div className="section-spotlight-violet" aria-hidden />
+      <div className="section-spotlight-violet" aria-hidden />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-emerald-600/10 rounded-full blur-[120px] pointer-events-none animate-pulse-slow" />
 
       {/* Header */}
       <div className="max-w-7xl mx-auto px-6 mb-20 text-center relative z-10">

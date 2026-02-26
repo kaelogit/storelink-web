@@ -1,11 +1,7 @@
 import { MetadataRoute } from 'next';
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@/lib/supabase';
 
-// 1. Initialize Supabase Admin Client (Use Service Role Key for bypass RLS if needed, or Anon key for public data)
-// NOTE: For sitemaps, using the ANON key is usually fine if your profiles/products are public.
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createServerClient();
 
 const BASE_URL = 'https://storelink.ng';
 
@@ -56,7 +52,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .not('slug', 'is', null) // Ensure they have a username
     .limit(5000);
 
-  const profileMap = (profiles || []).map((profile) => ({
+  const profileMap = (profiles || []).map((profile: { slug: string; updated_at: string | null }) => ({
     url: `${BASE_URL}/${profile.slug}`, // e.g. storelink.ng/kaelo
     lastModified: new Date(profile.updated_at || new Date()),
     changeFrequency: 'daily' as const, // Profiles update often
@@ -69,12 +65,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch top 5,000 active products
   const { data: products } = await supabase
     .from('products')
-    .select('id, updated_at') // Assuming you use ID or Slug for products
+    .select('slug, updated_at')
     .eq('is_active', true) // Only show active items
+    .not('slug', 'is', null)
     .limit(5000);
 
-  const productMap = (products || []).map((product) => ({
-    url: `${BASE_URL}/p/${product.id}`, // e.g. storelink.ng/p/123-abc-456
+  const productMap = (products || []).map((product: { slug: string; updated_at: string | null }) => ({
+    url: `${BASE_URL}/p/${product.slug}`,
     lastModified: new Date(product.updated_at || new Date()),
     changeFrequency: 'weekly' as const,
     priority: 0.7, // Products are specific, but critical for long-tail search

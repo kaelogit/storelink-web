@@ -1,14 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { 
   Apple, Smartphone, Star, Bell, 
   Menu, Users, Gem, MapPin, Edit3, Share2, 
-  Package, Video, Layers, CheckCircle2 
+  Package, Video, Layers, CheckCircle2, ShieldCheck, Zap, Sparkles 
 } from 'lucide-react';
 import Footer from '../../components/home/Footer';
 import Image from 'next/image';
+
+const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL ?? '';
+const PLAY_STORE_URL = process.env.NEXT_PUBLIC_PLAY_STORE_URL ?? '';
+const HAS_APP_LINKS = Boolean(APP_STORE_URL || PLAY_STORE_URL);
 
 // Custom Icons for Stores
 const AppleLogo = () => (
@@ -24,7 +29,18 @@ const PlayStoreLogo = () => (
 );
 
 export default function DownloadPage() {
+  const searchParams = useSearchParams();
+  const intentPath = searchParams.get('intent') ?? null;
   const [os, setOS] = useState<'ios' | 'android' | 'desktop'>('desktop');
+
+  // Persist intent so app / deferred deep link can restore context after install
+  useEffect(() => {
+    if (intentPath && typeof window !== 'undefined') {
+      try {
+        sessionStorage.setItem('storelink_intent', intentPath);
+      } catch (_) {}
+    }
+  }, [intentPath]);
 
   // 🕵️ DEVICE DETECTION
   useEffect(() => {
@@ -39,13 +55,19 @@ export default function DownloadPage() {
   }, []);
 
   return (
-    <main className="bg-slate-50 min-h-screen font-sans selection:bg-emerald-100 flex flex-col">
+    <main className="min-h-screen font-sans selection:bg-emerald-100 flex flex-col relative">
+      {/* Base layer for full-page depth */}
+      <div className="fixed inset-0 -z-20 bg-[linear-gradient(165deg,#f8fafc_0%,#ffffff_40%,#f0fdf4_80%,#faf5ff_100%)]" />
+      <div className="fixed inset-0 -z-20 bg-[radial-gradient(ellipse_80%_60%_at_20%_20%,rgba(16,185,129,0.08),transparent_50%)]" />
+      <div className="fixed inset-0 -z-20 bg-[radial-gradient(ellipse_60%_80%_at_90%_80%,rgba(139,92,246,0.06),transparent_50%)]" />
 
-      <section className="flex-1 pt-32 pb-20 relative overflow-hidden flex items-center">
-        
-        {/* Background Gradients */}
-        <div className="absolute top-0 right-0 w-3/4 h-full bg-gradient-to-l from-emerald-50 to-transparent" />
-        <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-purple-50 rounded-full blur-[100px]" />
+      <section className="flex-1 pt-32 pb-28 md:pb-40 relative overflow-hidden flex items-center section-bg-light-mesh">
+        <div className="section-grid-subtle" aria-hidden />
+        <div className="section-band-emerald" aria-hidden />
+        <div className="section-orb-emerald section-orb-emerald-tl" />
+        <div className="section-orb-violet section-orb-violet-tr" />
+        <div className="absolute top-0 right-0 w-3/4 h-full bg-gradient-to-l from-emerald-50/50 to-transparent pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-purple-100/40 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-6 w-full grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
           
@@ -56,10 +78,12 @@ export default function DownloadPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 text-white text-xs font-bold uppercase tracking-wider mb-6">
-                <Bell size={14} className="text-emerald-400" />
-                Launching Next Week
-              </div>
+              {!HAS_APP_LINKS && (
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 text-white text-xs font-bold uppercase tracking-wider mb-6">
+                  <Bell size={14} className="text-emerald-400" />
+                  Coming Soon
+                </div>
+              )}
 
               <h1 className="text-5xl md:text-7xl font-display font-bold text-slate-900 mb-6 leading-[1.1] tracking-tight">
                 Your entire store <br />
@@ -71,44 +95,84 @@ export default function DownloadPage() {
                 Manage orders, create AI listings, and get paid instantly. The OS for social commerce is finally here.
               </p>
 
+              {intentPath && (
+                <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 mb-6">
+                  After you install the app, open it to continue to the page you were viewing.
+                </p>
+              )}
+
               {/* 🕹️ DYNAMIC DOWNLOAD AREA */}
               <div className="bg-white p-2 rounded-[2rem] border border-slate-200 shadow-xl shadow-slate-200/50 inline-block w-full max-w-md">
                 
-                {/* DESKTOP: QR Code */}
+                {/* DESKTOP: QR or store links */}
                 {os === 'desktop' && (
                   <div className="flex gap-6 p-4 items-center">
                     <div className="bg-slate-900 p-3 rounded-2xl shrink-0">
-                       <img 
-                         src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://storelink.app&color=ffffff&bgcolor=0f172a`} 
-                         alt="Scan" 
-                         className="w-24 h-24"
-                       />
+                      <img 
+                        src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fstorelink.ng%2Fdownload&color=ffffff&bgcolor=0f172a" 
+                        alt="Scan" 
+                        className="w-24 h-24"
+                      />
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-900 text-lg mb-1">Scan to Pre-Register</h3>
+                      <h3 className="font-bold text-slate-900 text-lg mb-1">
+                        {HAS_APP_LINKS ? 'Get the app' : 'Scan to join'}
+                      </h3>
                       <p className="text-sm text-slate-500 mb-3 leading-snug">
-                        Point your camera here to join the waitlist on iOS or Android.
+                        {HAS_APP_LINKS ? 'Download StoreLink on iOS or Android.' : 'Point your camera here to get the app on your phone.'}
                       </p>
-                      <div className="flex gap-2">
-                        <Apple size={16} className="text-slate-400" />
-                        <Smartphone size={16} className="text-slate-400" />
-                      </div>
+                      {HAS_APP_LINKS && (
+                        <div className="flex flex-col gap-2 mt-2">
+                          {APP_STORE_URL && (
+                            <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition-colors">
+                              <Apple size={18} /> App Store
+                            </a>
+                          )}
+                          {PLAY_STORE_URL && (
+                            <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition-colors">
+                              <PlayStoreLogo /> Google Play
+                            </a>
+                          )}
+                        </div>
+                      )}
+                      {!HAS_APP_LINKS && (
+                        <div className="flex gap-2">
+                          <Apple size={16} className="text-slate-400" />
+                          <Smartphone size={16} className="text-slate-400" />
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
 
-                {/* MOBILE: Button */}
+                {/* MOBILE: Store buttons or coming soon */}
                 {os !== 'desktop' && (
                   <div className="p-4">
-                    <button className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 shadow-lg shadow-slate-900/20 active:scale-95 transition-transform">
-                      {os === 'ios' ? <AppleLogo /> : <PlayStoreLogo />}
-                      <span>
-                        {os === 'ios' ? 'Pre-order on App Store' : 'Pre-register on Play Store'}
-                      </span>
-                    </button>
-                    <p className="text-center text-xs text-slate-400 mt-3 font-medium">
-                      🚀 Launching officially next week. Be the first.
-                    </p>
+                    {HAS_APP_LINKS ? (
+                      <div className="flex flex-col gap-3">
+                        {os === 'ios' && APP_STORE_URL && (
+                          <a href={APP_STORE_URL} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 shadow-lg shadow-slate-900/20 active:scale-95 transition-transform" target="_blank" rel="noopener noreferrer">
+                            <AppleLogo /> Get on App Store
+                          </a>
+                        )}
+                        {os === 'android' && PLAY_STORE_URL && (
+                          <a href={PLAY_STORE_URL} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 shadow-lg shadow-slate-900/20 active:scale-95 transition-transform" target="_blank" rel="noopener noreferrer">
+                            <PlayStoreLogo /> Get on Google Play
+                          </a>
+                        )}
+                        {((os === 'ios' && !APP_STORE_URL) || (os === 'android' && !PLAY_STORE_URL)) && (
+                          <p className="text-center text-sm text-slate-500">Store link not yet configured for this device.</p>
+                        )}
+                      </div>
+                    ) : (
+                      <>
+                        <button className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 shadow-lg shadow-slate-900/20 active:scale-95 transition-transform" disabled>
+                          {os === 'ios' ? <AppleLogo /> : <PlayStoreLogo />}
+                          <span>{os === 'ios' ? 'Coming to App Store' : 'Coming to Play Store'}</span>
+                        </button>
+                        <p className="text-center text-xs text-slate-400 mt-3 font-medium">Insert app store links in env when live.</p>
+                      </>
+                    )}
                   </div>
                 )}
 
@@ -269,6 +333,42 @@ export default function DownloadPage() {
             </motion.div>
           </div>
 
+        </div>
+      </section>
+
+      {/* Why get the app — fuller page */}
+      <section className="py-24 md:py-32 border-t border-slate-200/50 section-bg-light-mesh relative overflow-hidden">
+        <div className="section-grid-subtle" aria-hidden />
+        <div className="section-band-emerald" aria-hidden />
+        <div className="section-orb-emerald section-orb-emerald-tl" style={{ top: '50%', left: '-15%' }} />
+        <div className="section-orb-violet section-orb-violet-tr" style={{ top: '20%', right: '-10%' }} />
+        <div className="max-w-5xl mx-auto px-6 relative z-10">
+          <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-900 text-center mb-12">
+            One app. <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">Everything you need.</span>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-4 text-emerald-600">
+                <ShieldCheck size={26} strokeWidth={2} />
+              </div>
+              <h3 className="font-bold text-slate-900 mb-2">Escrow protection</h3>
+              <p className="text-sm text-slate-500">Pay safely. Funds released only when you confirm delivery.</p>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <div className="w-14 h-14 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center mb-4 text-purple-600">
+                <Sparkles size={26} strokeWidth={2} />
+              </div>
+              <h3 className="font-bold text-slate-900 mb-2">AI listings</h3>
+              <p className="text-sm text-slate-500">Remove backgrounds and write captions in one tap.</p>
+            </div>
+            <div className="flex flex-col items-center text-center">
+              <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center mb-4 text-amber-600">
+                <Zap size={26} strokeWidth={2} />
+              </div>
+              <h3 className="font-bold text-slate-900 mb-2">Instant payouts</h3>
+              <p className="text-sm text-slate-500">Get paid the moment the buyer accepts the order.</p>
+            </div>
+          </div>
         </div>
       </section>
 

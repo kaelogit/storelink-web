@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# StoreLink Web (storelink.ng)
 
-## Getting Started
+Public marketing site and shared-link landing for **StoreLink**. Users do not sign up or shop here—they are directed to the app. The site provides:
 
-First, run the development server:
+- **Shared links:** Product (`/p/[slug]`), Reel (`/r/[id]`), Profile (`/@[slug]` or `/[slug]`)
+- **Explore:** Browse products by category (aligned with app)
+- **Download:** App store links (configurable via env when live)
+- **API:** `/api/send-email` (Resend) for app verification, welcome, order emails
+
+## Setup
+
+1. Copy env and fill in values:
+   ```bash
+   cp .env.example .env.local
+   ```
+2. Required: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+3. Optional: `REVALIDATION_SECRET`, `RESEND_API_KEY`, `SEND_EMAIL_FROM`, app store URLs, `NEXT_PUBLIC_ADMIN_APP_URL`
+
+## Run locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Deploy to Vercel (or any Next.js host). Set environment variables in the dashboard. Production URL should be **https://storelink.ng** so the app’s `storelink.ng` links resolve here.
 
-## Learn More
+## Key routes
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Route | Purpose |
+|-------|--------|
+| `/` | Home |
+| `/explore` | Product feed; `?category=fashion` etc. |
+| `/p/[slug]` | Product (app share link) |
+| `/r/[id]` | Reel teaser (app share link) |
+| `/@[slug]`, `/[slug]` | Profile (app shares `@slug`) |
+| `/download` | Get the app (App Store / Play Store when URLs set) |
+| `/admin` | Redirects to admin app when `NEXT_PUBLIC_ADMIN_APP_URL` is set |

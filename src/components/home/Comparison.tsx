@@ -95,18 +95,18 @@ const bentoItems = [
 
 export default function Comparison() {
   return (
-    <section className="py-20 md:py-32 bg-slate-50 relative overflow-hidden">
-      
-      {/* Background Decor (Subtle & Clean) */}
+    <section className="py-28 md:py-40 section-bg-light-mesh relative overflow-hidden border-t border-slate-200/50">
+      <div className="section-grid-subtle" aria-hidden />
+      <div className="section-band-emerald" aria-hidden />
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-         <div className="absolute top-[10%] right-[-10%] w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-emerald-500/5 rounded-full blur-[80px] md:blur-[120px]" />
-         <div className="absolute bottom-[0%] left-[-10%] w-[300px] md:w-[600px] h-[300px] md:h-[600px] bg-indigo-500/5 rounded-full blur-[80px] md:blur-[120px]" />
+         <div className="section-orb-emerald section-orb-emerald-tl animate-pulse-slow" />
+         <div className="section-orb-violet section-orb-violet-bl" />
       </div>
 
       <div className="max-w-6xl mx-auto px-4 md:px-6 relative z-10">
         
         {/* Section Header */}
-        <div className="max-w-3xl mx-auto text-center mb-12 md:mb-20">
+        <div className="max-w-3xl mx-auto text-center mb-16 md:mb-24">
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}

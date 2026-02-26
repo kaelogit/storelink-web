@@ -11,13 +11,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@/lib/supabase';
 
 // --- CONFIG ---
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createBrowserClient();
 
 const CATEGORIES = [
   { label: 'All', icon: Layers },
@@ -90,7 +87,7 @@ export default function Hero() {
 
       if (data && data.length > 0) {
         // 🚀 Hype Engine: Assign random realistic stats
-        const hypedData = data.map(p => ({
+        const hypedData = data.map((p: Record<string, unknown>) => ({
             ...p,
             generated_likes: Math.floor(Math.random() * (2500 - 42 + 1)) + 42,
             generated_comments: Math.floor(Math.random() * (120 - 3 + 1)) + 3,

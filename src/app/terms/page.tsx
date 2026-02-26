@@ -11,7 +11,7 @@ export default function TermsPage() {
         {/* Header */}
         <div className="mb-16">
             <h1 className="text-4xl md:text-5xl font-display font-bold text-slate-900 mb-4">Terms of Service</h1>
-            <p className="text-slate-500 font-bold text-xs tracking-widest uppercase">Effective Date: February 1, 2026</p>
+            <p className="text-slate-500 font-bold text-xs tracking-widest uppercase">EFFECTIVE DATE: FEBRUARY 1, 2026</p>
         </div>
 
         {/* Content */}
@@ -42,20 +42,20 @@ export default function TermsPage() {
 
             <Section title="4. PAYOUTS & FEES">
                 <Bullet text="Sellers may withdraw available funds to their verified Nigerian Bank Account." />
-                <Bullet text="StoreLink charges a Platform Fee on successful sales (Standard Sellers). Diamond Sellers enjoy 0% marketplace fees on transactions." />
+                <Bullet text="StoreLink charges a 3.5% platform fee plus a flat fee per transaction on successful sales." />
                 <Bullet text="Payout processing times depend on the banking network, typically 24-48 hours." />
             </Section>
 
-            <Section title="5. SUBSCRIPTIONS (DIAMOND)">
-                <Bullet text="Diamond Subscriptions are billed on a recurring basis (Monthly, Quarterly, Biannual, or Yearly)." />
+            <Section title="5. SUBSCRIPTIONS">
+                <Bullet text="Subscriptions are billed on a recurring basis (Monthly, Quarterly, Biannual, or Yearly)." />
                 <Bullet text="Payments for subscriptions are non-refundable." />
-                <Bullet text="If a subscription expires, access to premium features (AI Tools, Zero Fees, Priority Visibility) will be immediately revoked." />
+                <Bullet text="If a seller's subscription expires, access to premium features (AI Tools, Product Visibility) will be immediately revoked." />
             </Section>
 
             <Section title="6. STORELINK COINS (LOYALTY)">
                 <Bullet text="Coins are a virtual loyalty currency with no real-world cash value." />
                 <Bullet text="Coins cannot be withdrawn to a bank account or transferred between users." />
-                <Bullet text="We reserve the right to cap Coin usage per transaction (currently 5% of order value) or expire unused Coins." />
+                <Bullet text="We reserve the right to cap Coin usage per transaction (currently 5% of order value)." />
             </Section>
 
             <Section title="7. PROHIBITED ITEMS">
@@ -86,7 +86,7 @@ export default function TermsPage() {
 
             <Section title="11. ACCOUNT DELETION">
                 <p className="text-slate-600 leading-relaxed">
-                    You may delete your account and data at any time via Settings - Security - Delete Account. This action is irreversible. Pending orders must be completed before deletion.
+                    You may delete your account and data at any time via Settings → Delete Account. This action is irreversible. Pending orders must be completed before deletion.
                 </p>
             </Section>
 

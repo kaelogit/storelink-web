@@ -1,21 +1,22 @@
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import ClientProfileWrapper from './ClientProfileWrapper';
 import { Metadata } from 'next';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+function normalizeSlug(username: string): string {
+  return username.startsWith('@') ? username.slice(1) : username;
+}
 
 // --- 1. DYNAMIC SEO GENERATOR ---
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
   const { username } = await params;
+  const slug = normalizeSlug(username);
+  const supabase = createServerClient();
 
   const { data: profile } = await supabase
     .from('profiles')
     .select('display_name, bio, logo_url, slug')
-    .eq('slug', username)
+    .eq('slug', slug)
     .single();
 
   if (!profile) {
@@ -34,7 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
     openGraph: {
       title,
       description,
-      url: `https://storelink.ng/${profile.slug}`,
+      url: `https://storelink.ng/@${profile.slug}`,
       siteName: 'StoreLink Nigeria',
       images: [
         {
@@ -57,7 +58,7 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
     },
     // Useful for WhatsApp/Search Engines
     alternates: {
-      canonical: `https://storelink.ng/${profile.slug}`,
+      canonical: `https://storelink.ng/@${profile.slug}`,
     },
     // Meta tags for mobile web app look
     appleWebApp: {
@@ -69,12 +70,14 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
 
 // --- 2. DATA FETCHING ---
 async function getProfileData(username: string) {
-  if (['favicon.ico', 'p', 'api', '_next'].includes(username)) return null;
+  const slug = normalizeSlug(username);
+  if (['favicon.ico', 'p', 'api', '_next', 'r', 'explore', 'download', 'admin'].includes(slug)) return null;
 
+  const supabase = createServerClient();
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
-    .eq('slug', username)
+    .eq('slug', slug)
     .single();
 
   if (!profile) return null;

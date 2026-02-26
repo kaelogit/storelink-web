@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { 
   ChevronLeft, Share2, ShieldCheck, 
   MessageCircle, ShoppingBag, MapPin, 
-  Gem, CheckCircle, Info,
-  Image as ImageIcon // 2. ✅ RENAME Lucide Icon to 'ImageIcon' to avoid conflict
+  Gem, CheckCircle, Info, Smartphone,
+  Image as ImageIcon
 } from 'lucide-react';
 import AppTrapModal from '../../../components/ui/DownloadTrap';
 // Helper
@@ -150,6 +150,15 @@ export default function ClientProductWrapper({ product, seller }: any) {
 
         </div>
 
+        {/* Open in app: deep link if installed; otherwise download with intent */}
+           <a href={`storelink://p/${product.slug}`} className="flex items-center justify-center gap-2 py-3 text-sm font-bold text-emerald-600 hover:text-emerald-700">
+             <Smartphone size={16} />
+             Open in app
+           </a>
+           <Link href={`/download?intent=${encodeURIComponent(`/p/${product.slug}`)}`} className="flex items-center justify-center gap-2 py-2 text-xs font-medium text-slate-500 hover:text-slate-700">
+             Don&apos;t have the app? Get it here
+           </Link>
+
         {/* 4. STICKY ACTION BAR (The Trap) */}
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 flex gap-3 z-30">
            <button 
@@ -175,6 +184,7 @@ export default function ClientProductWrapper({ product, seller }: any) {
         onClose={() => setTrapOpen(false)} 
         sellerName={seller.display_name}
         trigger={trapTrigger}
+        intentPath={`/p/${product.slug}`}
       />
     </div>
   );

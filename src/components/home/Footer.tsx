@@ -64,7 +64,7 @@ export default function Footer() {
               {categories.map((cat) => (
                 <Link 
                   key={cat} 
-                  href={`/explore/${cat.toLowerCase()}`} 
+                  href={`/explore?category=${cat.toLowerCase().replace(/\s+/g, '-')}`} 
                   className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/5 text-xs font-medium hover:bg-white/10 hover:border-emerald-500/30 hover:text-emerald-400 transition-all"
                 >
                   {cat}

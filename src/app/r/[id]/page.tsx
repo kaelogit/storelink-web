@@ -1,18 +1,13 @@
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@/lib/supabase';
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import ClientReelWrapper from './ClientReelWrapper';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
-
 // --- 1. DYNAMIC SEO (The Hook) ---
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
+  const supabase = createServerClient();
 
-  // Fetch Reel & Creator
   const { data: reel } = await supabase
     .from('reels')
     .select(`
@@ -57,6 +52,7 @@ const title = `Watch ${sellerName || 'a seller'}'s video on StoreLink`;
 
 // --- 2. DATA FETCHING ---
 async function getReelData(id: string) {
+  const supabase = createServerClient();
   const { data: reel } = await supabase
     .from('reels')
     .select(`

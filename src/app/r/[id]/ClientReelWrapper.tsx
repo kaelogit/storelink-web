@@ -41,9 +41,14 @@ export default function ClientReelWrapper({ reel }: any) {
          {/* Header */}
          <div className="absolute top-6 left-0 right-0 px-4 flex justify-between items-center z-20">
             <Link href="/" className="text-white font-black tracking-tighter text-lg">StoreLink.</Link>
-            <div className="bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5">
-               <Smartphone size={12} className="text-white" />
-               <span className="text-[10px] font-bold text-white uppercase">Open App</span>
+            <div className="flex items-center gap-2">
+               <a href={`storelink://r/${reel.id}`} className="bg-emerald-500/90 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-emerald-500">
+                  <Smartphone size={12} className="text-white" />
+                  <span className="text-[10px] font-bold text-white uppercase">Open in app</span>
+               </a>
+               <Link href={`/download?intent=${encodeURIComponent(`/r/${reel.id}`)}`} className="bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5">
+                  <span className="text-[10px] font-bold text-white uppercase">Get app</span>
+               </Link>
             </div>
          </div>
 
@@ -102,7 +107,8 @@ export default function ClientReelWrapper({ reel }: any) {
         isOpen={trapOpen} 
         onClose={() => setTrapOpen(false)} 
         sellerName={reel.seller?.display_name || "Creator"}
-        trigger="view" // You can create a 'watch' trigger if you want specific text
+        trigger="view"
+        intentPath={`/r/${reel.id}`}
       />
     </div>
   );

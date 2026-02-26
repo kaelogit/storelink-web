@@ -1,35 +1,58 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Zap, X, Layers, Shirt, Smartphone, Sparkles, Home, Activity, Wrench, Building2, Car, Gem, ArrowRight, Smartphone as PhoneIcon } from 'lucide-react';
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@/lib/supabase';
 import WebProductCard from './WebProductCard';
 import AppTrapModal from '../../components/ui/DownloadTrap';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+const supabase = createBrowserClient();
 
 const CATEGORIES = [
-  { label: 'All', slug: 'All', icon: Layers, prestige: false },
-  { label: 'Fashion', slug: 'Fashion', icon: Shirt, prestige: true },
-  { label: 'Electronics', slug: 'Electronics', icon: Smartphone, prestige: false },
-  { label: 'Beauty', slug: 'Beauty', icon: Sparkles, prestige: true },
-  { label: 'Home', slug: 'Home', icon: Home, prestige: false },
-  { label: 'Wellness', slug: 'Wellness', icon: Activity, prestige: false },
-  { label: 'Services', slug: 'Services', icon: Wrench, prestige: false },
-  { label: 'Property', slug: 'Real Estate', icon: Building2, prestige: false },
-  { label: 'Auto', slug: 'Automotive', icon: Car, prestige: false },
+  { label: 'All', slug: 'all', icon: Layers, prestige: false },
+  { label: 'Fashion', slug: 'fashion', icon: Shirt, prestige: true },
+  { label: 'Electronics', slug: 'electronics', icon: Smartphone, prestige: false },
+  { label: 'Beauty', slug: 'beauty', icon: Sparkles, prestige: true },
+  { label: 'Home', slug: 'home', icon: Home, prestige: false },
+  { label: 'Wellness', slug: 'wellness', icon: Activity, prestige: false },
+  { label: 'Services', slug: 'services', icon: Wrench, prestige: false },
+  { label: 'Real Estate', slug: 'real-estate', icon: Building2, prestige: false },
+  { label: 'Auto', slug: 'auto', icon: Car, prestige: false },
 ];
 
-export default function ClientExploreWrapper() {
+const slugToLabel: Record<string, string> = {
+  all: 'All', fashion: 'Fashion', electronics: 'Electronics', tech: 'Electronics',
+  beauty: 'Beauty', home: 'Home', wellness: 'Wellness', services: 'Services',
+  'real-estate': 'Real Estate', auto: 'Auto', automotive: 'Auto',
+};
+
+export default function ClientExploreWrapper({
+  searchParams,
+}: {
+  searchParams?: Promise<{ category?: string }>;
+}) {
+  const router = useRouter();
+  const urlSearchParams = useSearchParams();
+  const categoryFromUrl = urlSearchParams.get('category')?.toLowerCase() ?? null;
+  const initialCategory = useMemo(() => {
+    if (!categoryFromUrl) return 'All';
+    const normalized = categoryFromUrl.replace(/\s+/g, '-');
+    const label = slugToLabel[normalized] ?? normalized;
+    const match = CATEGORIES.find((c) => c.slug === normalized || c.label.toLowerCase() === (typeof label === 'string' ? label.toLowerCase() : ''));
+    return match ? match.label : 'All';
+  }, [categoryFromUrl]);
+
   const [query, setQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState('All');
+  const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [isFlashMode, setIsFlashMode] = useState(false);
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [trapOpen, setTrapOpen] = useState(false);
+
+  useEffect(() => {
+    setActiveCategory(initialCategory);
+  }, [initialCategory]);
 
   const mapRPCData = (data: any[]) => {
     return data.map(item => {
@@ -66,7 +89,7 @@ export default function ClientExploreWrapper() {
         if (rpcError || !rpcData) {
             const { data: tableData } = await supabase
                 .from('products')
-                .select(`*, seller:profiles ( id, display_name, slug, logo_url, is_verified, subscription_plan, loyalty_enabled, loyalty_percentage, location_city )`)
+                .select(`*, seller:profiles ( id, display_name, slug, logo_url, is_verified, subscription_plan, loyalty_enabled, loyalty_percentage, location_city, category )`)
                 .eq('is_active', true)
                 .order('created_at', { ascending: false })
                 .limit(50);
@@ -89,6 +112,16 @@ export default function ClientExploreWrapper() {
              });
         }
 
+        if (activeCategory && activeCategory !== 'All') {
+          const catLower = activeCategory.toLowerCase();
+          finalData = finalData.filter((p: any) => {
+            const productCat = (p.category || p.category_name || '').toString().toLowerCase();
+            const sellerCat = (p.seller?.category || '').toString().toLowerCase();
+            const name = (p.name || '').toLowerCase();
+            return productCat.includes(catLower) || sellerCat.includes(catLower) || name.includes(catLower);
+          });
+        }
+
         setProducts(finalData.slice(0, 30));
       } catch (err) {
           console.error("Fetch error:", err);
@@ -102,8 +135,11 @@ export default function ClientExploreWrapper() {
   }, [query, activeCategory, isFlashMode]);
 
   return (
-    // 🟢 Added pt-20 to push the whole page below your Main Website Nav
-    <div className="min-h-screen bg-slate-50 pt-20 pb-20">
+    <div className="min-h-screen section-bg-light-mesh pt-20 pb-24 relative overflow-hidden">
+      <div className="section-grid-subtle" aria-hidden />
+      <div className="section-band-emerald" aria-hidden />
+      <div className="section-orb-emerald section-orb-emerald-br" />
+      <div className="section-orb-violet section-orb-violet-tr" style={{ top: '10%' }} />
       
       {/* 1. STICKY HEADER */}
       {/* 🟢 Added top-[80px] (adjust based on your nav height) to the sticky header */}
@@ -145,11 +181,17 @@ export default function ClientExploreWrapper() {
             <div className="flex gap-3 mt-4 overflow-x-auto scrollbar-hide pb-2 -mx-4 px-4">
                {CATEGORIES.map((cat) => {
                   const Icon = cat.icon;
-                  const isActive = activeCategory === cat.slug;
+                  const isActive = activeCategory === cat.label;
                   return (
                      <button 
                        key={cat.slug}
-                       onClick={() => setActiveCategory(cat.slug)}
+                       onClick={() => {
+                         setActiveCategory(cat.label);
+                         const params = new URLSearchParams(urlSearchParams);
+                         if (cat.slug === 'all') params.delete('category');
+                         else params.set('category', cat.slug);
+                         router.push(`/explore?${params.toString()}`, { scroll: false });
+                       }}
                        className={`flex items-center gap-2 px-4 h-10 rounded-2xl border-[1.5px] whitespace-nowrap transition-all active:scale-95 ${
                          isActive 
                          ? 'bg-slate-900 border-slate-900 text-white shadow-md' 

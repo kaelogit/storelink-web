@@ -45,18 +45,16 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section className="py-24 md:py-32 bg-slate-50 relative overflow-hidden">
-      
-      {/* Background Grid */}
-      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03]" />
-      
-      {/* Decorative Glows */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-3xl h-[500px] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
+    <section className="py-28 md:py-40 section-bg-light-mesh relative overflow-hidden border-t border-slate-200/50">
+      <div className="section-grid-subtle" aria-hidden />
+      <div className="section-band-emerald" aria-hidden />
+      <div className="section-orb-emerald section-orb-emerald-tl" />
+      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         
         {/* Header */}
-        <div className="text-center mb-16 md:mb-24 max-w-3xl mx-auto">
+        <div className="text-center mb-20 md:mb-28 max-w-3xl mx-auto">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

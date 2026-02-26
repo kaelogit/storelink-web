@@ -2,9 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 
 export async function POST(req: NextRequest) {
-  // 1. Security Check: Prevent strangers from spamming your server
-  const secret = req.nextUrl.searchParams.get('secret');
-  
+  // Prefer header (avoids secret in logs/URL); fallback to query for backwards compatibility
+  const secret = req.headers.get('x-revalidate-secret') ?? req.nextUrl.searchParams.get('secret');
   if (secret !== process.env.REVALIDATION_SECRET) {
     return NextResponse.json({ message: 'Invalid secret' }, { status: 401 });
   }

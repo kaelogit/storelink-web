@@ -1,5 +1,14 @@
 @import "tailwindcss";
 
+/* =============================================================================
+   STORELINK DESIGN TOKENS
+   - Primary: Emerald (#10b981) — CTAs, success, brand
+   - Accent: Purple (violet) — premium/diamond
+   - Neutrals: Slate — text, borders, surfaces
+   - Radius: 0.5rem base; use rounded-2xl/3xl for cards
+   - Fonts: --font-inter (body), --font-space (display) in layout
+   ============================================================================= */
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -95,4 +104,79 @@
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+/* =============================================================================
+   SECTION BACKGROUNDS — Rich, layered backgrounds for every section (supersede competitors).
+   Use on <section> or wrapper: add class e.g. section-bg-light-mesh + section-orb-emerald
+   ============================================================================= */
+
+/* Light section: soft gradient mesh */
+.section-bg-light-mesh {
+  background: linear-gradient(165deg, #f8fafc 0%, #ffffff 40%, #f0fdf4 100%);
+}
+
+/* Light section: dual orbs (emerald + violet) */
+.section-orb-emerald {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(80px);
+  opacity: 0.12;
+}
+.section-orb-emerald-tl { width: 50vmax; height: 50vmax; top: -20%; left: -10%; background: #10b981; }
+.section-orb-emerald-br { width: 40vmax; height: 40vmax; bottom: -20%; right: -10%; background: #10b981; }
+.section-orb-violet { position: absolute; border-radius: 50%; pointer-events: none; filter: blur(100px); opacity: 0.08; background: #8b5cf6; }
+.section-orb-violet-tr { width: 45vmax; height: 45vmax; top: -15%; right: -15%; }
+.section-orb-violet-bl { width: 35vmax; height: 35vmax; bottom: -10%; left: -10%; }
+
+/* Dark section: spotlight + grid */
+.section-bg-dark-spotlight {
+  background: #050505;
+}
+.section-spotlight-emerald {
+  position: absolute;
+  width: 120%;
+  height: 70%;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(16, 185, 129, 0.15), transparent 70%);
+  pointer-events: none;
+}
+.section-spotlight-violet {
+  position: absolute;
+  width: 80%;
+  height: 80%;
+  top: 0;
+  right: 0;
+  background: radial-gradient(ellipse 60% 80% at 80% 20%, rgba(139, 92, 246, 0.1), transparent 60%);
+  pointer-events: none;
+}
+
+/* Subtle grid overlay for sections */
+.section-grid-subtle {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px);
+  background-size: 3rem 3rem;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 70%);
+  opacity: 0.04;
+  pointer-events: none;
+}
+
+/* Soft gradient band (horizontal) for variety */
+.section-band-emerald {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 0%, rgba(16, 185, 129, 0.03) 50%, transparent 100%);
+  pointer-events: none;
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.08; transform: scale(1); }
+  50% { opacity: 0.14; transform: scale(1.05); }
+}
+.animate-pulse-slow {
+  animation: pulse-slow 8s ease-in-out infinite;
 }

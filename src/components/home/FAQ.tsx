@@ -52,16 +52,15 @@ export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="py-24 md:py-32 bg-slate-50 relative overflow-hidden">
-      
-      {/* Background Decor (Matching the Grid Theme) */}
-      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03]" />
-      <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
+    <section className="py-28 md:py-40 section-bg-light-mesh relative overflow-hidden border-t border-slate-200/50">
+      <div className="section-grid-subtle" aria-hidden />
+      <div className="section-orb-emerald section-orb-emerald-br" />
+      <div className="section-orb-violet section-orb-violet-tr" />
       
       <div className="max-w-4xl mx-auto px-6 relative z-10">
         
         {/* Header */}
-        <div className="text-center mb-20">
+        <div className="text-center mb-16 md:mb-24">
           <motion.div 
              initial={{ opacity: 0, y: 20 }}
              whileInView={{ opacity: 1, y: 0 }}

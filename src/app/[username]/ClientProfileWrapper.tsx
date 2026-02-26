@@ -6,10 +6,10 @@ import Link from 'next/link'; // Added missing import
 import { 
   MapPin, Star, Store, Video, 
   Layers, Package, Gem, CheckCircle, 
-  UserPlus, MessageCircle, Share2, QrCode 
+  UserPlus, MessageCircle, Share2, QrCode, Smartphone 
 } from 'lucide-react';
 import AppTrapModal from '../../components/ui/DownloadTrap';
-import ShareProfileModal from '../../components/shared/ShareProfileModal'; // New Import
+import ShareProfileModal from '../../components/shared/ShareProfileModal';
 
 // Helper for currency format
 const formatPrice = (amount: number, currency: string) => {
@@ -256,7 +256,10 @@ export default function ClientProfileWrapper({ profile, products }: any) {
                     <p className="text-[10px] text-slate-400 font-medium">Secure payments & buyer protection</p>
                  </div>
               </div>
-              <Link href="/download" className="px-5 py-2.5 bg-white text-black text-xs font-black rounded-xl tracking-wide hover:bg-slate-100 transition-colors">
+              <a href={`storelink://@${profile.slug}`} className="px-3 py-2.5 bg-emerald-500 text-white text-xs font-black rounded-xl tracking-wide hover:bg-emerald-600 transition-colors">
+                 Open in app
+              </a>
+              <Link href={`/download?intent=${encodeURIComponent(`/@${profile.slug}`)}`} className="px-5 py-2.5 bg-white text-black text-xs font-black rounded-xl tracking-wide hover:bg-slate-100 transition-colors">
                  GET APP
               </Link>
            </div>
@@ -270,6 +273,7 @@ export default function ClientProfileWrapper({ profile, products }: any) {
         onClose={() => setTrapOpen(false)} 
         sellerName={profile.display_name}
         trigger={trapTrigger}
+        intentPath={`/@${profile.slug}`}
       />
 
       {/* 🟢 THE SHARE MODAL */}

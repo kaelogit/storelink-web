@@ -38,8 +38,11 @@ export default function StoreCoins() {
   }, []);
 
   return (
-    <section className="py-20 md:py-32 px-4 md:px-6 bg-white">
-      <div className="max-w-7xl mx-auto">
+    <section className="py-28 md:py-40 px-4 md:px-6 bg-white relative overflow-hidden border-t border-slate-100">
+      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03]" aria-hidden />
+      <div className="section-orb-emerald section-orb-emerald-tl" style={{ top: '20%', left: '-5%' }} />
+      <div className="section-orb-violet section-orb-violet-tr" style={{ top: '60%' }} />
+      <div className="max-w-7xl mx-auto relative z-10">
         
         {/* THE DARK CONTAINER */}
         <motion.div 

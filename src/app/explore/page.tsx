@@ -34,6 +34,10 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ExplorePage() {
-  return <ClientExploreWrapper />;
+export default function ExplorePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}) {
+  return <ClientExploreWrapper searchParams={searchParams} />;
 }

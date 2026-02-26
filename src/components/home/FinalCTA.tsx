@@ -18,13 +18,11 @@ const PlayStoreLogo = () => (
 
 export default function FinalCTA() {
   return (
-    <section className="py-32 md:py-48 bg-[#050505] relative overflow-hidden flex items-center justify-center border-t border-white/5">
-      
-      {/* Background: The Grid Floor (Centered perspective) */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20 pointer-events-none" />
-      
-      {/* Ambient Spotlights */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[128px] pointer-events-none" />
+    <section className="py-40 md:py-56 section-bg-dark-spotlight relative overflow-hidden flex items-center justify-center border-t border-white/5">
+      <div className="section-spotlight-emerald" aria-hidden />
+      <div className="section-spotlight-violet" aria-hidden />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20 pointer-events-none" aria-hidden />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[128px] pointer-events-none animate-pulse-slow" />
 
       <div className="max-w-5xl mx-auto px-6 relative z-10 text-center">
         

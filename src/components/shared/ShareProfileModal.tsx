@@ -17,7 +17,7 @@ interface ShareProfileModalProps {
 
 export default function ShareProfileModal({ isOpen, onClose, profile }: ShareProfileModalProps) {
   const [copied, setCopied] = useState(false);
-  const url = `https://storelink.ng/${profile.slug}`;
+  const url = `https://storelink.ng/@${profile.slug}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(url);
