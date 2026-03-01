@@ -121,7 +121,7 @@ export default function Navbar() {
                             <div className="grid gap-1">
                                 <DropdownItem icon={<Wand2 size={18} className="text-purple-600"/>} title="AI Writer" desc="Generate viral descriptions." href="/tools/ai" />
                                 <DropdownItem icon={<ImageMinus size={18} className="text-blue-600"/>} title="Magic Studio" desc="Remove backgrounds." href="/tools/studio" />
-                                <DropdownItem icon={<History size={18} className="text-orange-600"/>} title="Story Row" desc="24h ephemeral updates." href="/tools/stories" />
+                                <DropdownItem icon={<History size={18} className="text-orange-600"/>} title="Story Row" desc="12h ephemeral updates." href="/tools/stories" />
                                 <DropdownItem icon={<Users size={18} className="text-pink-600"/>} title="Community" desc="Build your fanbase." href="/tools/community" />
                             </div>
                         </motion.div>

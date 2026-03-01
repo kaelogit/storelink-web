@@ -2,13 +2,14 @@
 
 import * as React from 'react';
 
-export type SectionVariant = 'hero' | 'light' | 'dark' | 'card';
+export type SectionVariant = 'hero' | 'light' | 'dark' | 'card' | 'transparent';
 
 const variantClass: Record<SectionVariant, string> = {
   hero: 'section-hero',
   light: 'section-light',
   dark: 'section-dark',
   card: 'section-card',
+  transparent: '',
 };
 
 export interface SectionProps extends React.HTMLAttributes<HTMLElement> {

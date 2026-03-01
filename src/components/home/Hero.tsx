@@ -112,7 +112,7 @@ export default function Hero() {
           className="text-lg md:text-xl text-slate-600 max-w-2xl mb-12 leading-relaxed font-light"
         >
           The first social marketplace where <span className="text-emerald-600 font-semibold">reputation is currency</span>. 
-          Don't just browse—shop the feed through verified, shoppable reels.
+          Don't just browse, shop the feed through verified, shoppable reels.
         </motion.p>
 
         {/* Action Buttons */}

@@ -2,10 +2,10 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Sparkles, ShieldCheck, Gem } from 'lucide-react';
+import { Check, Sparkles, ShieldCheck, Gem, Percent } from 'lucide-react';
 import Footer from '../../components/home/Footer';
 import Section from '../../components/ui/Section';
-import Button from '../../components/ui/Button';
+import Link from 'next/link'; // Swapped Button for Link to keep it standard
 
 // 💰 CONFIGURATION (Matching Mobile Logic)
 const BASE_PRICES = { 
@@ -45,75 +45,77 @@ export default function PricingPage() {
   };
 
   return (
-    <main className="min-h-screen font-sans selection:bg-emerald-100">
-      <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-16">
-        <div className="text-center max-w-4xl mx-auto">
+    <main className="min-h-screen bg-slate-50 font-sans selection:bg-emerald-100 overflow-hidden">
+      
+      {/* ⚡ BACKGROUND EFFECTS (High Performance) */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_20%,transparent_100%)]" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[radial-gradient(circle,rgba(52,211,153,0.15)_0%,transparent_70%)] pointer-events-none" />
+
+      <Section variant="transparent" padding="none" className="pt-32 pb-16 relative z-10">
+        <div className="text-center max-w-4xl mx-auto px-6">
           <motion.div
              initial={{ opacity: 0, y: 20 }}
              animate={{ opacity: 1, y: 0 }}
-             className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-bold uppercase tracking-wider mb-6"
+             className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-100/50 border border-emerald-200 text-emerald-800 text-[10px] md:text-xs font-black uppercase tracking-widest mb-8 shadow-sm"
           >
-             <Sparkles size={14} />
+             <Sparkles size={14} className="text-emerald-600" />
              Simple & Transparent
           </motion.div>
           
-          <h1 className="text-5xl md:text-7xl font-display font-bold text-slate-900 mb-6 tracking-tight">
+          <h1 className="text-5xl md:text-7xl font-display font-black text-slate-900 mb-6 tracking-tight leading-[1.05]">
             Invest in your <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">
               Social Empire.
             </span>
           </h1>
-          <p className="text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
-            Start with a free 14-day trial. Upgrade to unlock full power. <br/>
+          <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-light">
+            Start with a free 14-day trial. Upgrade to unlock full power. <br className="hidden md:block" />
             No hidden fees. Cancel anytime.
           </p>
 
           {/* 🎛️ CONTROLS */}
           <div className="mt-12 flex flex-col items-center gap-8">
             
-            <div className="bg-[var(--card)] p-1.5 rounded-[var(--radius-2xl)] border border-[var(--border)] shadow-sm flex relative">
+            {/* 1. Master Toggle (Seller vs Buyer) */}
+            <div className="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm flex relative w-full max-w-[340px]">
                <button 
                  onClick={() => { setRole('seller'); setSelectedMonths(1); }}
-                 className={`relative z-10 px-8 py-3 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${role === 'seller' ? 'text-white' : 'text-slate-500 hover:text-slate-900'}`}
+                 className={`flex-1 relative z-10 py-3.5 rounded-xl text-sm font-black uppercase tracking-wider transition-colors duration-300 ${role === 'seller' ? 'text-white' : 'text-slate-500 hover:text-slate-900'}`}
                >
                  I am a Seller
                </button>
                <button 
                  onClick={() => { setRole('buyer'); setSelectedMonths(1); }}
-                 className={`relative z-10 px-8 py-3 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${role === 'buyer' ? 'text-white' : 'text-slate-500 hover:text-slate-900'}`}
+                 className={`flex-1 relative z-10 py-3.5 rounded-xl text-sm font-black uppercase tracking-wider transition-colors duration-300 ${role === 'buyer' ? 'text-white' : 'text-slate-500 hover:text-slate-900'}`}
                >
                  I am a Shopper
                </button>
                <motion.div 
-                 layoutId="role-pill"
-                 className="absolute top-1.5 bottom-1.5 bg-slate-900 rounded-xl shadow-lg"
+                 className="absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-slate-900 rounded-xl shadow-md"
                  initial={false}
-                 animate={{ 
-                   left: role === 'seller' ? 6 : '50%', 
-                   width: 'calc(50% - 9px)',
-                   x: role === 'seller' ? 0 : 3
-                 }}
+                 animate={{ x: role === 'seller' ? 0 : '100%' }}
+                 transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
                />
             </div>
 
-            {/* 2. Duration Slider (Only show if not looking at Buyer Free tier logic, but technically Buyer has Diamond so keep it) */}
-            <div className="flex flex-wrap justify-center gap-3 bg-white/50 p-2 rounded-2xl border border-slate-200/60 backdrop-blur-sm">
+            {/* 2. Duration Selector */}
+            <div className="flex flex-wrap justify-center bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm w-fit max-w-full">
                 {DURATIONS.map((d) => {
                     const isActive = selectedMonths === d.months;
                     return (
                         <button
                             key={d.months}
                             onClick={() => setSelectedMonths(d.months)}
-                            className={`relative px-5 py-2.5 rounded-xl text-sm font-bold transition-all border ${
+                            className={`relative px-5 md:px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
                                 isActive 
-                                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-md shadow-emerald-500/20' 
-                                    : 'bg-white text-slate-500 border-transparent hover:border-slate-200'
+                                    ? 'bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-200/50' 
+                                    : 'bg-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50'
                             }`}
                         >
                             {d.label}
                             {d.discount > 0 && (
-                                <span className={`absolute -top-2 -right-2 text-[9px] px-1.5 py-0.5 rounded-md shadow-sm ${
-                                    isActive ? 'bg-white text-emerald-700' : 'bg-red-100 text-red-600'
+                                <span className={`absolute -top-2.5 -right-2 text-[10px] font-black px-1.5 py-0.5 rounded-md shadow-sm border ${
+                                    isActive ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-white text-slate-600 border-slate-200'
                                 }`}>
                                     -{d.discount * 100}%
                                 </span>
@@ -127,7 +129,7 @@ export default function PricingPage() {
         </div>
       </Section>
 
-      <section className="px-6 pb-32">
+      <section className="px-6 pb-24 md:pb-32 relative z-10">
         <div className="max-w-6xl mx-auto">
           
           <AnimatePresence mode="wait">
@@ -137,7 +139,8 @@ export default function PricingPage() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.3 }}
-              className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start"
+              /* ⚡ FIX: Dynamically change grid columns based on role so buyers are perfectly centered */
+              className={`grid gap-8 items-start ${role === 'seller' ? 'grid-cols-1 md:grid-cols-3' : 'grid-cols-1 md:grid-cols-2 max-w-3xl mx-auto'}`}
             >
               {role === 'seller' ? (
                 <>
@@ -168,7 +171,7 @@ export default function PricingPage() {
                       "Verified Merchant Badge",
                       "Advanced Analytics",
                       "Priority Support",
-                      "Standard Feed Visibility"
+                      "High feed visibility"
                     ]}
                     cta={`Get Standard`}
                     href="/download"
@@ -185,7 +188,7 @@ export default function PricingPage() {
                     features={[
                       "Everything in Standard",
                       "Priority #1 Feed Placement",
-                      "Gemini AI Copywriter (Unlimited)",
+                      "Gemini AI Copywriter",
                       "Magic Studio (Remove BG)",
                       "Dedicated Success Manager"
                     ]}
@@ -198,7 +201,6 @@ export default function PricingPage() {
               ) : (
                 <>
                   {/* 1. BUYER: FREE */}
-                  <div className="md:col-span-1 md:col-start-1" /> {/* Spacer */}
                   <PricingCard 
                     title="Shopper"
                     desc="Browse and buy securely."
@@ -222,11 +224,10 @@ export default function PricingPage() {
                     subPrice={selectedMonths > 1 ? `Equivalent to ₦${calculatePrice('diamond').perMonth.toLocaleString()}/mo` : 'Billed once'}
                     features={[
                       "Everything in Free",
-                      "Exclusive Profile Aura & Halo",
+                      "Exclusive Profile Halo",
                       "Priority Comment Visibility",
                       "Diamond Badge on Profile",
                       "Early Access to Features",
-                      "2x Coin Earning Rate"
                     ]}
                     cta="Become a VIP"
                     href="/download"
@@ -240,49 +241,58 @@ export default function PricingPage() {
 
           {/* ⚖️ TRANSACTION FEE NOTE */}
           {role === 'seller' && (
-             <div className="mt-12 text-center">
-                <div className="inline-flex flex-col md:flex-row items-center gap-3 bg-white px-6 py-4 rounded-2xl border border-slate-100 shadow-sm">
-                   <div className="flex items-center gap-2 text-slate-900 font-bold">
-                      <ShieldCheck size={18} className="text-emerald-600" />
-                      Fair Play Fee:
+             <motion.div 
+               initial={{ opacity: 0 }} 
+               animate={{ opacity: 1 }} 
+               transition={{ delay: 0.4 }}
+               className="mt-16 text-center flex justify-center"
+             >
+                <div className="inline-flex flex-col md:flex-row items-center gap-4 bg-white/60 backdrop-blur-md px-8 py-5 rounded-3xl border border-slate-200/60 shadow-xl shadow-slate-200/20">
+                   <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                      <Percent size={20} className="text-emerald-600" strokeWidth={3} />
                    </div>
-                   <p className="text-sm text-slate-500">
-                      We charge a flat <span className="text-emerald-600 font-bold">3.5%</span> transaction fee only when you make a sale. No sale, no fee.
-                   </p>
+                   <div className="text-left">
+                      <div className="text-slate-900 font-black text-sm uppercase tracking-wider mb-1">Fair Play Fee</div>
+                      <p className="text-sm text-slate-500 font-medium">
+                         We charge a flat <span className="text-emerald-600 font-bold">3.5%</span> transaction fee only when you make a sale. <br className="hidden md:block"/>No sale, no fee.
+                      </p>
+                   </div>
                 </div>
-             </div>
+             </motion.div>
           )}
 
         </div>
       </section>
 
       {/* 📊 FULL FEATURE COMPARISON */}
-      <section className="py-24 bg-white border-t border-slate-100">
+      <section className="py-24 bg-white border-t border-slate-200/50">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-display font-bold text-slate-900">Compare Features</h2>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-display font-black text-slate-900 tracking-tight">Compare Features</h2>
+            <p className="mt-3 text-sm text-slate-500 font-medium max-w-xl mx-auto">Seller tiers. Standard includes high feed visibility and analytics; Diamond adds AI tools, top placement, and a Success Manager.</p>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+          <div className="overflow-x-auto rounded-[2rem] border border-slate-200 shadow-xl shadow-slate-100 bg-white">
+            <table className="w-full text-left border-collapse min-w-[600px]">
               <thead>
-                <tr>
-                  <th className="p-4 border-b-2 border-slate-100 w-1/3 min-w-[200px]"></th>
-                  <th className="p-4 border-b-2 border-slate-100 text-center font-bold text-slate-500">Trial</th>
-                  <th className="p-4 border-b-2 border-slate-100 text-center font-bold text-emerald-600">Standard</th>
-                  <th className="p-4 border-b-2 border-slate-100 text-center font-bold text-purple-600">Diamond</th>
+                <tr className="bg-slate-50">
+                  <th className="p-6 border-b border-slate-200 w-1/3 text-xs font-black uppercase tracking-widest text-slate-400">Features</th>
+                  <th className="p-6 border-b border-slate-200 text-center font-black text-slate-500">Trial</th>
+                  <th className="p-6 border-b border-slate-200 text-center font-black text-emerald-600">Standard</th>
+                  <th className="p-6 border-b border-slate-200 text-center font-black text-purple-600">Diamond</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
                 <FeatureRow label="Product Listings" v1="Unlimited" v2="Unlimited" v3="Unlimited" />
                 <FeatureRow label="Video Reels" v1="Unlimited" v2="Unlimited" v3="Unlimited" />
-                <FeatureRow label="Story Row (24h)" v1={<Check size={16} className="mx-auto text-slate-400"/>} v2={<Check size={16} className="mx-auto text-emerald-500"/>} v3={<Check size={16} className="mx-auto text-purple-500"/>} />
-                <FeatureRow label="Flash Drops" v1={<Check size={16} className="mx-auto text-slate-400"/>} v2={<Check size={16} className="mx-auto text-emerald-500"/>} v3={<Check size={16} className="mx-auto text-purple-500"/>} />
-                <FeatureRow label="Gemini AI Writer" v1="5 Credits" v2="5 Credits / mo" v3="Unlimited" />
-                <FeatureRow label="Magic Studio (BG Remove)" v1="5 Credits" v2="5 Credits / mo" v3="Unlimited" />
-                <FeatureRow label="Inventory Management" v1={<Check size={16} className="mx-auto text-slate-400"/>} v2={<Check size={16} className="mx-auto text-emerald-500"/>} v3={<Check size={16} className="mx-auto text-purple-500"/>} />
+                <FeatureRow label="Story Row (24h)" v1={<Check size={18} strokeWidth={3} className="mx-auto text-slate-300"/>} v2={<Check size={18} strokeWidth={3} className="mx-auto text-emerald-500"/>} v3={<Check size={18} strokeWidth={3} className="mx-auto text-purple-500"/>} />
+                <FeatureRow label="Flash Drops" v1={<Check size={18} strokeWidth={3} className="mx-auto text-slate-300"/>} v2={<Check size={18} strokeWidth={3} className="mx-auto text-emerald-500"/>} v3={<Check size={18} strokeWidth={3} className="mx-auto text-purple-500"/>} />
+                <FeatureRow label="Gemini AI Writer" v1="—" v2="—" v3="Unlimited" />
+                <FeatureRow label="Magic Studio (BG Remove)" v1="—" v2="—" v3="Unlimited" />
+                <FeatureRow label="Inventory Management" v1={<Check size={18} strokeWidth={3} className="mx-auto text-slate-300"/>} v2={<Check size={18} strokeWidth={3} className="mx-auto text-emerald-500"/>} v3={<Check size={18} strokeWidth={3} className="mx-auto text-purple-500"/>} />
                 <FeatureRow label="Customer Analytics" v1="Basic" v2="Advanced" v3="Real-Time" />
                 <FeatureRow label="Feed Priority" v1="Standard" v2="High" v3="🔥 Highest" />
+                <FeatureRow label="Dedicated Success Manager" v1="—" v2="—" v3={<Check size={18} strokeWidth={3} className="mx-auto text-purple-500"/>} />
               </tbody>
             </table>
           </div>
@@ -296,77 +306,94 @@ export default function PricingPage() {
 
 // 🧩 HELPER COMPONENTS
 
-function PricingCard({ title, desc, price, subPrice, features, cta, href, featured, diamond, savings }: any) {
+interface PricingCardProps {
+  title: string;
+  desc: string;
+  price: string;
+  subPrice: string;
+  features: string[];
+  cta: string;
+  href: string;
+  featured?: boolean;
+  diamond?: boolean;
+  savings?: string | null;
+}
+
+function PricingCard({ title, desc, price, subPrice, features, cta, href, featured, diamond, savings }: PricingCardProps) {
   return (
-    <div className={`relative p-8 rounded-[2.5rem] border flex flex-col h-full transition-all duration-300 ${
+    <div className={`relative p-8 md:p-10 rounded-[2.5rem] border flex flex-col h-full transform-gpu transition-transform duration-300 hover:-translate-y-2 ${
       diamond 
-        ? 'bg-slate-900 border-purple-500 text-white shadow-2xl shadow-purple-900/20' 
+        ? 'bg-slate-950 border-purple-500/50 text-white shadow-2xl shadow-purple-900/30' 
         : featured
-          ? 'bg-white border-emerald-500 shadow-xl shadow-emerald-500/10 scale-[1.02] z-10'
-          : 'bg-white border-slate-200 shadow-sm hover:shadow-lg'
+          ? 'bg-white border-emerald-500 shadow-2xl shadow-emerald-500/10 md:scale-105 z-10'
+          : 'bg-white border-slate-200 shadow-lg shadow-slate-200/50'
     }`}>
+      
+      {/* Badges */}
       {featured && !diamond && (
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-emerald-500 text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-emerald-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-md">
           Best Value
         </div>
       )}
       {diamond && (
-        <div className="absolute top-0 right-0 bg-purple-600 text-white px-4 py-2 rounded-bl-3xl rounded-tr-[2rem] text-[10px] font-black uppercase tracking-wider flex items-center gap-1">
-          <Gem size={12} /> Prestige
+        <div className="absolute top-0 right-0 bg-gradient-to-bl from-purple-500 to-indigo-600 text-white px-5 py-2.5 rounded-bl-[2rem] rounded-tr-[2.4rem] text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-md">
+          <Gem size={14} className="fill-white/20" /> Prestige
         </div>
       )}
 
-      {/* Savings Badge (Dynamic) */}
+      {/* Savings Pill */}
       {savings && (
-         <div className={`absolute top-6 right-6 px-2 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wide ${diamond ? 'bg-purple-800 text-purple-200' : 'bg-red-50 text-red-600'}`}>
+         <div className={`absolute top-8 right-8 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${diamond ? 'bg-purple-900/50 text-purple-300 border border-purple-500/30' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
             {savings}
          </div>
       )}
 
-      <div className="mb-6">
-        <h3 className={`text-xl font-black mb-2 ${diamond ? 'text-white' : 'text-slate-900'}`}>{title}</h3>
+      <div className="mb-8">
+        <h3 className={`text-2xl font-black mb-2 tracking-tight ${diamond ? 'text-white' : 'text-slate-900'}`}>{title}</h3>
         <p className={`text-sm font-medium ${diamond ? 'text-slate-400' : 'text-slate-500'}`}>{desc}</p>
       </div>
 
-      <div className="mb-8">
+      <div className="mb-10">
         <div className="flex flex-col">
-          <span className={`text-4xl font-black ${diamond ? 'text-white' : 'text-slate-900'}`}>{price}</span>
-          <span className={`text-xs font-bold mt-1 ${diamond ? 'text-slate-500' : 'text-slate-400'}`}>{subPrice}</span>
+          <span className={`text-5xl font-black tracking-tighter ${diamond ? 'text-white' : 'text-slate-900'}`}>{price}</span>
+          <span className={`text-xs font-bold mt-2 uppercase tracking-wide ${diamond ? 'text-slate-500' : 'text-slate-400'}`}>{subPrice}</span>
         </div>
       </div>
 
-      <div className="flex-1 mb-8 space-y-4">
+      <div className="flex-1 mb-10 space-y-4">
         {features.map((feat: string, i: number) => (
           <div key={i} className="flex items-start gap-3">
-            <div className={`mt-0.5 p-0.5 rounded-full ${diamond ? 'bg-purple-500/20 text-purple-400' : 'bg-emerald-100 text-emerald-600'}`}>
-              <Check size={12} strokeWidth={3} />
+            <div className={`mt-0.5 p-1 rounded-full shrink-0 ${diamond ? 'bg-purple-500/20 text-purple-400' : 'bg-emerald-50 text-emerald-500'}`}>
+              <Check size={14} strokeWidth={4} />
             </div>
-            <span className={`text-sm font-medium ${diamond ? 'text-slate-300' : 'text-slate-600'}`}>{feat}</span>
+            <span className={`text-sm font-medium leading-relaxed ${diamond ? 'text-slate-300' : 'text-slate-600'}`}>{feat}</span>
           </div>
         ))}
       </div>
 
-      <Button
+      <Link
         href={href}
-        size="lg"
-        variant={diamond ? 'primary' : featured ? 'secondary' : 'outline'}
-        className={`w-full ${
-          diamond ? '!bg-purple-600 hover:!bg-purple-500 shadow-lg shadow-purple-600/30' : ''
-        } ${featured ? '!bg-[var(--charcoal)]' : ''}`}
+        className={`w-full py-4 rounded-2xl flex items-center justify-center font-bold text-sm uppercase tracking-wide transition-all ${
+          diamond 
+            ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/30' 
+            : featured 
+              ? 'bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20' 
+              : 'bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-900'
+        }`}
       >
         {cta}
-      </Button>
+      </Link>
     </div>
   );
 }
 
 function FeatureRow({ label, v1, v2, v3 }: any) {
   return (
-    <tr className="border-b border-slate-50 last:border-0 hover:bg-slate-50/50 transition-colors">
-      <td className="p-4 py-5 text-sm font-bold text-slate-700">{label}</td>
-      <td className="p-4 py-5 text-sm font-medium text-slate-500 text-center">{v1}</td>
-      <td className="p-4 py-5 text-sm font-bold text-slate-900 text-center bg-emerald-50/10">{v2}</td>
-      <td className="p-4 py-5 text-sm font-bold text-purple-900 text-center bg-purple-50/10">{v3}</td>
+    <tr className="hover:bg-slate-50/80 transition-colors group">
+      <td className="p-6 text-sm font-bold text-slate-700">{label}</td>
+      <td className="p-6 text-sm font-medium text-slate-500 text-center">{v1}</td>
+      <td className="p-6 text-sm font-black text-slate-900 text-center bg-emerald-50/30 group-hover:bg-emerald-50/50 transition-colors">{v2}</td>
+      <td className="p-6 text-sm font-black text-purple-900 text-center bg-purple-50/30 group-hover:bg-purple-50/50 transition-colors">{v3}</td>
     </tr>
   );
 }

@@ -8,7 +8,7 @@ import Image from 'next/image';
 import Section from '../../../components/ui/Section';
 import Button from '../../../components/ui/Button';
 
-// Story Mock Data (Updated Images)
+// Story Mock Data
 const STORIES = [
   {
     id: 1,
@@ -20,14 +20,14 @@ const STORIES = [
   {
     id: 2,
     type: 'image',
-    url: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=800', // Shoes
+    url: 'https://images.unsplash.com/photo-1606107557195-0e29a4b5b4aa?w=800', // Sneakers
     caption: "These details are insane. Dropping at 6PM.",
     tag: "Sneak Peek"
   },
   {
     id: 3,
     type: 'image',
-    url: 'https://images.unsplash.com/photo-1586880244406-556ebe35f288?w=800', // Packaging
+    url: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800', // Packaging / boxes
     caption: "Packing orders for Abuja! ✈️ Thanks for the support.",
     tag: "BTS"
   }
@@ -61,8 +61,10 @@ export default function StoriesPage() {
 
       <Section variant="hero" container={false} padding="none" className="pt-40 pb-20 px-6 overflow-hidden !bg-[#0f0505]">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-orange-600/20 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-pink-600/20 rounded-full blur-[120px] pointer-events-none" />
+        
+        {/* ⚡ OPTIMIZED: Replaced heavy blurs with CSS radial gradients for 60FPS scrolling */}
+        <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(234,88,12,0.15)_0%,transparent_60%)] pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-[radial-gradient(circle,rgba(219,39,119,0.15)_0%,transparent_60%)] pointer-events-none" />
 
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center relative z-10">
           <div className="text-white">
@@ -144,7 +146,7 @@ export default function StoriesPage() {
                          </div>
                          <div>
                             <p className="text-sm font-bold text-white leading-none">Kaelo's Store</p>
-                            <p className="text-[10px] text-white/80">{Math.floor(Math.random() * 11) + 1}h ago</p>
+                            <p className="text-[10px] text-white/80">2h ago</p>
                          </div>
                          <div className="ml-auto">
                             <X size={20} className="text-white/80" />
@@ -213,15 +215,16 @@ export default function StoriesPage() {
          </div>
       </Section>
 
-      <Section variant="light" className="border-t border-[var(--border)]">
-         <div className="max-w-6xl mx-auto">
+      <Section variant="light" className="border-t border-[var(--border)] pb-32">
+         <div className="max-w-6xl mx-auto px-4 md:px-0">
             <h2 className="text-3xl font-bold text-[var(--foreground)] mb-12">What to post today.</h2>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-               <InspirationCard title="Behind the Scenes" img="https://images.unsplash.com/photo-1598550476439-cce8831d387c?w=400" />
-               <InspirationCard title="Customer Reviews" img="https://images.unsplash.com/photo-1512413914633-b5043f4041ea?w=400" />
-               <InspirationCard title="Flash Discounts" img="https://images.unsplash.com/photo-1472851294608-415522f96385?w=400" />
-               <InspirationCard title="New Arrivals" img="https://images.unsplash.com/photo-1485230946387-43302e5648e1?w=400" />
+            {/* ✅ UPDATED: Using your custom Nigerian AI Images */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+               <InspirationCard title="Behind the Scenes" img="/behindthescenes.png" />
+               <InspirationCard title="Customer Reviews" img="/customerreviews.png" />
+               <InspirationCard title="Flash Discounts" img="/flashdiscounts.png" />
+               <InspirationCard title="New Arrivals" img="/newarrival.png" />
             </div>
          </div>
       </Section>
@@ -245,11 +248,18 @@ function Feature({ icon, title, desc }: any) {
 
 function InspirationCard({ title, img }: any) {
    return (
-      <div className="relative aspect-[3/4] rounded-[var(--radius-2xl)] overflow-hidden group cursor-pointer">
-         <Image src={img} alt={title} fill className="object-cover group-hover:scale-110 transition-transform duration-[var(--duration-150)]" />
-         <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors" />
-         <div className="absolute bottom-4 left-4 right-4">
-            <p className="text-white font-bold text-lg">{title}</p>
+      <div className="relative aspect-[3/4] md:aspect-[4/5] rounded-[var(--radius-2xl)] overflow-hidden group cursor-pointer border border-slate-200/50 shadow-sm hover:shadow-xl transition-all duration-300">
+         <Image 
+            src={img} 
+            alt={title} 
+            fill 
+            className="object-cover group-hover:scale-105 transition-transform duration-500" 
+         />
+         {/* Upgraded Gradient Overlay so text pops against the image */}
+         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
+         
+         <div className="absolute bottom-4 md:bottom-6 left-4 md:left-6 right-4">
+            <p className="text-white font-bold text-base md:text-xl tracking-tight leading-tight">{title}</p>
          </div>
       </div>
    )
