@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, ChevronDown, ShoppingBag, Store, ShieldCheck, Truck, HelpCircle, ArrowRight, Minus, Plus } from 'lucide-react';
+import { Search, ShoppingBag, Store, ShieldCheck, Truck, HelpCircle, ArrowRight, Minus, Plus } from 'lucide-react';
 import Footer from '../../components/home/Footer';
 import Link from 'next/link';
+import Section from '../../components/ui/Section';
+import Button from '../../components/ui/Button';
 
 // 📚 KNOWLEDGE BASE CATEGORIES
 const CATEGORIES = [
@@ -93,45 +95,42 @@ export default function HelpCenterPage() {
   });
 
   return (
-    <main className="bg-white min-h-screen font-sans selection:bg-emerald-100">
-
-      {/* 🔍 HERO: The Search Engine */}
-      <section className="pt-40 pb-10 px-6 bg-slate-50 border-b border-slate-100">
+    <main className="min-h-screen font-sans bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
+      <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-10 border-b border-[var(--border)]">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-display font-bold text-slate-900 mb-8">
+          <h1 className="text-4xl md:text-5xl font-display font-bold text-[var(--foreground)] mb-8">
             How can we help you?
           </h1>
-          
           <div className="relative max-w-xl mx-auto mb-10">
-             <div className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400">
+             <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--muted)]">
                 <Search size={20} />
              </div>
-             <input 
-                type="text" 
-                placeholder="Search for 'refunds', 'delivery', 'verification'..." 
+             <input
+                type="text"
+                placeholder="Search for 'refunds', 'delivery', 'verification'..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-14 pr-6 py-5 rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-lg transition-all"
+                className="w-full pl-14 pr-6 py-5 rounded-[var(--radius-2xl)] border border-[var(--border)] shadow-xl bg-[var(--card)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-lg transition-all duration-[var(--duration-150)]"
              />
           </div>
         </div>
-      </section>
+      </Section>
 
-      {/* 📂 CATEGORY TABS */}
-      <section className="sticky top-20 z-30 bg-white/80 backdrop-blur-md border-b border-slate-100 px-6">
+      <section className="sticky top-20 z-30 bg-[var(--card)]/80 backdrop-blur-md border-b border-[var(--border)] px-6">
          <div className="max-w-6xl mx-auto overflow-x-auto no-scrollbar py-4">
             <div className="flex gap-4 min-w-max justify-center">
                {CATEGORIES.map((cat) => (
-                  <button 
-                    key={cat.id} 
+                  <button
+                    key={cat.id}
+                    type="button"
                     onClick={() => {
                         setSelectedCategory(cat.id);
-                        setOpenIndex(null); // Close accordions when switching
+                        setOpenIndex(null);
                     }}
-                    className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold transition-all ${
-                        selectedCategory === cat.id 
-                        ? 'bg-slate-900 text-white shadow-lg scale-105' 
-                        : 'bg-slate-50 text-slate-500 hover:bg-slate-100'
+                    className={`flex items-center gap-2 px-6 py-3 rounded-full text-sm font-bold transition-all duration-[var(--duration-150)] ${
+                        selectedCategory === cat.id
+                        ? 'bg-[var(--charcoal)] text-white shadow-lg scale-105'
+                        : 'bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--border)]'
                     }`}
                   >
                      <cat.icon size={16} className={selectedCategory === cat.id ? 'text-emerald-400' : cat.color} />
@@ -142,10 +141,9 @@ export default function HelpCenterPage() {
          </div>
       </section>
 
-      {/* ❓ FAQ ACCORDION */}
-      <section className="py-16 px-6 bg-white min-h-[500px]">
-         <div className="max-w-3xl mx-auto">
-            <h2 className="text-2xl font-bold text-slate-900 mb-8">
+      <section className="section-card py-16 px-6 min-h-[500px]">
+         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h2 className="text-2xl font-bold text-[var(--foreground)] mb-8">
                 {searchQuery 
                     ? `Results for "${searchQuery}"` 
                     : `${CATEGORIES.find(c => c.id === selectedCategory)?.name} Questions`
@@ -161,21 +159,21 @@ export default function HelpCenterPage() {
                             key={index} 
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className={`group rounded-2xl overflow-hidden transition-all duration-500 ease-out border ${
-                                isOpen 
-                                ? 'bg-[#0f172a] shadow-xl border-slate-800 scale-[1.02]' 
-                                : 'bg-white border-slate-200 hover:border-emerald-200'
+                            className={`group rounded-[var(--radius-2xl)] overflow-hidden transition-all duration-[var(--duration-250)] ease-[var(--ease-out-expo)] border ${
+                                isOpen
+                                ? 'bg-[var(--charcoal)] shadow-xl border-[var(--border)] scale-[1.02]'
+                                : 'bg-[var(--card)] border-[var(--border)] hover:border-emerald-200'
                             }`}
                         >
                             <button
                                 onClick={() => setOpenIndex(isOpen ? null : index)}
                                 className="w-full flex items-center justify-between p-6 text-left relative z-10"
                             >
-                                <span className={`text-lg font-bold transition-colors duration-200 ${isOpen ? 'text-white' : 'text-slate-900'}`}>
+                                <span className={`text-lg font-bold transition-colors duration-[var(--duration-150)] ${isOpen ? 'text-white' : 'text-[var(--foreground)]'}`}>
                                     {faq.question}
                                 </span>
-                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
-                                    isOpen ? 'bg-emerald-500 text-white rotate-180' : 'bg-slate-100 text-slate-400 group-hover:bg-emerald-50 group-hover:text-emerald-600'
+                                <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-[var(--duration-250)] ${
+                                    isOpen ? 'bg-[var(--emerald)] text-white rotate-180' : 'bg-[var(--surface)] text-[var(--muted)] group-hover:bg-emerald-50 group-hover:text-emerald-600'
                                 }`}>
                                     {isOpen ? <Minus size={16} strokeWidth={3} /> : <Plus size={16} strokeWidth={3} />}
                                 </div>
@@ -203,32 +201,29 @@ export default function HelpCenterPage() {
                    })
                ) : (
                    <div className="text-center py-12">
-                       <p className="text-slate-400 text-lg mb-4">We couldn't find anything matching that.</p>
-                       <Link href="/contact" className="text-emerald-600 font-bold hover:underline">
-                           Contact Support directly &rarr;
-                       </Link>
+                       <p className="text-[var(--muted)] text-lg mb-4">We couldn't find anything matching that.</p>
+                       <Button href="/contact" variant="ghost" size="md" className="text-emerald-600 font-bold">
+                           Contact Support directly <ArrowRight size={16} />
+                       </Button>
                    </div>
                )}
             </div>
          </div>
       </section>
 
-      {/* 📞 STILL STUCK? */}
-      <section className="py-24 px-6 bg-slate-50 border-t border-slate-200">
-         <div className="max-w-4xl mx-auto bg-slate-900 rounded-[2.5rem] p-10 md:p-16 text-center text-white relative overflow-hidden">
-            <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-            <div className="relative z-10">
-                <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 backdrop-blur-md">
-                    <HelpCircle size={32} />
-                </div>
-                <h2 className="text-3xl md:text-4xl font-bold mb-4">Still can't find an answer?</h2>
-                <p className="text-slate-400 text-lg mb-8 max-w-xl mx-auto">
-                    Our support team is based in Lagos and available 24/7. We usually reply in under 30 minutes.
-                </p>
-                <Link href="/contact" className="inline-flex items-center gap-2 bg-white text-slate-900 px-8 py-4 rounded-xl font-bold hover:bg-emerald-50 transition-colors">
-                    Chat with Support <ArrowRight size={20} />
-                </Link>
+      <section className="section-dark py-24 px-6 border-t border-[var(--border)]" aria-labelledby="help-cta-heading">
+         <div className="section-spotlight-emerald" aria-hidden />
+         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <div className="w-16 h-16 bg-white/10 rounded-[var(--radius-2xl)] flex items-center justify-center mx-auto mb-6 backdrop-blur-md">
+                <HelpCircle size={32} className="text-white" />
             </div>
+            <h2 id="help-cta-heading" className="text-3xl md:text-4xl font-bold mb-4 text-white">Still can't find an answer?</h2>
+            <p className="text-slate-400 text-lg mb-8 max-w-xl mx-auto">
+                Our support team is based in Lagos and available 24/7. We usually reply in under 30 minutes.
+            </p>
+            <Button href="/contact" variant="primary" size="lg" className="!bg-white !text-[var(--charcoal)] hover:!bg-emerald-50 justify-center gap-2">
+                Chat with Support <ArrowRight size={20} />
+            </Button>
          </div>
       </section>
 

@@ -104,19 +104,27 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth">
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased selection:bg-emerald-100 selection:text-emerald-900`}>
-        
-        {/* 🌟 THE ATMOSPHERE LAYER 🌟 */}
-        <div className="bg-noise" />
+      <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased min-h-screen bg-[var(--background)] text-[var(--foreground)]`}>
+        {/* Skip to main content for keyboard/screen reader */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-emerald-500 focus:px-4 focus:py-2 focus:text-white focus:outline-none focus:ring-2 focus:ring-emerald-300"
+        >
+          Skip to main content
+        </a>
+
+        <div className="bg-noise" aria-hidden="true" />
 
         <Navbar />
-        
-        <main className="min-h-screen flex flex-col relative w-full overflow-x-hidden">
+
+        <main id="main-content" className="min-h-screen flex flex-col relative w-full overflow-x-hidden">
           {children}
         </main>
 

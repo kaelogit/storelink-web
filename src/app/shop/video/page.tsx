@@ -1,23 +1,19 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Play, ShoppingBag, Heart, MessageCircle, Share2, Zap, Eye, CheckCircle2 } from 'lucide-react';
+import { Play, Heart, MessageCircle, Share2, Zap, Eye, CheckCircle2 } from 'lucide-react';
 import Footer from '../../../components/home/Footer';
-import Link from 'next/link';
 import Image from 'next/image';
+import Button from '../../../components/ui/Button';
 
 export default function VideoShoppingPage() {
   return (
-    <main className="bg-[#050505] min-h-screen font-sans selection:bg-emerald-500 selection:text-white">
+    <main className="min-h-screen font-sans bg-[var(--pitch-black)] text-white selection:bg-emerald-500 selection:text-white">
+      <section className="section-hero pt-24 md:pt-32 pb-20 relative overflow-hidden" aria-labelledby="video-hero-heading">
+        <div className="section-glow-violet section-orb-tl" style={{ width: '500px', height: '500px' }} aria-hidden />
+        <div className="section-glow-emerald section-orb-br" style={{ width: '600px', height: '600px' }} aria-hidden />
 
-      {/* 🎬 HERO SECTION */}
-      <section className="pt-40 pb-20 px-6 relative overflow-hidden">
-        {/* Ambient Glows */}
-        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-purple-900/20 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-0 right-1/4 w-[600px] h-[600px] bg-emerald-900/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5" />
-
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
           
           {/* Left: Text */}
           <div className="order-2 lg:order-1 text-center lg:text-left">
@@ -30,7 +26,7 @@ export default function VideoShoppingPage() {
                Live Commerce
             </motion.div>
             
-            <h1 className="text-5xl md:text-7xl font-display font-bold text-white mb-8 tracking-tight leading-[1.1]">
+            <h1 id="video-hero-heading" className="text-5xl md:text-7xl font-display font-bold text-white mb-8 tracking-tight leading-[1.1]">
               Shop the <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-purple-500 to-orange-500">
                 Stream.
@@ -42,12 +38,12 @@ export default function VideoShoppingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Link href="/download" className="inline-flex items-center justify-center gap-3 bg-white text-black px-8 py-4 rounded-2xl font-black text-lg hover:scale-105 transition-transform shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]">
+                <Button href="/download" size="lg" className="!bg-white !text-black hover:scale-105 justify-center gap-3">
                   <Play size={20} fill="black" /> Start Watching
-                </Link>
-                <Link href="/pricing" className="inline-flex items-center justify-center gap-3 bg-white/10 text-white border border-white/10 px-8 py-4 rounded-2xl font-bold text-lg hover:bg-white/20 transition-colors backdrop-blur-md">
+                </Button>
+                <Button href="/pricing" variant="outline" size="lg" className="!bg-white/10 !border-white/10 !text-white hover:!bg-white/20 justify-center gap-3 backdrop-blur-md">
                   Start Selling
-                </Link>
+                </Button>
             </div>
           </div>
 
@@ -130,11 +126,12 @@ export default function VideoShoppingPage() {
         </div>
       </section>
 
-      {/* 💎 WHY IT WORKS */}
-      <section className="py-24 px-6 bg-[#0a0a0a] border-t border-white/5">
-         <div className="max-w-6xl mx-auto">
+      <section className="section-dark py-24 px-6 border-t border-white/5" aria-labelledby="video-why-heading">
+         <div className="section-spotlight-emerald" aria-hidden />
+         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <h2 id="video-why-heading" className="sr-only">Why it works</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
-               <Feature 
+               <Feature
                  icon={<Eye className="text-purple-500" />}
                  title="See the Truth"
                  desc="Photos can be photoshopped. Video shows the drape, the shine, and the scale. Goodbye 'What I Ordered vs What I Got'."
@@ -169,10 +166,10 @@ function ActionIcon({ icon, label, color = "text-white" }: any) {
    )
 }
 
-function Feature({ icon, title, desc }: any) {
+function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
    return (
-      <div className="p-8 rounded-[2rem] bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
-         <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-6">
+      <div className="p-8 rounded-[var(--radius-2xl)] bg-white/5 border border-white/5 hover:bg-white/10 transition-colors duration-[var(--duration-150)]">
+         <div className="w-14 h-14 rounded-[var(--radius-2xl)] bg-white/5 flex items-center justify-center mb-6">
             {icon}
          </div>
          <h3 className="text-xl font-bold text-white mb-3">{title}</h3>

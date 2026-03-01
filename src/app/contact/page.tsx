@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Mail, MapPin, MessageSquare, ArrowRight, CheckCircle2, Loader2, HelpCircle } from 'lucide-react';
 import Footer from '../../components/home/Footer';
-import Link from 'next/link';
+import Section from '../../components/ui/Section';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,33 +23,30 @@ export default function ContactPage() {
   };
 
   return (
-    <main className="bg-white min-h-screen font-sans selection:bg-emerald-100">
-
-      {/* 📬 HERO SECTION */}
-      <section className="pt-40 pb-20 px-6 bg-slate-50 border-b border-slate-100">
+    <main className="min-h-screen font-sans bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
+      <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-20 border-b border-[var(--border)]">
         <div className="max-w-4xl mx-auto text-center">
-          <motion.h1 
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-5xl md:text-6xl font-display font-bold text-slate-900 mb-6 tracking-tight"
+            className="text-5xl md:text-6xl font-display font-bold text-[var(--foreground)] mb-6 tracking-tight"
           >
             How can we help?
           </motion.h1>
-          <p className="text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-[var(--muted)] max-w-2xl mx-auto leading-relaxed">
             Have a question about the app, a partnership idea, or just want to say hello? 
             Our team is ready to answer.
           </p>
         </div>
-      </section>
+      </Section>
 
-      {/* 🎛️ CONTACT GRID */}
-      <section className="py-24 px-6 bg-white">
+      <section className="section-card py-24 px-6">
          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-24">
             
             {/* LEFT: Direct Info */}
             <div className="lg:col-span-1 space-y-10">
                 <div>
-                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Direct Channels</h3>
+                    <h3 className="text-sm font-bold text-[var(--muted)] uppercase tracking-widest mb-6">Direct Channels</h3>
                     <div className="space-y-6">
                         <ContactItem 
                             icon={<MessageSquare className="text-emerald-500" />}
@@ -71,14 +70,14 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Office</h3>
+                    <h3 className="text-sm font-bold text-[var(--muted)] uppercase tracking-widest mb-6">Office</h3>
                     <div className="flex gap-4">
-                        <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0 text-slate-600">
+                        <div className="w-10 h-10 rounded-full bg-[var(--surface)] flex items-center justify-center shrink-0 text-[var(--muted)]">
                             <MapPin size={18} />
                         </div>
                         <div>
-                            <p className="font-bold text-slate-900">Lagos HQ</p>
-                            <p className="text-slate-500 text-sm leading-relaxed mt-1">
+                            <p className="font-bold text-[var(--foreground)]">Lagos HQ</p>
+                            <p className="text-[var(--muted)] text-sm leading-relaxed mt-1">
                                 12A Lekki Phase 1, <br/>
                                 Lagos, Nigeria.
                             </p>
@@ -87,9 +86,8 @@ export default function ContactPage() {
                 </div>
             </div>
 
-            {/* RIGHT: The Form */}
             <div className="lg:col-span-2">
-                <div className="bg-slate-50 rounded-[2.5rem] p-8 md:p-12 border border-slate-100">
+                <Card className="rounded-[var(--radius-3xl)] p-8 md:p-12">
                     
                     {isSent ? (
                         <motion.div 
@@ -100,14 +98,11 @@ export default function ContactPage() {
                             <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <CheckCircle2 size={40} />
                             </div>
-                            <h3 className="text-2xl font-bold text-slate-900 mb-2">Message Sent!</h3>
-                            <p className="text-slate-500">We'll get back to you within 24 hours.</p>
-                            <button 
-                                onClick={() => setIsSent(false)}
-                                className="mt-8 text-sm font-bold text-slate-900 underline"
-                            >
+                            <h3 className="text-2xl font-bold text-[var(--foreground)] mb-2">Message Sent!</h3>
+                            <p className="text-[var(--muted)]">We'll get back to you within 24 hours.</p>
+                            <Button variant="ghost" size="sm" onClick={() => setIsSent(false)} className="mt-8">
                                 Send another message
-                            </button>
+                            </Button>
                         </motion.div>
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-6">
@@ -119,8 +114,8 @@ export default function ContactPage() {
                             <Input label="Email Address" placeholder="jane@example.com" type="email" />
                             
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Topic</label>
-                                <select className="w-full bg-white border border-slate-200 rounded-xl px-4 py-4 text-slate-900 focus:outline-none focus:border-slate-900 transition-colors appearance-none cursor-pointer">
+                                <label className="block text-xs font-bold text-[var(--foreground)] uppercase tracking-wider mb-2">Topic</label>
+                                <select className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-xl)] px-4 py-4 text-[var(--foreground)] focus:outline-none focus:border-[var(--emerald)] transition-colors duration-[var(--duration-150)] appearance-none cursor-pointer">
                                     <option>General Inquiry</option>
                                     <option>Report a Bug</option>
                                     <option>Billing Issue</option>
@@ -129,19 +124,21 @@ export default function ContactPage() {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Message</label>
-                                <textarea 
+                                <label className="block text-xs font-bold text-[var(--foreground)] uppercase tracking-wider mb-2">Message</label>
+                                <textarea
                                     rows={5}
-                                    className="w-full bg-white border border-slate-200 rounded-xl px-4 py-4 text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-slate-900 transition-colors resize-none"
+                                    className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-xl)] px-4 py-4 text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--emerald)] transition-colors duration-[var(--duration-150)] resize-none"
                                     placeholder="Tell us how we can help..."
                                     required
                                 />
                             </div>
 
-                            <button 
-                                type="submit" 
+                            <Button
+                                type="submit"
                                 disabled={isSubmitting}
-                                className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-lg hover:bg-emerald-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                                variant="secondary"
+                                size="lg"
+                                className="w-full justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? (
                                     <>
@@ -152,29 +149,28 @@ export default function ContactPage() {
                                         Send Message <ArrowRight size={20} />
                                     </>
                                 )}
-                            </button>
+                            </Button>
                         </form>
                     )}
 
-                </div>
+                </Card>
             </div>
 
          </div>
       </section>
 
-      {/* ❓ FAQ TEASER */}
-      <section className="py-20 px-6 bg-white border-t border-slate-100">
+      <Section variant="light" padding="default" className="border-t border-[var(--border)]">
          <div className="max-w-4xl mx-auto text-center">
-            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
+            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-[var(--radius-2xl)] flex items-center justify-center mx-auto mb-6">
                 <HelpCircle size={24} />
             </div>
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">Need answers right now?</h2>
-            <p className="text-slate-500 mb-8">Check out our Help Center for instant answers to common questions about payments, delivery, and account settings.</p>
-            <Link href="/help-center" className="text-emerald-600 font-bold hover:underline">
-                Visit Help Center &rarr;
-            </Link>
+            <h2 className="text-3xl font-bold text-[var(--foreground)] mb-4">Need answers right now?</h2>
+            <p className="text-[var(--muted)] mb-8">Check out our Help Center for instant answers to common questions about payments, delivery, and account settings.</p>
+            <Button href="/help-center" variant="ghost" size="md" className="text-emerald-600 font-bold">
+                Visit Help Center <ArrowRight size={16} />
+            </Button>
          </div>
-      </section>
+      </Section>
 
       <Footer />
     </main>
@@ -183,16 +179,16 @@ export default function ContactPage() {
 
 // 🧩 Components
 
-function ContactItem({ icon, title, desc, link }: any) {
+function ContactItem({ icon, title, desc, link }: { icon: React.ReactNode; title: string; desc: string; link: string }) {
     return (
         <div className="flex gap-4 group">
-            <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center shrink-0 transition-colors group-hover:bg-slate-100">
+            <div className="w-10 h-10 rounded-full bg-[var(--surface)] flex items-center justify-center shrink-0 transition-colors group-hover:bg-[var(--border)]">
                 {icon}
             </div>
             <div>
-                <p className="font-bold text-slate-900">{title}</p>
-                <p className="text-slate-500 text-sm mb-1">{desc}</p>
-                <a href={`mailto:${link}`} className="text-sm font-bold text-slate-900 hover:text-emerald-600 transition-colors">
+                <p className="font-bold text-[var(--foreground)]">{title}</p>
+                <p className="text-[var(--muted)] text-sm mb-1">{desc}</p>
+                <a href={`mailto:${link}`} className="text-sm font-bold text-[var(--foreground)] hover:text-emerald-600 transition-colors">
                     {link}
                 </a>
             </div>
@@ -200,13 +196,13 @@ function ContactItem({ icon, title, desc, link }: any) {
     )
 }
 
-function Input({ label, placeholder, type = "text" }: any) {
+function Input({ label, placeholder, type = "text" }: { label: string; placeholder: string; type?: string }) {
     return (
         <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">{label}</label>
-            <input 
-                type={type} 
-                className="w-full bg-white border border-slate-200 rounded-xl px-4 py-4 text-slate-900 placeholder:text-slate-300 focus:outline-none focus:border-slate-900 transition-colors"
+            <label className="block text-xs font-bold text-[var(--foreground)] uppercase tracking-wider mb-2">{label}</label>
+            <input
+                type={type}
+                className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-xl)] px-4 py-4 text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--emerald)] transition-colors duration-[var(--duration-150)]"
                 placeholder={placeholder}
                 required
             />

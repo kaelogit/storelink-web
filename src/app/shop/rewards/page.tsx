@@ -4,19 +4,17 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Coins, Wallet, Gift, ArrowRight, TrendingUp, Lock, RefreshCw } from 'lucide-react';
 import Footer from '../../../components/home/Footer';
-import Link from 'next/link';
 import Image from 'next/image';
+import Button from '../../../components/ui/Button';
 
 export default function RewardsPage() {
   const [balance, setBalance] = useState(2400);
   const [showConfetti, setShowConfetti] = useState(false);
 
-  // Simulate earning coins
   const triggerEarn = () => {
     setShowConfetti(true);
     let start = balance;
     const end = balance + 500;
-    
     const timer = setInterval(() => {
         start += 20;
         if (start >= end) {
@@ -30,15 +28,11 @@ export default function RewardsPage() {
   };
 
   return (
-    <main className="bg-[#050505] min-h-screen font-sans selection:bg-amber-500 selection:text-black">
+    <main className="min-h-screen font-sans bg-[var(--pitch-black)] text-white selection:bg-amber-500 selection:text-black">
+      <section className="section-hero pt-24 md:pt-32 pb-24 relative overflow-hidden" aria-labelledby="rewards-hero-heading">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-amber-600/10 rounded-full blur-[120px] pointer-events-none" aria-hidden />
 
-      {/* 💰 HERO SECTION */}
-      <section className="pt-40 pb-24 px-6 relative overflow-hidden">
-        {/* Golden Glows */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-amber-600/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center relative z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center relative z-10">
           
           {/* Left: Text */}
           <div>
@@ -51,7 +45,7 @@ export default function RewardsPage() {
                Loyalty System
             </motion.div>
             
-            <h1 className="text-5xl md:text-7xl font-display font-bold text-white mb-8 tracking-tight leading-[1.1]">
+            <h1 id="rewards-hero-heading" className="text-5xl md:text-7xl font-display font-bold text-white mb-8 tracking-tight leading-[1.1]">
               Shop. Earn. <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-500 to-orange-500">
                 Repeat.
@@ -61,9 +55,9 @@ export default function RewardsPage() {
               The first marketplace with built-in cashback. Sellers set the rules, buyers collect the coins. Turn one-time customers into lifetime fans.
             </p>
 
-            <Link href="/download" className="inline-flex items-center gap-3 bg-white text-black px-8 py-4 rounded-2xl font-black text-lg hover:scale-105 transition-transform shadow-[0_0_40px_-10px_rgba(245,158,11,0.4)]">
+            <Button href="/download" size="lg" className="!bg-white !text-black hover:scale-105 gap-3">
               <Wallet size={20} /> Start Collecting
-            </Link>
+            </Button>
           </div>
 
           {/* Right: The Wallet Simulator */}

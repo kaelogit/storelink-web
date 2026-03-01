@@ -84,7 +84,9 @@ export default function WebProductCard({ item, onAddToCart }: any) {
                 alt="Seller" 
                 fill 
                 className="object-cover"
-                unoptimized={true} // 👈 ADDED HERE
+                sizes="44px"
+                loading="lazy"
+                unoptimized={true}
               />
            </Link>
         </div>
@@ -204,7 +206,9 @@ export default function WebProductCard({ item, onAddToCart }: any) {
                          alt={item.name} 
                          fill 
                          className={`object-cover ${isSoldOut ? 'opacity-70 grayscale' : ''}`} 
-                         unoptimized={true} // 👈 ADDED HERE (CRITICAL FIX)
+                         sizes="(max-width: 640px) 100vw, 400px"
+                         loading="lazy"
+                         unoptimized={true}
                        />
                     </Link>
                  )) : (

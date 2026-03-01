@@ -1,11 +1,12 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { ImageMinus, Wand2, Layers, Download, CheckCircle2, Sun, ScanLine } from 'lucide-react';
-import Footer from '../../../components/home/Footer';
-import Link from 'next/link';
-import Image from 'next/image';
 import { useState } from 'react';
+import { motion } from 'framer-motion';
+import { ImageMinus, Download, CheckCircle2, Sun, ScanLine } from 'lucide-react';
+import Footer from '../../../components/home/Footer';
+import Image from 'next/image';
+import Section from '../../../components/ui/Section';
+import Button from '../../../components/ui/Button';
 
 // Demo Images (High Quality)
 const BEFORE_IMG = "/tomford-bg.png"; 
@@ -15,13 +16,10 @@ export default function StudioPage() {
   const [sliderPosition, setSliderPosition] = useState(50);
 
   return (
-    <main className="bg-white min-h-screen font-sans selection:bg-emerald-100">
+    <main className="min-h-screen font-sans bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
 
-      {/* 🎨 HERO: The Pitch */}
-      <section className="pt-40 pb-20 px-6 text-center relative overflow-hidden bg-slate-50 border-b border-slate-100">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.05]" />
-        
-        <div className="relative z-10 max-w-4xl mx-auto">
+      <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-20 text-center border-b border-[var(--border)]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
              initial={{ opacity: 0, y: 20 }}
              animate={{ opacity: 1, y: 0 }}
@@ -30,34 +28,29 @@ export default function StudioPage() {
              <ImageMinus size={14} />
              Magic Studio™
           </motion.div>
-          
-          <h1 className="text-5xl md:text-7xl font-display font-bold text-slate-900 mb-8 tracking-tight">
+          <h1 className="text-5xl md:text-7xl font-display font-bold text-[var(--foreground)] mb-8 tracking-tight">
             A Pro Photo Studio <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">
               in your Pocket.
             </span>
           </h1>
-          <p className="text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-medium mb-10">
+          <p className="text-xl text-[var(--muted)] max-w-2xl mx-auto leading-relaxed font-medium mb-10">
             No green screen. No Photoshop. Just point your camera, and our Computer Vision engine removes backgrounds, fixes lighting, and standardizes your catalog instantly.
           </p>
-
-          <Link href="/download" className="inline-flex items-center gap-3 bg-slate-900 text-white px-8 py-4 rounded-2xl font-black text-lg hover:bg-emerald-600 transition-colors shadow-xl hover:shadow-emerald-500/20 active:scale-95 transform duration-200">
+          <Button href="/download" variant="secondary" size="lg" className="gap-3">
             <Download size={20} /> Get the Tool
-          </Link>
+          </Button>
         </div>
-      </section>
+      </Section>
 
       {/* 🪄 INTERACTIVE SLIDER (The Core Demo) */}
-      <section className="py-24 px-6 relative bg-white">
-         <div className="max-w-5xl mx-auto">
-            
+      <section className="section-card py-24 px-6 relative">
+         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">TRY IT YOURSELF</p>
-                <h2 className="text-3xl font-bold text-slate-900">Drag to Clean</h2>
+                <p className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest mb-2">TRY IT YOURSELF</p>
+                <h2 className="text-3xl font-bold text-[var(--foreground)]">Drag to Clean</h2>
             </div>
-
-            {/* The Comparator Component */}
-            <div className="relative aspect-[4/3] md:aspect-[21/9] rounded-[3rem] overflow-hidden border-8 border-slate-100 shadow-2xl select-none group cursor-ew-resize">
+            <div className="relative aspect-[4/3] md:aspect-[21/9] rounded-[var(--radius-3xl)] overflow-hidden border-8 border-[var(--border)] shadow-2xl select-none group cursor-ew-resize">
                
                {/* Background Layer (AFTER) - The Clean Result */}
                <Image 
@@ -123,13 +116,13 @@ export default function StudioPage() {
          </div>
       </section>
 
-      {/* 🛠️ TECHNICAL CAPABILITIES (Dark Mode) */}
-      <section className="py-24 px-6 bg-[#0f172a] text-white">
-         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
+      <section className="section-dark py-24 px-6 text-white" aria-labelledby="studio-engineered-heading">
+        <div className="section-spotlight-emerald" aria-hidden />
+         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
             
             {/* Left: Text */}
-            <div>
-               <h2 className="text-4xl font-display font-bold mb-6 text-white">Engineered for Commerce.</h2>
+            <div className="relative z-10">
+               <h2 id="studio-engineered-heading" className="text-4xl font-display font-bold mb-6 text-white">Engineered for Commerce.</h2>
                <p className="text-slate-400 text-lg leading-relaxed mb-10">
                   This isn't just a generic eraser. Our model is trained specifically on retail objects—perfumes, shoes, bags. It understands edges, shadows, and reflections to create a natural look.
                </p>

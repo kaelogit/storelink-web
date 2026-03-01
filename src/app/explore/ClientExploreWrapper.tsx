@@ -135,15 +135,11 @@ export default function ClientExploreWrapper({
   }, [query, activeCategory, isFlashMode]);
 
   return (
-    <div className="min-h-screen section-bg-light-mesh pt-20 pb-24 relative overflow-hidden">
-      <div className="section-grid-subtle" aria-hidden />
-      <div className="section-band-emerald" aria-hidden />
-      <div className="section-orb-emerald section-orb-emerald-br" />
-      <div className="section-orb-violet section-orb-violet-tr" style={{ top: '10%' }} />
-      
-      {/* 1. STICKY HEADER */}
-      {/* 🟢 Added top-[80px] (adjust based on your nav height) to the sticky header */}
-      <div className="sticky top-[80px] z-30 bg-white/95 backdrop-blur-md border-b border-slate-100 shadow-sm">
+    <div className="min-h-screen section-light pt-20 pb-24 relative overflow-hidden">
+      <div className="section-orb section-orb-emerald section-orb-br" aria-hidden />
+      <div className="section-orb section-orb-violet section-orb-tr" aria-hidden />
+
+      <div className="sticky top-[80px] z-30 bg-[var(--card)]/95 backdrop-blur-md border-b border-[var(--border)] shadow-sm">
          <div className="max-w-md mx-auto px-4 py-3">
             
             <div className="flex items-center justify-between mb-4 mt-2">
@@ -244,20 +240,21 @@ export default function ClientExploreWrapper({
                ))}
                
                <div className="px-4 mt-8 mb-10">
-                  <button 
+                  <button
+                    type="button"
                     onClick={() => setTrapOpen(true)}
-                    className="w-full bg-slate-900 active:scale-95 transition-all text-white p-6 rounded-3xl shadow-xl shadow-slate-200 flex flex-col items-center text-center border-b-4 border-slate-700"
+                    className="w-full bg-[var(--charcoal)] active:scale-[0.98] transition-all duration-[var(--duration-150)] text-white p-6 rounded-[var(--radius-3xl)] shadow-xl border-b-4 border-[var(--pitch-black)] flex flex-col items-center text-center"
                   >
-                     <div className="w-12 h-12 bg-slate-800 rounded-2xl flex items-center justify-center mb-3">
+                     <div className="w-12 h-12 rounded-[var(--radius-2xl)] bg-[var(--pitch-black)] flex items-center justify-center mb-3">
                         <PhoneIcon className="text-emerald-400" size={24} />
                      </div>
                      <h3 className="text-lg font-black tracking-tight mb-1">Want to see more?</h3>
-                     <p className="text-sm font-medium text-slate-400 mb-4">
+                     <p className="text-sm font-medium text-[var(--muted)] mb-4">
                         There are 1,000+ more items on the app.
                      </p>
-                     <div className="flex items-center gap-2 text-xs font-black bg-white text-slate-900 px-4 py-2 rounded-full">
+                     <span className="flex items-center gap-2 text-xs font-black bg-white text-[var(--foreground)] px-4 py-2 rounded-full">
                         GET THE APP <ArrowRight size={14} />
-                     </div>
+                     </span>
                   </button>
                </div>
 

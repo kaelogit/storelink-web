@@ -1,10 +1,9 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { 
   Layers, ShieldCheck, 
   Users, Sparkles, Zap, ArrowRight,
-  Fingerprint, Lock
+  Lock
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -22,8 +21,9 @@ const bentoItems = [
     accentColor: "emerald",
     href: "/download",
     visual: (
-      <div className="absolute right-0 bottom-0 w-full h-full overflow-hidden pointer-events-none opacity-30">
-         <div className="absolute right-[-10%] bottom-[-20%] w-[200px] md:w-[300px] h-[200px] md:h-[300px] rounded-full bg-gradient-to-tr from-emerald-100 to-transparent blur-3xl" />
+      <div className="absolute right-0 bottom-0 w-full h-full overflow-hidden pointer-events-none opacity-50 transition-opacity duration-500 group-hover:opacity-100">
+         {/* ⚡ OPTIMIZED: Replaced expensive 'blur-3xl' with a cheap CSS radial-gradient */}
+         <div className="absolute -right-[10%] -bottom-[20%] w-[300px] h-[300px] bg-[radial-gradient(circle,rgba(52,211,153,0.15)_0%,transparent_70%)] transition-transform duration-700 group-hover:scale-110" />
          <div className="absolute right-[10%] bottom-[10%] w-[100px] md:w-[150px] h-[100px] md:h-[150px] border border-slate-100 rounded-full" />
          <div className="absolute right-[15%] bottom-[15%] w-[60px] md:w-[100px] h-[60px] md:h-[100px] border border-slate-100 rounded-full" />
       </div>
@@ -42,9 +42,11 @@ const bentoItems = [
     href: "/tools/ai",
     visual: (
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -right-10 -top-10 w-40 md:w-60 h-40 md:h-60 bg-purple-500/30 rounded-full blur-[60px] md:blur-[80px]" />
-        <div className="absolute -left-10 -bottom-10 w-40 md:w-60 h-40 md:h-60 bg-indigo-500/30 rounded-full blur-[60px] md:blur-[80px]" />
-        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-20 mix-blend-overlay" />
+        {/* ⚡ OPTIMIZED: Removed massive blur-[80px]. Replaced with buttery-smooth radial gradients */}
+        <div className="absolute -right-[10%] -top-[10%] w-[250px] h-[250px] bg-[radial-gradient(circle,rgba(168,85,247,0.35)_0%,transparent_70%)] transition-transform duration-700 group-hover:scale-110" />
+        <div className="absolute -left-[10%] -bottom-[10%] w-[250px] h-[250px] bg-[radial-gradient(circle,rgba(99,102,241,0.35)_0%,transparent_70%)] transition-transform duration-700 group-hover:scale-110" />
+        {/* ⚡ OPTIMIZED: Removed mix-blend-overlay (a massive GPU killer) */}
+        <div className="absolute inset-0 bg-[url('/noise.png')] opacity-10" />
       </div>
     )
   },
@@ -60,11 +62,11 @@ const bentoItems = [
     accentColor: "blue",
     href: "/safety", 
     visual: (
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none transition-transform duration-500 group-hover:scale-105">
          <div className="absolute right-[-20%] top-[-20%] text-blue-50/50 rotate-12 transform scale-125 md:scale-150">
            <ShieldCheck size={180} strokeWidth={0.5} />
          </div>
-         <div className="absolute right-6 bottom-6">
+         <div className="absolute right-6 bottom-6 transition-transform duration-300 group-hover:-translate-y-1">
             <Lock size={24} className="text-blue-100" />
          </div>
       </div>
@@ -83,11 +85,11 @@ const bentoItems = [
     href: "/tools/community", 
     visual: (
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.07]" />
-        <div className="absolute right-0 top-0 w-1/2 h-full bg-gradient-to-l from-slate-900 to-transparent" />
-        {/* Subtle glowing dots */}
-        <div className="absolute top-1/4 right-1/4 w-1 h-1 bg-emerald-400 rounded-full shadow-[0_0_8px_rgba(52,211,153,0.8)] animate-pulse" />
-        <div className="absolute bottom-1/3 right-1/3 w-1 h-1 bg-purple-400 rounded-full shadow-[0_0_8px_rgba(192,132,252,0.8)] animate-pulse delay-700" />
+        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.05]" />
+        <div className="absolute right-0 top-0 w-2/3 h-full bg-gradient-to-l from-slate-950 via-slate-900/80 to-transparent" />
+        {/* ⚡ OPTIMIZED: Added hover expansion to the glowing dots for extra flair */}
+        <div className="absolute top-1/4 right-1/4 w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_12px_rgba(52,211,153,0.9)] transition-transform duration-500 group-hover:scale-150" />
+        <div className="absolute bottom-1/3 right-1/3 w-1.5 h-1.5 bg-purple-400 rounded-full shadow-[0_0_12px_rgba(192,132,252,0.9)] transition-transform duration-500 group-hover:scale-150" />
       </div>
     )
   }
@@ -95,34 +97,22 @@ const bentoItems = [
 
 export default function Comparison() {
   return (
-    <section className="py-28 md:py-40 section-bg-light-mesh relative overflow-hidden border-t border-slate-200/50">
-      <div className="section-grid-subtle" aria-hidden />
-      <div className="section-band-emerald" aria-hidden />
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-         <div className="section-orb-emerald section-orb-emerald-tl animate-pulse-slow" />
-         <div className="section-orb-violet section-orb-violet-bl" />
-      </div>
+    <section className="section-light py-28 md:py-40 border-t border-slate-200/50 relative overflow-hidden" aria-labelledby="comparison-heading">
+      {/* ⚡ OPTIMIZED: Converted external CSS orbs to radial gradients to protect scroll performance */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-[radial-gradient(circle,rgba(52,211,153,0.05)_0%,transparent_50%)] pointer-events-none" aria-hidden />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-[radial-gradient(circle,rgba(168,85,247,0.05)_0%,transparent_50%)] pointer-events-none" aria-hidden />
 
       <div className="max-w-6xl mx-auto px-4 md:px-6 relative z-10">
         
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center mb-16 md:mb-24">
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 text-[10px] md:text-[11px] font-bold uppercase tracking-widest mb-6 hover:border-emerald-200 transition-colors cursor-default"
-          >
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 text-[10px] md:text-[11px] font-bold uppercase tracking-widest mb-6 hover:border-emerald-200 transition-colors cursor-default">
             <Zap size={12} className="text-amber-500 fill-amber-500" />
             <span>Why We Built This</span>
-          </motion.div>
-          
-          <motion.h2 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="text-3xl md:text-5xl lg:text-6xl font-display font-bold text-slate-900 mb-4 md:mb-6 tracking-tight leading-[1.1]"
+          </div>
+          <h2
+            id="comparison-heading"
+            className="text-4xl md:text-5xl lg:text-6xl font-display font-black text-slate-900 mb-4 md:mb-6 tracking-tight leading-[1.1]"
           >
             It's not just an App. <br />
             It's an <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500 relative inline-block">
@@ -131,29 +121,19 @@ export default function Comparison() {
                  <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" opacity="0.4" />
               </svg>
             </span>
-          </motion.h2>
-          
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="text-base md:text-xl text-slate-500 leading-relaxed max-w-xl md:max-w-2xl mx-auto font-light"
-          >
-            We bridged the gap between social connection and secure transaction, creating the first true OS for the social economy.
-          </motion.p>
+          </h2>
+          <p className="text-lg md:text-xl text-slate-500 leading-relaxed max-w-xl md:max-w-2xl mx-auto font-light">
+            We bridged the gap between social connection and secure transactions, creating the first true OS for the social economy.
+          </p>
         </div>
 
         {/* 🍱 THE BENTO GRID */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 auto-rows-[minmax(280px,auto)]">
-          {bentoItems.map((item, i) => (
+          {bentoItems.map((item) => (
             <Link key={item.id} href={item.href} className={`${item.colSpan} block group h-full`}>
-              <motion.div
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5, ease: "easeOut" }}
-                className={`h-full relative rounded-[24px] md:rounded-[32px] overflow-hidden transition-all duration-300 border active:scale-[0.98] hover:shadow-2xl hover:shadow-slate-200/50 ${item.bgClass} ${item.borderClass} ${item.textClass}`}
+              <div
+                /* ⚡ OPTIMIZED: Added transform-gpu so hover states process on the graphics card instead of CPU */
+                className={`h-full relative rounded-[24px] md:rounded-[32px] overflow-hidden transition-all duration-300 border active:scale-[0.98] hover:shadow-2xl hover:shadow-slate-200/50 transform-gpu ${item.bgClass} ${item.borderClass} ${item.textClass}`}
               >
                 {/* Visual Layer */}
                 {item.visual}
@@ -195,7 +175,7 @@ export default function Comparison() {
                   </div>
 
                 </div>
-              </motion.div>
+              </div>
             </Link>
           ))}
         </div>

@@ -4,24 +4,20 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Zap, Timer, Flame, Bell, ArrowRight, TrendingUp } from 'lucide-react';
 import Footer from '../../../components/home/Footer';
-import Link from 'next/link';
 import Image from 'next/image';
+import Button from '../../../components/ui/Button';
 
 export default function FlashDropsPage() {
-  // Simulation State
   const [stock, setStock] = useState(85);
   const [timeLeft, setTimeLeft] = useState(59);
 
-  // Simulate a live sale draining stock
   useEffect(() => {
     const stockTimer = setInterval(() => {
       setStock((prev) => (prev > 10 ? prev - Math.floor(Math.random() * 5) : 0));
     }, 2000);
-
     const clockTimer = setInterval(() => {
         setTimeLeft((prev) => (prev > 0 ? prev - 1 : 59));
     }, 1000);
-
     return () => {
         clearInterval(stockTimer);
         clearInterval(clockTimer);
@@ -29,15 +25,11 @@ export default function FlashDropsPage() {
   }, []);
 
   return (
-    <main className="bg-[#050505] min-h-screen font-sans selection:bg-amber-500 selection:text-black">
+    <main className="min-h-screen font-sans bg-[var(--pitch-black)] text-white selection:bg-amber-500 selection:text-black">
+      <section className="section-hero pt-24 md:pt-32 pb-24 relative overflow-hidden" aria-labelledby="flash-hero-heading">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" aria-hidden />
 
-      {/* ⚡ HERO SECTION */}
-      <section className="pt-40 pb-24 px-6 relative overflow-hidden">
-        {/* Electric Background */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-
-        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center relative z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 lg:grid-cols-2 gap-20 items-center relative z-10">
           
           {/* Left: Text */}
           <div>
@@ -50,7 +42,7 @@ export default function FlashDropsPage() {
                High Voltage Sales
             </motion.div>
             
-            <h1 className="text-5xl md:text-7xl font-display font-bold text-white mb-8 tracking-tight leading-[1.1]">
+            <h1 id="flash-hero-heading" className="text-5xl md:text-7xl font-display font-bold text-white mb-8 tracking-tight leading-[1.1]">
               Create a <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-500 to-red-500">
                 Frenzy.
@@ -60,9 +52,9 @@ export default function FlashDropsPage() {
               Turn a regular discount into an event. Set a timer, drop the price, and watch your followers race to checkout before the clock hits zero.
             </p>
 
-            <Link href="/download" className="inline-flex items-center gap-3 bg-white text-black px-8 py-4 rounded-2xl font-black text-lg hover:scale-105 transition-transform shadow-[0_0_40px_-10px_rgba(245,158,11,0.5)]">
+            <Button href="/download" size="lg" className="!bg-white !text-black hover:scale-105 gap-3">
               <Flame size={20} className="text-orange-600" fill="currentColor" /> Start a Drop
-            </Link>
+            </Button>
           </div>
 
           {/* Right: The Live Card Simulator */}

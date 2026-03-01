@@ -9,7 +9,7 @@ import {
   PlayCircle, Coins, Users, ShieldCheck, CreditCard,
   Search
 } from 'lucide-react';
-import { motion, AnimatePresence, useScroll, useMotionValueEvent } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Custom Icons
 const AppleIcon = () => (
@@ -28,18 +28,11 @@ export default function Navbar() {
   const pathname = usePathname();
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { scrollY } = useScroll();
 
-  // ⚡️ SCROLL TRIGGER: Turns white only after 1440px
-  useMotionValueEvent(scrollY, "change", (latest) => {
-    setScrolled(latest > 1440);
-  });
-
-  // 🦎 THE CHAMELEON LOGIC
+  // Navbar is always white (no dark transparent state)
   const isHome = pathname === '/';
-  const isTransparent = isHome && !scrolled;
+  const isTransparent = false;
 
   // 🔎 SEARCH HANDLER
   const handleSearch = (e: React.FormEvent) => {
@@ -51,17 +44,17 @@ export default function Navbar() {
   };
 
   return (
-    <header 
+    <header
+      role="banner"
       className={`${isHome ? 'fixed' : 'relative'} top-0 left-0 right-0 z-50 transition-all duration-700 ease-out ${
         !isTransparent
-          ? 'bg-white/90 backdrop-blur-xl border-b border-gray-200/50 shadow-sm py-3' 
-          : 'bg-slate-950/30 backdrop-blur-md border-b border-white/5 py-5' // 🌌 Deep Space Glass
+          ? 'bg-[var(--background)]/90 backdrop-blur-xl border-b border-[var(--border)] shadow-sm py-3'
+          : 'bg-[var(--pitch-black)]/30 backdrop-blur-md border-b border-white/5 py-5'
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 h-12 flex items-center justify-between gap-4">
-        
         {/* LOGO */}
-        <Link href="/" className="flex items-center gap-2.5 z-50 group shrink-0">
+        <Link href="/" className="flex items-center gap-2.5 z-50 group shrink-0" aria-label="StoreLink home">
            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all duration-300 ${
              isTransparent 
                 ? 'bg-white/5 border-white/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]' // 🟢 Glowing Green on Dark
@@ -70,7 +63,7 @@ export default function Navbar() {
               <LayoutDashboard size={22}/>
            </div>
            <span className={`font-display font-bold text-xl tracking-tight transition-colors duration-300 ${
-             isTransparent ? 'text-white' : 'text-slate-900'
+             isTransparent ? 'text-white' : 'text-[var(--foreground)]'
            }`}>StoreLink.</span>
         </Link>
 
@@ -93,21 +86,26 @@ export default function Navbar() {
         </form>
 
         {/* DESKTOP MENU */}
-        <nav className="hidden md:flex items-center gap-1 h-full shrink-0">
-            
-            {/* 1. SELLING TOOLS */}
-            <div 
-                className="relative h-full flex items-center px-2 lg:px-3"
-                onMouseEnter={() => setActiveMenu('selling')}
-                onMouseLeave={() => setActiveMenu(null)}
+        <nav className="hidden md:flex items-center gap-1 h-full shrink-0" aria-label="Main">
+          {/* 1. SELLING TOOLS */}
+          <div
+            className="relative h-full flex items-center px-2 lg:px-3"
+            onMouseEnter={() => setActiveMenu('selling')}
+            onMouseLeave={() => setActiveMenu(null)}
+          >
+            <button
+              type="button"
+              aria-expanded={activeMenu === 'selling'}
+              aria-haspopup="true"
+              aria-controls="selling-menu"
+              className={`flex items-center gap-1.5 text-sm font-bold transition-colors duration-300 ${
+                isTransparent
+                  ? 'text-white hover:text-emerald-400 drop-shadow-md'
+                  : (activeMenu === 'selling' ? 'text-emerald-600' : 'text-[var(--muted)]')
+              }`}
             >
-                <button className={`flex items-center gap-1.5 text-sm font-bold transition-colors duration-300 ${
-                    isTransparent 
-                        ? 'text-white hover:text-emerald-400 drop-shadow-md' // ✨ Bright White with Shadow
-                        : (activeMenu === 'selling' ? 'text-emerald-600' : 'text-slate-600')
-                }`}>
-                    <span className="hidden lg:inline">Selling</span> Tools <ChevronDown size={14} className={`transition-transform duration-300 ${activeMenu === 'selling' ? 'rotate-180' : ''}`}/>
-                </button>
+              <span className="hidden lg:inline">Selling</span> Tools <ChevronDown size={14} className={`transition-transform duration-300 ${activeMenu === 'selling' ? 'rotate-180' : ''}`} />
+            </button>
 
                 <AnimatePresence>
                     {activeMenu === 'selling' && (
@@ -116,7 +114,9 @@ export default function Navbar() {
                             animate={{ opacity: 1, y: 0, scale: 1 }}
                             exit={{ opacity: 0, y: 8, scale: 0.98 }}
                             transition={{ duration: 0.2 }}
-                            className="absolute top-full right-0 w-[300px] bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mt-4"
+                            id="selling-menu"
+                            className="absolute top-full right-0 w-[300px] bg-[var(--card)] rounded-2xl shadow-xl border border-[var(--border)] p-2 mt-4"
+                            role="menu"
                         >
                             <div className="grid gap-1">
                                 <DropdownItem icon={<Wand2 size={18} className="text-purple-600"/>} title="AI Writer" desc="Generate viral descriptions." href="/tools/ai" />
@@ -129,29 +129,37 @@ export default function Navbar() {
                 </AnimatePresence>
             </div>
 
-            {/* 2. SHOPPING */}
-            <div 
-                className="relative h-full flex items-center px-2 lg:px-3"
-                onMouseEnter={() => setActiveMenu('shopping')}
-                onMouseLeave={() => setActiveMenu(null)}
+          {/* 2. SHOPPING */}
+          <div
+            className="relative h-full flex items-center px-2 lg:px-3"
+            onMouseEnter={() => setActiveMenu('shopping')}
+            onMouseLeave={() => setActiveMenu(null)}
+          >
+            <button
+              type="button"
+              aria-expanded={activeMenu === 'shopping'}
+              aria-haspopup="true"
+              aria-controls="shopping-menu"
+              className={`flex items-center gap-1.5 text-sm font-bold transition-colors duration-300 ${
+                isTransparent
+                  ? 'text-white hover:text-emerald-400 drop-shadow-md'
+                  : (activeMenu === 'shopping' ? 'text-emerald-600' : 'text-[var(--muted)]')
+              }`}
             >
-                <button className={`flex items-center gap-1.5 text-sm font-bold transition-colors duration-300 ${
-                    isTransparent 
-                        ? 'text-white hover:text-emerald-400 drop-shadow-md' 
-                        : (activeMenu === 'shopping' ? 'text-emerald-600' : 'text-slate-600')
-                }`}>
-                    Shopping <ChevronDown size={14} className={`transition-transform duration-300 ${activeMenu === 'shopping' ? 'rotate-180' : ''}`}/>
-                </button>
+              Shopping <ChevronDown size={14} className={`transition-transform duration-300 ${activeMenu === 'shopping' ? 'rotate-180' : ''}`} />
+            </button>
 
-                <AnimatePresence>
-                    {activeMenu === 'shopping' && (
-                        <motion.div 
-                            initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                            animate={{ opacity: 1, y: 0, scale: 1 }}
-                            exit={{ opacity: 0, y: 8, scale: 0.98 }}
-                            transition={{ duration: 0.2 }}
-                            className="absolute top-full right-0 w-[300px] bg-white rounded-2xl shadow-xl border border-gray-100 p-2 mt-4"
-                        >
+            <AnimatePresence>
+              {activeMenu === 'shopping' && (
+                <motion.div
+                  id="shopping-menu"
+                  role="menu"
+                  initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 8, scale: 0.98 }}
+                  transition={{ duration: 0.2 }}
+                  className="absolute top-full right-0 w-[300px] bg-[var(--card)] rounded-2xl shadow-xl border border-[var(--border)] p-2 mt-4"
+                >
                             <div className="grid gap-1">
                                 <DropdownItem icon={<PlayCircle size={18} className="text-red-500"/>} title="Video Shopping" desc="Watch Reels and buy." href="/shop/video" />
                                 <DropdownItem icon={<Zap size={18} className="text-amber-500"/>} title="Flash Drops" desc="Limited time offers." href="/shop/flash" />
@@ -162,8 +170,8 @@ export default function Navbar() {
                 </AnimatePresence>
             </div>
 
-            <Link href="/pricing" className={`px-3 text-sm font-bold transition-colors duration-300 hidden lg:block ${isTransparent ? 'text-white hover:text-emerald-400 drop-shadow-md' : 'text-slate-600 hover:text-emerald-600'}`}>Pricing</Link>
-            <Link href="/safety" className={`px-3 text-sm font-bold transition-colors duration-300 hidden lg:block ${isTransparent ? 'text-white hover:text-emerald-400 drop-shadow-md' : 'text-slate-600 hover:text-emerald-600'}`}>Safety</Link>
+            <Link href="/pricing" className={`px-3 text-sm font-bold transition-colors duration-300 hidden lg:block ${isTransparent ? 'text-white hover:text-emerald-400 drop-shadow-md' : 'text-[var(--muted)] hover:text-emerald-600'}`}>Pricing</Link>
+            <Link href="/safety" className={`px-3 text-sm font-bold transition-colors duration-300 hidden lg:block ${isTransparent ? 'text-white hover:text-emerald-400 drop-shadow-md' : 'text-[var(--muted)] hover:text-emerald-600'}`}>Safety</Link>
 
         </nav>
 
@@ -207,14 +215,16 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* 4. MOBILE DRAWER */}
+      {/* MOBILE DRAWER */}
       <AnimatePresence>
         {isMobileMenuOpen && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-white border-b border-gray-100 overflow-hidden absolute top-full left-0 right-0 shadow-xl"
+            className="md:hidden bg-[var(--background)] border-b border-[var(--border)] overflow-hidden absolute top-full left-0 right-0 shadow-xl"
+            role="dialog"
+            aria-label="Mobile menu"
           >
               <div className="px-6 py-6 space-y-8 max-h-[85vh] overflow-y-auto">
                 {/* 🔎 MOBILE SEARCH BAR */}

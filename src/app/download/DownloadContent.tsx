@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
-  Apple, Smartphone, Menu, Users, Gem, MapPin, Edit3, Share2,
+  Apple, Menu, Users, Gem, MapPin, Edit3, Share2,
   Package, Video, Layers, CheckCircle2, ShieldCheck, Zap, Sparkles
 } from 'lucide-react';
 import Footer from '../../components/home/Footer';
 import Image from 'next/image';
+import Button from '../../components/ui/Button';
+import Card from '../../components/ui/Card';
 
 const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL ?? '';
 const PLAY_STORE_URL = process.env.NEXT_PUBLIC_PLAY_STORE_URL ?? '';
@@ -51,18 +53,10 @@ export default function DownloadContent() {
   }, []);
 
   return (
-    <main className="min-h-screen font-sans selection:bg-emerald-100 flex flex-col relative">
-      <div className="fixed inset-0 -z-20 bg-[linear-gradient(165deg,#f8fafc_0%,#ffffff_40%,#f0fdf4_80%,#faf5ff_100%)]" />
-      <div className="fixed inset-0 -z-20 bg-[radial-gradient(ellipse_80%_60%_at_20%_20%,rgba(16,185,129,0.08),transparent_50%)]" />
-      <div className="fixed inset-0 -z-20 bg-[radial-gradient(ellipse_60%_80%_at_90%_80%,rgba(139,92,246,0.06),transparent_50%)]" />
-
-      <section className="flex-1 pt-32 pb-28 md:pb-40 relative overflow-hidden flex items-center section-bg-light-mesh">
-        <div className="section-grid-subtle" aria-hidden />
-        <div className="section-band-emerald" aria-hidden />
-        <div className="section-orb-emerald section-orb-emerald-tl" />
-        <div className="section-orb-violet section-orb-violet-tr" />
-        <div className="absolute top-0 right-0 w-3/4 h-full bg-gradient-to-l from-emerald-50/50 to-transparent pointer-events-none" />
-        <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-purple-100/40 rounded-full blur-[120px] pointer-events-none" />
+    <main className="min-h-screen font-sans flex flex-col relative bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
+      <section className="section-light flex-1 pt-32 pb-28 md:pb-40 relative overflow-hidden flex items-center">
+        <div className="section-orb section-orb-emerald section-orb-tl" aria-hidden />
+        <div className="section-orb section-orb-violet section-orb-tr" aria-hidden />
 
         <div className="max-w-7xl mx-auto px-6 w-full grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
           <div className="order-2 lg:order-1">
@@ -71,26 +65,26 @@ export default function DownloadContent() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h1 className="text-5xl md:text-7xl font-display font-bold text-slate-900 mb-6 leading-[1.1] tracking-tight">
+              <h1 className="text-5xl md:text-7xl font-display font-bold text-[var(--foreground)] mb-6 leading-[1.1] tracking-tight">
                 Your entire store <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">
                   in your pocket.
                 </span>
               </h1>
-              <p className="text-xl text-slate-500 leading-relaxed mb-10 max-w-lg">
+              <p className="text-xl text-[var(--muted)] leading-relaxed mb-10 max-w-lg">
                 Manage orders, create AI listings, and get paid instantly. The OS for social commerce is here.
               </p>
 
               {intentPath && (
-                <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 mb-6">
+                <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-[var(--radius-xl)] px-4 py-3 mb-6">
                   After you install the app, open it to continue to the page you were viewing.
                 </p>
               )}
 
-              <div className="bg-white p-2 rounded-[2rem] border border-slate-200 shadow-xl shadow-slate-200/50 inline-block w-full max-w-md">
+              <Card className="p-2 rounded-[2rem] w-full max-w-md inline-block">
                 {os === 'desktop' && (
                   <div className="flex gap-6 p-4 items-center">
-                    <div className="bg-slate-900 p-3 rounded-2xl shrink-0">
+                    <div className="bg-[var(--charcoal)] p-3 rounded-[var(--radius-2xl)] shrink-0">
                       <img
                         src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https%3A%2F%2Fstorelink.ng%2Fdownload&color=ffffff&bgcolor=0f172a"
                         alt="Scan to get the app"
@@ -98,25 +92,25 @@ export default function DownloadContent() {
                       />
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-900 text-lg mb-1">Get the app</h3>
-                      <p className="text-sm text-slate-500 mb-3 leading-snug">
+                      <h3 className="font-bold text-[var(--foreground)] text-lg mb-1">Get the app</h3>
+                      <p className="text-sm text-[var(--muted)] mb-3 leading-snug">
                         Scan with your phone or use the links below to download StoreLink on iOS or Android.
                       </p>
                       {HAS_APP_LINKS ? (
                         <div className="flex flex-col gap-2 mt-2">
                           {APP_STORE_URL && (
-                            <a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition-colors">
+                            <Button href={APP_STORE_URL} variant="secondary" size="md" className="w-full justify-center" target="_blank" rel="noopener noreferrer">
                               <Apple size={18} /> App Store
-                            </a>
+                            </Button>
                           )}
                           {PLAY_STORE_URL && (
-                            <a href={PLAY_STORE_URL} target="_blank" rel="noopener noreferrer" className="inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl bg-slate-900 text-white font-bold text-sm hover:bg-slate-800 transition-colors">
+                            <Button href={PLAY_STORE_URL} variant="secondary" size="md" className="w-full justify-center" target="_blank" rel="noopener noreferrer">
                               <PlayStoreLogo /> Google Play
-                            </a>
+                            </Button>
                           )}
                         </div>
                       ) : (
-                        <p className="text-sm text-slate-500 mt-1">Available on App Store and Google Play.</p>
+                        <p className="text-sm text-[var(--muted)] mt-1">Available on App Store and Google Play.</p>
                       )}
                     </div>
                   </div>
@@ -127,28 +121,28 @@ export default function DownloadContent() {
                     {HAS_APP_LINKS ? (
                       <div className="flex flex-col gap-3">
                         {os === 'ios' && APP_STORE_URL && (
-                          <a href={APP_STORE_URL} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 shadow-lg shadow-slate-900/20 active:scale-95 transition-transform" target="_blank" rel="noopener noreferrer">
+                          <Button href={APP_STORE_URL} variant="secondary" size="lg" className="w-full justify-center gap-3" target="_blank" rel="noopener noreferrer">
                             <AppleLogo /> Get on App Store
-                          </a>
+                          </Button>
                         )}
                         {os === 'android' && PLAY_STORE_URL && (
-                          <a href={PLAY_STORE_URL} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-3 shadow-lg shadow-slate-900/20 active:scale-95 transition-transform" target="_blank" rel="noopener noreferrer">
+                          <Button href={PLAY_STORE_URL} variant="secondary" size="lg" className="w-full justify-center gap-3" target="_blank" rel="noopener noreferrer">
                             <PlayStoreLogo /> Get on Google Play
-                          </a>
+                          </Button>
                         )}
                         {((os === 'ios' && !APP_STORE_URL) || (os === 'android' && !PLAY_STORE_URL)) && (
-                          <p className="text-center text-sm text-slate-500">Use a computer to scan the QR code at storelink.ng/download, or open this page on the other device.</p>
+                          <p className="text-center text-sm text-[var(--muted)]">Use a computer to scan the QR code at storelink.ng/download, or open this page on the other device.</p>
                         )}
                       </div>
                     ) : (
                       <div className="text-center py-2">
-                        <p className="text-slate-600 font-medium mb-1">Get the app</p>
-                        <p className="text-sm text-slate-500">Open storelink.ng/download on a computer and scan the QR code, or download from the App Store or Google Play.</p>
+                        <p className="text-[var(--foreground)] font-medium mb-1">Get the app</p>
+                        <p className="text-sm text-[var(--muted)]">Open storelink.ng/download on a computer and scan the QR code, or download from the App Store or Google Play.</p>
                       </div>
                     )}
                   </div>
                 )}
-              </div>
+              </Card>
 
               <div className="mt-8 flex items-center gap-3 text-sm text-slate-500 font-medium">
                 <div className="flex -space-x-2">
@@ -275,36 +269,34 @@ export default function DownloadContent() {
         </div>
       </section>
 
-      <section className="py-24 md:py-32 border-t border-slate-200/50 section-bg-light-mesh relative overflow-hidden">
-        <div className="section-grid-subtle" aria-hidden />
-        <div className="section-band-emerald" aria-hidden />
-        <div className="section-orb-emerald section-orb-emerald-tl" style={{ top: '50%', left: '-15%' }} />
-        <div className="section-orb-violet section-orb-violet-tr" style={{ top: '20%', right: '-10%' }} />
+      <section className="section-light py-24 md:py-32 border-t border-[var(--border)] relative overflow-hidden">
+        <div className="section-orb section-orb-emerald section-orb-bl" aria-hidden />
+        <div className="section-orb section-orb-violet section-orb-tr" aria-hidden />
         <div className="max-w-5xl mx-auto px-6 relative z-10">
-          <h2 className="text-2xl md:text-3xl font-display font-bold text-slate-900 text-center mb-12">
+          <h2 className="text-2xl md:text-3xl font-display font-bold text-[var(--foreground)] text-center mb-12">
             One app. <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">Everything you need.</span>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
             <div className="flex flex-col items-center text-center">
-              <div className="w-14 h-14 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-4 text-emerald-600">
+              <div className="w-14 h-14 rounded-[var(--radius-2xl)] bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-4 text-emerald-600">
                 <ShieldCheck size={26} strokeWidth={2} />
               </div>
-              <h3 className="font-bold text-slate-900 mb-2">Escrow protection</h3>
-              <p className="text-sm text-slate-500">Pay safely. Funds released only when you confirm delivery.</p>
+              <h3 className="font-bold text-[var(--foreground)] mb-2">Escrow protection</h3>
+              <p className="text-sm text-[var(--muted)]">Pay safely. Funds released only when you confirm delivery.</p>
             </div>
             <div className="flex flex-col items-center text-center">
-              <div className="w-14 h-14 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center mb-4 text-purple-600">
+              <div className="w-14 h-14 rounded-[var(--radius-2xl)] bg-purple-50 border border-purple-100 flex items-center justify-center mb-4 text-purple-600">
                 <Sparkles size={26} strokeWidth={2} />
               </div>
-              <h3 className="font-bold text-slate-900 mb-2">AI listings</h3>
-              <p className="text-sm text-slate-500">Remove backgrounds and write captions in one tap.</p>
+              <h3 className="font-bold text-[var(--foreground)] mb-2">AI listings</h3>
+              <p className="text-sm text-[var(--muted)]">Remove backgrounds and write captions in one tap.</p>
             </div>
             <div className="flex flex-col items-center text-center">
-              <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center mb-4 text-amber-600">
+              <div className="w-14 h-14 rounded-[var(--radius-2xl)] bg-amber-50 border border-amber-100 flex items-center justify-center mb-4 text-amber-600">
                 <Zap size={26} strokeWidth={2} />
               </div>
-              <h3 className="font-bold text-slate-900 mb-2">Instant payouts</h3>
-              <p className="text-sm text-slate-500">Get paid the moment the buyer accepts the order.</p>
+              <h3 className="font-bold text-[var(--foreground)] mb-2">Instant payouts</h3>
+              <p className="text-sm text-[var(--muted)]">Get paid the moment the buyer accepts the order.</p>
             </div>
           </div>
         </div>

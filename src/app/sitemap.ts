@@ -74,11 +74,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     url: `${BASE_URL}/p/${product.slug}`,
     lastModified: new Date(product.updated_at || new Date()),
     changeFrequency: 'weekly' as const,
-    priority: 0.7, // Products are specific, but critical for long-tail search
+    priority: 0.7,
   }));
 
   // ---------------------------------------------------------
-  // 4. COMBINE AND RETURN
+  // 4. DYNAMIC ROUTES: REELS (short_code URLs)
   // ---------------------------------------------------------
-  return [...staticMap, ...profileMap, ...productMap];
+  const { data: reels } = await supabase
+    .from('reels')
+    .select('short_code, updated_at')
+    .not('short_code', 'is', null)
+    .limit(2000);
+
+  const reelMap = (reels || []).map((reel: { short_code: string; updated_at: string | null }) => ({
+    url: `${BASE_URL}/r/${reel.short_code}`,
+    lastModified: new Date(reel.updated_at || new Date()),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }));
+
+  // ---------------------------------------------------------
+  // 5. COMBINE AND RETURN
+  // ---------------------------------------------------------
+  return [...staticMap, ...profileMap, ...productMap, ...reelMap];
 }

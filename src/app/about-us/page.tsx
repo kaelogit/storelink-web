@@ -4,6 +4,9 @@ import { motion } from 'framer-motion';
 import { Quote, TrendingUp, ShieldCheck, Users, Heart, MapPin, Linkedin } from 'lucide-react';
 import Footer from '../../components/home/Footer';
 import Image from 'next/image';
+import Section from '../../components/ui/Section';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
 
 // 📊 MOCK STATS
 const STATS = [
@@ -25,30 +28,25 @@ const EMPLOYEES = [
 
 export default function AboutPage() {
   return (
-    <main className="bg-white min-h-screen font-sans selection:bg-emerald-100">
-
-      {/* 📜 HERO: The Origin */}
-      <section className="pt-40 pb-20 px-6 relative overflow-hidden bg-slate-50">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.05]" />
-        
-        <div className="max-w-4xl mx-auto text-center relative z-10">
-          <motion.h1 
+    <main className="min-h-screen font-sans bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
+      <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-20" container>
+        <div className="max-w-4xl mx-auto text-center">
+          <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-5xl md:text-7xl font-display font-bold text-slate-900 mb-8 tracking-tight leading-[1.1]"
+            className="text-5xl md:text-7xl font-display font-bold text-[var(--foreground)] mb-8 tracking-tight leading-[1.1]"
           >
             We didn't just build an app. <br/>
             We fixed <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">Trust.</span>
           </motion.h1>
-          <p className="text-xl text-slate-500 leading-relaxed font-medium mb-10 max-w-2xl mx-auto">
+          <p className="text-xl text-[var(--muted)] leading-relaxed font-medium mb-10 max-w-2xl mx-auto">
             StoreLink began in Lagos, born from the frustration of "DM for price" and the fear of "What I Ordered vs What I Got."
           </p>
         </div>
-      </section>
+      </Section>
 
-      {/* 🏙️ ACT 1: THE CHAOS */}
-      <section className="py-24 px-6 bg-white">
-         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+      <section className="section-card py-24 px-6">
+         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
             <div className="relative h-[500px] rounded-[3rem] overflow-hidden group border border-slate-100 shadow-2xl">
                {/* ⚠️ Ensure you have a generic market image for this fallback or use a placeholder */}
                <Image 
@@ -68,37 +66,34 @@ export default function AboutPage() {
                <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-red-600 mb-6">
                   <Quote size={20} className="rotate-180" />
                </div>
-               <h2 className="text-4xl font-display font-bold text-slate-900 mb-6">Commerce was broken.</h2>
-               <p className="text-lg text-slate-500 leading-relaxed mb-6">
+               <h2 className="text-4xl font-display font-bold text-[var(--foreground)] mb-6">Commerce was broken.</h2>
+               <p className="text-lg text-[var(--muted)] leading-relaxed mb-6">
                   We saw talented vendors spending 6 hours a day replying to "Is this available?" instead of creating. We saw buyers scared to transfer money to strangers. 
                </p>
-               <p className="text-lg text-slate-500 leading-relaxed font-medium">
+               <p className="text-lg text-[var(--muted)] leading-relaxed font-medium">
                   A transaction that should have taken seconds was taking days. The trust gap was killing the economy.
                </p>
             </div>
          </div>
       </section>
 
-      {/* 📊 OUR IMPACT */}
-      <section className="py-20 px-6 bg-slate-50 border-y border-slate-100">
-        <div className="max-w-6xl mx-auto">
+      <Section variant="light" padding="default" className="border-y border-[var(--border)]">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                 {STATS.map((stat, i) => (
                     <div key={i}>
-                        <p className="text-4xl md:text-5xl font-black text-slate-900 mb-2 tracking-tight">{stat.value}</p>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{stat.label}</p>
+                        <p className="text-4xl md:text-5xl font-black text-[var(--foreground)] mb-2 tracking-tight">{stat.value}</p>
+                        <p className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest">{stat.label}</p>
                     </div>
                 ))}
             </div>
         </div>
-      </section>
+      </Section>
 
-      {/* 🌉 ACT 2: THE BRIDGE */}
-      <section className="py-24 px-6 bg-slate-900 text-white relative overflow-hidden">
-         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-900/20 rounded-full blur-[120px] pointer-events-none" />
-         
-         <div className="max-w-6xl mx-auto text-center relative z-10">
-            <h2 className="text-4xl md:text-5xl font-display font-bold mb-16">The Operating System for <br/> Social Commerce.</h2>
+      <section className="section-dark py-24 px-6 relative overflow-hidden" aria-labelledby="about-values-heading">
+         <div className="section-spotlight-emerald" aria-hidden />
+         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <h2 id="about-values-heading" className="text-4xl md:text-5xl font-display font-bold mb-16 text-white">The Operating System for <br/> Social Commerce.</h2>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-left">
                <ValueCard 
@@ -120,12 +115,11 @@ export default function AboutPage() {
          </div>
       </section>
 
-      {/* 👑 THE LEADERSHIP */}
-      <section className="py-24 px-6 bg-white">
-         <div className="max-w-6xl mx-auto">
+      <section className="section-card py-24 px-6">
+         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-20">
-                <h2 className="text-4xl font-display font-bold text-slate-900">The Leadership</h2>
-                <p className="text-slate-500 mt-4 text-lg">Architecting the future of African commerce.</p>
+                <h2 className="text-4xl font-display font-bold text-[var(--foreground)]">The Leadership</h2>
+                <p className="text-[var(--muted)] mt-4 text-lg">Architecting the future of African commerce.</p>
             </div>
 
             <div className="space-y-24">
@@ -146,10 +140,10 @@ export default function AboutPage() {
                     </div>
                     
                     <div className="w-full lg:w-2/3">
-                        <h3 className="text-3xl font-bold text-slate-900 mb-1">Abdulkareem Abdulkareem</h3>
+                        <h3 className="text-3xl font-bold text-[var(--foreground)] mb-1">Abdulkareem Abdulkareem</h3>
                         <p className="text-emerald-600 font-bold uppercase tracking-widest text-sm mb-8">Founder & CTO</p>
                         
-                        <div className="prose prose-slate prose-lg text-slate-500 leading-relaxed space-y-6">
+                        <div className="prose prose-slate prose-lg text-[var(--muted)] leading-relaxed space-y-6">
                             <p>
                                 Abdulkareem is engineering the <strong>Nervous System</strong> for the next generation of social commerce. Sitting at the intersection of high-fidelity product design and sovereign financial infrastructure, he architected StoreLink to solve the critical fragmentation of the African digital marketplace.
                             </p>
@@ -165,10 +159,9 @@ export default function AboutPage() {
                         </div>
                         
                         <div className="flex gap-4 mt-8">
-                            <SocialButton 
-                                icon={Linkedin} 
-                                href="https://www.linkedin.com/in/abdulkareem-abdulkareem-77747a319"
-                            />
+                            <Button href="https://www.linkedin.com/in/abdulkareem-abdulkareem-77747a319" variant="ghost" size="sm" className="!p-0 !h-10 !w-10 rounded-full" target="_blank" rel="noopener noreferrer">
+                                <Linkedin size={18} />
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -189,10 +182,10 @@ export default function AboutPage() {
                     </div>
                     
                     <div className="w-full lg:w-2/3 text-left lg:text-right">
-                        <h3 className="text-3xl font-bold text-slate-900 mb-1">Shedrach Maisamari</h3>
+                        <h3 className="text-3xl font-bold text-[var(--foreground)] mb-1">Shedrach Maisamari</h3>
                         <p className="text-blue-600 font-bold uppercase tracking-widest text-sm mb-8">Co-Founder & CMO</p>
                         
-                        <div className="prose prose-slate prose-lg text-slate-500 leading-relaxed space-y-6">
+                        <div className="prose prose-slate prose-lg text-[var(--muted)] leading-relaxed space-y-6">
                             <p>
                                 Shedrach brings an ardent expertise in Learning and Development (L&D) to the heart of StoreLink. With experience training over <strong>8,000 professionals</strong> across Africa, he champions the human side of our technology.
                             </p>
@@ -205,10 +198,9 @@ export default function AboutPage() {
                         </div>
 
                         <div className="flex gap-4 mt-8 justify-start lg:justify-end">
-                            <SocialButton 
-                                icon={Linkedin} 
-                                href="https://www.linkedin.com/in/shedrach-maisamari-b125b3176/"
-                            />
+                            <Button href="https://www.linkedin.com/in/shedrach-maisamari-b125b3176/" variant="ghost" size="sm" className="!p-0 !h-10 !w-10 rounded-full" target="_blank" rel="noopener noreferrer">
+                                <Linkedin size={18} />
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -217,36 +209,34 @@ export default function AboutPage() {
          </div>
       </section>
 
-      {/* 🤝 THE SQUAD (Employees) */}
-      <section className="py-24 px-6 bg-slate-50 border-t border-slate-100">
-         <div className="max-w-6xl mx-auto">
+      <Section variant="light" padding="default" className="border-t border-[var(--border)]">
+         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-                <h2 className="text-3xl font-bold text-slate-900">The Squad</h2>
-                <p className="text-slate-500 mt-2">The brilliant minds powering the engine.</p>
+                <h2 className="text-3xl font-bold text-[var(--foreground)]">The Squad</h2>
+                <p className="text-[var(--muted)] mt-2">The brilliant minds powering the engine.</p>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
                 {EMPLOYEES.map((member, i) => (
-                    <div key={i} className="group bg-white p-4 rounded-2xl border border-slate-100 text-center hover:shadow-lg transition-all">
+                    <Card key={i} padding="compact" className="group text-center hover:shadow-lg transition-all duration-[var(--duration-150)]">
                         <div className="relative w-20 h-20 mx-auto rounded-full overflow-hidden mb-4 bg-slate-100">
                             <Image src={member.img} alt={member.name} fill className="object-cover grayscale group-hover:grayscale-0 transition-all" />
                         </div>
-                        <h4 className="font-bold text-slate-900 text-sm mb-1">{member.name}</h4>
-                        <p className="text-xs text-slate-400 font-medium uppercase tracking-wide">{member.role}</p>
-                    </div>
+                        <h4 className="font-bold text-[var(--foreground)] text-sm mb-1">{member.name}</h4>
+                        <p className="text-xs text-[var(--muted)] font-medium uppercase tracking-wide">{member.role}</p>
+                    </Card>
                 ))}
             </div>
          </div>
-      </section>
+      </Section>
 
-      {/* 🚀 ACT 3: THE VISION */}
-      <section className="py-24 px-6 bg-emerald-50">
+      <Section variant="light" padding="default" className="bg-emerald-50/50">
          <div className="max-w-4xl mx-auto text-center">
-            <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center text-emerald-600 mx-auto mb-8">
+            <div className="w-16 h-16 bg-emerald-100 rounded-[var(--radius-2xl)] flex items-center justify-center text-emerald-600 mx-auto mb-8">
                <Heart size={32} fill="currentColor" />
             </div>
-            <h2 className="text-4xl font-bold text-slate-900 mb-6">The "Everyone" Store.</h2>
-            <p className="text-xl text-slate-600 leading-relaxed mb-10">
+            <h2 className="text-4xl font-bold text-[var(--foreground)] mb-6">The "Everyone" Store.</h2>
+            <p className="text-xl text-[var(--muted)] leading-relaxed mb-10">
                We are not trying to be Amazon. We don't want a massive warehouse. 
                We want to empower the vintage curator in Yaba, the sneakerhead in Abuja, and the skincare expert in Port Harcourt.
             </p>
@@ -254,7 +244,7 @@ export default function AboutPage() {
                StoreLink is where Culture meets Commerce.
             </p>
          </div>
-      </section>
+      </Section>
 
       <Footer />
     </main>
@@ -263,27 +253,14 @@ export default function AboutPage() {
 
 // 🧩 Helper Components
 
-function ValueCard({ icon, title, desc }: any) {
+function ValueCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
    return (
-      <div className="p-8 rounded-[2rem] bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-         <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center mb-6">
+      <div className="p-8 rounded-[var(--radius-2xl)] bg-white/5 border border-white/10 hover:bg-white/10 transition-colors duration-[var(--duration-150)]">
+         <div className="w-12 h-12 rounded-[var(--radius-xl)] bg-white/5 flex items-center justify-center mb-6">
             {icon}
          </div>
          <h3 className="text-xl font-bold mb-3 text-white">{title}</h3>
          <p className="text-slate-400 leading-relaxed">{desc}</p>
       </div>
    )
-}
-
-function SocialButton({ icon: Icon, href }: any) {
-    return (
-        <a 
-            href={href} 
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-900 hover:text-white transition-colors"
-        >
-            <Icon size={18} />
-        </a>
-    )
 }

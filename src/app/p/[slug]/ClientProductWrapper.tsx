@@ -1,15 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import Image from 'next/image'; // 1. Next.js Image Component
+import Image from 'next/image';
 import Link from 'next/link';
-import { 
-  ChevronLeft, Share2, ShieldCheck, 
-  MessageCircle, ShoppingBag, MapPin, 
-  Gem, CheckCircle, Info, Smartphone,
+import {
+  ChevronLeft, Share2, ShieldCheck,
+  MessageCircle, ShoppingBag, Gem, CheckCircle, Info,
   Image as ImageIcon
 } from 'lucide-react';
 import AppTrapModal from '../../../components/ui/DownloadTrap';
+import Button from '../../../components/ui/Button';
 // Helper
 const formatPrice = (amount: number, currency: string) => {
   return new Intl.NumberFormat('en-NG', {
@@ -34,9 +34,8 @@ export default function ClientProductWrapper({ product, seller }: any) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 pt-24 pb-10">
-      
-      <div className="max-w-md mx-auto bg-white min-h-[90vh] shadow-2xl rounded-3xl overflow-hidden relative flex flex-col border border-slate-100 pb-24">
+    <div className="min-h-screen bg-[var(--background)] pt-24 pb-10">
+      <div className="max-w-md mx-auto bg-[var(--card)] min-h-[90vh] shadow-2xl rounded-[var(--radius-3xl)] overflow-hidden relative flex flex-col border border-[var(--border)] pb-24">
         
         {/* 1. NAV BAR (Floating Transparent) */}
         <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between p-4 pt-4">
@@ -49,7 +48,7 @@ export default function ClientProductWrapper({ product, seller }: any) {
         </div>
 
         {/* 2. IMAGE CAROUSEL (Snap Scroll) */}
-        <div className="relative aspect-[4/5] bg-slate-200">
+        <div className="relative aspect-[4/5] bg-[var(--surface)]">
            {/* Scroll Container */}
            <div 
              className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide"
@@ -70,7 +69,7 @@ export default function ClientProductWrapper({ product, seller }: any) {
                    />
                 </div>
              )) : (
-                <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400">
+                <div className="w-full h-full flex items-center justify-center bg-[var(--surface)] text-[var(--muted)]">
                    {/* 3. ✅ USE THE ALIAS HERE */}
                    <ImageIcon size={40} />
                 </div>
@@ -97,7 +96,7 @@ export default function ClientProductWrapper({ product, seller }: any) {
            
            {/* Price & Title */}
            <div className="mb-6">
-              <h1 className="text-xl font-black text-slate-900 leading-snug mb-2">
+              <h1 className="text-xl font-black text-[var(--foreground)] leading-snug mb-2">
                 {product.name}
               </h1>
               <p className="text-2xl font-black text-emerald-600 tracking-tight">
@@ -105,10 +104,9 @@ export default function ClientProductWrapper({ product, seller }: any) {
               </p>
            </div>
 
-           {/* Seller Mini-Profile */}
-           <Link href={`/${seller.slug}`} className="flex items-center gap-3 p-3 bg-slate-50 rounded-2xl mb-6 active:bg-slate-100 transition-colors">
+           <Link href={`/${seller.slug}`} className="flex items-center gap-3 p-3 bg-[var(--surface)] rounded-[var(--radius-2xl)] mb-6 active:bg-[var(--border)] transition-colors duration-[var(--duration-150)]">
               <div className="relative">
-                 <div className="w-12 h-12 rounded-full bg-slate-200 overflow-hidden border border-slate-200">
+                 <div className="w-12 h-12 rounded-full bg-[var(--border)] overflow-hidden border border-[var(--border)]">
                     <Image src={sellerAvatar} alt={seller.display_name} fill className="object-cover" />
                  </div>
                  {seller.is_verified && (
@@ -119,26 +117,24 @@ export default function ClientProductWrapper({ product, seller }: any) {
               </div>
               <div className="flex-1">
                  <div className="flex items-center gap-1.5">
-                    <p className="text-sm font-bold text-slate-900">{seller.display_name}</p>
+                    <p className="text-sm font-bold text-[var(--foreground)]">{seller.display_name}</p>
                     {seller.subscription_plan === 'diamond' && <Gem size={12} className="text-purple-500" fill="currentColor" />}
                  </div>
-                 <p className="text-xs text-slate-500 font-medium">@{seller.slug}</p>
+                 <p className="text-xs text-[var(--muted)] font-medium">@{seller.slug}</p>
               </div>
-              <ChevronLeft size={16} className="text-slate-400 rotate-180" />
+              <ChevronLeft size={16} className="text-[var(--muted)] rotate-180" />
            </Link>
 
-           {/* Description */}
            <div className="mb-8">
-              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-widest mb-3 flex items-center gap-2">
+              <h3 className="text-xs font-bold text-[var(--foreground)] uppercase tracking-widest mb-3 flex items-center gap-2">
                  <Info size={14} /> Description
               </h3>
-              <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+              <p className="text-sm text-[var(--muted)] leading-relaxed whitespace-pre-wrap">
                  {product.description || "No description provided."}
               </p>
            </div>
 
-           {/* Safety Badge */}
-           <div className="flex items-start gap-3 p-4 bg-blue-50/50 rounded-2xl border border-blue-100">
+           <div className="flex items-start gap-3 p-4 bg-blue-50/50 rounded-[var(--radius-2xl)] border border-blue-100">
               <ShieldCheck size={20} className="text-blue-600 mt-0.5" />
               <div>
                  <p className="text-xs font-bold text-blue-900 mb-1">Funds Secured</p>
@@ -150,31 +146,21 @@ export default function ClientProductWrapper({ product, seller }: any) {
 
         </div>
 
-        {/* Open in app: deep link if installed; otherwise download with intent */}
-           <a href={`storelink://p/${product.slug}`} className="flex items-center justify-center gap-2 py-3 text-sm font-bold text-emerald-600 hover:text-emerald-700">
-             <Smartphone size={16} />
+        <a href={`storelink://p/${product.slug}`} className="flex items-center justify-center gap-2 py-3 text-sm font-bold text-emerald-600 hover:text-emerald-700">
              Open in app
            </a>
-           <Link href={`/download?intent=${encodeURIComponent(`/p/${product.slug}`)}`} className="flex items-center justify-center gap-2 py-2 text-xs font-medium text-slate-500 hover:text-slate-700">
+           <Button href={`/download?intent=${encodeURIComponent(`/p/${product.slug}`)}`} variant="ghost" size="sm" className="text-[var(--muted)] font-medium">
              Don&apos;t have the app? Get it here
-           </Link>
+           </Button>
 
-        {/* 4. STICKY ACTION BAR (The Trap) */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-slate-100 flex gap-3 z-30">
-           <button 
-             onClick={() => handleTrap('chat')}
-             className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-900 active:scale-95 transition-transform"
-           >
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-[var(--card)] border-t border-[var(--border)] flex gap-3 z-30">
+           <Button onClick={() => handleTrap('chat')} variant="outline" size="lg" className="w-14 !p-0 justify-center rounded-[var(--radius-2xl)]">
               <MessageCircle size={24} strokeWidth={2} />
-           </button>
-           
-           <button 
-             onClick={() => handleTrap('buy')}
-             className="flex-1 h-14 rounded-2xl bg-slate-900 flex items-center justify-center gap-2 active:scale-95 transition-transform shadow-xl shadow-slate-900/20"
-           >
-              <ShoppingBag size={20} className="text-white" strokeWidth={2.5} />
-              <span className="text-white font-bold text-sm tracking-wide">BUY NOW</span>
-           </button>
+           </Button>
+           <Button onClick={() => handleTrap('buy')} variant="secondary" size="lg" className="flex-1 justify-center gap-2 rounded-[var(--radius-2xl)]">
+              <ShoppingBag size={20} strokeWidth={2.5} />
+              <span className="font-bold text-sm tracking-wide">BUY NOW</span>
+           </Button>
         </div>
 
       </div>

@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, Sparkles, ShieldCheck, Gem } from 'lucide-react';
-import Link from 'next/link';
+import { Check, Sparkles, ShieldCheck, Gem } from 'lucide-react';
 import Footer from '../../components/home/Footer';
+import Section from '../../components/ui/Section';
+import Button from '../../components/ui/Button';
 
 // 💰 CONFIGURATION (Matching Mobile Logic)
 const BASE_PRICES = { 
@@ -44,13 +45,9 @@ export default function PricingPage() {
   };
 
   return (
-    <main className="bg-slate-50 min-h-screen font-sans selection:bg-emerald-100">
-      
-      {/* 🟢 HEADER SECTION */}
-      <section className="pt-40 pb-16 px-6 text-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03]" />
-        
-        <div className="relative z-10 max-w-4xl mx-auto">
+    <main className="min-h-screen font-sans selection:bg-emerald-100">
+      <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-16">
+        <div className="text-center max-w-4xl mx-auto">
           <motion.div
              initial={{ opacity: 0, y: 20 }}
              animate={{ opacity: 1, y: 0 }}
@@ -74,8 +71,7 @@ export default function PricingPage() {
           {/* 🎛️ CONTROLS */}
           <div className="mt-12 flex flex-col items-center gap-8">
             
-            {/* 1. Role Switcher */}
-            <div className="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm flex relative">
+            <div className="bg-[var(--card)] p-1.5 rounded-[var(--radius-2xl)] border border-[var(--border)] shadow-sm flex relative">
                <button 
                  onClick={() => { setRole('seller'); setSelectedMonths(1); }}
                  className={`relative z-10 px-8 py-3 rounded-xl text-sm font-black uppercase tracking-wide transition-all ${role === 'seller' ? 'text-white' : 'text-slate-500 hover:text-slate-900'}`}
@@ -129,9 +125,8 @@ export default function PricingPage() {
 
           </div>
         </div>
-      </section>
+      </Section>
 
-      {/* 📦 PRICING CARDS */}
       <section className="px-6 pb-32">
         <div className="max-w-6xl mx-auto">
           
@@ -351,18 +346,16 @@ function PricingCard({ title, desc, price, subPrice, features, cta, href, featur
         ))}
       </div>
 
-      <Link 
+      <Button
         href={href}
-        className={`w-full py-4 rounded-2xl font-bold text-sm text-center transition-all ${
-          diamond 
-            ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/30' 
-            : featured 
-              ? 'bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20'
-              : 'bg-slate-100 hover:bg-slate-200 text-slate-900'
-        }`}
+        size="lg"
+        variant={diamond ? 'primary' : featured ? 'secondary' : 'outline'}
+        className={`w-full ${
+          diamond ? '!bg-purple-600 hover:!bg-purple-500 shadow-lg shadow-purple-600/30' : ''
+        } ${featured ? '!bg-[var(--charcoal)]' : ''}`}
       >
         {cta}
-      </Link>
+      </Button>
     </div>
   );
 }

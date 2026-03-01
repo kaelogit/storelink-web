@@ -1,22 +1,26 @@
 import { createServerClient } from '@/lib/supabase';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import ClientProfileWrapper from './ClientProfileWrapper';
 import { Metadata } from 'next';
 
-function normalizeSlug(username: string): string {
-  return username.startsWith('@') ? username.slice(1) : username;
+/** Normalize profile path: strip @, trim, lowercase for consistent lookup. */
+export function normalizeUsername(username: string): string {
+  const raw = typeof username === 'string' ? username : '';
+  const withoutAt = raw.startsWith('@') ? raw.slice(1) : raw;
+  return withoutAt.trim().toLowerCase() || '';
 }
 
 // --- 1. DYNAMIC SEO GENERATOR ---
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
   const { username } = await params;
-  const slug = normalizeSlug(username);
+  const slug = normalizeUsername(username);
+  if (!slug) return { title: 'User Not Found' };
   const supabase = createServerClient();
 
   const { data: profile } = await supabase
     .from('profiles')
     .select('display_name, bio, logo_url, slug')
-    .eq('slug', slug)
+    .ilike('slug', slug)
     .single();
 
   if (!profile) {
@@ -68,16 +72,23 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
   };
 }
 
+const RESERVED_SLUGS = new Set([
+  'favicon.ico', 'p', 'api', '_next', 'r', 'explore', 'download', 'admin',
+  'about-us', 'blog', 'careers', 'contact', 'community', 'help-center', 'press',
+  'pricing', 'privacy', 'safety', 'terms', 'shop', 'tools',
+  'opengraph-image', 'sitemap.xml', 'robots.txt',
+]);
+
 // --- 2. DATA FETCHING ---
 async function getProfileData(username: string) {
-  const slug = normalizeSlug(username);
-  if (['favicon.ico', 'p', 'api', '_next', 'r', 'explore', 'download', 'admin'].includes(slug)) return null;
+  const slug = normalizeUsername(username);
+  if (!slug || RESERVED_SLUGS.has(slug)) return null;
 
   const supabase = createServerClient();
   const { data: profile } = await supabase
     .from('profiles')
     .select('*')
-    .eq('slug', slug)
+    .ilike('slug', slug)
     .single();
 
   if (!profile) return null;
@@ -99,6 +110,13 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   const data = await getProfileData(resolvedParams.username);
 
   if (!data) return notFound();
+
+  // Redirect to canonical URL when path differs (e.g. /kaelo vs stored /Kaelo)
+  const requested = (resolvedParams.username || '').replace(/^@/, '').trim();
+  const canonical = (data.profile.slug || '').trim();
+  if (canonical && requested !== canonical) {
+    redirect(`/${canonical}`);
+  }
 
   return (
     <ClientProfileWrapper 

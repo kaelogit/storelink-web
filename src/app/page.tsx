@@ -1,27 +1,22 @@
+import dynamic from 'next/dynamic';
 import Hero from '../components/home/Hero';
-import SocialProofStrip from '../components/home/SocialProofStrip';
 import Comparison from '../components/home/Comparison';
 import SellerFeatures from '../components/home/SellerFeatures';
-import TheFeed from '../components/home/TheFeed';
-import HowItWorks from '../components/home/HowItWorks';
-import StoreCoins from '../components/home/StoreCoins';
-import FinalCTA from '../components/home/FinalCTA';
-import FAQ from '../components/home/FAQ';
 import Footer from '../components/home/Footer';
+
+// Below-fold sections: load JS after hero so LCP isn't blocked by Framer/Supabase
+const TheFeed = dynamic(() => import('../components/home/TheFeed'), { ssr: true, loading: () => <section className="section-dark py-40 md:py-48 border-t border-white/5 min-h-[400px]" aria-label="Loading feed"><div className="max-w-7xl mx-auto px-6 flex items-center justify-center"><div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" /></div></section> });
+const HowItWorks = dynamic(() => import('../components/home/HowItWorks'), { ssr: true });
+const StoreCoins = dynamic(() => import('../components/home/StoreCoins'), { ssr: true });
+const FAQ = dynamic(() => import('../components/home/FAQ'), { ssr: true });
+const FinalCTA = dynamic(() => import('../components/home/FinalCTA'), { ssr: true });
 
 export default function Home() {
   return (
-    <main className="min-h-screen relative overflow-hidden">
-      {/* Base layer: warm gradient mesh so every section sits on depth */}
-      <div className="fixed inset-0 -z-20 bg-[linear-gradient(165deg,#f8fafc_0%,#ffffff_35%,#f0fdf4_70%,#faf5ff_100%)]" />
-      <div className="fixed inset-0 -z-20 bg-[radial-gradient(ellipse_90%_70%_at_50%_-10%,rgba(16,185,129,0.14),transparent_55%)]" />
-      <div className="fixed inset-0 -z-20 bg-[radial-gradient(ellipse_70%_90%_at_85%_60%,rgba(139,92,246,0.08),transparent_50%)]" />
-      <div className="fixed inset-0 -z-20 bg-[radial-gradient(ellipse_60%_60%_at_10%_80%,rgba(16,185,129,0.06),transparent_50%)]" />
-      <div className="bg-noise" />
+    <main className="min-h-screen relative overflow-x-hidden">
       <Hero />
-      <SocialProofStrip />
       <Comparison />
-      <SellerFeatures /> 
+      <SellerFeatures />
       <TheFeed />
       <HowItWorks />
       <StoreCoins />

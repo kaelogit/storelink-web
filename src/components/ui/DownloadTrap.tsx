@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Smartphone, Apple, Play } from 'lucide-react';
 import Link from 'next/link';
+import Button from '@/components/ui/Button';
 
 // Expanded triggers to cover all actions
 export type TrapTrigger = 'buy' | 'view' | 'chat' | 'like' | 'comment' | 'save' | 'explore';
@@ -63,7 +64,7 @@ export default function AppTrapModal({ isOpen, onClose, sellerName, trigger, int
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-[var(--pitch-black)]/60 backdrop-blur-sm"
           />
 
           {/* Modal */}
@@ -72,54 +73,46 @@ export default function AppTrapModal({ isOpen, onClose, sellerName, trigger, int
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-sm bg-white rounded-t-[2.5rem] md:rounded-[2.5rem] p-8 shadow-2xl z-10"
+            className="relative w-full max-w-sm z-10 rounded-t-[var(--radius-3xl)] md:rounded-[var(--radius-3xl)] p-8 shadow-2xl bg-[var(--card)] border border-[var(--border)]"
           >
-             {/* Handle bar for mobile feel */}
-             <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6 md:hidden" />
+             <div className="w-12 h-1.5 rounded-full mx-auto mb-6 md:hidden bg-[var(--border)]" />
 
              <button 
-               onClick={onClose} 
-               className="absolute top-6 right-6 p-2 bg-slate-100 hover:bg-slate-200 rounded-full text-slate-500 transition-colors"
+               onClick={onClose}
+               aria-label="Close"
+               className="absolute top-6 right-6 p-2 rounded-full bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--border)] transition-colors duration-[var(--duration-150)]"
              >
                <X size={20} />
              </button>
 
              <div className="text-center">
-                {/* Icon logic: Flash red if it's a 'buy' or 'explore' trigger */}
-                <div className={`w-20 h-20 rounded-[2rem] flex items-center justify-center mx-auto mb-6 transition-colors ${trigger === 'buy' || trigger === 'explore' ? 'bg-red-100 text-red-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                <div className={`w-20 h-20 rounded-[var(--radius-2xl)] flex items-center justify-center mx-auto mb-6 transition-colors duration-[var(--duration-150)] ${trigger === 'buy' || trigger === 'explore' ? 'bg-red-100 text-red-600' : 'bg-[var(--emerald)]/10 text-[var(--emerald)]'}`}>
                     <Smartphone size={40} strokeWidth={1.5} />
                 </div>
                 
-                <h3 className="text-2xl font-black text-slate-900 mb-3 leading-tight">
+                <h3 className="text-[var(--text-heading)] font-black text-[var(--foreground)] mb-3 leading-tight">
                   {activeContent.title}
                 </h3>
-                <p className="text-slate-500 text-sm mb-10 leading-relaxed font-medium">
+                <p className="text-[var(--muted)] text-[var(--text-body-md)] mb-10 leading-relaxed font-medium">
                   {activeContent.desc}
                 </p>
 
                 <div className="space-y-3">
-                   <Link 
-                     href={downloadHref}
-                     className="w-full py-4 bg-slate-900 hover:bg-black text-white rounded-2xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-slate-200 transition-all active:scale-95"
-                   >
-                     <Apple size={20} className="mb-1" />
+                   <Button href={downloadHref} variant="secondary" size="lg" className="w-full">
+                     <Apple size={20} className="mb-0.5" />
                      Download on App Store
-                   </Link>
-                   
-                   <Link 
-                     href={downloadHref}
-                     className="w-full py-4 bg-white border-2 border-slate-100 hover:border-slate-300 text-slate-900 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all active:scale-95"
-                   >
-                     <div className="w-5 h-5 bg-slate-900 rounded-md flex items-center justify-center">
+                   </Button>
+                   <Button href={downloadHref} variant="outline" size="lg" className="w-full">
+                     <div className="w-5 h-5 rounded-[var(--radius-sm)] bg-[var(--charcoal)] flex items-center justify-center">
                         <Play size={10} className="text-white fill-white ml-0.5" />
                      </div>
                      Get it on Google Play
-                   </Link>
+                   </Button>
                 </div>
 
                 <button 
                   onClick={onClose}
-                  className="mt-6 text-xs font-bold text-slate-400 uppercase tracking-widest hover:text-slate-600 transition-colors"
+                  className="mt-6 text-[var(--text-label)] font-bold text-[var(--muted)] uppercase tracking-widest hover:text-[var(--foreground)] transition-colors duration-[var(--duration-150)]"
                 >
                   Maybe Later
                 </button>

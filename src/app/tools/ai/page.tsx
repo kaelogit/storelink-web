@@ -3,20 +3,17 @@
 import { motion } from 'framer-motion';
 import { Sparkles, Zap, Globe, MessageSquare, Wand2, TrendingUp, DollarSign, ScanFace, HeartHandshake, SlidersHorizontal } from 'lucide-react';
 import Footer from '../../../components/home/Footer';
-import Link from 'next/link';
+import Section from '../../../components/ui/Section';
+import Button from '../../../components/ui/Button';
 
 export default function AIWriterPage() {
   return (
-    <main className="bg-slate-50 min-h-screen font-sans">
+    <main className="min-h-screen font-sans bg-[var(--background)] text-[var(--foreground)]">
+      <section className="section-hero pt-24 md:pt-32 pb-20 relative overflow-hidden text-white" aria-labelledby="ai-hero-heading">
+        <div className="section-glow-violet" style={{ width: '800px', height: '800px', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} aria-hidden />
+        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" aria-hidden />
 
-      {/* 🧠 HERO SECTION */}
-      <section className="pt-40 pb-20 px-6 relative overflow-hidden bg-[#0f0a1e] text-white">
-        {/* Gemini Background Gradients */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-purple-600/20 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-
-        <div className="max-w-5xl mx-auto text-center relative z-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <motion.div
              initial={{ opacity: 0, scale: 0.9 }}
              animate={{ opacity: 1, scale: 1 }}
@@ -26,7 +23,7 @@ export default function AIWriterPage() {
              Powered by Gemini 2.5
           </motion.div>
           
-          <h1 className="text-5xl md:text-7xl font-display font-bold mb-8 tracking-tight leading-[1.1]">
+          <h1 id="ai-hero-heading" className="text-5xl md:text-7xl font-display font-bold mb-8 tracking-tight leading-[1.1]">
             Stop writing. <br/>
             Start <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300">Selling.</span>
           </h1>
@@ -35,15 +32,14 @@ export default function AIWriterPage() {
             It writes SEO-optimized descriptions, viral captions, and professional emails in seconds.
           </p>
 
-          <Link href="/download" className="inline-flex items-center gap-3 bg-white text-purple-950 px-8 py-4 rounded-2xl font-black text-lg hover:scale-105 transition-transform shadow-[0_0_40px_-10px_rgba(168,85,247,0.5)]">
+          <Button href="/download" variant="primary" size="lg" className="!bg-white !text-purple-950 hover:scale-105 gap-3">
             <Wand2 size={20} /> Try It Now
-          </Link>
+          </Button>
         </div>
       </section>
 
-      {/* 🤖 THE DEMO (Live Simulation) */}
-      <section className="py-24 px-6 -mt-20 relative z-20">
-        <div className="max-w-4xl mx-auto bg-slate-900 border border-slate-800 rounded-[3rem] shadow-2xl overflow-hidden">
+      <section className="py-24 px-6 -mt-20 relative z-20 section-light">
+        <div className="max-w-4xl mx-auto bg-[var(--charcoal)] border border-[var(--border)] rounded-[var(--radius-3xl)] shadow-2xl overflow-hidden">
            <div className="grid grid-cols-1 md:grid-cols-2">
               
               {/* Left: Input */}
@@ -117,14 +113,12 @@ export default function AIWriterPage() {
         </div>
       </section>
 
-      {/* 🔮 FUTURE ROADMAP (Coming Soon) */}
-      <section className="py-24 px-6 bg-slate-900 text-white relative overflow-hidden">
-         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5" />
-         
-         <div className="max-w-6xl mx-auto relative z-10">
+      <section className="section-dark py-24 px-6 text-white relative overflow-hidden" aria-labelledby="ai-roadmap-heading">
+         <div className="section-spotlight-violet" aria-hidden />
+         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div className="flex flex-col md:flex-row items-center justify-between mb-16 gap-6">
                 <div>
-                    <h2 className="text-4xl font-display font-bold mb-4">The AI Roadmap.</h2>
+                    <h2 id="ai-roadmap-heading" className="text-4xl font-display font-bold mb-4">The AI Roadmap.</h2>
                     <p className="text-slate-400 text-lg max-w-xl">
                         We are building the smartest commerce engine in Africa. Here is what's coming to your dashboard soon.
                     </p>
@@ -175,14 +169,14 @@ export default function AIWriterPage() {
   );
 }
 
-function FeatureCard({ icon, title, desc }: any) {
+function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
-    <div className="p-8 rounded-[2rem] bg-slate-50 border border-slate-100 hover:bg-white hover:shadow-xl transition-all duration-300 group">
-       <div className="w-14 h-14 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+    <div className="p-8 rounded-[var(--radius-2xl)] bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--card)] hover:shadow-xl transition-all duration-[var(--duration-250)] group">
+       <div className="w-14 h-14 rounded-[var(--radius-2xl)] bg-[var(--card)] shadow-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-[var(--duration-150)]">
           {icon}
        </div>
-       <h3 className="text-xl font-bold text-slate-900 mb-3">{title}</h3>
-       <p className="text-slate-500 leading-relaxed font-medium">{desc}</p>
+       <h3 className="text-xl font-bold text-[var(--foreground)] mb-3">{title}</h3>
+       <p className="text-[var(--muted)] leading-relaxed font-medium">{desc}</p>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import Link from 'next/link';
+import Button from '@/components/ui/Button';
 
 // Custom SVGs for Authenticity
 const AppleLogo = () => (
@@ -18,11 +18,9 @@ const PlayStoreLogo = () => (
 
 export default function FinalCTA() {
   return (
-    <section className="py-40 md:py-56 section-bg-dark-spotlight relative overflow-hidden flex items-center justify-center border-t border-white/5">
+    <section className="section-dark py-40 md:py-56 flex items-center justify-center border-t border-white/5" aria-label="Final call to action">
       <div className="section-spotlight-emerald" aria-hidden />
       <div className="section-spotlight-violet" aria-hidden />
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f2937_1px,transparent_1px),linear-gradient(to_bottom,#1f2937_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-20 pointer-events-none" aria-hidden />
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[128px] pointer-events-none animate-pulse-slow" />
 
       <div className="max-w-5xl mx-auto px-6 relative z-10 text-center">
         
@@ -31,7 +29,7 @@ export default function FinalCTA() {
            whileInView={{ opacity: 1, y: 0 }}
            viewport={{ once: true }}
         >
-            <h2 className="text-5xl md:text-8xl font-display font-bold text-white mb-8 tracking-tight leading-[0.9]">
+            <h2 id="final-cta-heading" className="text-5xl md:text-8xl font-display font-bold text-white mb-8 tracking-tight leading-[0.9]">
               The Mall is <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-200 to-white">
                 Open for Business.
@@ -43,27 +41,34 @@ export default function FinalCTA() {
               Don't just list your products—broadcast them. Join the marketplace where items go viral and selling happens on autopilot.
             </p>
 
-            {/* App Store Buttons */}
             <div className="flex flex-col sm:flex-row items-center gap-5 justify-center">
-              <Link href="/download" className="flex items-center gap-3 bg-white text-black px-8 py-4 rounded-2xl font-bold hover:bg-emerald-50 hover:scale-105 transition-all w-full sm:w-auto justify-center group shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]">
+              <Button
+                href="/download"
+                size="lg"
+                className="w-full sm:w-auto justify-center gap-3 !bg-white !text-black hover:!bg-emerald-50 hover:scale-105 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]"
+              >
                 <AppleLogo />
                 <div className="text-left leading-none">
                   <p className="text-[10px] font-bold uppercase tracking-wider mb-1 text-slate-500 group-hover:text-slate-900">Download on the</p>
                   <p className="text-lg font-black tracking-wide">App Store</p>
                 </div>
-              </Link>
-              
-              <Link href="/download" className="flex items-center gap-3 bg-white/5 border border-white/10 text-white px-8 py-4 rounded-2xl font-bold hover:bg-white/10 hover:border-white/20 hover:scale-105 transition-all w-full sm:w-auto justify-center backdrop-blur-md">
+              </Button>
+              <Button
+                href="/download"
+                variant="outline"
+                size="lg"
+                className="w-full sm:w-auto justify-center gap-3 !bg-white/5 !border-white/10 !text-white hover:!bg-white/10 hover:!border-white/20 hover:scale-105 backdrop-blur-md"
+              >
                 <PlayStoreLogo />
                 <div className="text-left leading-none">
                   <p className="text-[10px] font-bold uppercase tracking-wider mb-1 text-slate-400">Get it on</p>
                   <p className="text-lg font-black tracking-wide">Google Play</p>
                 </div>
-              </Link>
+              </Button>
             </div>
 
             <p className="mt-8 text-sm text-slate-500 font-medium">
-              Trusted by 10,000+ Creators & Vendors
+              Trusted by 50,000+ Creators & Vendors
             </p>
 
         </motion.div>

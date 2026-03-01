@@ -1,61 +1,110 @@
 @import "tailwindcss";
 
 /* =============================================================================
-   STORELINK DESIGN TOKENS
-   - Primary: Emerald (#10b981) — CTAs, success, brand
-   - Accent: Purple (violet) — premium/diamond
-   - Neutrals: Slate — text, borders, surfaces
-   - Radius: 0.5rem base; use rounded-2xl/3xl for cards
-   - Fonts: --font-inter (body), --font-space (display) in layout
+   STORELINK WEB — DESIGN TOKENS (aligned with app: Colors.ts, Typography.ts)
+   Single source of truth for color, type, radius, motion. Use these everywhere.
    ============================================================================= */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* ---- Brand (do not change between themes) ---- */
+    --emerald: #10b981;
+    --emerald-400: #34d399;
+    --emerald-500: #10b981;
+    --emerald-600: #059669;
+    --emerald-900: #064e3b;
+    --emerald-950: #022c22;
 
-    /* Brand: StoreLink Emerald */
-    --emerald-500: 158 64% 52%; 
-    --emerald-900: 166 100% 12%; 
+    --violet: #8b5cf6;
+    --violet-400: #a78bfa;
+    --violet-500: #8b5cf6;
+    --violet-600: #7c3aed;
+    --violet-900: #4c1d95;
+    --violet-950: #2e1065;
 
-    /* Brand: Gemini Purple */
-    --gemini-500: 270 95% 60%;
-    --gemini-900: 270 100% 15%;
-    
-    --radius: 0.5rem;
+    --gold: #f59e0b; /* coins, rewards */
+
+    --charcoal: #111827;
+    --pitch-black: #000000;
+
+    /* ---- Surfaces & text (light default) ---- */
+    --background: #ffffff;
+    --foreground: #111827;
+    --muted: #6b7280;
+    --border: #e5e7eb;
+    --surface: #f9fafb;
+    --card: #ffffff;
+
+    /* ---- Radius scale (no random values) ---- */
+    --radius-sm: 0.375rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
+    --radius-xl: 1rem;
+    --radius-2xl: 1.5rem;
+    --radius-3xl: 2rem;
+
+    /* ---- Motion ---- */
+    --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+    --ease-out-circ: cubic-bezier(0.075, 0.82, 0.165, 1);
+    --duration-150: 150ms;
+    --duration-250: 250ms;
+    --duration-400: 400ms;
+
+    /* ---- Type scale (app Typography.ts) ---- */
+    --text-caption: 0.625rem;      /* 10px */
+    --text-label: 0.6875rem;      /* 11px */
+    --text-body-sm: 0.75rem;      /* 12px */
+    --text-body: 0.8125rem;      /* 13px */
+    --text-body-md: 0.875rem;     /* 14px */
+    --text-body-lg: 0.9375rem;    /* 15px */
+    --text-input: 1rem;          /* 16px */
+    --text-subtitle: 1.125rem;    /* 18px */
+    --text-title: 1.5rem;         /* 24px */
+    --text-heading: 1.75rem;     /* 28px */
+    --text-heading-lg: 2rem;      /* 32px */
+    --text-display: 2.5rem;      /* 40px */
+    --text-display-lg: 3rem;      /* 48px */
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: #000000;
+    --foreground: #ffffff;
+    --muted: #9ca3af;
+    --border: #262626;
+    --surface: #111111;
+    --card: #111111;
   }
-}
 
-@layer base {
-  /* 🛠️ FIX: Use standard CSS instead of @apply to stop the build error */
   * {
-    border-color: #e2e8f0; /* This is the hex code for slate-200 */
+    border-color: var(--border);
   }
-  
+
   html {
     scroll-behavior: smooth;
   }
 
   body {
-    background-color: white;
-    color: #0f172a; /* slate-900 */
+    background-color: var(--background);
+    color: var(--foreground);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* 💎 LUXURY DETAIL: Branded Text Selection */
   ::selection {
-    background-color: #10b981; /* emerald-500 */
+    background-color: var(--emerald);
     color: white;
+  }
+
+  /* Focus ring for a11y (keyboard nav) */
+  :focus-visible {
+    outline: 2px solid var(--emerald);
+    outline-offset: 2px;
   }
 }
 
-/* 🌟 UTILITIES 🌟 */
+/* =============================================================================
+   UTILITIES
+   ============================================================================= */
 
 .bg-noise {
   position: fixed;
@@ -64,24 +113,11 @@
   width: 100vw;
   height: 100vh;
   z-index: -1;
-  opacity: 0.03; 
+  opacity: 0.03;
   pointer-events: none;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
 }
 
-/* Aurora Animation */
-@keyframes aurora {
-  0% { transform: translate(0px, 0px) scale(1); }
-  33% { transform: translate(30px, -50px) scale(1.1); }
-  66% { transform: translate(-20px, 20px) scale(0.9); }
-  100% { transform: translate(0px, 0px) scale(1); }
-}
-
-.animate-aurora {
-  animation: aurora 10s infinite ease-in-out;
-}
-
-/* Hide Scrollbar */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
@@ -90,7 +126,6 @@
   scrollbar-width: none;
 }
 
-/* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -107,76 +142,142 @@
 }
 
 /* =============================================================================
-   SECTION BACKGROUNDS — Rich, layered backgrounds for every section (supersede competitors).
-   Use on <section> or wrapper: add class e.g. section-bg-light-mesh + section-orb-emerald
+   SECTION SYSTEM — Four types only. Use one per section for consistency.
    ============================================================================= */
 
-/* Light section: soft gradient mesh */
-.section-bg-light-mesh {
-  background: linear-gradient(165deg, #f8fafc 0%, #ffffff 40%, #f0fdf4 100%);
+/* ---- Hero: full-bleed dark, glow, grid (home hero, page heroes) ---- */
+.section-hero {
+  position: relative;
+  background-color: var(--pitch-black);
+  color: #ffffff;
+  overflow: hidden;
+}
+.section-hero .section-glow-emerald {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(120px);
+  opacity: 0.12;
+  background: var(--emerald);
+}
+.section-hero .section-glow-violet {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(100px);
+  opacity: 0.08;
+  background: var(--violet);
+}
+.section-hero .section-grid {
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+  background-size: 3rem 3rem;
+  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 20%, transparent 70%);
+  pointer-events: none;
 }
 
-/* Light section: dual orbs (emerald + violet) */
-.section-orb-emerald {
+/* ---- Light: soft gradient, optional orb (features, pricing top, etc.) ---- */
+.section-light {
+  position: relative;
+  background: linear-gradient(165deg, #f8fafc 0%, #ffffff 40%, rgba(16, 185, 129, 0.03) 100%);
+  color: var(--foreground);
+  overflow: hidden;
+}
+.section-light .section-orb {
   position: absolute;
   border-radius: 50%;
   pointer-events: none;
   filter: blur(80px);
-  opacity: 0.12;
+  opacity: 0.1;
 }
-.section-orb-emerald-tl { width: 50vmax; height: 50vmax; top: -20%; left: -10%; background: #10b981; }
-.section-orb-emerald-br { width: 40vmax; height: 40vmax; bottom: -20%; right: -10%; background: #10b981; }
-.section-orb-violet { position: absolute; border-radius: 50%; pointer-events: none; filter: blur(100px); opacity: 0.08; background: #8b5cf6; }
-.section-orb-violet-tr { width: 45vmax; height: 45vmax; top: -15%; right: -15%; }
-.section-orb-violet-bl { width: 35vmax; height: 35vmax; bottom: -10%; left: -10%; }
-
-/* Dark section: spotlight + grid */
-.section-bg-dark-spotlight {
-  background: #050505;
+.section-light .section-orb-emerald {
+  background: var(--emerald);
 }
-.section-spotlight-emerald {
+.section-light .section-orb-violet {
+  background: var(--violet);
+  opacity: 0.06;
+}
+/* Orb positions (use with .section-orb or .section-glow-*; adds position + size) */
+.section-orb-tl { position: absolute; top: -20%; left: -10%; width: 50vmax; height: 50vmax; }
+.section-orb-br { position: absolute; bottom: -20%; right: -10%; width: 40vmax; height: 40vmax; }
+.section-orb-tr { position: absolute; top: -15%; right: -15%; width: 45vmax; height: 45vmax; }
+.section-orb-bl { position: absolute; bottom: -10%; left: -10%; width: 35vmax; height: 35vmax; }
+/* Orbs usable outside .section-light (e.g. .section-card) */
+.section-card .section-orb,
+.section-dark .section-orb {
   position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(80px);
+  opacity: 0.1;
+}
+.section-card .section-orb-emerald,
+.section-dark .section-orb-emerald { background: var(--emerald); }
+.section-card .section-orb-violet,
+.section-dark .section-orb-violet { background: var(--violet); opacity: 0.06; }
+
+/* ---- Dark band: charcoal + spotlight (CTA bands, footer area) ---- */
+.section-dark {
+  position: relative;
+  background-color: #050505;
+  color: #e2e8f0;
+  overflow: hidden;
+}
+.section-dark .section-spotlight-emerald,
+.section-dark .section-spotlight-violet {
+  position: absolute;
+  pointer-events: none;
+}
+.section-dark .section-spotlight-emerald {
   width: 120%;
   height: 70%;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(16, 185, 129, 0.15), transparent 70%);
-  pointer-events: none;
+  background: radial-gradient(ellipse 80% 60% at 50% 50%, rgba(16, 185, 129, 0.12), transparent 70%);
 }
-.section-spotlight-violet {
-  position: absolute;
+.section-dark .section-spotlight-violet {
   width: 80%;
   height: 80%;
   top: 0;
   right: 0;
-  background: radial-gradient(ellipse 60% 80% at 80% 20%, rgba(139, 92, 246, 0.1), transparent 60%);
-  pointer-events: none;
+  background: radial-gradient(ellipse 60% 80% at 80% 20%, rgba(139, 92, 246, 0.08), transparent 60%);
 }
 
-/* Subtle grid overlay for sections */
-.section-grid-subtle {
-  position: absolute;
-  inset: 0;
-  background-image: linear-gradient(to right, #e2e8f0 1px, transparent 1px), linear-gradient(to bottom, #e2e8f0 1px, transparent 1px);
-  background-size: 3rem 3rem;
-  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 30%, transparent 70%);
-  opacity: 0.04;
-  pointer-events: none;
+/* ---- Card band: white/slate-50, cards with token radius ---- */
+.section-card {
+  background-color: var(--surface);
+  color: var(--foreground);
+}
+.section-card .card {
+  background-color: var(--card);
+  border-radius: var(--radius-2xl);
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
 }
 
-/* Soft gradient band (horizontal) for variety */
-.section-band-emerald {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, transparent 0%, rgba(16, 185, 129, 0.03) 50%, transparent 100%);
-  pointer-events: none;
+/* =============================================================================
+   ANIMATIONS (keep only what we use: hero blob, pulse-slow)
+   ============================================================================= */
+
+@keyframes aurora {
+  0% { transform: translate(0px, 0px) scale(1); }
+  33% { transform: translate(30px, -50px) scale(1.1); }
+  66% { transform: translate(-20px, 20px) scale(0.9); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
+.animate-aurora {
+  animation: aurora 10s var(--ease-out-circ) infinite;
 }
 
 @keyframes pulse-slow {
   0%, 100% { opacity: 0.08; transform: scale(1); }
   50% { opacity: 0.14; transform: scale(1.05); }
 }
+
 .animate-pulse-slow {
-  animation: pulse-slow 8s ease-in-out infinite;
+  animation: pulse-slow 8s var(--ease-out-circ) infinite;
 }

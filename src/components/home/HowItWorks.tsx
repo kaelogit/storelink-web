@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion';
 import { Lock, Truck, Eye, CheckCircle2, ShieldCheck, ArrowRight, ArrowDown } from 'lucide-react';
 import Link from 'next/link';
+import Card from '@/components/ui/Card';
 
 const steps = [
   {
@@ -45,11 +46,8 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section className="py-28 md:py-40 section-bg-light-mesh relative overflow-hidden border-t border-slate-200/50">
-      <div className="section-grid-subtle" aria-hidden />
-      <div className="section-band-emerald" aria-hidden />
-      <div className="section-orb-emerald section-orb-emerald-tl" />
-      <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-emerald-500/5 blur-[120px] rounded-full pointer-events-none" />
+    <section className="section-light py-28 md:py-40 border-t border-slate-200/50" aria-labelledby="how-it-works-heading">
+      <div className="section-orb section-orb-emerald section-orb-tl" aria-hidden />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
         
@@ -65,7 +63,7 @@ export default function HowItWorks() {
               StoreLink Escrow™
             </div>
             
-            <h2 className="text-3xl md:text-5xl lg:text-6xl font-display font-bold text-slate-900 mb-6 tracking-tight">
+            <h2 id="how-it-works-heading" className="text-3xl md:text-5xl lg:text-6xl font-display font-bold text-[var(--foreground)] mb-6 tracking-tight">
               The <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500 relative inline-block">
                 "No-Scam"
                 <svg className="absolute w-full h-2 md:h-3 -bottom-1 left-0 text-emerald-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
@@ -111,7 +109,7 @@ export default function HowItWorks() {
                 )}
 
                 <Link href={step.href} className="block h-full relative z-10">
-                    <div className="bg-white rounded-[24px] p-6 md:p-8 border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-2 hover:border-emerald-100 transition-all duration-300 h-full flex flex-col relative overflow-hidden group">
+                    <Card padding="default" className="rounded-[var(--radius-2xl)] md:rounded-[24px] p-6 md:p-8 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-2 hover:border-emerald-100 transition-all duration-300 h-full flex flex-col relative overflow-hidden group">
                       
                       {/* Step Number Watermark */}
                       <span className="absolute -top-4 -right-4 text-[8rem] font-display font-bold text-slate-50 opacity-50 group-hover:text-emerald-50 transition-colors pointer-events-none select-none">
@@ -147,8 +145,7 @@ export default function HowItWorks() {
                       <div className="mt-6 flex items-center gap-2 text-emerald-600 text-xs font-bold opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-300">
                           Learn more <ArrowRight size={14} />
                       </div>
-                      
-                    </div>
+                    </Card>
                 </Link>
               </motion.div>
             ))}

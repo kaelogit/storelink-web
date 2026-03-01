@@ -2,8 +2,10 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Copy, Check, Share2, Download } from 'lucide-react';
+import { X, Copy, Check, Share2 } from 'lucide-react';
 import QRCode from 'react-qr-code';
+import Button from '@/components/ui/Button';
+import Card from '@/components/ui/Card';
 
 interface ShareProfileModalProps {
   isOpen: boolean;
@@ -51,71 +53,72 @@ export default function ShareProfileModal({ isOpen, onClose, profile }: SharePro
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            className="absolute inset-0 bg-[var(--pitch-black)]/80 backdrop-blur-sm"
           />
 
-          {/* Business Card Modal */}
+          {/* Modal panel — tokens: overlay, radius, shadow */}
           <motion.div 
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 20 }}
-            className="relative w-full max-w-sm bg-white rounded-3xl p-6 shadow-2xl z-10 overflow-hidden"
+            className="relative w-full max-w-sm z-10 overflow-hidden rounded-[var(--radius-3xl)] bg-[var(--card)] shadow-2xl border border-[var(--border)]"
+            style={{ padding: '1.5rem' }}
           >
-             {/* Decorative Background Blob */}
-             <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-gradient-to-br from-emerald-50 via-white to-white z-0 pointer-events-none opacity-50" />
+             <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-gradient-to-br from-[rgba(16,185,129,0.06)] via-[var(--card)] to-[var(--card)] z-0 pointer-events-none" />
 
-             <button onClick={onClose} className="absolute top-4 right-4 p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 z-10">
+             <button
+               onClick={onClose}
+               aria-label="Close"
+               className="absolute top-4 right-4 p-2 rounded-full bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--border)] z-10 transition-colors duration-[var(--duration-150)]"
+             >
                <X size={20} />
              </button>
 
              <div className="relative z-10 flex flex-col items-center text-center">
-                
-                {/* 1. Header Info */}
                 <div className="mb-6">
-                    <h3 className="text-xl font-black text-slate-900 tracking-tight mb-1">
+                    <h3 className="text-[var(--text-title)] font-black text-[var(--foreground)] tracking-tight mb-1">
                         {profile.display_name.toUpperCase()}
                     </h3>
-                    <p className="text-sm font-bold text-slate-400">@{profile.slug}</p>
+                    <p className="text-[var(--text-body-md)] font-bold text-[var(--muted)]">@{profile.slug}</p>
                 </div>
 
-                {/* 2. The QR Code Card */}
-                <div className="bg-white p-4 rounded-2xl shadow-lg border border-slate-100 mb-6">
-                    <div className="w-48 h-48">
+                <Card padding="default" className="mb-6 w-full">
+                    <div className="w-48 h-48 mx-auto">
                         <QRCode 
                             value={url} 
                             size={256}
                             style={{ height: "auto", maxWidth: "100%", width: "100%" }}
                             viewBox={`0 0 256 256`}
-                            fgColor="#022c22" // Emerald-950
+                            fgColor="#022c22"
                         />
                     </div>
+                </Card>
+
+                <div className="flex items-center gap-2 mb-8 rounded-full px-3 py-1.5 bg-[var(--emerald)]/10">
+                    <div className="w-2 h-2 rounded-full bg-[var(--emerald)] animate-pulse" />
+                    <span className="text-[var(--text-label)] font-black text-[var(--emerald-900)] tracking-widest uppercase">Scan to visit store</span>
                 </div>
 
-                {/* 3. Scan Instruction */}
-                <div className="flex items-center gap-2 mb-8 bg-emerald-50 px-3 py-1.5 rounded-full">
-                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                    <span className="text-[10px] font-black text-emerald-800 tracking-widest uppercase">Scan to visit store</span>
-                </div>
-
-                {/* 4. Action Buttons */}
                 <div className="flex gap-3 w-full">
-                    <button 
+                    <Button
+                        variant="outline"
+                        size="lg"
                         onClick={handleCopy}
-                        className="flex-1 h-12 flex items-center justify-center gap-2 bg-slate-100 rounded-xl font-bold text-slate-900 hover:bg-slate-200 transition-colors"
+                        className="flex-1"
                     >
-                        {copied ? <Check size={18} className="text-emerald-600" /> : <Copy size={18} />}
+                        {copied ? <Check size={18} className="opacity-80" /> : <Copy size={18} />}
                         {copied ? "Copied" : "Copy Link"}
-                    </button>
-                    
-                    <button 
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        size="lg"
                         onClick={handleNativeShare}
-                        className="flex-1 h-12 flex items-center justify-center gap-2 bg-slate-900 rounded-xl font-bold text-white hover:bg-black transition-colors"
+                        className="flex-1"
                     >
                         <Share2 size={18} />
                         Share
-                    </button>
+                    </Button>
                 </div>
-
              </div>
           </motion.div>
         </div>

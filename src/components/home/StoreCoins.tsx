@@ -38,10 +38,9 @@ export default function StoreCoins() {
   }, []);
 
   return (
-    <section className="py-28 md:py-40 px-4 md:px-6 bg-white relative overflow-hidden border-t border-slate-100">
-      <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.03]" aria-hidden />
-      <div className="section-orb-emerald section-orb-emerald-tl" style={{ top: '20%', left: '-5%' }} />
-      <div className="section-orb-violet section-orb-violet-tr" style={{ top: '60%' }} />
+    <section className="section-card py-28 md:py-40 px-4 md:px-6 border-t border-slate-100" aria-labelledby="store-coins-heading">
+      <div className="section-orb section-orb-emerald section-orb-tl absolute" style={{ top: '20%', left: '-5%' }} aria-hidden />
+      <div className="section-orb section-orb-violet section-orb-tr absolute" style={{ top: '60%' }} aria-hidden />
       <div className="max-w-7xl mx-auto relative z-10">
         
         {/* THE DARK CONTAINER */}
@@ -93,7 +92,7 @@ export default function StoreCoins() {
                 <span className="text-[10px] md:text-xs font-black uppercase tracking-[0.15em]">Customer Retention</span>
               </motion.div>
               
-              <h2 className="text-4xl md:text-6xl lg:text-7xl font-display font-bold text-white mb-6 leading-[0.95] tracking-tight">
+              <h2 id="store-coins-heading" className="text-4xl md:text-6xl lg:text-7xl font-display font-bold text-white mb-6 leading-[0.95] tracking-tight">
                 Shop. Earn. <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-amber-500 animate-gradient-x">
                   Stick Together.

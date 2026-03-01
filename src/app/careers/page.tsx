@@ -1,13 +1,12 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { 
-  Zap, Globe, Heart, 
-  Briefcase, ArrowRight, Terminal, 
-  PenTool, LineChart, Coffee 
-} from 'lucide-react';
+import { Zap, Globe, Heart, Briefcase, ArrowRight, Terminal, PenTool, LineChart, Coffee } from 'lucide-react';
 import Footer from '../../components/home/Footer';
 import Link from 'next/link';
+import Section from '../../components/ui/Section';
+import Card from '../../components/ui/Card';
+import Button from '../../components/ui/Button';
 
 // 💼 OPEN ROLES DATA
 const JOBS = [
@@ -59,14 +58,10 @@ const PERKS = [
 
 export default function CareersPage() {
   return (
-    <main className="bg-slate-50 min-h-screen font-sans selection:bg-emerald-100">
-
-      {/* 🚀 HERO: The Call to Adventure */}
-      <section className="pt-40 pb-20 px-6 relative overflow-hidden bg-[#0f172a] text-white">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
-        
-        <div className="max-w-4xl mx-auto text-center relative z-10">
+    <main className="min-h-screen font-sans bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
+      <section className="section-dark pt-24 md:pt-32 pb-20 relative overflow-hidden text-white" aria-labelledby="careers-hero-heading">
+        <div className="section-spotlight-emerald" aria-hidden />
+        <div className="max-w-4xl mx-auto text-center relative z-10 px-4 sm:px-6 lg:px-8">
           <motion.div
              initial={{ opacity: 0, y: 20 }}
              animate={{ opacity: 1, y: 0 }}
@@ -76,7 +71,8 @@ export default function CareersPage() {
              We are Hiring
           </motion.div>
 
-          <motion.h1 
+          <motion.h1
+            id="careers-hero-heading"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
@@ -93,59 +89,55 @@ export default function CareersPage() {
           </p>
           
           <div className="flex justify-center">
-             <a href="#roles" className="bg-white text-slate-900 px-8 py-4 rounded-2xl font-black text-lg hover:bg-emerald-50 transition-colors inline-flex items-center gap-2">
+             <Button href="#roles" variant="primary" size="lg" className="!bg-white !text-[var(--charcoal)] hover:!bg-emerald-50 justify-center gap-2">
                 View Open Roles <ArrowRight size={20} />
-             </a>
+             </Button>
           </div>
         </div>
       </section>
 
-      {/* ❤️ VALUES & PERKS */}
-      <section className="py-24 px-6 bg-white">
-         <div className="max-w-6xl mx-auto">
+      <Section variant="light" padding="default">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-               <h2 className="text-3xl font-display font-bold text-slate-900">Why StoreLink?</h2>
-               <p className="text-slate-500 mt-4">We treat our team as well as we treat our customers.</p>
+               <h2 className="text-3xl font-display font-bold text-[var(--foreground)]">Why StoreLink?</h2>
+               <p className="text-[var(--muted)] mt-4">We treat our team as well as we treat our customers.</p>
             </div>
-
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                {PERKS.map((perk, i) => (
-                  <div key={i} className="p-6 rounded-3xl bg-slate-50 border border-slate-100 hover:shadow-lg transition-shadow">
-                     <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center mb-4 text-emerald-600">
+                  <Card key={i} padding="default" className="rounded-[var(--radius-3xl)] hover:shadow-lg transition-shadow duration-[var(--duration-150)]">
+                     <div className="w-12 h-12 bg-[var(--card)] rounded-[var(--radius-xl)] shadow-sm flex items-center justify-center mb-4 text-emerald-600 border border-[var(--border)]">
                         <perk.icon size={24} />
                      </div>
-                     <h3 className="text-lg font-bold text-slate-900 mb-2">{perk.title}</h3>
-                     <p className="text-slate-500 text-sm leading-relaxed">{perk.desc}</p>
-                  </div>
+                     <h3 className="text-lg font-bold text-[var(--foreground)] mb-2">{perk.title}</h3>
+                     <p className="text-[var(--muted)] text-sm leading-relaxed">{perk.desc}</p>
+                  </Card>
                ))}
             </div>
-         </div>
-      </section>
+        </div>
+      </Section>
 
-      {/* 📋 OPEN ROLES */}
-      <section id="roles" className="py-24 px-6 bg-slate-50 border-t border-slate-200">
-         <div className="max-w-4xl mx-auto">
+      <Section variant="light" padding="default" className="border-t border-[var(--border)]" id="roles">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="mb-12">
-               <h2 className="text-4xl font-display font-bold text-slate-900">Open Roles</h2>
-               <p className="text-slate-500 mt-2">Come build the future with us.</p>
+               <h2 className="text-4xl font-display font-bold text-[var(--foreground)]">Open Roles</h2>
+               <p className="text-[var(--muted)] mt-2">Come build the future with us.</p>
             </div>
-
             <div className="space-y-4">
                {JOBS.map((job) => (
                   <Link href={`/careers/${job.id}`} key={job.id} className="block group">
-                     <motion.div 
+                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
-                        className="bg-white p-6 md:p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-emerald-200 transition-all duration-300 flex flex-col md:flex-row gap-6 md:items-center"
                      >
+                     <Card padding="default" className="rounded-[var(--radius-3xl)] p-6 md:p-8 hover:shadow-xl hover:border-emerald-200 transition-all duration-[var(--duration-250)] flex flex-col md:flex-row gap-6 md:items-center">
                         {/* Icon & Title */}
                         <div className="flex-1 flex gap-4 items-start md:items-center">
-                           <div className="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center border border-slate-100 shrink-0 group-hover:scale-110 transition-transform">
+                           <div className="w-12 h-12 rounded-[var(--radius-2xl)] bg-[var(--surface)] flex items-center justify-center border border-[var(--border)] shrink-0 group-hover:scale-110 transition-transform duration-[var(--duration-150)]">
                               {job.icon}
                            </div>
                            <div>
-                              <h3 className="text-xl font-bold text-slate-900 group-hover:text-emerald-600 transition-colors">{job.title}</h3>
+                              <h3 className="text-xl font-bold text-[var(--foreground)] group-hover:text-emerald-600 transition-colors">{job.title}</h3>
                               <div className="flex flex-wrap gap-2 mt-2">
                                  <Badge text={job.department} />
                                  <Badge text={job.type} />
@@ -154,38 +146,34 @@ export default function CareersPage() {
                            </div>
                         </div>
 
-                        {/* Description (Hidden on mobile for cleaner look, or kept short) */}
-                        <div className="flex-1 text-slate-500 text-sm font-medium leading-relaxed">
+                        <div className="flex-1 text-[var(--muted)] text-sm font-medium leading-relaxed">
                            {job.desc}
                         </div>
 
-                        {/* Arrow */}
                         <div className="shrink-0 flex items-center justify-end md:justify-center">
-                           <div className="w-10 h-10 rounded-full bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-emerald-500 group-hover:text-white transition-all">
+                           <div className="w-10 h-10 rounded-full bg-[var(--surface)] flex items-center justify-center text-[var(--muted)] group-hover:bg-emerald-500 group-hover:text-white transition-all duration-[var(--duration-150)]">
                               <ArrowRight size={20} />
                            </div>
                         </div>
+                     </Card>
                      </motion.div>
                   </Link>
                ))}
             </div>
-
-            {/* General Application */}
-            <div className="mt-16 bg-[#0f172a] rounded-[2.5rem] p-10 text-center relative overflow-hidden">
-               <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
+            <div className="mt-16 section-dark rounded-[var(--radius-3xl)] p-10 text-center relative overflow-hidden">
+               <div className="section-spotlight-emerald" aria-hidden />
                <div className="relative z-10">
                   <h3 className="text-2xl font-bold text-white mb-4">Don't see your role?</h3>
                   <p className="text-slate-400 max-w-lg mx-auto mb-8">
                      We are always looking for exceptional talent. If you think you can help us win, pitch us a role.
                   </p>
-                  <a href="mailto:careers@storelink.app" className="inline-flex items-center gap-2 px-6 py-3 bg-white text-slate-900 rounded-xl font-bold hover:bg-emerald-50 transition-colors">
+                  <Button href="mailto:careers@storelink.app" variant="primary" size="lg" className="!bg-white !text-[var(--charcoal)] hover:!bg-emerald-50 justify-center">
                      Email Us Your Pitch
-                  </a>
+                  </Button>
                </div>
             </div>
-
-         </div>
-      </section>
+        </div>
+      </Section>
 
       <Footer />
     </main>
@@ -194,9 +182,9 @@ export default function CareersPage() {
 
 // 🏷️ Badge Helper
 function Badge({ text }: { text: string }) {
-   return (
-      <span className="px-2 py-1 rounded-md bg-slate-100 text-slate-500 text-[10px] font-bold uppercase tracking-wider">
-         {text}
-      </span>
-   )
+  return (
+    <span className="px-2 py-1 rounded-[var(--radius-md)] bg-[var(--surface)] text-[var(--muted)] text-[10px] font-bold uppercase tracking-wider">
+      {text}
+    </span>
+  );
 }

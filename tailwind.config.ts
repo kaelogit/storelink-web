@@ -13,40 +13,54 @@ const config: Config = {
         display: ["var(--font-space)", "sans-serif"],
       },
       colors: {
-        // We extend the palette for deeper, richer gradients
+        /* Aligned with globals.css tokens (app: Colors.ts) */
         emerald: {
-          400: '#34d399',
-          500: '#10b981',
-          600: '#059669',
-          900: '#064e3b',
-          950: '#022c22', 
+          400: "#34d399",
+          500: "#10b981",
+          600: "#059669",
+          900: "#064e3b",
+          950: "#022c22",
         },
         purple: {
-          400: '#a78bfa',
-          500: '#8b5cf6',
-          600: '#7c3aed',
-          900: '#4c1d95',
-          950: '#2e1065', // Ultra-deep purple for "Black Hole" sections
-        }
+          400: "#a78bfa",
+          500: "#8b5cf6",
+          600: "#7c3aed",
+          900: "#4c1d95",
+          950: "#2e1065",
+        },
+        gold: "#f59e0b",
+        charcoal: "#111827",
+        pitch: "#000000",
       },
-      // 🌟 PHYSICS ENGINE: Smoother, more natural easing curves
+      borderRadius: {
+        "sl-sm": "var(--radius-sm)",
+        "sl-md": "var(--radius-md)",
+        "sl-lg": "var(--radius-lg)",
+        "sl-xl": "var(--radius-xl)",
+        "sl-2xl": "var(--radius-2xl)",
+        "sl-3xl": "var(--radius-3xl)",
+      },
       transitionTimingFunction: {
-        "out-expo": "cubic-bezier(0.19, 1, 0.22, 1)", // The "Apple" snap effect
-        "out-circ": "cubic-bezier(0.075, 0.82, 0.165, 1)",
+        "out-expo": "var(--ease-out-expo)",
+        "out-circ": "var(--ease-out-circ)",
+      },
+      transitionDuration: {
+        "150": "150ms",
+        "250": "250ms",
+        "400": "400ms",
       },
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
-        "hero-glow": "conic-gradient(from 90deg at 50% 50%, #00000000 50%, #10b981 100%)", // Emerald Spotlight
+        "hero-glow": "conic-gradient(from 90deg at 50% 50%, transparent 50%, #10b981 100%)",
       },
       animation: {
-        "shimmer": "shimmer 2.5s linear infinite",
-        "blob": "blob 7s infinite",
-        "float": "float 6s ease-in-out infinite",
-        "pulse-slow": "pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        "aurora": "aurora 20s linear infinite", // Slower = More Premium
-        "meteor": "meteor 5s linear infinite",
-        "spotlight": "spotlight 2s ease .75s 1 forwards",
+        shimmer: "shimmer 2.5s linear infinite",
+        blob: "blob 7s var(--ease-out-circ) infinite",
+        float: "float 6s ease-in-out infinite",
+        "pulse-slow": "pulse-slow 8s var(--ease-out-circ) infinite",
+        aurora: "aurora 10s var(--ease-out-circ) infinite",
+        spotlight: "spotlight 2s ease-out 0.75s 1 forwards",
       },
       keyframes: {
         shimmer: {
@@ -63,14 +77,15 @@ const config: Config = {
           "0%, 100%": { transform: "translateY(0)" },
           "50%": { transform: "translateY(-20px)" },
         },
-        aurora: {
-          from: { backgroundPosition: "50% 50%, 50% 50%" },
-          to: { backgroundPosition: "350% 50%, 350% 50%" },
+        "pulse-slow": {
+          "0%, 100%": { opacity: "0.08", transform: "scale(1)" },
+          "50%": { opacity: "0.14", transform: "scale(1.05)" },
         },
-        meteor: {
-          "0%": { transform: "rotate(215deg) translateX(0)", opacity: "1" },
-          "70%": { opacity: "1" },
-          "100%": { transform: "rotate(215deg) translateX(-500px)", opacity: "0" },
+        aurora: {
+          "0%": { transform: "translate(0px, 0px) scale(1)" },
+          "33%": { transform: "translate(30px, -50px) scale(1.1)" },
+          "66%": { transform: "translate(-20px, 20px) scale(0.9)" },
+          "100%": { transform: "translate(0px, 0px) scale(1)" },
         },
         spotlight: {
           "0%": { opacity: "0", transform: "translate(-72%, -62%) scale(0.5)" },
@@ -79,23 +94,23 @@ const config: Config = {
       },
     },
   },
-  // 🌟 UTILITY: Adds animation-delay classes (delay-100, delay-200) for staggered entrances
   plugins: [
-    function ({ matchUtilities, theme }: any) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    function (api: any) {
+      const { matchUtilities, theme } = api;
       matchUtilities(
         {
-          "bg-grid": (value: any) => ({
+          "bg-grid": (value: string) => ({
             backgroundImage: `url("${svgGrid(value)}")`,
           }),
         },
-        { values: theme("backgroundColor") }
+        { values: theme("backgroundColor") ?? {} }
       );
     },
   ],
 };
 
-// Helper to generate grid pattern (for that "blueprint" background look)
-function svgGrid(color: any) {
+function svgGrid(color: string) {
   return `data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='${encodeURIComponent(
     color
   )}'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e`;

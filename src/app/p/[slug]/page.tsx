@@ -1,18 +1,29 @@
 import { createServerClient } from '@/lib/supabase';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { Metadata } from 'next';
 import ClientProductWrapper from './ClientProductWrapper';
+
+/** Decode and normalize product slug from URL (decodeURIComponent, trim, collapse spaces to single hyphen). */
+export function normalizeProductSlug(raw: string): string {
+  try {
+    const decoded = decodeURIComponent((raw || '').trim());
+    return decoded.replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || '';
+  } catch {
+    return (raw || '').trim();
+  }
+}
 
 // --- 2. DYNAMIC SEO GENERATOR (The Money Maker) ---
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const resolvedParams = await params;
-  const slug = resolvedParams.slug;
+  const slug = normalizeProductSlug(resolvedParams.slug);
+  if (!slug) return { title: 'Product Not Found | StoreLink' };
   const supabase = createServerClient();
 
   const { data: product } = await supabase
     .from('products')
-    .select('name, description, price, currency_code, image_urls, seller_id')
-    .eq('slug', slug)
+    .select('name, description, price, currency_code, image_urls, seller_id, slug')
+    .ilike('slug', slug)
     .single();
 
   if (!product) {
@@ -62,12 +73,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 // --- 3. MAIN DATA FETCHING ---
-async function getProductData(slug: string) {
+async function getProductData(rawSlug: string) {
+  const slug = normalizeProductSlug(rawSlug);
+  if (!slug) return null;
   const supabase = createServerClient();
   const { data: product, error: productError } = await supabase
     .from('products')
     .select('*')
-    .eq('slug', slug)
+    .ilike('slug', slug)
     .single();
 
   if (productError || !product) {
@@ -95,6 +108,13 @@ export default async function ProductPage({ params }: { params: Promise<{ slug: 
   const data = await getProductData(resolvedParams.slug);
 
   if (!data) return notFound();
+
+  // Redirect to canonical slug if URL differed (e.g. encoding or extra hyphens)
+  const requested = normalizeProductSlug(resolvedParams.slug);
+  const canonical = (data.product.slug || '').trim();
+  if (canonical && requested !== canonical) {
+    redirect(`/p/${encodeURIComponent(canonical)}`);
+  }
 
   return <ClientProductWrapper product={data.product} seller={data.seller} />;
 }

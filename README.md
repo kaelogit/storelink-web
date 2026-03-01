@@ -29,6 +29,8 @@ Open [http://localhost:3000](http://localhost:3000).
 
 Deploy to Vercel (or any Next.js host). Set environment variables in the dashboard. Production URL should be **https://storelink.ng** so the app’s `storelink.ng` links resolve here.
 
+For deploy steps and Core Web Vitals monitoring (GA4, PageSpeed), see [docs/DEPLOY_AND_MONITOR.md](docs/DEPLOY_AND_MONITOR.md).
+
 ## Key routes
 
 | Route | Purpose |

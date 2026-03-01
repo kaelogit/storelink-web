@@ -3,16 +3,15 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Play, VolumeX, Heart, MessageCircle, Share2, Smartphone } from 'lucide-react';
+import { Play, Heart, MessageCircle, Share2, Smartphone } from 'lucide-react';
 import AppTrapModal from '../../../components/ui/DownloadTrap';
+import Button from '../../../components/ui/Button';
 
 export default function ClientReelWrapper({ reel }: any) {
   const [trapOpen, setTrapOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center relative overflow-hidden">
-      
-      {/* 1. BACKGROUND BLUR (Atmosphere) */}
+    <div className="min-h-screen bg-[var(--pitch-black)] flex items-center justify-center relative overflow-hidden">
       <div className="absolute inset-0 opacity-30 blur-3xl scale-110">
          <Image 
            src={reel.thumbnail_url} 
@@ -23,8 +22,7 @@ export default function ClientReelWrapper({ reel }: any) {
          />
       </div>
 
-      {/* 2. THE PHONE CONTAINER */}
-      <div className="relative w-full max-w-[400px] h-[85vh] bg-slate-900 md:rounded-[32px] overflow-hidden shadow-2xl border border-slate-800">
+      <div className="relative w-full max-w-[400px] h-[85vh] bg-[var(--charcoal)] md:rounded-[var(--radius-3xl)] overflow-hidden shadow-2xl border border-[var(--border)]">
          
          {/* Static Thumbnail (Looks like paused video) */}
          <Image 
@@ -42,37 +40,38 @@ export default function ClientReelWrapper({ reel }: any) {
          <div className="absolute top-6 left-0 right-0 px-4 flex justify-between items-center z-20">
             <Link href="/" className="text-white font-black tracking-tighter text-lg">StoreLink.</Link>
             <div className="flex items-center gap-2">
-               <a href={`storelink://r/${reel.id}`} className="bg-emerald-500/90 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-emerald-500">
-                  <Smartphone size={12} className="text-white" />
-                  <span className="text-[10px] font-bold text-white uppercase">Open in app</span>
+               <a href={`storelink://r/${reel.id}`} className="bg-[var(--emerald)]/90 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-[var(--emerald)] text-white text-[10px] font-bold uppercase">
+                  <Smartphone size={12} />
+                  Open in app
                </a>
-               <Link href={`/download?intent=${encodeURIComponent(`/r/${reel.id}`)}`} className="bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5">
-                  <span className="text-[10px] font-bold text-white uppercase">Get app</span>
-               </Link>
+               <Button href={`/download?intent=${encodeURIComponent(`/r/${reel.short_code ?? reel.id}`)}`} size="sm" variant="ghost" className="!bg-black/40 !text-white hover:!bg-black/60 !py-1.5 text-[10px] font-bold uppercase">
+                  Get app
+               </Button>
             </div>
          </div>
 
          {/* CENTER PLAY BUTTON (THE TRAP) */}
-         <button 
+         <button
+           type="button"
            onClick={() => setTrapOpen(true)}
-           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/40 hover:scale-110 transition-transform z-30 group"
+           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/40 hover:scale-110 transition-transform duration-[var(--duration-150)] z-30 group"
          >
             <Play size={32} className="text-white fill-white ml-1 group-hover:scale-110 transition-transform" />
          </button>
 
          {/* Sidebar Actions (Fake) */}
          <div className="absolute bottom-24 right-4 flex flex-col gap-6 items-center z-20">
-            <button onClick={() => setTrapOpen(true)} className="flex flex-col items-center gap-1">
-               <Heart size={28} className="text-white" strokeWidth={2} />
-               <span className="text-white text-[10px] font-bold">Like</span>
+            <button type="button" onClick={() => setTrapOpen(true)} className="flex flex-col items-center gap-1 text-white">
+               <Heart size={28} strokeWidth={2} />
+               <span className="text-[10px] font-bold">Like</span>
             </button>
-            <button onClick={() => setTrapOpen(true)} className="flex flex-col items-center gap-1">
-               <MessageCircle size={28} className="text-white" strokeWidth={2} />
-               <span className="text-white text-[10px] font-bold">Chat</span>
+            <button type="button" onClick={() => setTrapOpen(true)} className="flex flex-col items-center gap-1 text-white">
+               <MessageCircle size={28} strokeWidth={2} />
+               <span className="text-[10px] font-bold">Chat</span>
             </button>
-            <button onClick={() => setTrapOpen(true)} className="flex flex-col items-center gap-1">
-               <Share2 size={28} className="text-white" strokeWidth={2} />
-               <span className="text-white text-[10px] font-bold">Share</span>
+            <button type="button" onClick={() => setTrapOpen(true)} className="flex flex-col items-center gap-1 text-white">
+               <Share2 size={28} strokeWidth={2} />
+               <span className="text-[10px] font-bold">Share</span>
             </button>
          </div>
 
@@ -88,12 +87,9 @@ export default function ClientReelWrapper({ reel }: any) {
                   </h3>
                   <p className="text-slate-300 text-xs">@{reel.seller?.slug}</p>
                </div>
-               <button 
-                 onClick={() => setTrapOpen(true)}
-                 className="bg-emerald-500 text-white px-4 py-1.5 rounded-lg text-xs font-bold shadow-lg"
-               >
+               <Button onClick={() => setTrapOpen(true)} variant="primary" size="sm" className="!py-1.5 text-xs font-bold">
                  View Shop
-               </button>
+               </Button>
             </div>
             
             <p className="text-white text-sm line-clamp-2 opacity-90 leading-relaxed font-medium">
@@ -108,7 +104,7 @@ export default function ClientReelWrapper({ reel }: any) {
         onClose={() => setTrapOpen(false)} 
         sellerName={reel.seller?.display_name || "Creator"}
         trigger="view"
-        intentPath={`/r/${reel.id}`}
+        intentPath={`/r/${reel.short_code ?? reel.id}`}
       />
     </div>
   );

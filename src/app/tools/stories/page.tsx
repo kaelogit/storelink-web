@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { History, Clock, Link as LinkIcon, Heart, Send, Plus, X } from 'lucide-react';
 import Footer from '../../../components/home/Footer';
-import Link from 'next/link';
 import Image from 'next/image';
+import Section from '../../../components/ui/Section';
+import Button from '../../../components/ui/Button';
 
 // Story Mock Data (Updated Images)
 const STORIES = [
@@ -56,24 +57,19 @@ export default function StoriesPage() {
   };
 
   return (
-    <main className="bg-slate-50 min-h-screen font-sans">
+    <main className="min-h-screen font-sans bg-[var(--background)]">
 
-      {/* 🟠 HERO SECTION */}
-      <section className="pt-40 pb-20 px-6 relative overflow-hidden bg-[#0f0505]">
-        
-        {/* Background Layers */}
+      <Section variant="hero" container={false} padding="none" className="pt-40 pb-20 px-6 overflow-hidden !bg-[#0f0505]">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-orange-600/20 rounded-full blur-[120px] pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-pink-600/20 rounded-full blur-[120px] pointer-events-none" />
 
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center relative z-10">
-          
-          {/* Text Content */}
           <div className="text-white">
             <motion.div
                initial={{ opacity: 0, y: 20 }}
                animate={{ opacity: 1, y: 0 }}
-               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-bold uppercase tracking-wider mb-8 backdrop-blur-md"
+               className="inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius-full)] bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-bold uppercase tracking-wider mb-8 backdrop-blur-md"
             >
                <History size={14} />
                Story Row™
@@ -85,18 +81,18 @@ export default function StoriesPage() {
                 Alive.
               </span>
             </h1>
-            <p className="text-xl text-slate-300 leading-relaxed font-medium mb-10 max-w-lg">
+            <p className="text-xl text-[var(--muted)] leading-relaxed font-medium mb-10 max-w-lg">
               Not every update needs a photoshoot. Post raw, ephemeral updates that vanish in <span className="text-orange-400 font-bold">12 hours</span>. Build urgency, show behind-the-scenes, and sell in the moment.
             </p>
 
-            <Link href="/download" className="inline-flex items-center gap-3 bg-white text-black px-8 py-4 rounded-2xl font-black text-lg hover:scale-105 transition-transform shadow-[0_0_40px_-10px_rgba(249,115,22,0.5)]">
+            <Button href="/download" size="lg" className="gap-3 !rounded-[var(--radius-2xl)] font-black text-lg hover:scale-105 transition-transform duration-[var(--duration-150)] shadow-[0_0_40px_-10px_rgba(249,115,22,0.5)] !bg-white !text-black hover:!bg-white/90">
               <Plus size={20} /> Post a Story
-            </Link>
+            </Button>
           </div>
 
           {/* Interactive Phone Demo */}
           <div className="flex justify-center lg:justify-end">
-             <div className="relative w-[320px] aspect-[9/18] bg-black rounded-[3rem] border-[8px] border-slate-800 shadow-2xl overflow-hidden ring-1 ring-white/10 select-none cursor-pointer" onClick={handleTap}>
+             <div className="relative w-[320px] aspect-[9/18] bg-[var(--pitch-black)] rounded-[var(--radius-3xl)] border-[8px] border-[var(--border)] shadow-2xl overflow-hidden ring-1 ring-white/10 select-none cursor-pointer" onClick={handleTap}>
                 {/* Dynamic Island */}
                 <div className="absolute top-5 left-1/2 -translate-x-1/2 w-28 h-8 bg-black rounded-full z-30" />
 
@@ -108,7 +104,7 @@ export default function StoriesPage() {
                      animate={{ opacity: 1 }}
                      exit={{ opacity: 0 }}
                      transition={{ duration: 0.2 }}
-                     className="absolute inset-0 bg-slate-900"
+                     className="absolute inset-0 bg-[var(--charcoal)]"
                    >
                       <Image 
                         src={STORIES[activeStory].url} 
@@ -188,14 +184,13 @@ export default function StoriesPage() {
           </div>
 
         </div>
-      </section>
+      </Section>
 
-      {/* 💡 WHY STORIES? */}
-      <section className="py-24 px-6 bg-white relative z-20 rounded-t-[3rem] -mt-10">
+      <Section variant="light" className="relative z-20 rounded-t-[var(--radius-3xl)] -mt-10">
          <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
-               <h2 className="text-4xl font-display font-bold text-slate-900">Why use Story Row?</h2>
-               <p className="text-slate-500 mt-4 text-lg">The feed is for your catalogue. Stories are for your personality.</p>
+               <h2 className="text-4xl font-display font-bold text-[var(--foreground)]">Why use Story Row?</h2>
+               <p className="text-[var(--muted)] mt-4 text-lg">The feed is for your catalogue. Stories are for your personality.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -216,12 +211,11 @@ export default function StoriesPage() {
                />
             </div>
          </div>
-      </section>
+      </Section>
 
-      {/* 📸 WHAT TO POST (Inspiration) */}
-      <section className="py-24 px-6 bg-slate-50 border-t border-slate-200">
+      <Section variant="light" className="border-t border-[var(--border)]">
          <div className="max-w-6xl mx-auto">
-            <h2 className="text-3xl font-bold text-slate-900 mb-12">What to post today.</h2>
+            <h2 className="text-3xl font-bold text-[var(--foreground)] mb-12">What to post today.</h2>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                <InspirationCard title="Behind the Scenes" img="https://images.unsplash.com/photo-1598550476439-cce8831d387c?w=400" />
@@ -230,7 +224,7 @@ export default function StoriesPage() {
                <InspirationCard title="New Arrivals" img="https://images.unsplash.com/photo-1485230946387-43302e5648e1?w=400" />
             </div>
          </div>
-      </section>
+      </Section>
 
       <Footer />
     </main>
@@ -239,20 +233,20 @@ export default function StoriesPage() {
 
 function Feature({ icon, title, desc }: any) {
    return (
-      <div className="p-8 rounded-3xl bg-slate-50 border border-slate-100 hover:shadow-xl transition-shadow">
-         <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4">
+      <div className="p-8 rounded-[var(--radius-3xl)] bg-[var(--surface)] border border-[var(--border)] hover:shadow-xl transition-shadow duration-[var(--duration-150)]">
+         <div className="w-12 h-12 rounded-[var(--radius-2xl)] bg-[var(--card)] shadow-sm flex items-center justify-center mb-4">
             {icon}
          </div>
-         <h3 className="text-xl font-bold text-slate-900 mb-2">{title}</h3>
-         <p className="text-slate-500 leading-relaxed font-medium">{desc}</p>
+         <h3 className="text-xl font-bold text-[var(--foreground)] mb-2">{title}</h3>
+         <p className="text-[var(--muted)] leading-relaxed font-medium">{desc}</p>
       </div>
    )
 }
 
 function InspirationCard({ title, img }: any) {
    return (
-      <div className="relative aspect-[3/4] rounded-2xl overflow-hidden group cursor-pointer">
-         <Image src={img} alt={title} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
+      <div className="relative aspect-[3/4] rounded-[var(--radius-2xl)] overflow-hidden group cursor-pointer">
+         <Image src={img} alt={title} fill className="object-cover group-hover:scale-110 transition-transform duration-[var(--duration-150)]" />
          <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-colors" />
          <div className="absolute bottom-4 left-4 right-4">
             <p className="text-white font-bold text-lg">{title}</p>
