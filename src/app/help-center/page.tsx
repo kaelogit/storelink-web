@@ -53,7 +53,7 @@ const FAQS = [
   {
     category: 'selling',
     question: "Is StoreLink free to join?",
-    answer: "Yes. Buyers can use the app for free. Sellers get a 14-day free trial to explore all features, list products, and make sales. After the trial, you can subscribe to our Standard or Diamond plans to keep growing your empire."
+    answer: "Yes. Buyers can use the app for free. Sellers get a 30-day free trial to explore all features, list products, and make sales. After the trial, you can subscribe to our Standard or Diamond plans to keep growing your empire."
   },
 
   // SAFETY & PAYMENTS
@@ -98,9 +98,12 @@ export default function HelpCenterPage() {
     <main className="min-h-screen font-sans bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
       <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-10 border-b border-[var(--border)]">
         <div className="max-w-3xl mx-auto text-center">
-          <h1 className="text-4xl md:text-5xl font-display font-bold text-[var(--foreground)] mb-8">
+          <h1 className="text-4xl md:text-5xl font-display font-bold text-[var(--foreground)] mb-4">
             How can we help you?
           </h1>
+          <p className="text-sm text-[var(--muted)] max-w-xl mx-auto mb-6">
+            These answers cover both products you buy and services you book on StoreLink — from escrow and safety to delivery and disputes.
+          </p>
           <div className="relative max-w-xl mx-auto mb-10">
              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[var(--muted)]">
                 <Search size={20} />

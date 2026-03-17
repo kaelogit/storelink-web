@@ -1,6 +1,7 @@
 import { createServerClient } from '@/lib/supabase';
 import { notFound, redirect } from 'next/navigation';
 import { Metadata } from 'next';
+import { getLocaleForCountry, getSiteNameForCountry } from '@/lib/countryMetadata';
 import ClientProductWrapper from './ClientProductWrapper';
 
 /** Decode and normalize product slug from URL (decodeURIComponent, trim, collapse spaces to single hyphen). */
@@ -22,9 +23,11 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
   const { data: product } = await supabase
     .from('products')
-    .select('name, description, price, currency_code, image_urls, seller_id, slug')
+    .select('name, description, price, currency_code, image_urls, seller_id, slug, seller:profiles(location_country_code)')
     .ilike('slug', slug)
     .single();
+
+  const sellerCountry = (product as any)?.seller?.location_country_code ?? null;
 
   if (!product) {
     return { title: 'Product Not Found | StoreLink' };
@@ -48,7 +51,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       title,
       description,
       url: `https://storelink.ng/p/${slug}`,
-      siteName: 'StoreLink',
+      siteName: getSiteNameForCountry(sellerCountry),
       images: [
         {
           url: mainImage,
@@ -57,7 +60,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
           alt: product.name,
         },
       ],
-      locale: 'en_NG',
+      locale: getLocaleForCountry(sellerCountry),
       type: 'website',
     },
     twitter: {

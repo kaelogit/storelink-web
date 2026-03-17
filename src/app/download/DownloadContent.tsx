@@ -85,21 +85,24 @@ export default function DownloadContent() {
               </div>
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-black text-[var(--foreground)] mb-6 leading-[1.05] tracking-tight">
                 Commerce{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-teal-500 to-emerald-600">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600">
                   without fear.
                 </span>
               </h1>
-              <p className="text-xl text-[var(--muted)] leading-relaxed mb-8 max-w-lg mx-auto lg:mx-0">
+              <p className="text-xl text-[var(--muted)] leading-relaxed mb-4 max-w-lg mx-auto lg:mx-0">
                 The first social marketplace where reputation is currency. Buy and sell through verified stores, shoppable reels, and protected payments—all in one app.
+              </p>
+              <p className="text-sm text-[var(--muted)] leading-relaxed mb-8 max-w-lg mx-auto lg:mx-0 font-semibold">
+                See, buy, and book the people you follow – products and services in one place.
               </p>
 
               {intentPath && (
                 <p className="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3 mb-6 max-w-md">
-                  After you install, open the app to continue to the page you were viewing.
+                  After you install and open the app, we&apos;ll take you straight back to this product, service, or profile.
                 </p>
               )}
 
-              <Card className="p-2 rounded-[2rem] w-full max-w-md inline-block border-2 border-slate-200/80 shadow-xl shadow-slate-900/5">
+              <Card className="p-2 rounded-[2rem] w-full max-w-md inline-block border-2 border-[var(--border)] shadow-xl shadow-[var(--charcoal)]/5">
                 {os === 'desktop' && (
                   <div className="flex gap-6 p-5 items-center">
                     <div className="bg-slate-900 p-3 rounded-2xl shrink-0">
@@ -288,7 +291,7 @@ export default function DownloadContent() {
         <div className="max-w-6xl mx-auto px-6 relative z-10">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-black text-[var(--foreground)] tracking-tight mb-4">
-              One app. <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">Every reason to join.</span>
+              One app. <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-500">Every reason to join.</span>
             </h2>
             <p className="text-lg text-[var(--muted)] max-w-2xl mx-auto font-medium">
               Built for Nigeria. Escrow, reels, verification, chat, and payouts—all in one place.
@@ -321,7 +324,7 @@ export default function DownloadContent() {
         <div className="section-orb section-orb-violet section-orb-tr" aria-hidden />
         <div className="max-w-5xl mx-auto px-6 relative z-10">
           <h2 className="text-2xl md:text-3xl font-display font-bold text-[var(--foreground)] text-center mb-14">
-            One app. <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">Everything you need.</span>
+            One app. <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-500">Everything you need.</span>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-14">
             <div className="flex flex-col items-center text-center">
@@ -356,18 +359,18 @@ export default function DownloadContent() {
           <h2 className="text-2xl md:text-3xl font-display font-black mb-4 tracking-tight">
             Ready to sell—or shop—without fear?
           </h2>
-          <p className="text-slate-400 font-medium mb-8 max-w-xl mx-auto">
-            Download StoreLink free. Buyers browse and pay with protection. Sellers get a 14-day trial, then choose Standard or Diamond.
+          <p className="text-white/70 font-medium mb-8 max-w-xl mx-auto">
+            Download StoreLink free. Buyers browse and pay with protection. Sellers get a 30-day trial, then choose Standard or Diamond.
           </p>
           {HAS_APP_LINKS && (
             <div className="flex flex-wrap items-center justify-center gap-4">
               {APP_STORE_URL && (
-                <Button href={APP_STORE_URL} className="!bg-white !text-slate-900 hover:!bg-slate-100 font-black gap-2" target="_blank" rel="noopener noreferrer">
+                <Button href={APP_STORE_URL} className="!bg-white !text-[var(--charcoal)] hover:!bg-white/90 font-black gap-2" target="_blank" rel="noopener noreferrer">
                   <Apple size={22} /> App Store
                 </Button>
               )}
               {PLAY_STORE_URL && (
-                <Button href={PLAY_STORE_URL} className="!bg-white !text-slate-900 hover:!bg-slate-100 font-black gap-2" target="_blank" rel="noopener noreferrer">
+                <Button href={PLAY_STORE_URL} className="!bg-white !text-[var(--charcoal)] hover:!bg-white/90 font-black gap-2" target="_blank" rel="noopener noreferrer">
                   <PlayStoreLogo /> Google Play
                 </Button>
               )}

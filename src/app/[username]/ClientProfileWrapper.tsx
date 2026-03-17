@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   MapPin, Star, Store, Video,
   Layers, Package, Gem, CheckCircle,
-  UserPlus, MessageCircle, Share2, QrCode
+  UserPlus, MessageCircle, Share2, QrCode, Wrench,
 } from 'lucide-react';
 import AppTrapModal from '../../components/ui/DownloadTrap';
 import ShareProfileModal from '../../components/shared/ShareProfileModal';
@@ -29,8 +29,8 @@ const cleanUrl = (url: string) => {
   } catch (e) { return url; }
 };
 
-export default function ClientProfileWrapper({ profile, products }: any) {
-  const [activeTab, setActiveTab] = useState<'drops' | 'reels' | 'collection'>('drops');
+export default function ClientProfileWrapper({ profile, products, services = [] }: any) {
+  const [activeTab, setActiveTab] = useState<'drops' | 'services' | 'reels' | 'collection'>('drops');
   
   // TRAP STATE
   const [trapOpen, setTrapOpen] = useState(false);
@@ -61,7 +61,7 @@ export default function ClientProfileWrapper({ profile, products }: any) {
               <span className="font-black text-[10px] tracking-[1.5px] text-[var(--foreground)] uppercase">
                 @{profile.slug}
               </span>
-              {isDiamond && <Gem size={10} className="text-purple-500" fill="currentColor" />}
+              {isDiamond && <Gem size={10} className="text-violet-500" fill="currentColor" />}
            </div>
         </div>
 
@@ -69,7 +69,7 @@ export default function ClientProfileWrapper({ profile, products }: any) {
            
            {/* Avatar */}
            <div className={`relative p-1 rounded-[36px] mb-4 ${isDiamond ? 'border-2 border-purple-500 shadow-lg shadow-purple-500/20' : ''}`}>
-              <div className="w-[100px] h-[100px] rounded-[30px] bg-slate-100 overflow-hidden relative">
+              <div className="w-[100px] h-[100px] rounded-[30px] bg-[var(--surface)] overflow-hidden relative">
                  <Image 
                     src={cleanUrl(avatarUrl)} 
                     alt={profile.display_name} 
@@ -79,8 +79,8 @@ export default function ClientProfileWrapper({ profile, products }: any) {
                  />
               </div>
               {isDiamond && (
-                <div className="absolute -bottom-1.5 -right-1.5 bg-white p-1.5 rounded-xl shadow-sm border border-slate-100">
-                   <Gem size={14} className="text-purple-500" fill="currentColor" />
+                <div className="absolute -bottom-1.5 -right-1.5 bg-[var(--card)] p-1.5 rounded-xl shadow-sm border border-[var(--border)]">
+                   <Gem size={14} className="text-violet-500" fill="currentColor" />
                 </div>
               )}
            </div>
@@ -179,6 +179,15 @@ export default function ClientProfileWrapper({ profile, products }: any) {
            <button type="button" onClick={() => setActiveTab('drops')} className={`flex-1 py-4 flex justify-center border-b-2 transition-colors duration-[var(--duration-150)] ${activeTab === 'drops' ? 'border-[var(--charcoal)] text-[var(--foreground)]' : 'border-transparent text-[var(--muted)]'}`}>
               <Package size={20} strokeWidth={activeTab === 'drops' ? 2.5 : 2} />
            </button>
+           <button
+             type="button"
+             onClick={() => setActiveTab('services')}
+             className={`flex-1 py-4 flex justify-center border-b-2 transition-colors duration-[var(--duration-150)] ${
+               activeTab === 'services' ? 'border-[var(--charcoal)] text-[var(--foreground)]' : 'border-transparent text-[var(--muted)]'
+             }`}
+           >
+              <Wrench size={20} strokeWidth={activeTab === 'services' ? 2.5 : 2} />
+           </button>
            <button type="button" onClick={() => handleTrap('view')} className="flex-1 py-4 flex justify-center border-b-2 border-transparent text-[var(--muted)] hover:text-[var(--foreground)]">
               <Video size={20} />
            </button>
@@ -192,7 +201,7 @@ export default function ClientProfileWrapper({ profile, products }: any) {
               <div className="grid grid-cols-2 gap-1">
                  {products.length > 0 ? products.map((item: any) => (
                     <div key={item.id} role="button" tabIndex={0} onClick={() => handleTrap('buy')} onKeyDown={(e) => e.key === 'Enter' && handleTrap('buy')} className="bg-[var(--card)] p-2.5 rounded-[var(--radius-xl)] cursor-pointer active:scale-95 transition-transform duration-[var(--duration-150)] shadow-sm border border-[var(--border)]">
-                       <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-slate-100 mb-2.5">
+                       <div className="aspect-[3/4] relative rounded-lg overflow-hidden bg-[var(--surface)] mb-2.5">
                           {item.image_urls?.[0] && (
                             <Image 
                                 src={cleanUrl(item.image_urls[0])} 
@@ -214,7 +223,76 @@ export default function ClientProfileWrapper({ profile, products }: any) {
               </div>
            )}
 
-           {products.length > 0 && (
+          {activeTab === 'services' && (
+           <div className="grid grid-cols-1 gap-2 pt-3 px-1">
+             {services.length > 0 && (
+               <p className="text-[10px] font-semibold text-[var(--muted)] tracking-[0.18em] uppercase mb-1 px-1">
+                 Finish booking in the StoreLink app to secure your service with escrow.
+               </p>
+             )}
+               {services.length > 0 ? (
+                 services.map((svc: any) => {
+                   const fromLabel = formatPrice((svc.hero_price_min || 0) / 100, svc.currency_code || profile.currency_code || 'NGN');
+                   let deliveryBadge: string | null = null;
+                   if (svc.delivery_type === 'online') deliveryBadge = 'Online';
+                   else if (svc.delivery_type === 'in_person' && svc.location_type === 'i_travel') deliveryBadge = 'I travel';
+                   else if (svc.delivery_type === 'in_person' && svc.location_type === 'both') deliveryBadge = 'Studio & Home';
+                   else if (svc.delivery_type === 'in_person' && svc.location_type === 'at_my_place') deliveryBadge = 'Studio only';
+                   else if (svc.delivery_type === 'both') deliveryBadge = 'Studio & Home';
+
+                   const media = (svc.media as string[] | null) || [];
+                   const heroImage = Array.isArray(media) && media.length > 0 ? media[0] : null;
+
+                   return (
+                     <button
+                       key={svc.id}
+                       type="button"
+                       onClick={() => handleTrap('view')}
+                       className="w-full text-left bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden active:scale-[0.98] transition-transform duration-[var(--duration-150)]"
+                     >
+                       <div className="flex">
+                         <div className="w-20 h-20 relative bg-[var(--surface)]">
+                           {heroImage ? (
+                             <Image
+                               src={cleanUrl(heroImage)}
+                               alt={svc.title}
+                               fill
+                               className="object-cover"
+                               unoptimized
+                             />
+                           ) : (
+                             <div className="w-full h-full flex items-center justify-center text-[var(--muted)]">
+                               <Store size={18} />
+                             </div>
+                           )}
+                         </div>
+                         <div className="flex-1 px-3 py-2 flex flex-col justify-center">
+                           <p className="text-[11px] font-black text-[var(--foreground)] uppercase tracking-[0.12em] line-clamp-2">
+                             {svc.title}
+                           </p>
+                           {deliveryBadge && (
+                             <p className="text-[10px] font-bold text-[var(--muted)] mt-0.5 uppercase tracking-[0.16em]">
+                               {deliveryBadge}
+                             </p>
+                           )}
+                           <p className="text-xs font-black text-emerald-600 mt-1">From {fromLabel}</p>
+                           <p className="text-[10px] font-semibold text-[var(--muted)] mt-0.5">
+                             View details & book in the app
+                           </p>
+                         </div>
+                       </div>
+                     </button>
+                   );
+                 })
+               ) : (
+                 <div className="py-12 text-center text-[var(--muted)] text-[10px] font-bold uppercase tracking-widest">
+                   No services published yet
+                 </div>
+               )}
+             </div>
+           )}
+
+           {products.length > 0 && activeTab === 'drops' && (
              <div className="py-16 text-center pb-32">
                 <p className="text-[var(--muted)] text-[10px] font-bold uppercase tracking-widest mb-4">+ More Items Hidden</p>
                 <Button onClick={() => handleTrap('view')} variant="outline" size="sm" className="rounded-full">
@@ -232,7 +310,7 @@ export default function ClientProfileWrapper({ profile, products }: any) {
                  </div>
                  <div>
                     <p className="text-xs font-bold text-emerald-400">Shop on StoreLink</p>
-                    <p className="text-[10px] text-slate-400 font-medium">Secure payments & buyer protection</p>
+                    <p className="text-[10px] text-[var(--muted)] font-medium">Secure payments & buyer protection</p>
                  </div>
               </div>
               <a href={`storelink://@${profile.slug}`} className="px-3 py-2.5 bg-[var(--emerald)] text-white text-xs font-black rounded-[var(--radius-xl)] tracking-wide hover:opacity-90 transition-opacity">

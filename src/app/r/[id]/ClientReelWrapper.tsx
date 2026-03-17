@@ -85,7 +85,7 @@ export default function ClientReelWrapper({ reel }: any) {
                   <h3 className="text-white font-bold text-sm shadow-black drop-shadow-md">
                     {reel.seller?.display_name}
                   </h3>
-                  <p className="text-slate-300 text-xs">@{reel.seller?.slug}</p>
+                  <p className="text-white/70 text-xs">@{reel.seller?.slug}</p>
                </div>
                <Button onClick={() => setTrapOpen(true)} variant="primary" size="sm" className="!py-1.5 text-xs font-bold">
                  View Shop

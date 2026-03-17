@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Space_Grotesk } from "next/font/google"; 
 import { GoogleAnalytics } from '@next/third-parties/google';
 import Navbar from "../components/home/Navbar";
+import { ThemeProvider } from "../components/providers/ThemeProvider";
 import "./globals.css";
 
 // 1. Load the High-End Fonts
@@ -102,7 +103,7 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="scroll-smooth" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -112,6 +113,7 @@ export default function RootLayout({
         />
       </head>
       <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased min-h-screen bg-[var(--background)] text-[var(--foreground)]`}>
+        <ThemeProvider>
         {/* Skip to main content for keyboard/screen reader */}
         <a
           href="#main-content"
@@ -129,6 +131,7 @@ export default function RootLayout({
         </main>
 
         <GoogleAnalytics gaId="G-LC8PN9CT62" />
+        </ThemeProvider>
       </body>
     </html>
   );

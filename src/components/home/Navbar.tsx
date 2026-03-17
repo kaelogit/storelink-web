@@ -10,6 +10,7 @@ import {
   Search
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import ThemeToggle from '../ui/ThemeToggle';
 
 // Custom Icons
 const AppleIcon = () => (
@@ -58,7 +59,7 @@ export default function Navbar() {
            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all duration-300 ${
              isTransparent 
                 ? 'bg-white/5 border-white/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]' // 🟢 Glowing Green on Dark
-                : 'bg-emerald-50 border-emerald-100 text-emerald-600 group-hover:bg-emerald-100'
+                : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50'
            }`}>
               <LayoutDashboard size={22}/>
            </div>
@@ -78,10 +79,10 @@ export default function Navbar() {
                 className={`w-full h-10 pl-10 pr-4 rounded-full text-sm font-bold focus:outline-none transition-all placeholder:font-medium ${
                     isTransparent
                         ? 'bg-white/5 border border-white/10 text-white placeholder:text-white/50 focus:bg-white/10 focus:border-white/30 backdrop-blur-md shadow-inner'
-                        : 'bg-slate-50 border border-slate-200 text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
+                        : 'bg-[var(--surface)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
                 }`}
               />
-              <Search size={16} className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors ${isTransparent ? 'text-white/50' : 'text-slate-400'}`} strokeWidth={2.5} />
+              <Search size={16} className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors ${isTransparent ? 'text-white/50' : 'text-[var(--muted)]'}`} strokeWidth={2.5} />
            </div>
         </form>
 
@@ -175,17 +176,18 @@ export default function Navbar() {
 
         </nav>
 
-        {/* 3. DOWNLOAD BUTTON */}
-        <div className="hidden md:flex items-center shrink-0">
+        {/* 3. THEME TOGGLE + DOWNLOAD */}
+        <div className="hidden md:flex items-center shrink-0 gap-3">
+          <ThemeToggle />
           <Link 
             href="/download"
             className={`group flex items-center gap-3 px-5 h-10 rounded-xl font-bold text-xs transition-all active:scale-95 border ${
                 isTransparent
                     ? 'bg-white/10 text-white border-white/20 hover:bg-white/20 backdrop-blur-md shadow-lg'
-                    : 'bg-emerald-50 text-emerald-950 border-emerald-100 hover:bg-emerald-100'
+                    : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 border-emerald-100 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
             }`}
           >
-            <div className={`flex items-center gap-2 transition-colors ${isTransparent ? 'text-emerald-400' : 'text-emerald-800'}`}>
+            <div className={`flex items-center gap-2 transition-colors ${isTransparent ? 'text-emerald-400' : 'text-emerald-800 dark:text-emerald-300'}`}>
                <AppleIcon />
                <PlayStoreIcon />
             </div>
@@ -194,11 +196,12 @@ export default function Navbar() {
         </div>
 
         {/* MOBILE TRIGGER */}
-        <div className="flex items-center gap-3 md:hidden">
+        <div className="flex items-center gap-2 md:hidden">
+             <ThemeToggle />
              <button 
                 onClick={() => router.push('/explore')} 
                 className={`p-2 rounded-lg transition-colors ${
-                    isTransparent ? 'text-white bg-white/10 backdrop-blur-md' : 'text-slate-600 bg-slate-50'
+                    isTransparent ? 'text-white bg-white/10 backdrop-blur-md' : 'text-[var(--muted)] bg-[var(--surface)]'
                 }`}
              >
                 <Search size={20} />
@@ -207,7 +210,7 @@ export default function Navbar() {
              <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
               className={`p-2 rounded-lg transition-colors ${
-                  isTransparent ? 'text-white bg-white/10 backdrop-blur-md' : 'text-slate-900 bg-slate-50 active:bg-slate-100'
+                  isTransparent ? 'text-white bg-white/10 backdrop-blur-md' : 'text-[var(--foreground)] bg-[var(--surface)] active:bg-[var(--border)]'
               }`}
              >
                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -234,14 +237,14 @@ export default function Navbar() {
                         placeholder="Search StoreLink..." 
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-12 pl-12 pr-4 bg-slate-50 border border-slate-200 rounded-2xl text-base font-bold text-slate-900 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+                        className="w-full h-12 pl-12 pr-4 bg-[var(--surface)] border border-[var(--border)] rounded-2xl text-base font-bold text-[var(--foreground)] focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
                     />
-                    <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+                    <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
                 </form>
 
                 {/* Selling Section */}
                 <div className="space-y-3">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Selling Tools</p>
+                  <p className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest pl-1">Selling Tools</p>
                   <div className="grid grid-cols-1 gap-1">
                       <MobileLink href="/tools/ai" icon={<Wand2 size={18} className="text-purple-600"/>} text="AI Writer" onClick={() => setIsMobileMenuOpen(false)} />
                       <MobileLink href="/tools/studio" icon={<ImageMinus size={18} className="text-blue-600"/>} text="Magic Studio" onClick={() => setIsMobileMenuOpen(false)} />
@@ -252,7 +255,7 @@ export default function Navbar() {
 
                 {/* Shopping Section */}
                 <div className="space-y-3">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest pl-1">Shopping</p>
+                  <p className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest pl-1">Shopping</p>
                   <div className="grid grid-cols-1 gap-1">
                       <MobileLink href="/shop/video" icon={<PlayCircle size={18} className="text-red-500"/>} text="Video Shopping" onClick={() => setIsMobileMenuOpen(false)} />
                       <MobileLink href="/shop/flash" icon={<Zap size={18} className="text-amber-500"/>} text="Flash Drops" onClick={() => setIsMobileMenuOpen(false)} />
@@ -261,16 +264,16 @@ export default function Navbar() {
                 </div>
 
                 {/* General Links */}
-                <div className="space-y-3 pt-2 border-t border-gray-50">
-                    <MobileLink href="/pricing" icon={<CreditCard size={18} className="text-slate-600"/>} text="Pricing Plans" onClick={() => setIsMobileMenuOpen(false)} />
-                    <MobileLink href="/safety" icon={<ShieldCheck size={18} className="text-slate-600"/>} text="Safety & Trust" onClick={() => setIsMobileMenuOpen(false)} />
+                <div className="space-y-3 pt-2 border-t border-[var(--border)]">
+                    <MobileLink href="/pricing" icon={<CreditCard size={18} className="text-[var(--muted)]"/>} text="Pricing Plans" onClick={() => setIsMobileMenuOpen(false)} />
+                    <MobileLink href="/safety" icon={<ShieldCheck size={18} className="text-[var(--muted)]"/>} text="Safety & Trust" onClick={() => setIsMobileMenuOpen(false)} />
                 </div>
 
                 {/* Mobile Download Action */}
                 <div className="pt-2 pb-6">
                   <Link 
                       href="/download" 
-                      className="flex items-center justify-center gap-3 bg-emerald-50 text-emerald-900 w-full py-4 rounded-xl font-bold border border-emerald-100 hover:bg-emerald-100 transition-colors"
+                      className="flex items-center justify-center gap-3 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-200 w-full py-4 rounded-xl font-bold border border-emerald-100 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                   >
                       <AppleIcon />

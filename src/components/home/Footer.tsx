@@ -10,7 +10,7 @@ const categories = [
 
 export default function Footer() {
   return (
-    <footer className="bg-slate-950 text-white pt-16 md:pt-24 pb-8 md:pb-12 border-t border-white/10" role="contentinfo">
+    <footer className="bg-[var(--charcoal)] text-white pt-16 md:pt-24 pb-8 md:pb-12 border-t border-white/10" role="contentinfo">
       <div className="max-w-7xl mx-auto px-6">
         
         {/* =========================================
@@ -29,10 +29,10 @@ export default function Footer() {
           
           {/* Column 1: The Mission (Span 4) */}
           <div className="lg:col-span-4 lg:pr-8">
-            <h4 className="font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] mb-4 md:mb-6 text-slate-500">
+            <h4 className="font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] mb-4 md:mb-6 text-white/60">
               The Ecosystem
             </h4>
-            <p className="text-slate-400 text-sm md:text-base leading-relaxed max-w-sm">
+            <p className="text-white/70 text-sm md:text-base leading-relaxed max-w-sm">
               The first operating system for social commerce. 
               We bridge the gap between social connection and secure transactions. 
               Buy, sell, and grow without fear.
@@ -41,33 +41,33 @@ export default function Footer() {
 
           {/* Column 2: Platform (Span 2) */}
           <div className="lg:col-span-2">
-            <h4 className="font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] mb-4 md:mb-6 text-slate-500">
+            <h4 className="font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] mb-4 md:mb-6 text-white/60">
               Platform
             </h4>
             <ul className="space-y-4 text-sm font-medium tracking-wide">
-              <li><Link href="/explore" className="text-slate-300 hover:text-white transition-colors">Explore Market</Link></li>
-              <li><Link href="/download" className="text-slate-300 hover:text-white transition-colors">Start Selling</Link></li>
-              <li><Link href="/tools/ai" className="text-slate-300 hover:text-white transition-colors">Gemini AI Studio</Link></li>
+              <li><Link href="/explore" className="text-white/80 hover:text-white transition-colors">Explore Market</Link></li>
+              <li><Link href="/download" className="text-white/80 hover:text-white transition-colors">Start Selling</Link></li>
+              <li><Link href="/tools/ai" className="text-white/80 hover:text-white transition-colors">Gemini AI Studio</Link></li>
               <li><Link href="/safety" className="text-emerald-400 hover:text-emerald-300 transition-colors">Escrow Protection</Link></li>
             </ul>
           </div>
 
           {/* Column 3: Company (Span 2) */}
           <div className="lg:col-span-2">
-            <h4 className="font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] mb-4 md:mb-6 text-slate-500">
+            <h4 className="font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] mb-4 md:mb-6 text-white/60">
               Company
             </h4>
             <ul className="space-y-4 text-sm font-medium tracking-wide">
-              <li><Link href="/about" className="text-slate-300 hover:text-white transition-colors">About Us</Link></li>
-              <li><Link href="/careers" className="text-slate-300 hover:text-white transition-colors">Careers</Link></li>
-              <li><Link href="/press" className="text-slate-300 hover:text-white transition-colors">Press</Link></li>
-              <li><Link href="/contact" className="text-slate-300 hover:text-white transition-colors">Contact</Link></li>
+              <li><Link href="/about" className="text-white/80 hover:text-white transition-colors">About Us</Link></li>
+              <li><Link href="/careers" className="text-white/80 hover:text-white transition-colors">Careers</Link></li>
+              <li><Link href="/press" className="text-white/80 hover:text-white transition-colors">Press</Link></li>
+              <li><Link href="/contact" className="text-white/80 hover:text-white transition-colors">Contact</Link></li>
             </ul>
           </div>
 
           {/* Column 4: Directory / Categories (Span 4) */}
           <div className="lg:col-span-4">
-            <h4 className="font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] mb-4 md:mb-6 text-slate-500">
+            <h4 className="font-bold text-[10px] md:text-xs uppercase tracking-[0.2em] mb-4 md:mb-6 text-white/60">
               Market Directory
             </h4>
             {/* Stripped the bubbly pills, using a high-end 2-column list instead */}
@@ -76,7 +76,7 @@ export default function Footer() {
                 <li key={cat}>
                   <Link 
                     href={`/explore?category=${cat.toLowerCase().replace(/\s+/g, '-')}`} 
-                    className="text-slate-400 hover:text-emerald-400 transition-colors"
+                    className="text-white/70 hover:text-emerald-400 transition-colors"
                   >
                     {cat}
                   </Link>
@@ -93,11 +93,11 @@ export default function Footer() {
         <div className="flex flex-col lg:flex-row items-center justify-between pt-8 border-t border-white/10 gap-6 md:gap-8">
           
           {/* Copyright & Legal */}
-          <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 order-2 lg:order-1 text-[10px] font-bold uppercase tracking-widest text-slate-600 w-full lg:w-auto text-center lg:text-left">
+            <div className="flex flex-col md:flex-row items-center gap-4 md:gap-8 order-2 lg:order-1 text-[10px] font-bold uppercase tracking-widest text-white/50 w-full lg:w-auto text-center lg:text-left">
             <p>© {new Date().getFullYear()} StoreLink Inc.</p>
             <div className="flex gap-6">
-              <Link href="/privacy" className="hover:text-slate-300 transition-colors">Privacy</Link>
-              <Link href="/terms" className="hover:text-slate-300 transition-colors">Terms</Link>
+              <Link href="/privacy" className="hover:text-white/80 transition-colors">Privacy</Link>
+              <Link href="/terms" className="hover:text-white/80 transition-colors">Terms</Link>
             </div>
           </div>
           
@@ -109,7 +109,7 @@ export default function Footer() {
               rel="noopener noreferrer"
               className="text-xs font-bold uppercase tracking-[0.2em] text-white hover:text-emerald-400 transition-colors flex items-center gap-1"
             >
-              Twitter <ArrowUpRight size={14} className="text-slate-500" />
+              Twitter <ArrowUpRight size={14} className="text-white/60" />
             </a>
             <a 
               href="https://instagram.com/storelink" 
@@ -117,7 +117,7 @@ export default function Footer() {
               rel="noopener noreferrer"
               className="text-xs font-bold uppercase tracking-[0.2em] text-white hover:text-emerald-400 transition-colors flex items-center gap-1"
             >
-              Instagram <ArrowUpRight size={14} className="text-slate-500" />
+              Instagram <ArrowUpRight size={14} className="text-white/60" />
             </a>
             <a 
               href="https://linkedin.com/company/storelink" 
@@ -125,7 +125,7 @@ export default function Footer() {
               rel="noopener noreferrer"
               className="text-xs font-bold uppercase tracking-[0.2em] text-white hover:text-emerald-400 transition-colors flex items-center gap-1"
             >
-              LinkedIn <ArrowUpRight size={14} className="text-slate-500" />
+              LinkedIn <ArrowUpRight size={14} className="text-white/60" />
             </a>
           </div>
 

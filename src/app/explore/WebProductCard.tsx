@@ -3,10 +3,19 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { 
-  Heart, MessageCircle, Share2, 
-  Bookmark, MapPin, Package, 
-  Gem, ShoppingBag, Zap, Sparkles, Coins
+import {
+  Heart,
+  MessageCircle,
+  Share2,
+  Bookmark,
+  MapPin,
+  Package,
+  Gem,
+  ShoppingBag,
+  Zap,
+  Sparkles,
+  Coins,
+  Wrench,
 } from 'lucide-react';
 
 // --- HELPER 1: CURRENCY FORMATTER ---
@@ -35,6 +44,14 @@ export default function WebProductCard({ item, onAddToCart }: any) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
 
+  const isService = item.type === 'service' || !!item.service_listing_id;
+  const serviceHref =
+    isService && item.seller?.slug && item.service_listing_id
+      ? `/s/${item.seller.slug}/service/${item.service_listing_id}`
+      : null;
+  const productHref = item.slug ? `/p/${item.slug}` : null;
+  const detailHref = serviceHref || productHref || '#';
+
   // ---------------------------------------------------------
   // 1. 🛡️ DATA SAFETY BLOCK
   // ---------------------------------------------------------
@@ -46,16 +63,19 @@ export default function WebProductCard({ item, onAddToCart }: any) {
   const stockQty = Number(item.stock_quantity || 0);
   const isSoldOut = stockQty < 1;
 
-  const isFlashActive = item.is_flash_drop && 
-    item.flash_end_time && 
+  const isFlashActive =
+    !isService &&
+    item.is_flash_drop &&
+    item.flash_end_time &&
     new Date(item.flash_end_time) > new Date();
 
   const activePrice = isFlashActive && item.flash_price ? item.flash_price : item.price;
   const anchorPrice = item.price;
 
-  const loyaltyEnabled = item.seller?.loyalty_enabled;
-  const loyaltyPercent = item.seller?.loyalty_percentage || 0;
-  const coinReward = (loyaltyEnabled && loyaltyPercent > 0) ? activePrice * (loyaltyPercent / 100) : 0;
+  const loyaltyEnabled = !isService && item.seller?.loyalty_enabled;
+  const loyaltyPercent = !isService ? item.seller?.loyalty_percentage || 0 : 0;
+  const coinReward =
+    loyaltyEnabled && loyaltyPercent > 0 ? activePrice * (loyaltyPercent / 100) : 0;
 
   const images = item.image_urls || [];
   const isDiamond = item.seller?.subscription_plan === 'diamond';
@@ -72,13 +92,13 @@ export default function WebProductCard({ item, onAddToCart }: any) {
   };
 
   return (
-    <div className="bg-white p-4 mb-4 rounded-none md:rounded-3xl border-b border-slate-100 md:border md:shadow-sm">
+    <div className="bg-[var(--card)] p-4 mb-4 rounded-none md:rounded-3xl border-b md:border border-[var(--border)] md:shadow-sm">
       
       {/* 🏛️ TOP SECTION: SELLER INFO */}
       <div className="flex mb-3">
         {/* Sidebar: Logo */}
         <div className="w-[50px] shrink-0 flex flex-col items-center">
-           <Link href={`/${item.seller?.slug}`} className={`w-11 h-11 rounded-2xl border-[1.5px] overflow-hidden relative ${isDiamond ? 'border-purple-500 ring-2 ring-purple-500/20' : 'border-slate-200'}`}>
+           <Link href={`/${item.seller?.slug}`} className={`w-11 h-11 rounded-2xl border-[1.5px] overflow-hidden relative ${isDiamond ? 'border-violet-500 ring-2 ring-violet-500/20' : 'border-[var(--border)]'}`}>
               <Image 
                 src={cleanUrl(item.seller?.logo_url) || `https://ui-avatars.com/api/?name=${item.seller?.display_name}`} 
                 alt="Seller" 
@@ -92,22 +112,22 @@ export default function WebProductCard({ item, onAddToCart }: any) {
         </div>
 
         {/* Content: Identity & Price */}
-        <div className="flex-1 ml-3">
+           <div className="flex-1 ml-3">
            <div className="mb-1">
               <div className="flex items-center gap-1.5">
-                 <h3 className="text-xs font-black text-slate-900 tracking-tight uppercase">
+                 <h3 className="text-xs font-black text-[var(--foreground)] tracking-tight uppercase">
                     {item.seller?.display_name || 'Store'}
                  </h3>
-                 {isDiamond && <Gem size={12} className="text-purple-500 fill-purple-500" />}
+                 {isDiamond && <Gem size={12} className="text-violet-500 fill-violet-500" />}
               </div>
               <div className="flex items-center gap-1">
-                 <span className="text-[11px] font-bold text-slate-400">@{item.seller?.slug}</span>
-                 {isDiamond && <Sparkles size={10} className="text-purple-400 fill-purple-400" />}
+                 <span className="text-[11px] font-bold text-[var(--muted)]">@{item.seller?.slug}</span>
+                 {isDiamond && <Sparkles size={10} className="text-violet-400 fill-violet-400" />}
               </div>
            </div>
 
            <div className="flex justify-between items-start mt-1">
-              <Link href={`/p/${item.slug}`} className="text-xs font-black text-slate-900 tracking-tight uppercase flex-1 mr-4 line-clamp-1 hover:underline">
+              <Link href={detailHref} className="text-xs font-black text-[var(--foreground)] tracking-tight uppercase flex-1 mr-4 line-clamp-1 hover:underline">
                  {item.name}
               </Link>
 
@@ -115,7 +135,7 @@ export default function WebProductCard({ item, onAddToCart }: any) {
                  {isFlashActive ? (
                     <div className="flex items-center gap-1.5">
                        <span className="text-xs font-black text-emerald-600">{formatMoney(activePrice, item.currency_code)}</span>
-                       <span className="text-[10px] font-bold text-slate-400 line-through decoration-slate-400">{formatMoney(anchorPrice, item.currency_code)}</span>
+                       <span className="text-[10px] font-bold text-[var(--muted)] line-through decoration-[var(--muted)]">{formatMoney(anchorPrice, item.currency_code)}</span>
                        <Zap size={12} className="text-amber-500 fill-amber-500" />
                     </div>
                  ) : (
@@ -125,7 +145,7 @@ export default function WebProductCard({ item, onAddToCart }: any) {
                  )}
 
                  {!isSoldOut && coinReward > 0 && (
-                    <div className="flex items-center gap-1 mt-1 bg-amber-50 px-1.5 py-0.5 rounded-md">
+                    <div className="flex items-center gap-1 mt-1 bg-amber-500/10 dark:bg-amber-500/20 px-1.5 py-0.5 rounded-md">
                        <Coins size={10} className="text-amber-500 fill-amber-500" />
                        <span className="text-[9px] font-black text-amber-500">+{formatMoney(coinReward, item.currency_code)} Coin</span>
                     </div>
@@ -135,17 +155,25 @@ export default function WebProductCard({ item, onAddToCart }: any) {
 
            <div className="flex gap-3 mt-2">
               <div className="flex items-center gap-1">
-                 <MapPin size={10} className="text-slate-400" strokeWidth={3} />
-                 <span className="text-[9px] font-black text-slate-400 tracking-wider">
-                    {(item.seller?.location_city || 'LAGOS, NG').toUpperCase()}
+                 <MapPin size={10} className="text-[var(--muted)]" strokeWidth={3} />
+                 <span className="text-[9px] font-black text-[var(--muted)] tracking-wider">
+                    {(
+                      item.service_distance_label ||
+                      item.seller?.location_city ||
+                      'LAGOS, NG'
+                    )
+                      .toString()
+                      .toUpperCase()}
                  </span>
               </div>
-              <div className="flex items-center gap-1">
-                 <Package size={10} className={isSoldOut ? 'text-red-500' : 'text-slate-400'} strokeWidth={3} />
-                 <span className={`text-[9px] font-black tracking-wider ${isSoldOut ? 'text-red-500' : 'text-slate-400'}`}>
-                    {isSoldOut ? "0 LEFT" : `${stockQty} LEFT`}
-                 </span>
-              </div>
+              {!isService && (
+                <div className="flex items-center gap-1">
+                   <Package size={10} className={isSoldOut ? 'text-red-500' : 'text-[var(--muted)]'} strokeWidth={3} />
+                   <span className={`text-[9px] font-black tracking-wider ${isSoldOut ? 'text-red-500' : 'text-[var(--muted)]'}`}>
+                      {isSoldOut ? "0 LEFT" : `${stockQty} LEFT`}
+                   </span>
+                </div>
+              )}
            </div>
         </div>
       </div>
@@ -157,31 +185,37 @@ export default function WebProductCard({ item, onAddToCart }: any) {
         <div className="w-[50px] shrink-0 flex flex-col items-center gap-6 pt-4">
            
            <button onClick={handleTrap} className="flex flex-col items-center gap-1 group">
-              <Heart size={24} className={`transition-colors ${item.is_liked ? 'text-emerald-500 fill-emerald-500' : 'text-slate-900 group-hover:text-emerald-500'}`} strokeWidth={2.5} />
-              <span className="text-[10px] font-black text-slate-900">{likeCount}</span>
+              <Heart size={24} className={`transition-colors ${item.is_liked ? 'text-emerald-500 fill-emerald-500' : 'text-[var(--foreground)] group-hover:text-emerald-500'}`} strokeWidth={2.5} />
+              <span className="text-[10px] font-black text-[var(--foreground)]">{likeCount}</span>
            </button>
 
            <button onClick={handleTrap} className="flex flex-col items-center gap-1 group">
-              <MessageCircle size={24} className="text-slate-900 group-hover:text-blue-500" strokeWidth={2.5} />
-              <span className="text-[10px] font-black text-slate-900">{commentCount}</span>
+              <MessageCircle size={24} className="text-[var(--foreground)] group-hover:text-emerald-500" strokeWidth={2.5} />
+              <span className="text-[10px] font-black text-[var(--foreground)]">{commentCount}</span>
            </button>
 
            {!isSoldOut && (
-             <button onClick={handleTrap} className="flex flex-col items-center gap-1 my-1 active:scale-95 transition-transform">
-                <div className="w-9 h-9 rounded-full bg-slate-900 flex items-center justify-center shadow-lg hover:bg-emerald-600 transition-colors">
-                   <ShoppingBag size={16} className="text-white" strokeWidth={3} />
-                </div>
-                <span className="text-[9px] font-black text-slate-900">BUY</span>
-             </button>
+           <button onClick={handleTrap} className="flex flex-col items-center gap-1 my-1 active:scale-95 transition-transform">
+             <div className="w-9 h-9 rounded-full bg-[var(--foreground)] flex items-center justify-center shadow-lg hover:bg-emerald-600 transition-colors">
+                {isService ? (
+                  <Wrench size={16} className="text-white" strokeWidth={3} />
+                ) : (
+                  <ShoppingBag size={16} className="text-white" strokeWidth={3} />
+                )}
+             </div>
+             <span className="text-[9px] font-black text-[var(--foreground)]">
+                {isService ? 'VIEW' : 'BUY'}
+             </span>
+           </button>
            )}
 
            <button onClick={handleTrap} className="flex flex-col items-center gap-1 group">
-              <Share2 size={22} className="text-slate-900 group-hover:text-blue-500" strokeWidth={2.5} />
+              <Share2 size={22} className="text-[var(--foreground)] group-hover:text-emerald-500" strokeWidth={2.5} />
            </button>
 
            <button onClick={handleTrap} className="flex flex-col items-center gap-1 group">
-              <Bookmark size={22} className="text-slate-900 group-hover:text-emerald-500" strokeWidth={2.5} />
-              <span className="text-[10px] font-black text-slate-900">{wishlistCount}</span>
+              <Bookmark size={22} className="text-[var(--foreground)] group-hover:text-emerald-500" strokeWidth={2.5} />
+              <span className="text-[10px] font-black text-[var(--foreground)]">{wishlistCount}</span>
            </button>
 
         </div>
@@ -190,7 +224,7 @@ export default function WebProductCard({ item, onAddToCart }: any) {
         <div className="flex-1 ml-3">
            
            {/* Visual Hub (Carousel) */}
-           <div className={`relative aspect-[4/5] w-full bg-slate-100 rounded-[24px] overflow-hidden border-[1.5px] border-slate-100 mb-3 group ${isDiamond ? 'border-purple-200' : ''}`}>
+           <div className={`relative aspect-[4/5] w-full bg-[var(--surface)] rounded-[24px] overflow-hidden border-[1.5px] border-[var(--border)] mb-3 group ${isDiamond ? 'border-violet-200 dark:border-violet-800' : ''}`}>
               
               <div 
                 className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide"
@@ -199,8 +233,8 @@ export default function WebProductCard({ item, onAddToCart }: any) {
                   setActiveImageIndex(Math.round(e.currentTarget.scrollLeft / width));
                 }}
               >
-                 {images.length > 0 ? images.map((img: string, idx: number) => (
-                    <Link key={idx} href={`/p/${item.slug}`} className="w-full h-full flex-shrink-0 snap-center relative block">
+                {images.length > 0 ? images.map((img: string, idx: number) => (
+                    <Link key={idx} href={detailHref} className="w-full h-full flex-shrink-0 snap-center relative block">
                        <Image 
                          src={cleanUrl(img)} 
                          alt={item.name} 
@@ -212,7 +246,7 @@ export default function WebProductCard({ item, onAddToCart }: any) {
                        />
                     </Link>
                  )) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-300">
+                    <div className="w-full h-full flex items-center justify-center text-[var(--muted)]">
                        <Package size={40} />
                     </div>
                  )}
@@ -248,7 +282,7 @@ export default function WebProductCard({ item, onAddToCart }: any) {
                        </div>
                     ))}
                  </div>
-                 <p className="text-[11px] font-medium text-slate-900">
+                 <p className="text-[11px] font-medium text-[var(--foreground)]">
                     Liked by <span className="font-black">{item.latest_likers?.[0]?.slug || 'someone'}</span>
                     {likeCount > 1 && <span> and <span className="font-black">{likeCount - 1} others</span></span>}
                  </p>
@@ -256,13 +290,13 @@ export default function WebProductCard({ item, onAddToCart }: any) {
            )}
 
            <div className="pr-2">
-              <p className={`text-[13px] leading-relaxed font-medium text-slate-700 ${!expanded ? 'line-clamp-2' : ''}`}>
-                 {description || "No description provided."}
+              <p className={`text-[13px] leading-relaxed font-medium text-[var(--foreground)] ${!expanded ? 'line-clamp-2' : ''}`}>
+                 {description || (isService ? 'Service preview — open in the app to see full details and book.' : 'No description provided.')}
               </p>
               {isLongDescription && (
                  <button 
                    onClick={() => setExpanded(!expanded)}
-                   className="text-[11px] font-black text-slate-400 mt-1 hover:text-slate-600"
+                   className="text-[11px] font-black text-[var(--muted)] mt-1 hover:text-[var(--foreground)]"
                  >
                     {expanded ? 'See less' : 'See more'}
                  </button>

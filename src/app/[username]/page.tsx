@@ -1,6 +1,7 @@
 import { createServerClient } from '@/lib/supabase';
 import { notFound, redirect } from 'next/navigation';
 import ClientProfileWrapper from './ClientProfileWrapper';
+import { getLocaleForCountry, getSiteNameForCountry } from '@/lib/countryMetadata';
 import { Metadata } from 'next';
 
 /** Normalize profile path: strip @, trim, lowercase for consistent lookup. */
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('display_name, bio, logo_url, slug')
+    .select('display_name, bio, logo_url, slug, location_country_code')
     .ilike('slug', slug)
     .single();
 
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
   const title = `${profile.display_name} (@${profile.slug}) | StoreLink`;
   const description = profile.bio || `Shop unique items and explore the collection from ${profile.display_name} on StoreLink.`;
   // Fallback to a generic StoreLink image if they don't have a logo
-  const image = profile.logo_url || 'https://yolqfndprzohjkrizbzu.supabase.co/storage/v1/object/public/brand/og-share.png';
+  const image = profile.logo_url || '/brand/og-share.png';
 
   return {
     title,
@@ -40,7 +41,7 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
       title,
       description,
       url: `https://storelink.ng/@${profile.slug}`,
-      siteName: 'StoreLink Nigeria',
+      siteName: getSiteNameForCountry(profile.location_country_code),
       images: [
         {
           url: image,
@@ -49,7 +50,7 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
           alt: profile.display_name,
         },
       ],
-      locale: 'en_NG',
+      locale: getLocaleForCountry(profile.location_country_code),
       type: 'profile',
     },
     // This handles Twitter and X
@@ -101,7 +102,17 @@ async function getProfileData(username: string) {
     .order('created_at', { ascending: false })
     .limit(30); // Higher limit for web browsing
 
-  return { profile, products: products || [] };
+  const { data: services } = await supabase
+    .from('service_listings')
+    .select(
+      'id, title, hero_price_min, currency_code, delivery_type, location_type, service_address, service_areas, media',
+    )
+    .eq('seller_id', profile.id)
+    .eq('is_active', true)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
+  return { profile, products: products || [], services: services || [] };
 }
 
 // --- 3. PAGE COMPONENT ---
@@ -119,9 +130,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   }
 
   return (
-    <ClientProfileWrapper 
-      profile={data.profile} 
-      products={data.products} 
+    <ClientProfileWrapper
+      profile={data.profile}
+      products={data.products}
+      services={data.services}
     />
   );
 }

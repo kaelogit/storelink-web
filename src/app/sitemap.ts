@@ -24,6 +24,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     '/privacy',
     '/safety',
     '/terms',
+    // Per-country legal (terms/ng, terms/gh, etc.)
+    ...['ng', 'gh', 'za', 'ke', 'ci', 'eg', 'rw'].flatMap((c) => [`/terms/${c}`, `/privacy/${c}`]),
     // Shop Features
     '/shop/flash',
     '/shop/rewards',
@@ -78,6 +80,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   }));
 
   // ---------------------------------------------------------
+  // 3b. DYNAMIC ROUTES: SERVICE LISTINGS (View-only pages)
+  // ---------------------------------------------------------
+  const { data: services } = await supabase
+    .from('service_listings')
+    .select('id, updated_at, seller:profiles!seller_id(slug)')
+    .eq('is_active', true)
+    .limit(5000);
+
+  const serviceMap = (services || [])
+    .filter((row: any) => (row as any).seller && (row as any).seller.slug)
+    .map((row: any) => ({
+      url: `${BASE_URL}/s/${(row as any).seller.slug}/service/${row.id}`,
+      lastModified: new Date(row.updated_at || new Date()),
+      changeFrequency: 'weekly' as const,
+      priority: 0.6,
+    }));
+
+  // ---------------------------------------------------------
   // 4. DYNAMIC ROUTES: REELS (short_code URLs)
   // ---------------------------------------------------------
   const { data: reels } = await supabase
@@ -96,5 +116,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ---------------------------------------------------------
   // 5. COMBINE AND RETURN
   // ---------------------------------------------------------
-  return [...staticMap, ...profileMap, ...productMap, ...reelMap];
+  return [...staticMap, ...profileMap, ...productMap, ...serviceMap, ...reelMap];
 }

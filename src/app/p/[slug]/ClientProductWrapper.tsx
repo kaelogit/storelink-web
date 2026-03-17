@@ -134,11 +134,11 @@ export default function ClientProductWrapper({ product, seller }: any) {
               </p>
            </div>
 
-           <div className="flex items-start gap-3 p-4 bg-blue-50/50 rounded-[var(--radius-2xl)] border border-blue-100">
-              <ShieldCheck size={20} className="text-blue-600 mt-0.5" />
+           <div className="flex items-start gap-3 p-4 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-[var(--radius-2xl)] border border-emerald-500/30">
+              <ShieldCheck size={20} className="text-emerald-600 mt-0.5" />
               <div>
-                 <p className="text-xs font-bold text-blue-900 mb-1">Funds Secured</p>
-                 <p className="text-[11px] text-blue-700/80 leading-relaxed">
+                 <p className="text-xs font-bold text-[var(--foreground)] mb-1">Funds Secured</p>
+                 <p className="text-[11px] text-[var(--muted)] leading-relaxed">
                     Your money is held in escrow until you confirm delivery. No scams.
                  </p>
               </div>

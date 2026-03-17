@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search, Zap, X, Layers, Shirt, Smartphone, Sparkles, Home, Activity, Wrench, Building2, Car, Gem, ArrowRight, Smartphone as PhoneIcon } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
@@ -47,8 +47,13 @@ export default function ClientExploreWrapper({
   const [activeCategory, setActiveCategory] = useState(initialCategory);
   const [isFlashMode, setIsFlashMode] = useState(false);
   const [products, setProducts] = useState<any[]>([]);
+  const productsRef = useRef<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [trapOpen, setTrapOpen] = useState(false);
+
+  useEffect(() => {
+    productsRef.current = products;
+  }, [products]);
 
   useEffect(() => {
     setActiveCategory(initialCategory);
@@ -133,6 +138,43 @@ export default function ClientExploreWrapper({
     const timer = setTimeout(() => { fetchProducts(); }, 500);
     return () => clearTimeout(timer);
   }, [query, activeCategory, isFlashMode]);
+
+  // Simple Explore session logging (web) – fire-and-forget, no variant branching here.
+  useEffect(() => {
+    let cancelled = false;
+    let sessionId: string | null = null;
+    const startedAt = Date.now();
+
+    const start = async () => {
+      try {
+        const { data, error } = await supabase.rpc('start_explore_session', {
+          p_user_id: null,
+          p_experiment_key: 'explore_feed_rank_v1',
+        });
+        if (error || !data || cancelled) return;
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row) return;
+        sessionId = String(row.session_id);
+      } catch {
+        // ignore
+      }
+    };
+
+    start();
+
+    return () => {
+      if (!sessionId) return;
+      const durationMs = Date.now() - startedAt;
+      const itemsSeen = productsRef.current.length;
+      supabase.rpc('end_explore_session', {
+        p_session_id: sessionId,
+        p_duration_ms: durationMs,
+        p_items_seen: itemsSeen,
+        p_profile_taps: null,
+        p_product_clicks: null,
+      });
+    };
+  }, []);
 
   return (
     <div className="min-h-screen section-light pt-20 pb-24 relative overflow-hidden">

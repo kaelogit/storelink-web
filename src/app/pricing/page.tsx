@@ -45,7 +45,7 @@ export default function PricingPage() {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50 font-sans selection:bg-emerald-100 overflow-hidden">
+    <main className="min-h-screen bg-[var(--surface)] dark:bg-[var(--background)] font-sans selection:bg-emerald-100 dark:selection:bg-emerald-950 overflow-hidden">
       
       {/* ⚡ BACKGROUND EFFECTS (High Performance) */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none [mask-image:radial-gradient(ellipse_80%_50%_at_50%_0%,#000_20%,transparent_100%)]" />
@@ -62,14 +62,14 @@ export default function PricingPage() {
              Simple & Transparent
           </motion.div>
           
-          <h1 className="text-5xl md:text-7xl font-display font-black text-slate-900 mb-6 tracking-tight leading-[1.05]">
+          <h1 className="text-5xl md:text-7xl font-display font-black text-[var(--foreground)] mb-6 tracking-tight leading-[1.05]">
             Invest in your <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-500">
               Social Empire.
             </span>
           </h1>
-          <p className="text-lg md:text-xl text-slate-500 max-w-2xl mx-auto leading-relaxed font-light">
-            Start with a free 14-day trial. Upgrade to unlock full power. <br className="hidden md:block" />
+          <p className="text-lg md:text-xl text-[var(--muted)] max-w-2xl mx-auto leading-relaxed font-light">
+            Start with a free 30-day trial. Upgrade to unlock full power. <br className="hidden md:block" />
             No hidden fees. Cancel anytime.
           </p>
 
@@ -77,21 +77,21 @@ export default function PricingPage() {
           <div className="mt-12 flex flex-col items-center gap-8">
             
             {/* 1. Master Toggle (Seller vs Buyer) */}
-            <div className="bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm flex relative w-full max-w-[340px]">
+            <div className="bg-[var(--card)] p-1.5 rounded-2xl border border-[var(--border)] shadow-sm flex relative w-full max-w-[340px]">
                <button 
                  onClick={() => { setRole('seller'); setSelectedMonths(1); }}
-                 className={`flex-1 relative z-10 py-3.5 rounded-xl text-sm font-black uppercase tracking-wider transition-colors duration-300 ${role === 'seller' ? 'text-white' : 'text-slate-500 hover:text-slate-900'}`}
+                 className={`flex-1 relative z-10 py-3.5 rounded-xl text-sm font-black uppercase tracking-wider transition-colors duration-300 ${role === 'seller' ? 'text-white' : 'text-[var(--muted)] hover:text-[var(--foreground)]'}`}
                >
                  I am a Seller
                </button>
                <button 
                  onClick={() => { setRole('buyer'); setSelectedMonths(1); }}
-                 className={`flex-1 relative z-10 py-3.5 rounded-xl text-sm font-black uppercase tracking-wider transition-colors duration-300 ${role === 'buyer' ? 'text-white' : 'text-slate-500 hover:text-slate-900'}`}
+                 className={`flex-1 relative z-10 py-3.5 rounded-xl text-sm font-black uppercase tracking-wider transition-colors duration-300 ${role === 'buyer' ? 'text-white' : 'text-[var(--muted)] hover:text-[var(--foreground)]'}`}
                >
                  I am a Shopper
                </button>
                <motion.div 
-                 className="absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-slate-900 rounded-xl shadow-md"
+                 className="absolute top-1.5 bottom-1.5 w-[calc(50%-6px)] bg-[var(--charcoal)] rounded-xl shadow-md"
                  initial={false}
                  animate={{ x: role === 'seller' ? 0 : '100%' }}
                  transition={{ type: "spring", bounce: 0.15, duration: 0.5 }}
@@ -99,7 +99,7 @@ export default function PricingPage() {
             </div>
 
             {/* 2. Duration Selector */}
-            <div className="flex flex-wrap justify-center bg-white p-1.5 rounded-2xl border border-slate-200 shadow-sm w-fit max-w-full">
+            <div className="flex flex-wrap justify-center bg-[var(--card)] p-1.5 rounded-2xl border border-[var(--border)] shadow-sm w-fit max-w-full">
                 {DURATIONS.map((d) => {
                     const isActive = selectedMonths === d.months;
                     return (
@@ -108,14 +108,14 @@ export default function PricingPage() {
                             onClick={() => setSelectedMonths(d.months)}
                             className={`relative px-5 md:px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
                                 isActive 
-                                    ? 'bg-emerald-50 text-emerald-700 shadow-sm ring-1 ring-emerald-200/50' 
-                                    : 'bg-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                                    ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 shadow-sm ring-1 ring-emerald-200/50 dark:ring-emerald-800/50' 
+                                    : 'bg-transparent text-[var(--muted)] hover:text-[var(--foreground)] hover:bg-[var(--surface)]'
                             }`}
                         >
                             {d.label}
                             {d.discount > 0 && (
                                 <span className={`absolute -top-2.5 -right-2 text-[10px] font-black px-1.5 py-0.5 rounded-md shadow-sm border ${
-                                    isActive ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-white text-slate-600 border-slate-200'
+                                    isActive ? 'bg-emerald-600 text-white border-emerald-500' : 'bg-[var(--card)] text-[var(--foreground)] border-[var(--border)]'
                                 }`}>
                                     -{d.discount * 100}%
                                 </span>
@@ -146,8 +146,8 @@ export default function PricingPage() {
                 <>
                   {/* 1. SELLER: FREE TRIAL */}
                   <PricingCard 
-                    title="14-Day Trial"
-                    desc="Test the full Standard experience."
+                    title="30-Day Trial"
+                    desc="Test the full Standard experience for 30 days."
                     price="Free"
                     subPrice="No credit card required"
                     features={[
@@ -247,13 +247,13 @@ export default function PricingPage() {
                transition={{ delay: 0.4 }}
                className="mt-16 text-center flex justify-center"
              >
-                <div className="inline-flex flex-col md:flex-row items-center gap-4 bg-white/60 backdrop-blur-md px-8 py-5 rounded-3xl border border-slate-200/60 shadow-xl shadow-slate-200/20">
-                   <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+                <div className="inline-flex flex-col md:flex-row items-center gap-4 bg-[var(--card)]/80 backdrop-blur-md px-8 py-5 rounded-3xl border border-[var(--border)] shadow-xl shadow-[var(--charcoal)]/5">
+                   <div className="w-10 h-10 rounded-full bg-emerald-100 dark:bg-emerald-950/50 flex items-center justify-center shrink-0">
                       <Percent size={20} className="text-emerald-600" strokeWidth={3} />
                    </div>
                    <div className="text-left">
-                      <div className="text-slate-900 font-black text-sm uppercase tracking-wider mb-1">Fair Play Fee</div>
-                      <p className="text-sm text-slate-500 font-medium">
+                      <div className="text-[var(--foreground)] font-black text-sm uppercase tracking-wider mb-1">Fair Play Fee</div>
+                      <p className="text-sm text-[var(--muted)] font-medium">
                          We charge a flat <span className="text-emerald-600 font-bold">3.5%</span> transaction fee only when you make a sale. <br className="hidden md:block"/>No sale, no fee.
                       </p>
                    </div>
@@ -265,34 +265,34 @@ export default function PricingPage() {
       </section>
 
       {/* 📊 FULL FEATURE COMPARISON */}
-      <section className="py-24 bg-white border-t border-slate-200/50">
+      <section className="py-24 bg-[var(--card)] border-t border-[var(--border)]">
         <div className="max-w-5xl mx-auto px-6">
           <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-4xl font-display font-black text-slate-900 tracking-tight">Compare Features</h2>
-            <p className="mt-3 text-sm text-slate-500 font-medium max-w-xl mx-auto">Seller tiers. Standard includes high feed visibility and analytics; Diamond adds AI tools, top placement, and a Success Manager.</p>
+            <h2 className="text-3xl md:text-4xl font-display font-black text-[var(--foreground)] tracking-tight">Compare Features</h2>
+            <p className="mt-3 text-sm text-[var(--muted)] font-medium max-w-xl mx-auto">Seller tiers. Standard includes high feed visibility and analytics; Diamond adds AI tools, top placement, and a Success Manager.</p>
           </div>
 
-          <div className="overflow-x-auto rounded-[2rem] border border-slate-200 shadow-xl shadow-slate-100 bg-white">
+          <div className="overflow-x-auto rounded-[2rem] border border-[var(--border)] shadow-xl shadow-[var(--charcoal)]/5 bg-[var(--card)]">
             <table className="w-full text-left border-collapse min-w-[600px]">
               <thead>
-                <tr className="bg-slate-50">
-                  <th className="p-6 border-b border-slate-200 w-1/3 text-xs font-black uppercase tracking-widest text-slate-400">Features</th>
-                  <th className="p-6 border-b border-slate-200 text-center font-black text-slate-500">Trial</th>
-                  <th className="p-6 border-b border-slate-200 text-center font-black text-emerald-600">Standard</th>
-                  <th className="p-6 border-b border-slate-200 text-center font-black text-purple-600">Diamond</th>
+                <tr className="bg-[var(--surface)]">
+                  <th className="p-6 border-b border-[var(--border)] w-1/3 text-xs font-black uppercase tracking-widest text-[var(--muted)]">Features</th>
+                  <th className="p-6 border-b border-[var(--border)] text-center font-black text-[var(--muted)]">Trial</th>
+                  <th className="p-6 border-b border-[var(--border)] text-center font-black text-emerald-600">Standard</th>
+                  <th className="p-6 border-b border-[var(--border)] text-center font-black text-violet-600">Diamond</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-[var(--border)]">
                 <FeatureRow label="Product Listings" v1="Unlimited" v2="Unlimited" v3="Unlimited" />
                 <FeatureRow label="Video Reels" v1="Unlimited" v2="Unlimited" v3="Unlimited" />
-                <FeatureRow label="Story Row (24h)" v1={<Check size={18} strokeWidth={3} className="mx-auto text-slate-300"/>} v2={<Check size={18} strokeWidth={3} className="mx-auto text-emerald-500"/>} v3={<Check size={18} strokeWidth={3} className="mx-auto text-purple-500"/>} />
-                <FeatureRow label="Flash Drops" v1={<Check size={18} strokeWidth={3} className="mx-auto text-slate-300"/>} v2={<Check size={18} strokeWidth={3} className="mx-auto text-emerald-500"/>} v3={<Check size={18} strokeWidth={3} className="mx-auto text-purple-500"/>} />
+                <FeatureRow label="Story Row (24h)" v1={<Check size={18} strokeWidth={3} className="mx-auto text-[var(--muted)]"/>} v2={<Check size={18} strokeWidth={3} className="mx-auto text-emerald-500"/>} v3={<Check size={18} strokeWidth={3} className="mx-auto text-violet-500"/>} />
+                <FeatureRow label="Flash Drops" v1={<Check size={18} strokeWidth={3} className="mx-auto text-[var(--muted)]"/>} v2={<Check size={18} strokeWidth={3} className="mx-auto text-emerald-500"/>} v3={<Check size={18} strokeWidth={3} className="mx-auto text-violet-500"/>} />
                 <FeatureRow label="Gemini AI Writer" v1="—" v2="—" v3="Unlimited" />
                 <FeatureRow label="Magic Studio (BG Remove)" v1="—" v2="—" v3="Unlimited" />
-                <FeatureRow label="Inventory Management" v1={<Check size={18} strokeWidth={3} className="mx-auto text-slate-300"/>} v2={<Check size={18} strokeWidth={3} className="mx-auto text-emerald-500"/>} v3={<Check size={18} strokeWidth={3} className="mx-auto text-purple-500"/>} />
+                <FeatureRow label="Inventory Management" v1={<Check size={18} strokeWidth={3} className="mx-auto text-[var(--muted)]"/>} v2={<Check size={18} strokeWidth={3} className="mx-auto text-emerald-500"/>} v3={<Check size={18} strokeWidth={3} className="mx-auto text-violet-500"/>} />
                 <FeatureRow label="Customer Analytics" v1="Basic" v2="Advanced" v3="Real-Time" />
                 <FeatureRow label="Feed Priority" v1="Standard" v2="High" v3="🔥 Highest" />
-                <FeatureRow label="Dedicated Success Manager" v1="—" v2="—" v3={<Check size={18} strokeWidth={3} className="mx-auto text-purple-500"/>} />
+                <FeatureRow label="Dedicated Success Manager" v1="—" v2="—" v3={<Check size={18} strokeWidth={3} className="mx-auto text-violet-500"/>} />
               </tbody>
             </table>
           </div>
@@ -323,10 +323,10 @@ function PricingCard({ title, desc, price, subPrice, features, cta, href, featur
   return (
     <div className={`relative p-8 md:p-10 rounded-[2.5rem] border flex flex-col h-full transform-gpu transition-transform duration-300 hover:-translate-y-2 ${
       diamond 
-        ? 'bg-slate-950 border-purple-500/50 text-white shadow-2xl shadow-purple-900/30' 
+        ? 'bg-[var(--charcoal)] border-violet-500/50 text-white shadow-2xl shadow-violet-900/30' 
         : featured
-          ? 'bg-white border-emerald-500 shadow-2xl shadow-emerald-500/10 md:scale-105 z-10'
-          : 'bg-white border-slate-200 shadow-lg shadow-slate-200/50'
+          ? 'bg-[var(--card)] border-emerald-500 shadow-2xl shadow-emerald-500/10 md:scale-105 z-10'
+          : 'bg-[var(--card)] border-[var(--border)] shadow-lg shadow-[var(--charcoal)]/5'
     }`}>
       
       {/* Badges */}
@@ -336,37 +336,37 @@ function PricingCard({ title, desc, price, subPrice, features, cta, href, featur
         </div>
       )}
       {diamond && (
-        <div className="absolute top-0 right-0 bg-gradient-to-bl from-purple-500 to-indigo-600 text-white px-5 py-2.5 rounded-bl-[2rem] rounded-tr-[2.4rem] text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-md">
+        <div className="absolute top-0 right-0 bg-gradient-to-bl from-violet-500 to-violet-600 text-white px-5 py-2.5 rounded-bl-[2rem] rounded-tr-[2.4rem] text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-md">
           <Gem size={14} className="fill-white/20" /> Prestige
         </div>
       )}
 
       {/* Savings Pill */}
       {savings && (
-         <div className={`absolute top-8 right-8 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${diamond ? 'bg-purple-900/50 text-purple-300 border border-purple-500/30' : 'bg-emerald-50 text-emerald-600 border border-emerald-100'}`}>
+         <div className={`absolute top-8 right-8 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest ${diamond ? 'bg-violet-900/50 text-violet-300 border border-violet-500/30' : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-800'}`}>
             {savings}
          </div>
       )}
 
       <div className="mb-8">
-        <h3 className={`text-2xl font-black mb-2 tracking-tight ${diamond ? 'text-white' : 'text-slate-900'}`}>{title}</h3>
-        <p className={`text-sm font-medium ${diamond ? 'text-slate-400' : 'text-slate-500'}`}>{desc}</p>
+        <h3 className={`text-2xl font-black mb-2 tracking-tight ${diamond ? 'text-white' : 'text-[var(--foreground)]'}`}>{title}</h3>
+        <p className={`text-sm font-medium ${diamond ? 'text-white/60' : 'text-[var(--muted)]'}`}>{desc}</p>
       </div>
 
       <div className="mb-10">
         <div className="flex flex-col">
-          <span className={`text-5xl font-black tracking-tighter ${diamond ? 'text-white' : 'text-slate-900'}`}>{price}</span>
-          <span className={`text-xs font-bold mt-2 uppercase tracking-wide ${diamond ? 'text-slate-500' : 'text-slate-400'}`}>{subPrice}</span>
+          <span className={`text-5xl font-black tracking-tighter ${diamond ? 'text-white' : 'text-[var(--foreground)]'}`}>{price}</span>
+          <span className={`text-xs font-bold mt-2 uppercase tracking-wide ${diamond ? 'text-white/50' : 'text-[var(--muted)]'}`}>{subPrice}</span>
         </div>
       </div>
 
       <div className="flex-1 mb-10 space-y-4">
         {features.map((feat: string, i: number) => (
           <div key={i} className="flex items-start gap-3">
-            <div className={`mt-0.5 p-1 rounded-full shrink-0 ${diamond ? 'bg-purple-500/20 text-purple-400' : 'bg-emerald-50 text-emerald-500'}`}>
+            <div className={`mt-0.5 p-1 rounded-full shrink-0 ${diamond ? 'bg-violet-500/20 text-violet-400' : 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-500'}`}>
               <Check size={14} strokeWidth={4} />
             </div>
-            <span className={`text-sm font-medium leading-relaxed ${diamond ? 'text-slate-300' : 'text-slate-600'}`}>{feat}</span>
+            <span className={`text-sm font-medium leading-relaxed ${diamond ? 'text-white/80' : 'text-[var(--foreground)]'}`}>{feat}</span>
           </div>
         ))}
       </div>
@@ -375,10 +375,10 @@ function PricingCard({ title, desc, price, subPrice, features, cta, href, featur
         href={href}
         className={`w-full py-4 rounded-2xl flex items-center justify-center font-bold text-sm uppercase tracking-wide transition-all ${
           diamond 
-            ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-lg shadow-purple-600/30' 
+            ? 'bg-violet-600 hover:bg-violet-500 text-white shadow-lg shadow-violet-600/30' 
             : featured 
-              ? 'bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20' 
-              : 'bg-white border-2 border-slate-200 hover:border-slate-300 text-slate-900'
+              ? 'bg-[var(--charcoal)] hover:opacity-90 text-white shadow-lg shadow-[var(--charcoal)]/20' 
+              : 'bg-[var(--card)] border-2 border-[var(--border)] hover:border-[var(--foreground)]/30 text-[var(--foreground)]'
         }`}
       >
         {cta}
@@ -389,11 +389,11 @@ function PricingCard({ title, desc, price, subPrice, features, cta, href, featur
 
 function FeatureRow({ label, v1, v2, v3 }: any) {
   return (
-    <tr className="hover:bg-slate-50/80 transition-colors group">
-      <td className="p-6 text-sm font-bold text-slate-700">{label}</td>
-      <td className="p-6 text-sm font-medium text-slate-500 text-center">{v1}</td>
-      <td className="p-6 text-sm font-black text-slate-900 text-center bg-emerald-50/30 group-hover:bg-emerald-50/50 transition-colors">{v2}</td>
-      <td className="p-6 text-sm font-black text-purple-900 text-center bg-purple-50/30 group-hover:bg-purple-50/50 transition-colors">{v3}</td>
+    <tr className="hover:bg-[var(--surface)]/80 transition-colors group">
+      <td className="p-6 text-sm font-bold text-[var(--foreground)]">{label}</td>
+      <td className="p-6 text-sm font-medium text-[var(--muted)] text-center">{v1}</td>
+      <td className="p-6 text-sm font-black text-[var(--foreground)] text-center bg-emerald-50/30 dark:bg-emerald-950/30 group-hover:bg-emerald-50/50 dark:group-hover:bg-emerald-950/50 transition-colors">{v2}</td>
+      <td className="p-6 text-sm font-black text-violet-900 dark:text-violet-200 text-center bg-violet-50/30 dark:bg-violet-950/30 group-hover:bg-violet-50/50 dark:group-hover:bg-violet-950/50 transition-colors">{v3}</td>
     </tr>
   );
 }

@@ -1,6 +1,7 @@
 import { createServerClient } from '@/lib/supabase';
 import { notFound, redirect } from 'next/navigation';
 import { Metadata } from 'next';
+import { getLocaleForCountry, getSiteNameForCountry } from '@/lib/countryMetadata';
 import ClientReelWrapper from './ClientReelWrapper';
 
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -10,7 +11,7 @@ async function getReelByParam(param: string) {
   const supabase = createServerClient();
   const select = `
     *,
-    seller:profiles (display_name, slug, logo_url, is_verified)
+    seller:profiles (display_name, slug, logo_url, is_verified, location_country_code)
   `;
   const shortCode = (param || '').trim().toLowerCase();
   const byShortCode = await supabase
@@ -39,6 +40,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
   const seller: any = reel.seller;
   const sellerName = Array.isArray(seller) ? seller[0]?.display_name : seller?.display_name;
+  const sellerCountry = Array.isArray(seller) ? seller[0]?.location_country_code : seller?.location_country_code;
   const title = `Watch ${sellerName || 'a seller'}'s video on StoreLink`;
   const desc = reel.description || "Check out this trending product video on StoreLink.";
   const canonicalCode = reel.short_code || reel.id;
@@ -50,6 +52,8 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
       title,
       description: desc,
       url: `https://storelink.ng/r/${canonicalCode}`,
+      siteName: getSiteNameForCountry(sellerCountry),
+      locale: getLocaleForCountry(sellerCountry),
       images: [
         {
           url: reel.thumbnail_url || 'https://storelink.ng/default-reel.png',
