@@ -14,6 +14,8 @@ import {
   Image as ImageIcon,
   MessageCircle,
   CalendarCheck2,
+  Heart,
+  Bookmark,
 } from 'lucide-react';
 import AppTrapModal from '@/components/ui/DownloadTrap';
 import Button from '@/components/ui/Button';
@@ -48,20 +50,23 @@ export default function ClientServiceWrapper({ service, seller }: any) {
   };
 
   const fromLabel = formatMoney(service.hero_price_min, service.currency_code || 'NGN');
+  const likesCount = Number(service.likes_count || 0);
+  const commentsCount = Number(service.comments_count || 0);
+  const wishlistCount = Number(service.wishlist_count || 0);
   const locationParts = [seller.location_city, seller.location_state].filter(Boolean);
   const locationLabel = locationParts.join(', ');
 
   let deliveryBadge: string | null = null;
   if (service.delivery_type === 'online') {
-    deliveryBadge = 'Online';
+    deliveryBadge = 'ONLINE';
   } else if (service.delivery_type === 'in_person' && service.location_type === 'i_travel') {
-    deliveryBadge = 'I travel';
+    deliveryBadge = 'I TRAVEL';
   } else if (service.delivery_type === 'in_person' && service.location_type === 'both') {
-    deliveryBadge = 'Studio & Home';
+    deliveryBadge = 'STUDIO & HOME';
   } else if (service.delivery_type === 'in_person' && service.location_type === 'at_my_place') {
-    deliveryBadge = 'Studio only';
+    deliveryBadge = 'STUDIO ONLY';
   } else if (service.delivery_type === 'both') {
-    deliveryBadge = 'Studio & Home';
+    deliveryBadge = 'STUDIO & HOME';
   }
 
   const intentPath = `/s/${seller.slug}/service/${service.id}`;
@@ -77,12 +82,26 @@ export default function ClientServiceWrapper({ service, seller }: any) {
           >
             <ChevronLeft size={24} strokeWidth={2} />
           </Link>
-          <button
-            onClick={() => handleTrap('view')}
-            className="w-10 h-10 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors"
-          >
-            <Share2 size={20} strokeWidth={2} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleTrap('view')}
+              className="w-10 h-10 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors"
+            >
+              <Heart size={18} strokeWidth={2.2} />
+            </button>
+            <button
+              onClick={() => handleTrap('view')}
+              className="w-10 h-10 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors"
+            >
+              <Bookmark size={18} strokeWidth={2.2} />
+            </button>
+            <button
+              onClick={() => handleTrap('view')}
+              className="w-10 h-10 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors"
+            >
+              <Share2 size={20} strokeWidth={2} />
+            </button>
+          </div>
         </div>
 
         {/* Media carousel */}
@@ -142,8 +161,26 @@ export default function ClientServiceWrapper({ service, seller }: any) {
               From
             </p>
             <p className="text-2xl font-black text-emerald-600 tracking-tight">{fromLabel}</p>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {service.service_category && (
+                <span className="px-2 py-1 rounded-full bg-(--surface) border border-(--border) text-[9px] font-black tracking-widest text-(--muted) uppercase">
+                  {String(service.service_category).replace(/_/g, ' ').toUpperCase()}
+                </span>
+              )}
+              {deliveryBadge && (
+                <span className="px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[9px] font-black tracking-widest text-emerald-700 uppercase">
+                  {deliveryBadge}
+                </span>
+              )}
+            </div>
+            <div className="mt-3 flex items-center gap-4 text-[11px] font-black text-(--muted) uppercase tracking-widest">
+              <span className="inline-flex items-center gap-1"><Heart size={12} /> {likesCount}</span>
+              <span className="inline-flex items-center gap-1"><MessageCircle size={12} /> {commentsCount}</span>
+              <span className="inline-flex items-center gap-1"><Bookmark size={12} /> {wishlistCount}</span>
+            </div>
           </div>
 
+          <p className="text-[10px] font-black text-(--muted) uppercase tracking-[0.18em] mb-2">SERVICE BY</p>
           <Link
             href={`/${seller.slug}`}
             className="flex items-center gap-3 p-3 bg-(--surface) rounded-2xl mb-6 active:bg-(--border) transition-colors duration-(--duration-150)"
@@ -184,7 +221,7 @@ export default function ClientServiceWrapper({ service, seller }: any) {
 
           <div className="mb-8">
             <h3 className="text-xs font-bold text-(--foreground) uppercase tracking-widest mb-3 flex items-center gap-2">
-              <Info size={14} /> Description
+              <Info size={14} /> DESCRIPTION
             </h3>
             <p className="text-sm text-(--muted) leading-relaxed whitespace-pre-wrap">
               {service.description || 'No description provided.'}
@@ -210,7 +247,7 @@ export default function ClientServiceWrapper({ service, seller }: any) {
           href={`storelink://s/${seller.slug}/service/${service.id}`}
           className="flex items-center justify-center gap-2 py-3 text-sm font-bold text-emerald-600 hover:text-emerald-700"
         >
-          Finish booking in the StoreLink app
+          OPEN IN APP
         </a>
         <Button
           href={`/download?intent=${encodeURIComponent(intentPath)}`}

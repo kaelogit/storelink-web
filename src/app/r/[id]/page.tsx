@@ -1,5 +1,5 @@
 import { createServerClient } from '@/lib/supabase';
-import { notFound, redirect } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { Metadata } from 'next';
 import { getLocaleForCountry, getSiteNameForCountry } from '@/lib/countryMetadata';
 import ClientReelWrapper from './ClientReelWrapper';
@@ -79,7 +79,10 @@ export default async function ReelPage({ params }: { params: Promise<{ id: strin
   const resolvedParams = await params;
   const reel = await getReelByParam(resolvedParams.id);
 
-  if (!reel) return notFound();
+  if (!reel) {
+    const requested = (resolvedParams.id || '').trim();
+    redirect(`/download?intent=${encodeURIComponent(`/r/${requested}`)}`);
+  }
 
   // Prefer short_code URL when available and request was by id
   const requested = (resolvedParams.id || '').trim();

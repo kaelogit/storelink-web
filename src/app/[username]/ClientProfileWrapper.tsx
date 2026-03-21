@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
@@ -29,8 +29,8 @@ const cleanUrl = (url: string) => {
   } catch (e) { return url; }
 };
 
-export default function ClientProfileWrapper({ profile, products, services = [] }: any) {
-  const [activeTab, setActiveTab] = useState<'drops' | 'services' | 'reels' | 'collection'>('drops');
+export default function ClientProfileWrapper({ profile, products, services = [], reels = [] }: any) {
+  const [activeTab, setActiveTab] = useState<'drops' | 'services' | 'reels' | 'collection'>('collection');
   
   // TRAP STATE
   const [trapOpen, setTrapOpen] = useState(false);
@@ -52,6 +52,26 @@ export default function ClientProfileWrapper({ profile, products, services = [] 
   const isDiamond = profile.subscription_plan === 'diamond';
   const bioText = profile.bio || "";
   const isBioTruncated = bioText.length > 90;
+  const sellerType = String(profile?.seller_type || '').toLowerCase();
+  const isSeller = !!profile?.is_seller;
+  const sellsProducts = sellerType === 'product' || sellerType === 'both' || (sellerType === '' && products.length > 0);
+  const offersServices = sellerType === 'service' || sellerType === 'both' || (sellerType === '' && services.length > 0);
+  const canShowSellerTabs = isSeller && (sellsProducts || offersServices);
+  const reelsCount = Array.isArray(reels) ? reels.length : 0;
+
+  useEffect(() => {
+    if (!canShowSellerTabs) {
+      if (activeTab !== 'collection') setActiveTab('collection');
+      return;
+    }
+    if (offersServices && !sellsProducts) {
+      if (activeTab !== 'services') setActiveTab('services');
+      return;
+    }
+    if (sellsProducts) {
+      if (activeTab !== 'drops' && activeTab !== 'services' && activeTab !== 'reels') setActiveTab('drops');
+    }
+  }, [canShowSellerTabs, offersServices, sellsProducts, activeTab]);
 
   return (
     <div className="min-h-screen bg-[var(--background)] pt-24 pb-10">
@@ -159,7 +179,7 @@ export default function ClientProfileWrapper({ profile, products, services = [] 
               <div className="flex flex-col items-center flex-1">
                  <div className="flex items-center gap-1 text-[var(--foreground)] font-black text-sm">
                     <Package size={14} />
-                    <span>{profile.product_count || 0}</span>
+                    <span>{products.length || profile.product_count || 0}</span>
                  </div>
                  <span className="text-[9px] font-bold text-[var(--muted)] uppercase tracking-widest mt-1">Drops</span>
               </div>
@@ -176,23 +196,41 @@ export default function ClientProfileWrapper({ profile, products, services = [] 
         </div>
 
         <div className="sticky top-[70px] bg-[var(--card)] z-30 border-b border-[var(--border)] flex shadow-sm">
-           <button type="button" onClick={() => setActiveTab('drops')} className={`flex-1 py-4 flex justify-center border-b-2 transition-colors duration-[var(--duration-150)] ${activeTab === 'drops' ? 'border-[var(--charcoal)] text-[var(--foreground)]' : 'border-transparent text-[var(--muted)]'}`}>
-              <Package size={20} strokeWidth={activeTab === 'drops' ? 2.5 : 2} />
-           </button>
+           {canShowSellerTabs && sellsProducts && (
+             <button type="button" onClick={() => setActiveTab('drops')} className={`flex-1 py-4 flex justify-center border-b-2 transition-colors duration-[var(--duration-150)] ${activeTab === 'drops' ? 'border-[var(--charcoal)] text-[var(--foreground)]' : 'border-transparent text-[var(--muted)]'}`}>
+                <Package size={20} strokeWidth={activeTab === 'drops' ? 2.5 : 2} />
+             </button>
+           )}
+           {canShowSellerTabs && offersServices && (
+             <button
+               type="button"
+               onClick={() => setActiveTab('services')}
+               className={`flex-1 py-4 flex justify-center border-b-2 transition-colors duration-[var(--duration-150)] ${
+                 activeTab === 'services' ? 'border-[var(--charcoal)] text-[var(--foreground)]' : 'border-transparent text-[var(--muted)]'
+               }`}
+             >
+                <Wrench size={20} strokeWidth={activeTab === 'services' ? 2.5 : 2} />
+             </button>
+           )}
+           {canShowSellerTabs && (
+             <button
+               type="button"
+               onClick={() => setActiveTab('reels')}
+               className={`flex-1 py-4 flex justify-center border-b-2 transition-colors duration-[var(--duration-150)] ${
+                 activeTab === 'reels' ? 'border-[var(--charcoal)] text-[var(--foreground)]' : 'border-transparent text-[var(--muted)]'
+               }`}
+             >
+                <Video size={20} strokeWidth={activeTab === 'reels' ? 2.5 : 2} />
+             </button>
+           )}
            <button
              type="button"
-             onClick={() => setActiveTab('services')}
+             onClick={() => setActiveTab('collection')}
              className={`flex-1 py-4 flex justify-center border-b-2 transition-colors duration-[var(--duration-150)] ${
-               activeTab === 'services' ? 'border-[var(--charcoal)] text-[var(--foreground)]' : 'border-transparent text-[var(--muted)]'
+               activeTab === 'collection' ? 'border-[var(--charcoal)] text-[var(--foreground)]' : 'border-transparent text-[var(--muted)]'
              }`}
            >
-              <Wrench size={20} strokeWidth={activeTab === 'services' ? 2.5 : 2} />
-           </button>
-           <button type="button" onClick={() => handleTrap('view')} className="flex-1 py-4 flex justify-center border-b-2 border-transparent text-[var(--muted)] hover:text-[var(--foreground)]">
-              <Video size={20} />
-           </button>
-           <button type="button" onClick={() => handleTrap('view')} className="flex-1 py-4 flex justify-center border-b-2 border-transparent text-[var(--muted)] hover:text-[var(--foreground)]">
-              <Layers size={20} />
+              <Layers size={20} strokeWidth={activeTab === 'collection' ? 2.5 : 2} />
            </button>
         </div>
 
@@ -230,6 +268,48 @@ export default function ClientProfileWrapper({ profile, products, services = [] 
                  Finish booking in the StoreLink app to secure your service with escrow.
                </p>
              )}
+
+          {activeTab === 'reels' && (
+            <div className="grid grid-cols-3 gap-1 p-1">
+              {reelsCount > 0 ? (
+                reels.map((reel: any) => (
+                  <button
+                    key={reel.id}
+                    type="button"
+                    onClick={() => handleTrap('view')}
+                    className="relative aspect-[9/16] bg-[var(--card)] rounded-xl overflow-hidden border border-[var(--border)]"
+                  >
+                    {reel.thumbnail_url ? (
+                      <Image src={cleanUrl(reel.thumbnail_url)} alt={reel.caption || 'Reel'} fill className="object-cover" unoptimized />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-[var(--muted)]">
+                        <Video size={16} />
+                      </div>
+                    )}
+                    <div className="absolute top-1 right-1 px-1.5 py-0.5 rounded bg-black/50 text-white text-[8px] font-black tracking-wide">
+                      {reel.service_listing_id ? 'SERVICE' : 'PRODUCT'}
+                    </div>
+                  </button>
+                ))
+              ) : (
+                <div className="col-span-3 py-12 text-center text-[var(--muted)] text-[10px] font-bold uppercase tracking-widest">
+                  No reels yet
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'collection' && (
+            <div className="py-16 text-center px-6">
+              <p className="text-[var(--foreground)] text-xs font-black tracking-wide mb-2">CURATION</p>
+              <p className="text-[var(--muted)] text-[11px] font-medium mb-4">
+                Full collection/wardrobe is available in the app.
+              </p>
+              <Button onClick={() => handleTrap('view')} variant="outline" size="sm" className="rounded-full">
+                View on App
+              </Button>
+            </div>
+          )}
                {services.length > 0 ? (
                  services.map((svc: any) => {
                    const fromLabel = formatPrice((svc.hero_price_min || 0) / 100, svc.currency_code || profile.currency_code || 'NGN');

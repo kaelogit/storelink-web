@@ -122,7 +122,29 @@ async function getServiceData(username: string, id: string) {
     return null;
   }
 
-  return { service: row, seller: (row as any).seller };
+  const [likesRes, commentsRes, wishlistRes] = await Promise.all([
+    supabase
+      .from('service_likes')
+      .select('id', { count: 'exact', head: true })
+      .eq('service_listing_id', row.id),
+    supabase
+      .from('service_comments')
+      .select('id', { count: 'exact', head: true })
+      .eq('service_listing_id', row.id),
+    supabase
+      .from('service_wishlist')
+      .select('id', { count: 'exact', head: true })
+      .eq('service_listing_id', row.id),
+  ]);
+
+  const serviceWithEngagement = {
+    ...(row as any),
+    likes_count: Number(likesRes.count || 0),
+    comments_count: Number(commentsRes.count || 0),
+    wishlist_count: Number(wishlistRes.count || 0),
+  };
+
+  return { service: serviceWithEngagement, seller: (row as any).seller };
 }
 
 export default async function ServicePage({ params }: { params: Promise<RouteParams> }) {

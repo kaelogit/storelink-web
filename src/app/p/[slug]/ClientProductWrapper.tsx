@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {
   ChevronLeft, Share2, ShieldCheck,
-  MessageCircle, ShoppingBag, Gem, CheckCircle, Info,
+  MessageCircle, ShoppingBag, Gem, CheckCircle, Info, Heart, Bookmark,
   Image as ImageIcon
 } from 'lucide-react';
 import AppTrapModal from '../../../components/ui/DownloadTrap';
@@ -25,6 +25,9 @@ export default function ClientProductWrapper({ product, seller }: any) {
   const [trapTrigger, setTrapTrigger] = useState<'buy' | 'view' | 'chat'>('buy');
 
   const images = product.image_urls || [];
+  const likesCount = Number(product.likes_count || 0);
+  const commentsCount = Number(product.comments_count || product.comment_count || 0);
+  const wishlistCount = Number(product.wishlist_count || 0);
   // Fallback avatar
   const sellerAvatar = seller.logo_url || `https://ui-avatars.com/api/?name=${seller.display_name}&background=10b981&color=fff`;
 
@@ -42,9 +45,17 @@ export default function ClientProductWrapper({ product, seller }: any) {
            <Link href={`/${seller.slug}`} className="w-10 h-10 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors">
               <ChevronLeft size={24} strokeWidth={2} />
            </Link>
-           <button onClick={() => handleTrap('view')} className="w-10 h-10 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors">
-              <Share2 size={20} strokeWidth={2} />
-           </button>
+           <div className="flex items-center gap-2">
+             <button onClick={() => handleTrap('view')} className="w-10 h-10 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors">
+                <Heart size={18} strokeWidth={2.2} />
+             </button>
+             <button onClick={() => handleTrap('view')} className="w-10 h-10 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors">
+                <Bookmark size={18} strokeWidth={2.2} />
+             </button>
+             <button onClick={() => handleTrap('view')} className="w-10 h-10 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors">
+                <Share2 size={20} strokeWidth={2} />
+             </button>
+           </div>
         </div>
 
         {/* 2. IMAGE CAROUSEL (Snap Scroll) */}
@@ -102,8 +113,26 @@ export default function ClientProductWrapper({ product, seller }: any) {
               <p className="text-2xl font-black text-emerald-600 tracking-tight">
                 {formatPrice(product.price, product.currency_code)}
               </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {(seller.location_city || seller.location_state) && (
+                  <span className="px-2 py-1 rounded-full bg-[var(--surface)] border border-[var(--border)] text-[9px] font-black tracking-widest text-[var(--muted)] uppercase">
+                    {[seller.location_city, seller.location_state].filter(Boolean).join(', ')}
+                  </span>
+                )}
+                {seller.subscription_plan === 'diamond' && (
+                <span className="px-2 py-1 rounded-full bg-violet-500/10 border border-violet-500/30 text-[9px] font-black tracking-widest text-violet-600 uppercase">
+                    DIAMOND
+                  </span>
+                )}
+              </div>
+              <div className="mt-3 flex items-center gap-4 text-[11px] font-black text-[var(--muted)] uppercase tracking-widest">
+                <span className="inline-flex items-center gap-1"><Heart size={12} /> {likesCount}</span>
+                <span className="inline-flex items-center gap-1"><MessageCircle size={12} /> {commentsCount}</span>
+                <span className="inline-flex items-center gap-1"><Bookmark size={12} /> {wishlistCount}</span>
+              </div>
            </div>
 
+           <p className="text-[10px] font-black text-[var(--muted)] uppercase tracking-[0.18em] mb-2">SOLD BY</p>
            <Link href={`/${seller.slug}`} className="flex items-center gap-3 p-3 bg-[var(--surface)] rounded-[var(--radius-2xl)] mb-6 active:bg-[var(--border)] transition-colors duration-[var(--duration-150)]">
               <div className="relative">
                  <div className="w-12 h-12 rounded-full bg-[var(--border)] overflow-hidden border border-[var(--border)]">
@@ -127,7 +156,7 @@ export default function ClientProductWrapper({ product, seller }: any) {
 
            <div className="mb-8">
               <h3 className="text-xs font-bold text-[var(--foreground)] uppercase tracking-widest mb-3 flex items-center gap-2">
-                 <Info size={14} /> Description
+                 <Info size={14} /> DESCRIPTION
               </h3>
               <p className="text-sm text-[var(--muted)] leading-relaxed whitespace-pre-wrap">
                  {product.description || "No description provided."}
@@ -137,7 +166,7 @@ export default function ClientProductWrapper({ product, seller }: any) {
            <div className="flex items-start gap-3 p-4 bg-emerald-500/10 dark:bg-emerald-500/20 rounded-[var(--radius-2xl)] border border-emerald-500/30">
               <ShieldCheck size={20} className="text-emerald-600 mt-0.5" />
               <div>
-                 <p className="text-xs font-bold text-[var(--foreground)] mb-1">Funds Secured</p>
+                 <p className="text-xs font-bold text-[var(--foreground)] mb-1 uppercase tracking-wide">FUNDS SECURED</p>
                  <p className="text-[11px] text-[var(--muted)] leading-relaxed">
                     Your money is held in escrow until you confirm delivery. No scams.
                  </p>
@@ -147,7 +176,7 @@ export default function ClientProductWrapper({ product, seller }: any) {
         </div>
 
         <a href={`storelink://p/${product.slug}`} className="flex items-center justify-center gap-2 py-3 text-sm font-bold text-emerald-600 hover:text-emerald-700">
-             Open in app
+             OPEN IN APP
            </a>
            <Button href={`/download?intent=${encodeURIComponent(`/p/${product.slug}`)}`} variant="ghost" size="sm" className="text-[var(--muted)] font-medium">
              Don&apos;t have the app? Get it here

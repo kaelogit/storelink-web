@@ -112,7 +112,14 @@ async function getProfileData(username: string) {
     .order('created_at', { ascending: false })
     .limit(20);
 
-  return { profile, products: products || [], services: services || [] };
+  const { data: reels } = await supabase
+    .from('reels')
+    .select('id, short_code, thumbnail_url, caption, product_id, service_listing_id, created_at')
+    .eq('seller_id', profile.id)
+    .order('created_at', { ascending: false })
+    .limit(30);
+
+  return { profile, products: products || [], services: services || [], reels: reels || [] };
 }
 
 // --- 3. PAGE COMPONENT ---
@@ -134,6 +141,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
       profile={data.profile}
       products={data.products}
       services={data.services}
+      reels={data.reels}
     />
   );
 }

@@ -6,8 +6,8 @@ import { createBrowserClient } from '@/lib/supabase';
 import Image from 'next/image';
 import Link from 'next/link';
 import { 
-  Heart, MessageCircle, Share2, ShoppingBag, 
-  TrendingUp, Play, Zap, Gem, MapPin 
+  Heart, MessageCircle, Share2, ShoppingBag,
+  TrendingUp, Play, Zap, Gem, MapPin, Wrench
 } from 'lucide-react';
 
 const supabase = createBrowserClient();
@@ -49,7 +49,8 @@ export default function TheFeed() {
         .select(`
           id, video_url, caption, likes_count, comment_count, views_count,
           seller:profiles!seller_id(display_name, slug, logo_url, subscription_plan, location_city),
-          product:products!product_id(name, price, currency_code, is_flash_drop, flash_price, stock_quantity, image_urls)
+          product:products!product_id(name, price, currency_code, is_flash_drop, flash_price, stock_quantity, image_urls),
+          service:service_listings!service_listing_id(title, hero_price_min, currency_code, media, is_active)
         `)
         .limit(FEED_LIMIT)
         .order('created_at', { ascending: false });
@@ -156,9 +157,18 @@ export default function TheFeed() {
             
             {marqueeItems.map((item, i) => {
                const isDiamond = item.seller?.subscription_plan === 'diamond';
-               const activePrice = item.product?.is_flash_drop ? item.product?.flash_price : item.product?.price;
-               const isSoldOut = (item.product?.stock_quantity || 0) < 1;
-               const thumbSource = item.product?.image_urls?.[0] || item.seller?.logo_url;
+               const isServiceLinked = !!item.service;
+               const activePrice = isServiceLinked
+                 ? Number(item.service?.hero_price_min || 0) / 100
+                 : (item.product?.is_flash_drop ? item.product?.flash_price : item.product?.price);
+               const isSoldOut = isServiceLinked ? false : (item.product?.stock_quantity || 0) < 1;
+               const serviceMedia = item.service?.media;
+               const serviceThumb = Array.isArray(serviceMedia)
+                 ? (typeof serviceMedia[0] === 'string' ? serviceMedia[0] : serviceMedia?.[0]?.url)
+                 : null;
+               const thumbSource = isServiceLinked
+                 ? (serviceThumb || item.seller?.logo_url)
+                 : (item.product?.image_urls?.[0] || item.seller?.logo_url);
 
                return (
                   <div key={`${item.id}-${i}`} className="pr-4 md:pr-8 shrink-0">
@@ -212,7 +222,11 @@ export default function TheFeed() {
                         {!isSoldOut && (
                             <Link href="/download" className="flex flex-col items-center gap-1 my-1 md:my-2 transition-transform hover:scale-110">
                               <div className="w-[40px] md:w-[50px] h-[40px] md:h-[50px] rounded-full bg-gradient-to-b from-emerald-500 to-emerald-700 flex items-center justify-center border-2 border-white shadow-md">
-                                  <ShoppingBag size={18} className="text-white md:w-5 md:h-5" strokeWidth={2.5} />
+                                  {isServiceLinked ? (
+                                    <Wrench size={18} className="text-white md:w-5 md:h-5" strokeWidth={2.5} />
+                                  ) : (
+                                    <ShoppingBag size={18} className="text-white md:w-5 md:h-5" strokeWidth={2.5} />
+                                  )}
                               </div>
                             </Link>
                         )}
@@ -245,7 +259,7 @@ export default function TheFeed() {
                           </div>
 
                           <p className="text-white/90 text-xs md:text-sm font-medium leading-snug line-clamp-2 pr-2">
-                            {item.caption || item.product?.name}
+                            {item.caption || item.product?.name || item.service?.title}
                           </p>
 
                           {/* Glass Product Card */}
@@ -254,16 +268,22 @@ export default function TheFeed() {
                                 {thumbSource && <Image src={thumbSource} fill className="object-cover" alt="prod" sizes="40px" />}
                             </div>
                             <div className="flex flex-col justify-center min-w-0">
-                                <span className="text-white text-[9px] md:text-[11px] font-bold truncate block w-full">{item.product?.name?.toUpperCase() || 'PRODUCT'}</span>
+                                <span className="text-white text-[9px] md:text-[11px] font-bold truncate block w-full">
+                                  {isServiceLinked
+                                    ? String(item.service?.title || 'SERVICE').toUpperCase()
+                                    : (item.product?.name?.toUpperCase() || 'PRODUCT')}
+                                </span>
                                 <div className="flex items-center gap-1 mt-0.5">
                                   {isSoldOut ? (
                                       <span className="text-[9px] md:text-[11px] font-black text-red-400">SOLD OUT</span>
                                   ) : (
                                       <>
                                         <span className="text-[9px] md:text-[11px] font-black text-emerald-400">
-                                          {formatMoney(activePrice || 0, item.product?.currency_code)}
+                                          {isServiceLinked
+                                            ? `From ${formatMoney(activePrice || 0, item.service?.currency_code || 'NGN')}`
+                                            : formatMoney(activePrice || 0, item.product?.currency_code)}
                                         </span>
-                                        {item.product?.is_flash_drop && <Zap size={8} className="text-amber-400 fill-amber-400 md:w-2.5 md:h-2.5" />}
+                                        {!isServiceLinked && item.product?.is_flash_drop && <Zap size={8} className="text-amber-400 fill-amber-400 md:w-2.5 md:h-2.5" />}
                                       </>
                                   )}
                                 </div>

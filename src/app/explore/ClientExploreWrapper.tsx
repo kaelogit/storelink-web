@@ -80,6 +80,18 @@ export default function ClientExploreWrapper({
     });
   };
 
+  const resolveServiceMedia = (raw: any): string[] => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) {
+      return raw
+        .map((m: any) => (typeof m === 'string' ? m : m?.url))
+        .filter((u: any) => typeof u === 'string' && u.length > 0);
+    }
+    if (typeof raw === 'string') return [raw];
+    if (typeof raw === 'object' && typeof raw.url === 'string') return [raw.url];
+    return [];
+  };
+
   useEffect(() => {
     async function fetchProducts() {
       setLoading(true);
@@ -122,12 +134,69 @@ export default function ClientExploreWrapper({
           finalData = finalData.filter((p: any) => {
             const productCat = (p.category || p.category_name || '').toString().toLowerCase();
             const sellerCat = (p.seller?.category || '').toString().toLowerCase();
-            const name = (p.name || '').toLowerCase();
+            const name = (p.name || p.title || '').toLowerCase();
             return productCat.includes(catLower) || sellerCat.includes(catLower) || name.includes(catLower);
           });
         }
 
-        setProducts(finalData.slice(0, 30));
+        // Pull active services too so Explore web mirrors app's mixed feed.
+        const { data: serviceRows } = await supabase
+          .from('service_listings')
+          .select(`
+            id, title, description, hero_price_min, currency_code, media, service_category, seller_id,
+            seller:profiles (
+              id, display_name, slug, logo_url, is_verified, subscription_plan, loyalty_enabled, loyalty_percentage, location_city, category
+            )
+          `)
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .limit(30);
+
+        const mappedServices = (serviceRows || []).map((s: any) => ({
+          id: s.id,
+          service_listing_id: s.id,
+          slug: null,
+          type: 'service',
+          name: String(s.title || 'Service'),
+          title: String(s.title || 'Service'),
+          description: s.description || '',
+          price: Number(s.hero_price_min || 0) / 100,
+          currency_code: s.currency_code || 'NGN',
+          image_urls: resolveServiceMedia(s.media),
+          likes_count: 0,
+          comment_count: 0,
+          comments_count: 0,
+          wishlist_count: 0,
+          is_liked: false,
+          stock_quantity: 999,
+          seller_id: s.seller_id,
+          seller: s.seller,
+          service_distance_label: 'NEAR YOU',
+          category: s.service_category || 'services',
+          category_name: s.service_category || 'services',
+        }));
+
+        let filteredServices = mappedServices;
+        if (query.length > 2) {
+          const lowerQ = query.toLowerCase();
+          filteredServices = filteredServices.filter((s: any) =>
+            s.name?.toLowerCase().includes(lowerQ) ||
+            s.seller?.display_name?.toLowerCase().includes(lowerQ),
+          );
+        }
+        if (activeCategory && activeCategory !== 'All') {
+          const catLower = activeCategory.toLowerCase();
+          filteredServices = filteredServices.filter((s: any) => {
+            const serviceCat = (s.category || s.category_name || '').toString().toLowerCase();
+            const sellerCat = (s.seller?.category || '').toString().toLowerCase();
+            const name = (s.name || '').toLowerCase();
+            return serviceCat.includes(catLower) || sellerCat.includes(catLower) || name.includes(catLower);
+          });
+        }
+
+        const merged = [...finalData, ...filteredServices];
+
+        setProducts(merged.slice(0, 30));
       } catch (err) {
           console.error("Fetch error:", err);
       } finally {
