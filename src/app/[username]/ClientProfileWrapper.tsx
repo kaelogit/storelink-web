@@ -262,12 +262,67 @@ export default function ClientProfileWrapper({ profile, products, services = [],
            )}
 
           {activeTab === 'services' && (
-           <div className="grid grid-cols-1 gap-2 pt-3 px-1">
-             {services.length > 0 && (
-               <p className="text-[10px] font-semibold text-[var(--muted)] tracking-[0.18em] uppercase mb-1 px-1">
-                 Finish booking in the StoreLink app to secure your service with escrow.
-               </p>
-             )}
+            <div className="grid grid-cols-1 gap-2 pt-3 px-1">
+              {services.length > 0 && (
+                <p className="text-[10px] font-semibold text-[var(--muted)] tracking-[0.18em] uppercase mb-1 px-1">
+                  Finish booking in the StoreLink app to secure your service with escrow.
+                </p>
+              )}
+              {services.length > 0 ? (
+                services.map((svc: any) => {
+                  const fromLabel = formatPrice((svc.hero_price_min || 0) / 100, svc.currency_code || profile.currency_code || 'NGN');
+                  let deliveryBadge: string | null = null;
+                  if (svc.delivery_type === 'online') deliveryBadge = 'Online';
+                  else if (svc.delivery_type === 'in_person' && svc.location_type === 'i_travel') deliveryBadge = 'I travel';
+                  else if (svc.delivery_type === 'in_person' && svc.location_type === 'both') deliveryBadge = 'Studio & Home';
+                  else if (svc.delivery_type === 'in_person' && svc.location_type === 'at_my_place') deliveryBadge = 'Studio only';
+                  else if (svc.delivery_type === 'both') deliveryBadge = 'Studio & Home';
+
+                  const media = (svc.media as string[] | null) || [];
+                  const heroImage = Array.isArray(media) && media.length > 0 ? media[0] : null;
+
+                  return (
+                    <button
+                      key={svc.id}
+                      type="button"
+                      onClick={() => handleTrap('view')}
+                      className="w-full text-left bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden active:scale-[0.98] transition-transform duration-[var(--duration-150)]"
+                    >
+                      <div className="flex">
+                        <div className="w-20 h-20 relative bg-[var(--surface)]">
+                          {heroImage ? (
+                            <Image src={cleanUrl(heroImage)} alt={svc.title} fill className="object-cover" unoptimized />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center text-[var(--muted)]">
+                              <Store size={18} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 px-3 py-2 flex flex-col justify-center">
+                          <p className="text-[11px] font-black text-[var(--foreground)] uppercase tracking-[0.12em] line-clamp-2">
+                            {svc.title}
+                          </p>
+                          {deliveryBadge && (
+                            <p className="text-[10px] font-bold text-[var(--muted)] mt-0.5 uppercase tracking-[0.16em]">
+                              {deliveryBadge}
+                            </p>
+                          )}
+                          <p className="text-xs font-black text-emerald-600 mt-1">From {fromLabel}</p>
+                          <p className="text-[10px] font-semibold text-[var(--muted)] mt-0.5">
+                            View details & book in the app
+                          </p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })
+              ) : (
+                <div className="py-12 text-center text-[var(--muted)] text-[10px] font-bold uppercase tracking-widest">
+                  No services published yet
+                </div>
+              )}
+            </div>
+          )}
 
           {activeTab === 'reels' && (
             <div className="grid grid-cols-3 gap-1 p-1">
@@ -310,67 +365,6 @@ export default function ClientProfileWrapper({ profile, products, services = [],
               </Button>
             </div>
           )}
-               {services.length > 0 ? (
-                 services.map((svc: any) => {
-                   const fromLabel = formatPrice((svc.hero_price_min || 0) / 100, svc.currency_code || profile.currency_code || 'NGN');
-                   let deliveryBadge: string | null = null;
-                   if (svc.delivery_type === 'online') deliveryBadge = 'Online';
-                   else if (svc.delivery_type === 'in_person' && svc.location_type === 'i_travel') deliveryBadge = 'I travel';
-                   else if (svc.delivery_type === 'in_person' && svc.location_type === 'both') deliveryBadge = 'Studio & Home';
-                   else if (svc.delivery_type === 'in_person' && svc.location_type === 'at_my_place') deliveryBadge = 'Studio only';
-                   else if (svc.delivery_type === 'both') deliveryBadge = 'Studio & Home';
-
-                   const media = (svc.media as string[] | null) || [];
-                   const heroImage = Array.isArray(media) && media.length > 0 ? media[0] : null;
-
-                   return (
-                     <button
-                       key={svc.id}
-                       type="button"
-                       onClick={() => handleTrap('view')}
-                       className="w-full text-left bg-[var(--card)] border border-[var(--border)] rounded-2xl overflow-hidden active:scale-[0.98] transition-transform duration-[var(--duration-150)]"
-                     >
-                       <div className="flex">
-                         <div className="w-20 h-20 relative bg-[var(--surface)]">
-                           {heroImage ? (
-                             <Image
-                               src={cleanUrl(heroImage)}
-                               alt={svc.title}
-                               fill
-                               className="object-cover"
-                               unoptimized
-                             />
-                           ) : (
-                             <div className="w-full h-full flex items-center justify-center text-[var(--muted)]">
-                               <Store size={18} />
-                             </div>
-                           )}
-                         </div>
-                         <div className="flex-1 px-3 py-2 flex flex-col justify-center">
-                           <p className="text-[11px] font-black text-[var(--foreground)] uppercase tracking-[0.12em] line-clamp-2">
-                             {svc.title}
-                           </p>
-                           {deliveryBadge && (
-                             <p className="text-[10px] font-bold text-[var(--muted)] mt-0.5 uppercase tracking-[0.16em]">
-                               {deliveryBadge}
-                             </p>
-                           )}
-                           <p className="text-xs font-black text-emerald-600 mt-1">From {fromLabel}</p>
-                           <p className="text-[10px] font-semibold text-[var(--muted)] mt-0.5">
-                             View details & book in the app
-                           </p>
-                         </div>
-                       </div>
-                     </button>
-                   );
-                 })
-               ) : (
-                 <div className="py-12 text-center text-[var(--muted)] text-[10px] font-bold uppercase tracking-widest">
-                   No services published yet
-                 </div>
-               )}
-             </div>
-           )}
 
            {products.length > 0 && activeTab === 'drops' && (
              <div className="py-16 text-center pb-32">
