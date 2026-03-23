@@ -23,7 +23,7 @@ const FAQS = [
   {
     category: 'selling',
     question: "How do I get on the 'Viral Feed'?",
-    answer: "It's about engagement. The algorithm rewards stores that build a community. Post high-quality reels, reply to comments to spark conversations, and grow your Follower count. The more your products 'Trend' with likes and shares, the more we push them to new buyers."
+    answer: "It is about engagement. The algorithm rewards stores that build a community. Post high-quality reels, reply to comments, and grow your follower count. The more your products and services trend with likes and shares, the more we push them to new buyers and clients."
   },
   {
     category: 'selling',
@@ -33,12 +33,12 @@ const FAQS = [
   {
     category: 'selling',
     question: "Do I need a professional camera to sell?",
-    answer: "Not at all. Our built-in AI Studio does the heavy lifting. Snap a photo with any phone, and our 'Magic Studio' will remove the background and fix the lighting instantly. It looks like a pro shot in seconds."
+    answer: "Not at all. Our built-in AI Studio does the heavy lifting. Snap a photo or record a service setup with any phone, and our Magic Studio will clean visuals and improve presentation instantly."
   },
   {
     category: 'selling',
     question: "What are 'Store Coins'?",
-    answer: "It's our customer retention engine. Sellers can enable Loyalty to reward buyers with coins on every purchase. Buyers save these coins and use them as cash discounts on future orders, keeping them coming back to your store."
+    answer: "It is our retention engine. Sellers can enable Loyalty to reward buyers with coins on eligible purchases and bookings. Buyers can redeem those coins on future product orders and service bookings."
   },
   {
     category: 'selling',
@@ -53,31 +53,31 @@ const FAQS = [
   {
     category: 'selling',
     question: "Is StoreLink free to join?",
-    answer: "Yes. Buyers can use the app for free. Sellers get a 30-day free trial to explore all features, list products, and make sales. After the trial, you can subscribe to our Standard or Diamond plans to keep growing your empire."
+    answer: "Yes. Buyers can use the app for free. Sellers get a 30-day free trial to list products, publish services, and close sales/bookings. After the trial, subscribe to Standard or Diamond to keep growing."
   },
 
   // SAFETY & PAYMENTS
   {
     category: 'safety',
     question: "How does 'Funds Secured' actually work?",
-    answer: "It's our safety lock. When a buyer pays, the money is held in the StoreLink Vault—not sent to the seller yet. The seller ships the item, and the money is only released after the buyer receives and confirms the goods. No scams, no fear."
+    answer: "It is our safety lock. When a buyer pays, the money is held in the StoreLink Vault, not sent to the seller yet. Product orders release after delivery confirmation. Service bookings release after completion acceptance."
   },
   {
     category: 'safety',
     question: "When do I get my money?",
-    answer: "Once the buyer receives the item and clicks 'I Accept', the funds are released directly to your linked bank account. Fast and secure."
+    answer: "For products, once the buyer receives the item and accepts delivery, funds are released to your linked bank account. For services, release happens after booking completion acceptance."
   },
   {
     category: 'safety',
     question: "What if there is a dispute or I need a refund?",
-    answer: "We have you covered. If an item arrives damaged or doesn't match the description, you can raise a dispute before confirming delivery. Our team reviews the evidence (videos/photos) and will refund the buyer from the Vault if the claim is valid."
+    answer: "We have you covered. If a product arrives damaged or a service outcome does not match what was promised, raise a dispute before final acceptance. Our team reviews evidence and refunds from the Vault if valid."
   },
 
   // DELIVERY
   {
     category: 'delivery',
-    question: "Who handles the shipping/delivery?",
-    answer: "You (the seller) are in control. You can use your preferred logistics partners. However, you must input the Tracking Number into StoreLink so we can track the delivery and know when to release the funds."
+    question: "Who handles shipping and service scheduling?",
+    answer: "Sellers are in control. For products, use preferred logistics and update tracking. For services, confirm slot/time in booking chat and update milestones so payout release stays accurate."
   },
 ];
 

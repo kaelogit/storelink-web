@@ -76,7 +76,7 @@ export default function SellerFeatures() {
               </span>
             </h2>
             <p className="text-lg md:text-xl text-slate-500 leading-relaxed font-light max-w-md">
-              Take a picture, and our AI handles the rest. It removes the background, enhances the lighting, and writes the sales copy instantly.
+              Capture once, publish everywhere. Our AI cleans media and writes conversion-ready copy for product listings and service offers instantly.
             </p>
           </motion.div>
 
@@ -98,7 +98,7 @@ export default function SellerFeatures() {
                 </div>
                 <div>
                   <h3 className={`text-xl font-bold mb-1 transition-colors ${isProcessed ? 'text-purple-900' : 'text-slate-900'}`}>Gemini Copywriter</h3>
-                  <p className="text-slate-500 text-sm md:text-base leading-relaxed">Auto-generates SEO descriptions that actually sell. No more writer's block.</p>
+                  <p className="text-slate-500 text-sm md:text-base leading-relaxed">Auto-generates SEO descriptions for products and service packages. No more writer's block.</p>
                 </div>
               </div>
             </motion.div>

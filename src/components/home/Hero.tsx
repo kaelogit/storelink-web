@@ -48,7 +48,7 @@ export default function Hero() {
           </div>
           <div className="flex flex-col">
             <span className="text-sm font-bold text-[var(--foreground)]">Shoppable Feeds</span>
-            <span className="text-xs font-medium text-[var(--muted)]">Watch & Buy Instantly</span>
+            <span className="text-xs font-medium text-[var(--muted)]">Watch, Buy or Book Instantly</span>
           </div>
         </motion.div>
 
@@ -112,7 +112,7 @@ export default function Hero() {
           className="text-lg md:text-xl text-[var(--muted)] max-w-2xl mb-12 leading-relaxed font-light"
         >
           The first social marketplace where <span className="text-emerald-600 font-semibold">reputation is currency</span>. 
-          Don't just browse, shop the feed through verified, shoppable reels.
+          Do not just browse, shop and book through verified, shoppable reels.
         </motion.p>
 
         {/* Action Buttons */}
@@ -123,12 +123,12 @@ export default function Hero() {
           className="flex flex-col sm:flex-row items-center gap-4 mb-16 w-full sm:w-auto"
         >
           <Link href="/download" className="group relative w-full sm:w-auto px-8 py-4 bg-[var(--charcoal)] text-white rounded-2xl font-bold text-lg hover:opacity-90 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-[0_8px_30px_rgb(17_24_39_/_0.25)]">
-            <span className="relative z-10">Start Selling</span>
+            <span className="relative z-10">Start Selling & Booking</span>
             <ArrowRight className="relative z-10 group-hover:translate-x-1 transition-transform" size={20} />
           </Link>
           <Link href="/explore" className="w-full sm:w-auto px-8 py-4 bg-[var(--card)]/80 backdrop-blur-md border-2 border-[var(--border)] text-[var(--foreground)] rounded-2xl font-semibold hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 transition-all flex items-center justify-center gap-2">
             <Search size={18} />
-            Explore Marketplace
+            Explore Products & Services
           </Link>
         </motion.div>
 
@@ -144,7 +144,7 @@ export default function Hero() {
                             </div>
           <p className="flex items-center gap-2">
             <ShieldCheck size={16} className="text-emerald-600" />
-            Trusted by <span className="font-bold text-[var(--foreground)]">50,000+</span> Shoppers & Vendors
+            Trusted by <span className="font-bold text-[var(--foreground)]">50,000+</span> Buyers, Clients & Vendors
           </p>
           </motion.div>
 

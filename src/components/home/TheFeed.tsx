@@ -47,9 +47,9 @@ export default function TheFeed() {
       const { data, error } = await supabase
         .from('reels')
         .select(`
-          id, video_url, caption, likes_count, comment_count, views_count,
+          id, video_url, caption, likes_count, comment_count, views_count, product_id, service_listing_id,
           seller:profiles!seller_id(display_name, slug, logo_url, subscription_plan, location_city),
-          product:products!product_id(name, price, currency_code, is_flash_drop, flash_price, stock_quantity, image_urls),
+          product:products!product_id(name, price, currency_code, is_flash_drop, flash_price, stock_quantity, image_urls, is_active),
           service:service_listings!service_listing_id(title, hero_price_min, currency_code, media, is_active)
         `)
         .limit(FEED_LIMIT)
@@ -59,7 +59,14 @@ export default function TheFeed() {
       setLoading(false);
 
       if (data && data.length > 0) {
-        const hypedData = data.map((item: Record<string, unknown>) => {
+        const activeLinkedOnly = data.filter((item: Record<string, unknown>) => {
+          const hasProductLink = !!item.product_id;
+          const hasServiceLink = !!item.service_listing_id;
+          if (hasProductLink) return Boolean((item as any).product?.is_active);
+          if (hasServiceLink) return Boolean((item as any).service?.is_active);
+          return true;
+        });
+        const hypedData = activeLinkedOnly.map((item: Record<string, unknown>) => {
           const likes = Number(item.likes_count) || 0;
           const comments = Number(item.comment_count) || 0;
           return {

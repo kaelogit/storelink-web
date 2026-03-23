@@ -38,7 +38,7 @@ export default function FinalCTA() {
             
             <p className="text-xl md:text-2xl text-slate-400 mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
               <span className="text-white font-bold">Ready for discovery?</span> <br/>
-              Don't just list your products and services—broadcast them. Join the marketplace where items go viral and selling happens on autopilot.
+              Do not just list products and services, broadcast them. Join the marketplace where items trend, bookings convert, and revenue compounds.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-5 justify-center">
@@ -68,7 +68,7 @@ export default function FinalCTA() {
             </div>
 
             <p className="mt-8 text-sm text-slate-500 font-medium">
-              Trusted by 50,000+ Creators & Vendors
+              Trusted by 50,000+ Creators, Service Pros & Vendors
             </p>
 
         </motion.div>

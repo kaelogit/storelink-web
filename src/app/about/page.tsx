@@ -61,7 +61,7 @@ export default function AboutPage() {
             transition={{ delay: 0.2 }}
             className="text-lg md:text-xl text-slate-500 leading-relaxed font-light mb-10 max-w-2xl mx-auto"
           >
-            StoreLink began in Lagos, born from the frustration of "DM for price" and the fear of "What I Ordered vs What I Got."
+            StoreLink began in Lagos, born from the frustration of DM pricing and the fear of failed product orders or service bookings.
           </motion.p>
         </div>
       </Section>
@@ -92,7 +92,7 @@ export default function AboutPage() {
                <h2 className="text-3xl md:text-5xl font-display font-black text-slate-900 mb-6 tracking-tight">Commerce was broken.</h2>
                <div className="text-base md:text-lg text-slate-600 leading-relaxed font-light space-y-6">
                  <p>
-                    We saw talented vendors spending 6 hours a day replying to "Is this available?" instead of creating. We saw buyers scared to transfer money to strangers. 
+                    We saw talented vendors spending 6 hours a day replying to availability messages instead of creating. We saw buyers and clients scared to transfer money to strangers for orders and bookings.
                  </p>
                  <p className="font-medium text-slate-900 border-l-4 border-emerald-500 pl-4 bg-emerald-50/50 py-2 pr-2 rounded-r-lg">
                     A transaction that should have taken seconds was taking days. The trust gap was killing the economy.

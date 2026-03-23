@@ -18,13 +18,54 @@ const CATEGORIES = [
   { label: 'Wellness', slug: 'wellness', icon: Activity, prestige: false },
   { label: 'Services', slug: 'services', icon: Wrench, prestige: false },
   { label: 'Real Estate', slug: 'real-estate', icon: Building2, prestige: false },
-  { label: 'Auto', slug: 'auto', icon: Car, prestige: false },
+  { label: 'Automotive', slug: 'automotive', icon: Car, prestige: false },
 ];
 
 const slugToLabel: Record<string, string> = {
   all: 'All', fashion: 'Fashion', electronics: 'Electronics', tech: 'Electronics',
   beauty: 'Beauty', home: 'Home', wellness: 'Wellness', services: 'Services',
-  'real-estate': 'Real Estate', auto: 'Auto', automotive: 'Auto',
+  'real-estate': 'Real Estate', auto: 'Automotive', automotive: 'Automotive',
+};
+
+const BEAUTY_SERVICE_CATS = [
+  'nail_tech',
+  'barber',
+  'makeup_artist',
+  'makeup_artistry',
+  'pedicure_manicure',
+  'braids_styling',
+  'lashes',
+  'skincare',
+];
+const FASHION_SERVICE_CATS = ['tailoring', 'alterations', 'custom_outfits'];
+const EVENT_SERVICE_CATS = ['photographer', 'surprise_planners', 'event_decorator'];
+
+const normalizeCategorySlug = (raw: string) => {
+  const normalized = String(raw || '').toLowerCase().trim();
+  if (normalized === 'auto') return 'automotive';
+  return normalized;
+};
+
+const matchesProductCategory = (productCategory: string, sellerCategory: string, wantedSlug: string) => {
+  const p = normalizeCategorySlug(productCategory);
+  const s = normalizeCategorySlug(sellerCategory);
+  const wanted = normalizeCategorySlug(wantedSlug);
+  if (wanted === 'all') return true;
+  return p === wanted || s === wanted;
+};
+
+const matchesServiceCategory = (serviceCategory: string, sellerCategory: string, wantedSlug: string) => {
+  const service = String(serviceCategory || '').toLowerCase().trim();
+  const seller = normalizeCategorySlug(sellerCategory);
+  const wanted = normalizeCategorySlug(wantedSlug);
+
+  if (wanted === 'all' || wanted === 'services') return true;
+  if (wanted === 'beauty') return BEAUTY_SERVICE_CATS.includes(service) || seller === 'beauty';
+  if (wanted === 'fashion') return FASHION_SERVICE_CATS.includes(service) || seller === 'fashion';
+  if (wanted === 'home' || wanted === 'electronics') {
+    return EVENT_SERVICE_CATS.includes(service) || seller === wanted;
+  }
+  return service === wanted || seller === wanted;
 };
 
 export default function ClientExploreWrapper({
@@ -45,6 +86,10 @@ export default function ClientExploreWrapper({
 
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState(initialCategory);
+  const activeCategorySlug = useMemo(
+    () => CATEGORIES.find((c) => c.label === activeCategory)?.slug || 'all',
+    [activeCategory],
+  );
   const [isFlashMode, setIsFlashMode] = useState(false);
   const [products, setProducts] = useState<any[]>([]);
   const productsRef = useRef<any[]>([]);
@@ -129,13 +174,13 @@ export default function ClientExploreWrapper({
              });
         }
 
-        if (activeCategory && activeCategory !== 'All') {
-          const catLower = activeCategory.toLowerCase();
+        if (activeCategorySlug && activeCategorySlug !== 'all') {
           finalData = finalData.filter((p: any) => {
             const productCat = (p.category || p.category_name || '').toString().toLowerCase();
             const sellerCat = (p.seller?.category || '').toString().toLowerCase();
             const name = (p.name || p.title || '').toLowerCase();
-            return productCat.includes(catLower) || sellerCat.includes(catLower) || name.includes(catLower);
+            if (query.length > 2 && name.includes(query.toLowerCase())) return true;
+            return matchesProductCategory(productCat, sellerCat, activeCategorySlug);
           });
         }
 
@@ -184,13 +229,13 @@ export default function ClientExploreWrapper({
             s.seller?.display_name?.toLowerCase().includes(lowerQ),
           );
         }
-        if (activeCategory && activeCategory !== 'All') {
-          const catLower = activeCategory.toLowerCase();
+        if (activeCategorySlug && activeCategorySlug !== 'all') {
           filteredServices = filteredServices.filter((s: any) => {
             const serviceCat = (s.category || s.category_name || '').toString().toLowerCase();
             const sellerCat = (s.seller?.category || '').toString().toLowerCase();
             const name = (s.name || '').toLowerCase();
-            return serviceCat.includes(catLower) || sellerCat.includes(catLower) || name.includes(catLower);
+            if (query.length > 2 && name.includes(query.toLowerCase())) return true;
+            return matchesServiceCategory(serviceCat, sellerCat, activeCategorySlug);
           });
         }
 
@@ -206,11 +251,11 @@ export default function ClientExploreWrapper({
 
     const timer = setTimeout(() => { fetchProducts(); }, 500);
     return () => clearTimeout(timer);
-  }, [query, activeCategory, isFlashMode]);
+  }, [query, activeCategorySlug, isFlashMode]);
 
   // Simple Explore session logging (web) – fire-and-forget, no variant branching here.
   useEffect(() => {
-    let cancelled = false;
+    const cancelled = false;
     let sessionId: string | null = null;
     const startedAt = Date.now();
 
@@ -250,7 +295,7 @@ export default function ClientExploreWrapper({
       <div className="section-orb section-orb-emerald section-orb-br" aria-hidden />
       <div className="section-orb section-orb-violet section-orb-tr" aria-hidden />
 
-      <div className="sticky top-[80px] z-30 bg-[var(--card)]/95 backdrop-blur-md border-b border-[var(--border)] shadow-sm">
+      <div className="sticky top-[80px] z-30 bg-(--card)/95 backdrop-blur-md border-b border-(--border) shadow-sm">
          <div className="max-w-md mx-auto px-4 py-3">
             
             <div className="flex items-center justify-between mb-4 mt-2">
@@ -334,7 +379,7 @@ export default function ClientExploreWrapper({
                            {[1,2,3,4].map(j => <div key={j} className="w-6 h-6 bg-slate-200 rounded-full" />)}
                         </div>
                         <div className="flex-1">
-                           <div className="aspect-[4/5] bg-slate-200 rounded-[24px]" />
+                           <div className="aspect-4/5 bg-slate-200 rounded-[24px]" />
                         </div>
                      </div>
                   </div>
@@ -354,16 +399,16 @@ export default function ClientExploreWrapper({
                   <button
                     type="button"
                     onClick={() => setTrapOpen(true)}
-                    className="w-full bg-[var(--charcoal)] active:scale-[0.98] transition-all duration-[var(--duration-150)] text-white p-6 rounded-[var(--radius-3xl)] shadow-xl border-b-4 border-[var(--pitch-black)] flex flex-col items-center text-center"
+                    className="w-full bg-(--charcoal) active:scale-[0.98] transition-all duration-(--duration-150) text-white p-6 rounded-3xl shadow-xl border-b-4 border-(--pitch-black) flex flex-col items-center text-center"
                   >
-                     <div className="w-12 h-12 rounded-[var(--radius-2xl)] bg-[var(--pitch-black)] flex items-center justify-center mb-3">
+                     <div className="w-12 h-12 rounded-2xl bg-(--pitch-black) flex items-center justify-center mb-3">
                         <PhoneIcon className="text-emerald-400" size={24} />
                      </div>
                      <h3 className="text-lg font-black tracking-tight mb-1">Want to see more?</h3>
-                     <p className="text-sm font-medium text-[var(--muted)] mb-4">
+                     <p className="text-sm font-medium text-(--muted) mb-4">
                         There are 1,000+ more items on the app.
                      </p>
-                     <span className="flex items-center gap-2 text-xs font-black bg-white text-[var(--foreground)] px-4 py-2 rounded-full">
+                     <span className="flex items-center gap-2 text-xs font-black bg-white text-(--foreground) px-4 py-2 rounded-full">
                         GET THE APP <ArrowRight size={14} />
                      </span>
                   </button>

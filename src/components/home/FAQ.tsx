@@ -7,7 +7,7 @@ import Link from 'next/link';
 const faqs = [
   {
     question: "How do I get on the 'Viral Feed'?",
-    answer: "It's about engagement. The algorithm rewards stores that build a community. Post high-quality reels, reply to comments to spark conversations, and grow your Follower count. The more your products 'Trend' with likes and shares, the more we push them to new buyers."
+    answer: "It is about engagement. The algorithm rewards stores that build a community. Post high-quality reels, reply to comments, and grow your follower count. The more your products and services trend with likes, shares, and saves, the more we push them to new buyers and clients."
   },
   {
     question: "Can I customize my Store Profile?",
@@ -15,7 +15,7 @@ const faqs = [
   },
   {
     question: "How does 'Funds Secured' actually work?",
-    answer: "It's our safety lock. When a buyer pays, the money is held in the StoreLink Vault—not sent to the seller yet. The seller ships the item, and the money is only released after the buyer receives and confirms the goods. No scams, no fear."
+    answer: "It is our safety lock. When a buyer pays, the money is held in the StoreLink Vault, not sent to the seller yet. For product orders, funds are released after delivery confirmation. For service bookings, funds are released after booking completion/acceptance. No scams, no fear."
   },
   {
     question: "Do I need a professional camera to sell?",
@@ -23,19 +23,19 @@ const faqs = [
   },
   {
     question: "What are 'Store Coins'?",
-    answer: "It's our customer retention engine. Sellers can enable Loyalty to reward buyers with coins on every purchase. Buyers save these coins and use them as cash discounts on future orders, keeping them coming back to your store."
+    answer: "It is our customer retention engine. Sellers can enable Loyalty to reward buyers with coins on eligible purchases and bookings. Buyers save these coins and use them as cash discounts on future product orders and service bookings."
   },
   {
-    question: "Who handles the shipping/delivery?",
-    answer: "You (the seller) are in control. You can use your preferred logistics partners. However, you must input the Tracking Number into StoreLink so we can track the delivery and know when to release the funds."
+    question: "Who handles shipping and service scheduling?",
+    answer: "Sellers are in control. For products, use your preferred logistics partner and update tracking in StoreLink. For services, confirm time/location in booking chat and update status milestones so escrow release stays accurate."
   },
   {
     question: "When do I get my money?",
-    answer: "Once the buyer receives the item and clicks 'I Accept', the funds are released directly to your linked bank account. Fast and secure."
+    answer: "For products, once the buyer receives the item and accepts delivery, funds are released to your linked account. For services, release happens after the booking is completed/accepted. Fast and secure."
   },
   {
     question: "What if there is a dispute or I need a refund?",
-    answer: "We have you covered. If an item arrives damaged or doesn't match the description, you can raise a dispute before confirming delivery. Our team reviews the evidence (videos/photos) and will refund the buyer from the Vault if the claim is valid."
+    answer: "We have you covered. If an item arrives damaged, or a service outcome does not match what was promised, a dispute can be raised before completion acceptance. Our team reviews evidence (photos/videos/chat context) and refunds from the Vault when claims are valid."
   },
   {
     question: "How do I get the Blue Verified Tick?",
@@ -76,7 +76,7 @@ export default function FAQ() {
             </span>
           </h2>
           <p className="text-lg text-slate-500 max-w-2xl mx-auto">
-            Everything you need to know about buying, selling, and growing on StoreLink.
+            Everything you need to know about buying, booking, selling, and growing on StoreLink.
           </p>
         </div>
 

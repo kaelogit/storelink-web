@@ -32,7 +32,7 @@ const cleanUrl = (url: string) => {
   if (!url) return '';
   try {
     // Remove accidental quotes if stored as JSON string
-    let clean = url.replace(/["\[\]]/g, ''); 
+    const clean = url.replace(/["\[\]]/g, ''); 
     // Encode spaces to %20
     return clean.replace(/ /g, '%20');
   } catch (e) {

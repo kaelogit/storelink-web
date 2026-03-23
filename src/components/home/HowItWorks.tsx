@@ -18,8 +18,8 @@ const steps = [
   {
     id: 2,
     icon: Truck,
-    title: "Seller Ships Item",
-    desc: "Confident that the payment is secured, the seller dispatches your order. We track the delivery in real-time.",
+    title: "Seller Ships or Confirms Booking",
+    desc: "For products, the seller dispatches your order. For services, the seller confirms your booking slot and timeline.",
     status: "In Transit",
     statusColor: "bg-blue-100 text-blue-700",
     href: "/safety"
@@ -27,8 +27,8 @@ const steps = [
   {
     id: 3,
     icon: Eye,
-    title: "Inspect & Verify",
-    desc: "Package arrived? Open it. Check the quality. If it doesn't match the video, you get a full refund.",
+    title: "Inspect Delivery or Attend Appointment",
+    desc: "Products: inspect the item on arrival. Services: confirm quality after the session. If it does not match what was promised, you can dispute before release.",
     status: "Inspection",
     statusColor: "bg-purple-100 text-purple-700",
     href: "/safety"
@@ -72,8 +72,8 @@ export default function HowItWorks() {
               </span> Guarantee.
             </h2>
             <p className="text-lg text-slate-500 leading-relaxed max-w-2xl mx-auto">
-              We replaced risky "Pay on Delivery" with a smart Escrow system. 
-              Here is exactly how your money moves when you buy on StoreLink.
+              We replaced risky pay-first or pay-on-delivery behavior with smart Escrow.
+              Here is exactly how your money moves for product orders and service bookings on StoreLink.
             </p>
           </motion.div>
         </div>

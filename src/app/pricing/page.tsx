@@ -11,7 +11,7 @@ import Link from 'next/link'; // Swapped Button for Link to keep it standard
 const BASE_PRICES = { 
   standard: 3500,        
   seller_diamond: 6000, 
-  buyer_diamond: 2000   
+  buyer_diamond: 2500   
 };
 
 const DURATIONS = [

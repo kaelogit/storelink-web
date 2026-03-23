@@ -11,15 +11,43 @@ import Button from '../../components/ui/Button';
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSent, setIsSent] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    topic: 'General Inquiry',
+    message: '',
+  });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setSubmitError(null);
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const response = await fetch('/api/support/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload?.error || 'Failed to send message');
+      }
       setIsSent(true);
-    }, 1500);
+      setForm({
+        firstName: '',
+        lastName: '',
+        email: '',
+        topic: 'General Inquiry',
+        message: '',
+      });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Could not send your message right now.';
+      setSubmitError(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -99,7 +127,7 @@ export default function ContactPage() {
                                 <CheckCircle2 size={40} />
                             </div>
                             <h3 className="text-2xl font-bold text-[var(--foreground)] mb-2">Message Sent!</h3>
-                            <p className="text-[var(--muted)]">We'll get back to you within 24 hours.</p>
+                            <p className="text-[var(--muted)]">We&apos;ll get back to you within 24 hours.</p>
                             <Button variant="ghost" size="sm" onClick={() => setIsSent(false)} className="mt-8">
                                 Send another message
                             </Button>
@@ -107,15 +135,15 @@ export default function ContactPage() {
                     ) : (
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                <Input label="First Name" placeholder="Jane" />
-                                <Input label="Last Name" placeholder="Doe" />
+                                <Input label="First Name" placeholder="Jane" value={form.firstName} onChange={(v) => setForm((prev) => ({ ...prev, firstName: v }))} />
+                                <Input label="Last Name" placeholder="Doe" value={form.lastName} onChange={(v) => setForm((prev) => ({ ...prev, lastName: v }))} />
                             </div>
                             
-                            <Input label="Email Address" placeholder="jane@example.com" type="email" />
+                            <Input label="Email Address" placeholder="jane@example.com" type="email" value={form.email} onChange={(v) => setForm((prev) => ({ ...prev, email: v }))} />
                             
                             <div>
                                 <label className="block text-xs font-bold text-[var(--foreground)] uppercase tracking-wider mb-2">Topic</label>
-                                <select className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-xl)] px-4 py-4 text-[var(--foreground)] focus:outline-none focus:border-[var(--emerald)] transition-colors duration-[var(--duration-150)] appearance-none cursor-pointer">
+                                <select value={form.topic} onChange={(e) => setForm((prev) => ({ ...prev, topic: e.target.value }))} className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-xl)] px-4 py-4 text-[var(--foreground)] focus:outline-none focus:border-[var(--emerald)] transition-colors duration-[var(--duration-150)] appearance-none cursor-pointer">
                                     <option>General Inquiry</option>
                                     <option>Report a Bug</option>
                                     <option>Billing Issue</option>
@@ -127,11 +155,16 @@ export default function ContactPage() {
                                 <label className="block text-xs font-bold text-[var(--foreground)] uppercase tracking-wider mb-2">Message</label>
                                 <textarea
                                     rows={5}
+                                    value={form.message}
+                                    onChange={(e) => setForm((prev) => ({ ...prev, message: e.target.value }))}
                                     className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-xl)] px-4 py-4 text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--emerald)] transition-colors duration-[var(--duration-150)] resize-none"
                                     placeholder="Tell us how we can help..."
                                     required
                                 />
                             </div>
+                            {submitError && (
+                              <p className="text-sm text-red-500 font-semibold">{submitError}</p>
+                            )}
 
                             <Button
                                 type="submit"
@@ -196,12 +229,14 @@ function ContactItem({ icon, title, desc, link }: { icon: React.ReactNode; title
     )
 }
 
-function Input({ label, placeholder, type = "text" }: { label: string; placeholder: string; type?: string }) {
+function Input({ label, placeholder, value, onChange, type = "text" }: { label: string; placeholder: string; value: string; onChange: (value: string) => void; type?: string }) {
     return (
         <div>
             <label className="block text-xs font-bold text-[var(--foreground)] uppercase tracking-wider mb-2">{label}</label>
             <input
                 type={type}
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
                 className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-xl)] px-4 py-4 text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--emerald)] transition-colors duration-[var(--duration-150)]"
                 placeholder={placeholder}
                 required

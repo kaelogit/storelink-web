@@ -21,7 +21,7 @@ export default function CommunityPage() {
 
   // Animate notifications appearing one by one
   useEffect(() => {
-    let timeouts: NodeJS.Timeout[] = [];
+    const timeouts: NodeJS.Timeout[] = [];
     NOTIFICATIONS.forEach((_, i) => {
       const timeout = setTimeout(() => {
         setVisibleNotifs(prev => [...prev, i]);
