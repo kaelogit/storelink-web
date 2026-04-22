@@ -116,10 +116,9 @@ export default function ContactPage() {
                             <MapPin size={18} />
                         </div>
                         <div>
-                            <p className="font-bold text-[var(--foreground)]">Lagos HQ</p>
+                            <p className="font-bold text-[var(--foreground)]">Coming soon</p>
                             <p className="text-[var(--muted)] text-sm leading-relaxed mt-1">
-                                12A Lekki Phase 1, <br/>
-                                Lagos, Nigeria.
+                                Office address updates will be shared here.
                             </p>
                         </div>
                     </div>
