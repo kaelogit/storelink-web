@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, MapPin, MessageSquare, ArrowRight, CheckCircle2, Loader2, HelpCircle } from 'lucide-react';
+import { Mail, MapPin, MessageSquare, Phone, ArrowRight, CheckCircle2, Loader2, HelpCircle } from 'lucide-react';
 import Footer from '../../components/home/Footer';
 import Section from '../../components/ui/Section';
 import Card from '../../components/ui/Card';
@@ -94,6 +94,18 @@ export default function ContactPage() {
                             desc="Newsroom inquiries."
                             link="press@storelink.app"
                         />
+                        <div className="flex gap-4 group">
+                            <div className="w-10 h-10 rounded-full bg-[var(--surface)] flex items-center justify-center shrink-0 transition-colors group-hover:bg-[var(--border)]">
+                                <Phone className="text-emerald-500" />
+                            </div>
+                            <div>
+                                <p className="font-bold text-[var(--foreground)]">Phone</p>
+                                <p className="text-[var(--muted)] text-sm mb-1">Talk to our support line.</p>
+                                <a href="tel:+2349125951202" className="text-sm font-bold text-[var(--foreground)] hover:text-emerald-600 transition-colors">
+                                    +2349125951202
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

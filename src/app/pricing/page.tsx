@@ -10,7 +10,7 @@ import Link from 'next/link'; // Swapped Button for Link to keep it standard
 // 💰 CONFIGURATION (Matching Mobile Logic)
 const BASE_PRICES = { 
   standard: 3500,        
-  seller_diamond: 6000, 
+  seller_diamond: 7500, 
   buyer_diamond: 2500   
 };
 

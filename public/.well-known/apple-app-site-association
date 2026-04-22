@@ -4,7 +4,15 @@
     "details": [
       {
         "appID": "TEAM_ID.com.storelink.mobile",
-        "paths": ["/p/*", "/r/*", "/@*"]
+        "paths": [
+          "/p/*",
+          "/r/*",
+          "/reel/*",
+          "/@*",
+          "/service/*",
+          "/s/*/service/*",
+          "/spotlight/*"
+        ]
       }
     ]
   }
