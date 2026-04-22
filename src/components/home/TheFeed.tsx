@@ -36,6 +36,16 @@ const FALLBACK_ITEMS = [
 
 const FEED_LIMIT = 4; // Keep this small to protect memory
 
+function toWebImageSrc(value?: string | null): string | null {
+  if (!value || typeof value !== 'string') return null;
+  const src = value.trim();
+  if (!src) return null;
+  if (src.startsWith('/')) return src;
+  if (src.startsWith('http://') || src.startsWith('https://')) return src;
+  // Reject local/mobile filesystem URIs like file:///... that break next/image on web.
+  return null;
+}
+
 export default function TheFeed() {
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -173,9 +183,12 @@ export default function TheFeed() {
                const serviceThumb = Array.isArray(serviceMedia)
                  ? (typeof serviceMedia[0] === 'string' ? serviceMedia[0] : serviceMedia?.[0]?.url)
                  : null;
-               const thumbSource = isServiceLinked
-                 ? (serviceThumb || item.seller?.logo_url)
-                 : (item.product?.image_urls?.[0] || item.seller?.logo_url);
+               const thumbSource = toWebImageSrc(
+                 isServiceLinked
+                   ? (serviceThumb || item.seller?.logo_url)
+                   : (item.product?.image_urls?.[0] || item.seller?.logo_url)
+               );
+               const sellerLogoSource = toWebImageSrc(item.seller?.logo_url);
 
                return (
                   <div key={`${item.id}-${i}`} className="pr-4 md:pr-8 shrink-0">
@@ -197,7 +210,7 @@ export default function TheFeed() {
                             muted
                             playsInline
                             preload="metadata"
-                            poster={thumbSource}
+                            poster={thumbSource || undefined}
                             className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-500"
                           >
                             <source src={item.video_url} type="video/mp4" />
@@ -247,8 +260,8 @@ export default function TheFeed() {
                       <div className="absolute bottom-6 md:bottom-8 left-3 md:left-4 w-[75%] z-20 flex flex-col gap-2 md:gap-3">
                           <div className="flex items-center gap-2 md:gap-3 mb-0.5 md:mb-1">
                             <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full overflow-hidden border-2 ${isDiamond ? 'border-purple-400' : 'border-white'} relative bg-slate-800`}>
-                                {item.seller?.logo_url && (
-                                  <Image src={item.seller.logo_url} alt="S" fill className="object-cover" sizes="40px" />
+                                {sellerLogoSource && (
+                                  <Image src={sellerLogoSource} alt="S" fill className="object-cover" sizes="40px" />
                                 )}
                             </div>
                             <div className="flex flex-col">

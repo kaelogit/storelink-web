@@ -69,7 +69,7 @@ export default function PricingPage() {
             </span>
           </h1>
           <p className="text-lg md:text-xl text-[var(--muted)] max-w-2xl mx-auto leading-relaxed font-light">
-            Start with a free 30-day trial. Upgrade to unlock full power. <br className="hidden md:block" />
+            Start selling on free Standard from day one. Upgrade to Diamond for extra visibility and growth tools. <br className="hidden md:block" />
             No hidden fees. Cancel anytime.
           </p>
 
@@ -252,9 +252,9 @@ export default function PricingPage() {
                       <Percent size={20} className="text-emerald-600" strokeWidth={3} />
                    </div>
                    <div className="text-left">
-                      <div className="text-[var(--foreground)] font-black text-sm uppercase tracking-wider mb-1">Fair Play Fee</div>
+                     <div className="text-[var(--foreground)] font-black text-sm uppercase tracking-wider mb-1">Fair Play Fee</div>
                       <p className="text-sm text-[var(--muted)] font-medium">
-                         We charge a flat <span className="text-emerald-600 font-bold">3.5%</span> transaction fee only when you make a sale. <br className="hidden md:block"/>No sale, no fee.
+                         We charge a total <span className="text-emerald-600 font-bold">4%</span> seller-side fee (2.5% platform + 1.5% processing) only when you make a sale. <br className="hidden md:block"/>No sale, no fee.
                       </p>
                    </div>
                 </div>

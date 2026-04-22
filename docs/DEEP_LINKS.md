@@ -24,14 +24,16 @@
 
 2. **Deploy the web app** so `https://storelink.ng/.well-known/apple-app-site-association` and `https://storelink.ng/.well-known/assetlinks.json` are reachable (no redirects, HTTPS).
 
-3. **Handle the URL inside the app** when the OS opens it. Right now the app does **not** yet read the incoming URL and navigate to the matching screen. You need one of:
-   - **Expo Router:** A `+native-intent.tsx` that implements `redirectSystemPath` and maps:
-     - `/p/:slug` → resolve product by slug (e.g. Supabase) then go to `/product/[id]`
-     - `/r/:shortCodeOrId` → go to reel (e.g. `reels/feed` with that reel as initial)
-     - `/@:slug` or `/:slug` (profile) → resolve profile by slug then go to `/u/[id]`
-   - Or a root-level effect that uses `Linking.getInitialURL()` (and optionally `Linking.addEventListener('url', ...)`) and does the same resolution + navigation.
+3. **App URL handling status (implemented)**
+   - The app now uses Expo Router `+native-intent` at `store-link-mobile/app/+native-intent.tsx`.
+   - Current mappings include:
+     - `/p/:slug` and `/product/:slugOrId` -> resolve product -> `/product/[id]`
+     - `/r/:shortCodeOrId` and `/reel/:shortCodeOrId` -> `/reels/feed?initialReelId=...`
+     - `/@slug`, `/s/:username`, `/u/:slugOrId`, and single-segment profile slugs -> resolve profile -> `/u/[id]`
+     - `/service/:id` and `/s/:username/service/:serviceId` -> resolve service -> `/service/[id]`
+     - `storelink://...` custom scheme paths are normalized to the same route mapping.
 
-Until this app-side handling is implemented, the OS may open the app when the user taps the link, but the app will not automatically show the product/reel/profile — it will show the default screen (e.g. home or login).
+With this in place, app-side route resolution is no longer the blocker.
 
 ---
 
@@ -60,8 +62,11 @@ To open the app **once** after first launch and go straight to the product/reel/
 
 | Scenario | Status |
 |----------|--------|
-| App installed → tap link → open in app | **Needs:** (1) Replace AASA/assetlinks placeholders and deploy, (2) Implement URL handling in the app (e.g. `+native-intent` or `Linking.getInitialURL` + navigate). |
+| App installed → tap link → open in app | **Needs:** (1) Replace AASA/assetlinks placeholders and deploy, (2) complete production device QA matrix. |
 | No app → tap link → website → download | **Works:** Link opens website, download page with intent is there. |
 | After install → land on same link | **Works** once (1) and (2) are done: user taps the **same** link again → app opens with URL → app navigates to product/reel/profile. |
 
-Replace `TEAM_ID` and the Android fingerprint, deploy the well-known files, then implement in-app URL handling to get the full “open in app” and “land on link after install” behavior.
+Next required steps are operational:
+1. Replace `TEAM_ID` and Android SHA256 fingerprint placeholders.
+2. Deploy and verify `.well-known` files on production domain.
+3. Run production QA on iOS/Android installed vs not-installed flows and log pass/fail.

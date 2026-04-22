@@ -72,7 +72,7 @@ export function getTermsContent(countryCode: string) {
         title: '4. PAYOUTS & FEES',
         bullets: [
           `Sellers may withdraw available funds to their verified ${adj} Bank Account.`,
-          'StoreLink charges a 3.5% platform fee plus a flat fee per transaction on successful sales.',
+          'StoreLink charges a total 4% seller-side transaction fee on successful sales (2.5% StoreLink platform fee + 1.5% payment processing).',
           'Payout processing times depend on the banking network, typically 24-48 hours.',
         ],
       },

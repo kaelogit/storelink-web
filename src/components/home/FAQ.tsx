@@ -43,7 +43,7 @@ const faqs = [
   },
   {
     question: "Is StoreLink free to join?",
-    answer: "Yes. Buyers can use the app for free (with an optional Diamond upgrade for unique perks). Sellers get a 30-day free trial to explore all features, list products, and make sales. After the trial, you can subscribe to our Standard or Diamond plans to keep growing your empire."
+    answer: "Yes. Buyers can use the app for free (with an optional Diamond upgrade for unique perks). Sellers also start on free Standard to list products and make sales. Diamond is optional for extra visibility and advanced growth tools."
   }
 ];
 

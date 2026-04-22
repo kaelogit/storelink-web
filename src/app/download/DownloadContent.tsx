@@ -360,7 +360,7 @@ export default function DownloadContent() {
             Ready to sell—or shop—without fear?
           </h2>
           <p className="text-white/70 font-medium mb-8 max-w-xl mx-auto">
-            Download StoreLink free. Buyers browse and pay with protection. Sellers get a 30-day trial, then choose Standard or Diamond.
+            Download StoreLink free. Buyers browse and pay with protection. Sellers start on free Standard and can optionally upgrade to Diamond for extra visibility.
           </p>
           {HAS_APP_LINKS && (
             <div className="flex flex-wrap items-center justify-center gap-4">

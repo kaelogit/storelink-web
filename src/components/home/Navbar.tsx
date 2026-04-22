@@ -1,13 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
+import { createBrowserClient } from '@/lib/supabase';
 import { 
   LayoutDashboard, Menu, X, ChevronDown, 
   Wand2, ImageMinus, History, Zap, 
   PlayCircle, Coins, Users, ShieldCheck, CreditCard,
-  Search
+  LogOut, User
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ThemeToggle from '../ui/ThemeToggle';
@@ -27,22 +28,82 @@ const PlayStoreIcon = () => (
 export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
+  const supabase = useMemo(() => createBrowserClient(), []);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [logoutLoading, setLogoutLoading] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
+  const [viewer, setViewer] = useState<{
+    id: string;
+    slug: string | null;
+    display_name: string | null;
+    logo_url: string | null;
+    email: string | null;
+  } | null>(null);
+
+  const isAppLayer = pathname?.startsWith('/app');
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadViewer = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!mounted) return;
+      const user = sessionData.session?.user;
+      if (!user) {
+        setViewer(null);
+        setAuthReady(true);
+        return;
+      }
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('id, slug, display_name, logo_url')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (!mounted) return;
+      setViewer({
+        id: user.id,
+        slug: profile?.slug ?? null,
+        display_name: profile?.display_name ?? null,
+        logo_url: profile?.logo_url ?? null,
+        email: user.email ?? null,
+      });
+      setAuthReady(true);
+    };
+
+    void loadViewer();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(() => {
+      void loadViewer();
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   // Navbar is always white (no dark transparent state)
   const isHome = pathname === '/';
   const isTransparent = false;
 
-  // 🔎 SEARCH HANDLER
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-        setIsMobileMenuOpen(false);
-        router.push(`/explore?q=${encodeURIComponent(searchQuery)}`);
+  const handleLogout = async () => {
+    try {
+      setLogoutLoading(true);
+      await supabase.auth.signOut();
+      setViewer(null);
+      router.push('/');
+      router.refresh();
+    } finally {
+      setLogoutLoading(false);
     }
   };
+
+  if (isAppLayer) {
+    return null;
+  }
 
   return (
     <header
@@ -67,24 +128,6 @@ export default function Navbar() {
              isTransparent ? 'text-white' : 'text-[var(--foreground)]'
            }`}>StoreLink.</span>
         </Link>
-
-        {/* 🔎 DESKTOP SEARCH BAR */}
-        <form onSubmit={handleSearch} className="hidden md:flex flex-1 max-w-sm relative transition-all duration-300">
-           <div className="relative w-full">
-              <input 
-                type="text" 
-                placeholder="Search shops or products..." 
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full h-10 pl-10 pr-4 rounded-full text-sm font-bold focus:outline-none transition-all placeholder:font-medium ${
-                    isTransparent
-                        ? 'bg-white/5 border border-white/10 text-white placeholder:text-white/50 focus:bg-white/10 focus:border-white/30 backdrop-blur-md shadow-inner'
-                        : 'bg-[var(--surface)] border border-[var(--border)] text-[var(--foreground)] placeholder:text-[var(--muted)] focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500'
-                }`}
-              />
-              <Search size={16} className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors ${isTransparent ? 'text-white/50' : 'text-[var(--muted)]'}`} strokeWidth={2.5} />
-           </div>
-        </form>
 
         {/* DESKTOP MENU */}
         <nav className="hidden md:flex items-center gap-1 h-full shrink-0" aria-label="Main">
@@ -173,12 +216,60 @@ export default function Navbar() {
 
             <Link href="/pricing" className={`px-3 text-sm font-bold transition-colors duration-300 hidden lg:block ${isTransparent ? 'text-white hover:text-emerald-400 drop-shadow-md' : 'text-[var(--muted)] hover:text-emerald-600'}`}>Pricing</Link>
             <Link href="/safety" className={`px-3 text-sm font-bold transition-colors duration-300 hidden lg:block ${isTransparent ? 'text-white hover:text-emerald-400 drop-shadow-md' : 'text-[var(--muted)] hover:text-emerald-600'}`}>Safety</Link>
-
         </nav>
 
         {/* 3. THEME TOGGLE + DOWNLOAD */}
         <div className="hidden md:flex items-center shrink-0 gap-3">
           <ThemeToggle />
+          {authReady && viewer ? (
+            <>
+              <Link
+                href="/app"
+                className={`px-4 h-10 rounded-xl font-bold text-xs inline-flex items-center transition-all border ${
+                  isTransparent
+                    ? 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                    : 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-500'
+                }`}
+              >
+                Web app
+              </Link>
+              <button
+                type="button"
+                onClick={() => void handleLogout()}
+                disabled={logoutLoading}
+                className={`px-4 h-10 rounded-xl font-bold text-xs inline-flex items-center transition-all border disabled:opacity-60 ${
+                  isTransparent
+                    ? 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                    : 'bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--surface)]'
+                }`}
+              >
+                {logoutLoading ? 'Signing out…' : 'Log out'}
+              </button>
+            </>
+          ) : authReady ? (
+            <>
+              <Link
+                href="/auth/login"
+                className={`px-4 h-10 rounded-xl font-bold text-xs inline-flex items-center transition-all border ${
+                  isTransparent
+                    ? 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                    : 'bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--surface)]'
+                }`}
+              >
+                Login
+              </Link>
+              <Link
+                href="/auth/signup"
+                className={`px-4 h-10 rounded-xl font-bold text-xs inline-flex items-center transition-all border ${
+                  isTransparent
+                    ? 'bg-emerald-500/90 text-white border-emerald-300/30 hover:bg-emerald-500'
+                    : 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-500'
+                }`}
+              >
+                Create account
+              </Link>
+            </>
+          ) : null}
           <Link 
             href="/download"
             className={`group flex items-center gap-3 px-5 h-10 rounded-xl font-bold text-xs transition-all active:scale-95 border ${
@@ -198,15 +289,6 @@ export default function Navbar() {
         {/* MOBILE TRIGGER */}
         <div className="flex items-center gap-2 md:hidden">
              <ThemeToggle />
-             <button 
-                onClick={() => router.push('/explore')} 
-                className={`p-2 rounded-lg transition-colors ${
-                    isTransparent ? 'text-white bg-white/10 backdrop-blur-md' : 'text-[var(--muted)] bg-[var(--surface)]'
-                }`}
-             >
-                <Search size={20} />
-             </button>
-
              <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
               className={`p-2 rounded-lg transition-colors ${
@@ -230,18 +312,6 @@ export default function Navbar() {
             aria-label="Mobile menu"
           >
               <div className="px-6 py-6 space-y-8 max-h-[85vh] overflow-y-auto">
-                {/* 🔎 MOBILE SEARCH BAR */}
-                <form onSubmit={handleSearch} className="relative">
-                    <input 
-                        type="text" 
-                        placeholder="Search StoreLink..." 
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full h-12 pl-12 pr-4 bg-[var(--surface)] border border-[var(--border)] rounded-2xl text-base font-bold text-[var(--foreground)] focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                    />
-                    <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)]" />
-                </form>
-
                 {/* Selling Section */}
                 <div className="space-y-3">
                   <p className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest pl-1">Selling Tools</p>
@@ -265,6 +335,28 @@ export default function Navbar() {
 
                 {/* General Links */}
                 <div className="space-y-3 pt-2 border-t border-[var(--border)]">
+                    {authReady && viewer ? (
+                      <>
+                        <MobileLink href="/app" icon={<LayoutDashboard size={18} className="text-emerald-600"/>} text="Web app" onClick={() => setIsMobileMenuOpen(false)} />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            void handleLogout();
+                            setIsMobileMenuOpen(false);
+                          }}
+                          disabled={logoutLoading}
+                          className="flex w-full items-center gap-3 rounded-xl p-3 text-left text-slate-600 transition-colors hover:bg-slate-50 hover:text-emerald-700 disabled:opacity-60"
+                        >
+                          <LogOut size={18} className="text-[var(--muted)]" />
+                          <span className="text-sm font-bold">{logoutLoading ? 'Signing out…' : 'Log out'}</span>
+                        </button>
+                      </>
+                    ) : authReady ? (
+                      <>
+                        <MobileLink href="/auth/login" icon={<Users size={18} className="text-[var(--muted)]"/>} text="Login" onClick={() => setIsMobileMenuOpen(false)} />
+                        <MobileLink href="/auth/signup" icon={<User size={18} className="text-[var(--muted)]"/>} text="Create account" onClick={() => setIsMobileMenuOpen(false)} />
+                      </>
+                    ) : null}
                     <MobileLink href="/pricing" icon={<CreditCard size={18} className="text-[var(--muted)]"/>} text="Pricing Plans" onClick={() => setIsMobileMenuOpen(false)} />
                     <MobileLink href="/safety" icon={<ShieldCheck size={18} className="text-[var(--muted)]"/>} text="Safety & Trust" onClick={() => setIsMobileMenuOpen(false)} />
                 </div>

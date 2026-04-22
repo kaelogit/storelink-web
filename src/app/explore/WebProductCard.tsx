@@ -40,7 +40,15 @@ const cleanUrl = (url: string) => {
   }
 };
 
-export default function WebProductCard({ item, onAddToCart }: any) {
+export default function WebProductCard({
+  item,
+  onAddToCart,
+  onToggleLike,
+  onOpenComments,
+  onOpenLikes,
+  onToggleWishlist,
+  onShare,
+}: any) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
 
@@ -81,6 +89,13 @@ export default function WebProductCard({ item, onAddToCart }: any) {
   const isDiamond = item.seller?.subscription_plan === 'diamond';
   const description = item.description || "";
   const isLongDescription = description.length > 90;
+  const sellerCity = item?.seller?.location_city;
+  const sellerState = item?.seller?.location_state;
+  const sellerLocationLabel =
+    [sellerCity, sellerState].filter(Boolean).join(', ') ||
+    sellerCity ||
+    sellerState ||
+    'LAGOS, NG';
 
   // ---------------------------------------------------------
   // 2. 🔒 THE TRAP HANDLER
@@ -90,6 +105,41 @@ export default function WebProductCard({ item, onAddToCart }: any) {
         onAddToCart(item); 
     }
   };
+  const handleLike = () => {
+    if (typeof onToggleLike === 'function') {
+      onToggleLike(item);
+      return;
+    }
+    handleTrap();
+  };
+  const handleComments = () => {
+    if (typeof onOpenComments === 'function') {
+      onOpenComments(item);
+      return;
+    }
+    handleTrap();
+  };
+  const handleLikes = () => {
+    if (typeof onOpenLikes === 'function') {
+      onOpenLikes(item);
+      return;
+    }
+    handleTrap();
+  };
+  const handleWishlist = () => {
+    if (typeof onToggleWishlist === 'function') {
+      onToggleWishlist(item);
+      return;
+    }
+    handleTrap();
+  };
+  const handleShare = () => {
+    if (typeof onShare === 'function') {
+      onShare(item);
+      return;
+    }
+    handleTrap();
+  };
 
   return (
     <div className="bg-[var(--card)] p-4 mb-4 rounded-none md:rounded-3xl border-b md:border border-[var(--border)] md:shadow-sm">
@@ -97,14 +147,14 @@ export default function WebProductCard({ item, onAddToCart }: any) {
       {/* 🏛️ TOP SECTION: SELLER INFO */}
       <div className="flex mb-3">
         {/* Sidebar: Logo */}
-        <div className="w-[50px] shrink-0 flex flex-col items-center">
-           <Link href={`/${item.seller?.slug}`} className={`w-11 h-11 rounded-2xl border-[1.5px] overflow-hidden relative ${isDiamond ? 'border-violet-500 ring-2 ring-violet-500/20' : 'border-[var(--border)]'}`}>
+        <div className="w-[44px] shrink-0 flex flex-col items-center">
+           <Link href={`/${item.seller?.slug}`} className={`w-[34px] h-[34px] rounded-xl border-[1.5px] overflow-hidden relative ${isDiamond ? 'border-violet-500 ring-2 ring-violet-500/20' : 'border-[var(--border)]'}`}>
               <Image 
                 src={cleanUrl(item.seller?.logo_url) || `https://ui-avatars.com/api/?name=${item.seller?.display_name}`} 
                 alt="Seller" 
                 fill 
                 className="object-cover"
-                sizes="44px"
+                sizes="34px"
                 loading="lazy"
                 unoptimized={true}
               />
@@ -159,8 +209,7 @@ export default function WebProductCard({ item, onAddToCart }: any) {
                  <span className="text-[9px] font-black text-[var(--muted)] tracking-wider">
                     {(
                       item.service_distance_label ||
-                      item.seller?.location_city ||
-                      'LAGOS, NG'
+                      sellerLocationLabel
                     )
                       .toString()
                       .toUpperCase()}
@@ -182,14 +231,14 @@ export default function WebProductCard({ item, onAddToCart }: any) {
       <div className="flex">
         
         {/* Sidebar: Actions */}
-        <div className="w-[50px] shrink-0 flex flex-col items-center gap-6 pt-4">
+        <div className="w-[44px] shrink-0 flex flex-col items-center gap-6 pt-4">
            
-           <button onClick={handleTrap} className="flex flex-col items-center gap-1 group">
+           <button onClick={handleLike} className="flex flex-col items-center gap-1 group">
               <Heart size={24} className={`transition-colors ${item.is_liked ? 'text-emerald-500 fill-emerald-500' : 'text-[var(--foreground)] group-hover:text-emerald-500'}`} strokeWidth={2.5} />
               <span className="text-[10px] font-black text-[var(--foreground)]">{likeCount}</span>
            </button>
 
-           <button onClick={handleTrap} className="flex flex-col items-center gap-1 group">
+           <button onClick={handleComments} className="flex flex-col items-center gap-1 group">
               <MessageCircle size={24} className="text-[var(--foreground)] group-hover:text-emerald-500" strokeWidth={2.5} />
               <span className="text-[10px] font-black text-[var(--foreground)]">{commentCount}</span>
            </button>
@@ -204,17 +253,23 @@ export default function WebProductCard({ item, onAddToCart }: any) {
                 )}
              </div>
              <span className="text-[9px] font-black text-[var(--foreground)]">
-                {isService ? 'VIEW' : 'BUY'}
+                {isService ? 'BOOK' : 'BUY'}
              </span>
            </button>
            )}
 
-           <button onClick={handleTrap} className="flex flex-col items-center gap-1 group">
+           <button onClick={handleShare} className="flex flex-col items-center gap-1 group">
               <Share2 size={22} className="text-[var(--foreground)] group-hover:text-emerald-500" strokeWidth={2.5} />
            </button>
 
-           <button onClick={handleTrap} className="flex flex-col items-center gap-1 group">
-              <Bookmark size={22} className="text-[var(--foreground)] group-hover:text-emerald-500" strokeWidth={2.5} />
+           <button onClick={handleWishlist} className="flex flex-col items-center gap-1 group">
+              <Bookmark
+                size={22}
+                className={`${
+                  item.is_wishlisted ? 'text-emerald-500 fill-emerald-500' : 'text-[var(--foreground)] group-hover:text-emerald-500'
+                }`}
+                strokeWidth={2.5}
+              />
               <span className="text-[10px] font-black text-[var(--foreground)]">{wishlistCount}</span>
            </button>
 
@@ -228,6 +283,7 @@ export default function WebProductCard({ item, onAddToCart }: any) {
               
               <div 
                 className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 onScroll={(e) => {
                   const width = e.currentTarget.offsetWidth;
                   setActiveImageIndex(Math.round(e.currentTarget.scrollLeft / width));
@@ -282,9 +338,15 @@ export default function WebProductCard({ item, onAddToCart }: any) {
                        </div>
                     ))}
                  </div>
-                 <p className="text-[11px] font-medium text-[var(--foreground)]">
-                    Liked by <span className="font-black">{item.latest_likers?.[0]?.slug || 'someone'}</span>
-                    {likeCount > 1 && <span> and <span className="font-black">{likeCount - 1} others</span></span>}
+                 <p className="text-[11px] font-medium text-[var(--foreground)] cursor-pointer" onClick={handleLikes}>
+                    {item.latest_likers?.[0]?.slug ? (
+                      <>
+                        Liked by <span className="font-black">{item.latest_likers?.[0]?.slug}</span>
+                        {likeCount > 1 && <span> and <span className="font-black">{likeCount - 1} others</span></span>}
+                      </>
+                    ) : (
+                      <span><span className="font-black">{likeCount}</span> likes</span>
+                    )}
                  </p>
               </div>
            )}
