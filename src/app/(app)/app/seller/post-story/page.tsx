@@ -120,7 +120,7 @@ export default function AppSellerPostStoryPage() {
         const { data: auth } = await supabase.auth.getUser();
         const userId = auth.user?.id;
         if (!active || !userId) return;
-        const queries: Promise<any>[] = [];
+        const queries: any[] = [];
         if (canLinkProduct) {
           queries.push(
             supabase.from('products').select('id,name,price').eq('seller_id', userId).eq('is_active', true).order('created_at', { ascending: false }).limit(50),
@@ -165,7 +165,7 @@ export default function AppSellerPostStoryPage() {
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id;
       if (!userId) throw new Error('Please login again.');
-      const queries: Promise<any>[] = [];
+      const queries: any[] = [];
       if (canLinkProduct) {
         queries.push(
           supabase.from('products').select('id,name,price').eq('seller_id', userId).eq('is_active', true).order('created_at', { ascending: false }).limit(50),

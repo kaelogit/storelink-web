@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import { coinsToCurrency, formatCurrency } from '@/lib/activity-feed';
+import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { currencyFromServicePriceLabel, fetchStoryQueue } from '@/lib/story-queue';
 
 const STORY_DURATION_IMAGE_MS = 30000;
@@ -111,7 +112,8 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
   const product = current?.product;
   const service = current?.service;
   const seller = current?.seller;
-  const serviceThumbUri = service && !product ? resolveServiceThumb(service) : null;
+  const serviceThumbUriRaw = service && !product ? resolveServiceThumb(service) : null;
+  const serviceThumbUri = serviceThumbUriRaw ? normalizeWebMediaUrl(serviceThumbUriRaw) || null : null;
 
   const isFlashActive =
     !!(
@@ -331,7 +333,37 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
 
   if (loading) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center text-sm text-(--muted)">Loading story…</div>
+      <div className="fixed inset-0 z-50 flex flex-col bg-black text-white" aria-busy="true" aria-label="Loading story">
+        <div className="relative flex-1">
+          <div className="absolute inset-0 bg-linear-to-b from-zinc-900 via-black to-zinc-950" />
+          <div className="absolute left-0 right-0 top-0 z-10 flex flex-col gap-2 px-3 pt-3">
+            <div className="flex gap-1">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full w-1/3 animate-pulse rounded-full bg-white/25" />
+                </div>
+              ))}
+            </div>
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 backdrop-blur-sm">
+                <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-white/15" />
+                <div className="flex flex-1 flex-col gap-2 py-0.5">
+                  <div className="h-2.5 w-28 animate-pulse rounded bg-white/20" />
+                  <div className="h-2 w-36 animate-pulse rounded bg-white/10" />
+                </div>
+              </div>
+              <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-white/15" />
+            </div>
+          </div>
+          <div className="absolute inset-0 flex items-center justify-center px-8">
+            <div className="aspect-9/16 w-full max-w-[min(100%,420px)] animate-pulse rounded-3xl bg-white/10" />
+          </div>
+          <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 flex flex-col gap-2 px-3 pb-[max(16px,env(safe-area-inset-bottom))] pt-2">
+            <div className="mx-auto h-11 w-28 animate-pulse rounded-full bg-white/10" />
+            <div className="h-16 w-full animate-pulse rounded-2xl bg-white/10" />
+          </div>
+        </div>
+      </div>
     );
   }
   if (loadError || !current) {
@@ -346,7 +378,9 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
   }
 
   const storyAgeLabel = formatStoryAge(current.created_at);
-  const isDiamond = seller?.subscription_plan === 'diamond';
+  const isDiamond = String(seller?.subscription_plan || '').toLowerCase() === 'diamond';
+  const sellerAvatarSrc = normalizeWebMediaUrl(seller?.logo_url);
+  const productThumbSrc = product ? normalizeWebMediaUrl(product.image_urls?.[0]) : '';
   const bgKey = String(current.story_background_color || 'none').toLowerCase();
   const bgHex = STORY_BG_HEX[bgKey] || STORY_BG_HEX.none;
   const textHex = STORY_BG_TEXT[bgKey] || '#ffffff';
@@ -404,7 +438,7 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
           <div className="flex h-full items-center justify-center text-sm text-white/70">No media</div>
         )}
 
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-black/60 via-transparent to-black/80" />
 
         {!isContentReady && current.type !== 'text' ? (
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 text-sm">Loading…</div>
@@ -445,8 +479,8 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
                 isDiamond ? 'ring-2 ring-violet-500' : ''
               }`}
             >
-              {seller?.logo_url ? (
-                <Image src={seller.logo_url} alt="" width={40} height={40} className="object-cover" unoptimized />
+              {sellerAvatarSrc ? (
+                <Image src={sellerAvatarSrc} alt="" width={40} height={40} className="object-cover" unoptimized />
               ) : null}
             </div>
             <div className="min-w-0 text-left">
@@ -515,9 +549,9 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
               isDiamond ? 'ring-1 ring-violet-500/60' : ''
             } ${isSoldOut ? 'opacity-60' : ''}`}
           >
-            {product.image_urls?.[0] ? (
+            {productThumbSrc ? (
               <Image
-                src={product.image_urls[0]}
+                src={productThumbSrc}
                 alt=""
                 width={48}
                 height={48}

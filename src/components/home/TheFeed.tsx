@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { createBrowserClient } from '@/lib/supabase';
 import Image from 'next/image';
 import Link from 'next/link';
+import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { 
   Heart, MessageCircle, Share2, ShoppingBag,
   TrendingUp, Play, Zap, Gem, MapPin, Wrench
@@ -35,16 +36,6 @@ const FALLBACK_ITEMS = [
 ];
 
 const FEED_LIMIT = 4; // Keep this small to protect memory
-
-function toWebImageSrc(value?: string | null): string | null {
-  if (!value || typeof value !== 'string') return null;
-  const src = value.trim();
-  if (!src) return null;
-  if (src.startsWith('/')) return src;
-  if (src.startsWith('http://') || src.startsWith('https://')) return src;
-  // Reject local/mobile filesystem URIs like file:///... that break next/image on web.
-  return null;
-}
 
 export default function TheFeed() {
   const [items, setItems] = useState<any[]>([]);
@@ -140,7 +131,7 @@ export default function TheFeed() {
           
           <h2 id="the-feed-heading" className="text-4xl md:text-7xl font-display font-black mb-4 md:mb-6 tracking-tight text-white leading-tight">
             Don't Browse. <br className="md:hidden" />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-teal-300">
               Watch.
             </span>
           </h2>
@@ -153,15 +144,15 @@ export default function TheFeed() {
       {/* 🎬 THE INFINITE VIDEO WALL */}
       <div className="relative w-full pause-on-hover flex flex-col items-center">
         {/* Soft edge fades to hide the pop-in */}
-        <div className="absolute left-0 top-0 bottom-0 w-12 md:w-48 bg-gradient-to-r from-slate-950 to-transparent z-20 pointer-events-none" />
-        <div className="absolute right-0 top-0 bottom-0 w-12 md:w-48 bg-gradient-to-l from-slate-950 to-transparent z-20 pointer-events-none" />
+        <div className="absolute left-0 top-0 bottom-0 w-12 md:w-48 bg-linear-to-r from-slate-950 to-transparent z-20 pointer-events-none" />
+        <div className="absolute right-0 top-0 bottom-0 w-12 md:w-48 bg-linear-to-l from-slate-950 to-transparent z-20 pointer-events-none" />
 
         {loading ? (
           <div className="flex overflow-hidden py-10 justify-center gap-4 md:gap-8 px-4 w-full">
             {[1, 2, 3].map((n) => (
               <div
                 key={n}
-                className="w-[240px] h-[480px] md:w-[320px] md:h-[650px] rounded-[2rem] md:rounded-[3rem] border-[6px] md:border-[8px] border-slate-900 bg-slate-800 shrink-0 animate-pulse"
+                className="w-[240px] h-[480px] md:w-[320px] md:h-[650px] rounded-4xl md:rounded-[3rem] border-6 md:border-8 border-slate-900 bg-slate-800 shrink-0 animate-pulse"
                 aria-hidden
               />
             ))}
@@ -173,7 +164,7 @@ export default function TheFeed() {
           <div className="flex shrink-0 animate-feed-marquee transform-gpu w-max">
             
             {marqueeItems.map((item, i) => {
-               const isDiamond = item.seller?.subscription_plan === 'diamond';
+               const isDiamond = String(item.seller?.subscription_plan || '').toLowerCase() === 'diamond';
                const isServiceLinked = !!item.service;
                const activePrice = isServiceLinked
                  ? Number(item.service?.hero_price_min || 0) / 100
@@ -183,16 +174,16 @@ export default function TheFeed() {
                const serviceThumb = Array.isArray(serviceMedia)
                  ? (typeof serviceMedia[0] === 'string' ? serviceMedia[0] : serviceMedia?.[0]?.url)
                  : null;
-               const thumbSource = toWebImageSrc(
+               const thumbSource = normalizeWebMediaUrl(
                  isServiceLinked
                    ? (serviceThumb || item.seller?.logo_url)
                    : (item.product?.image_urls?.[0] || item.seller?.logo_url)
-               );
-               const sellerLogoSource = toWebImageSrc(item.seller?.logo_url);
+               ) || null;
+               const sellerLogoSource = normalizeWebMediaUrl(item.seller?.logo_url) || null;
 
                return (
                   <div key={`${item.id}-${i}`} className="pr-4 md:pr-8 shrink-0">
-                    <div className="relative w-[240px] h-[480px] md:w-[320px] md:h-[650px] rounded-[2rem] md:rounded-[3rem] border-[6px] md:border-[8px] border-slate-900 bg-black overflow-hidden shadow-2xl group transform md:hover:-translate-y-4 hover:shadow-[0_20px_40px_rgba(52,211,153,0.15)] transition-all duration-500 will-change-transform">
+                    <div className="relative w-[240px] h-[480px] md:w-[320px] md:h-[650px] rounded-4xl md:rounded-[3rem] border-6 md:border-8 border-slate-900 bg-black overflow-hidden shadow-2xl group transform md:hover:-translate-y-4 hover:shadow-[0_20px_40px_rgba(52,211,153,0.15)] transition-all duration-500 will-change-transform">
                       
                       {/* Fake Phone Details */}
                       <div className="absolute top-3 md:top-4 left-1/2 -translate-x-1/2 w-20 md:w-28 h-5 md:h-7 bg-black rounded-full z-30 pointer-events-none border border-white/5 flex items-center justify-end px-2">
@@ -200,7 +191,7 @@ export default function TheFeed() {
                       </div>
                       
                       {/* Fake Screen Glare */}
-                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent pointer-events-none z-10" />
+                      <div className="absolute inset-0 bg-linear-to-tr from-transparent via-white/5 to-transparent pointer-events-none z-10" />
 
                       {/* 📹 VIDEO PLAYER */}
                       <div className="w-full h-full relative bg-slate-900">
@@ -215,7 +206,7 @@ export default function TheFeed() {
                           >
                             <source src={item.video_url} type="video/mp4" />
                           </video>
-                          <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent pointer-events-none" />
+                          <div className="absolute inset-0 bg-linear-to-t from-black via-black/20 to-transparent pointer-events-none" />
                           
                           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 md:w-16 h-12 md:h-16 bg-black/40 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none border border-white/20">
                             <Play fill="white" size={20} className="ml-1 md:w-6 md:h-6" />
@@ -241,7 +232,7 @@ export default function TheFeed() {
                         </div>
                         {!isSoldOut && (
                             <Link href="/download" className="flex flex-col items-center gap-1 my-1 md:my-2 transition-transform hover:scale-110">
-                              <div className="w-[40px] md:w-[50px] h-[40px] md:h-[50px] rounded-full bg-gradient-to-b from-emerald-500 to-emerald-700 flex items-center justify-center border-2 border-white shadow-md">
+                              <div className="w-[40px] md:w-[50px] h-[40px] md:h-[50px] rounded-full bg-linear-to-b from-emerald-500 to-emerald-700 flex items-center justify-center border-2 border-white shadow-md">
                                   {isServiceLinked ? (
                                     <Wrench size={18} className="text-white md:w-5 md:h-5" strokeWidth={2.5} />
                                   ) : (

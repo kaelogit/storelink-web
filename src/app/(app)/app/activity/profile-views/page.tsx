@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ChevronRight, Eye, Gem, Users } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
+import { normalizeWebMediaUrl } from '@/lib/media-url';
 
 function formatRelative(iso: string): string {
   const then = new Date(iso).getTime();
@@ -106,7 +107,8 @@ export default function ProfileViewsPage() {
             rows.map((item) => {
               const sender = item.sender;
               if (!sender?.id) return null;
-              const isDiamond = sender.subscription_plan === 'diamond';
+              const isDiamond = String(sender.subscription_plan || '').toLowerCase() === 'diamond';
+              const senderAvatarSrc = normalizeWebMediaUrl(sender.logo_url);
               const isOnline =
                 sender.last_seen_at &&
                 (Date.now() - new Date(sender.last_seen_at).getTime()) / 60000 < 5;
@@ -130,9 +132,9 @@ export default function ProfileViewsPage() {
                         isDiamond ? 'border-violet-500 ring-2 ring-violet-500/25' : 'border-(--border)'
                       }`}
                     >
-                      {sender.logo_url ? (
+                      {senderAvatarSrc ? (
                         <Image
-                          src={sender.logo_url}
+                          src={senderAvatarSrc}
                           alt=""
                           width={48}
                           height={48}

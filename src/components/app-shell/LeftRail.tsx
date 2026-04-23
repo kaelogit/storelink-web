@@ -14,7 +14,7 @@ export default function LeftRail() {
         <div className="h-full px-3 py-4 flex flex-col gap-2">
           {primaryNavItems.map((item) => {
             const Icon = item.icon;
-            const active = pathname === item.href || (item.id === 'discover' && pathname === '/app/explore');
+            const active = pathname === item.href;
             return (
               <Link
                 key={item.id}

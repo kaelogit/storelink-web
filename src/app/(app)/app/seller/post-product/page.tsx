@@ -87,7 +87,7 @@ export default function AppSellerPostProductPage() {
     if (!picked.length) return;
     setIsOptimizing(true);
     try {
-      const optimized = [];
+      const optimized: File[] = [];
       for (const file of picked) {
         optimized.push(await optimizeImageForUpload(file));
       }

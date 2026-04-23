@@ -8,9 +8,11 @@ import AppTrapModal from '../../components/ui/DownloadTrap';
 import StoryRowWeb from '@/components/home-index/StoryRowWeb';
 import SearchProtocolWeb from '@/components/home-index/SearchProtocolWeb';
 import CategoryPulseWeb from '@/components/home-index/CategoryPulseWeb';
-import HomeFeedCard from '@/components/home-index/HomeFeedCard';
+import ExploreReelCard from '@/app/explore/ExploreReelCard';
 import { fetchHomeFeedData } from '@/lib/homeFeedData';
+import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { enqueueRankingEventWeb, flushRankingEventQueueNowWeb } from '@/lib/rankingEventsWeb';
+import { getRankingRpcPlan } from '@/lib/rankingRouting';
 
 const supabase = createBrowserClient();
 
@@ -141,25 +143,34 @@ const interleaveHomeMix = (rows: any[], seed: string) => {
   return mixed.filter(Boolean);
 };
 
+const getModeDefaultCategory = (value: 'home' | 'explore_discovery' | 'explore_for_you' | 'spotlight'): string => {
+  if (value === 'explore_for_you') return 'product:any';
+  if (value === 'spotlight') return 'services:any';
+  return 'all';
+};
+
 export default function ClientExploreWrapper({
   searchParams,
   embedded = false,
   surface = 'home',
+  surfaceActive = true,
 }: {
   searchParams?: Promise<{ category?: string }>;
   embedded?: boolean;
   surface?: 'home' | 'explore_discovery' | 'explore_for_you' | 'spotlight';
+  surfaceActive?: boolean;
 }) {
+  const surfaceStateKey = `storelink:web:explore-state:${surface}`;
   const router = useRouter();
   const urlSearchParams = useSearchParams();
   const categoryFromUrl = urlSearchParams.get('category')?.toLowerCase() ?? null;
   const initialCategory = useMemo(() => {
-    if (!categoryFromUrl) return 'All';
+    if (!categoryFromUrl) return embedded ? getModeDefaultCategory(surface) : 'All';
     const normalized = categoryFromUrl.replace(/\s+/g, '-');
     const label = slugToLabel[normalized] ?? normalized;
     const match = CATEGORIES.find((c) => c.slug === normalized || c.label.toLowerCase() === (typeof label === 'string' ? label.toLowerCase() : ''));
     return match ? match.label : 'All';
-  }, [categoryFromUrl]);
+  }, [categoryFromUrl, embedded, surface]);
 
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState(initialCategory);
@@ -175,19 +186,44 @@ export default function ClientExploreWrapper({
   const [isFlashMode, setIsFlashMode] = useState(false);
   const [showCategoryFilter, setShowCategoryFilter] = useState(false);
   const [products, setProducts] = useState<any[]>([]);
+  const [isRecovering, setIsRecovering] = useState(false);
   const productsRef = useRef<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [trapOpen, setTrapOpen] = useState(false);
   const [viewerId, setViewerId] = useState<string | null>(null);
+  const [viewerResolved, setViewerResolved] = useState(false);
+  const [exploreRankV2Enabled, setExploreRankV2Enabled] = useState(false);
   const refreshSeedRef = useRef(Math.random().toString(36).slice(2));
   const loggedImpressionsRef = useRef<Set<string>>(new Set());
+  const handleCategorySelect = (value: string) => {
+    setActiveCategory(value);
+    if (surface !== 'home') return;
+    const decoded = safeDecodeCategorySelectionKey(value);
+    const params = new URLSearchParams(urlSearchParams.toString());
+    if (decoded.kind === 'all') params.delete('category');
+    else if (decoded.kind === 'product') params.set('category', decoded.slug);
+    else if (decoded.kind === 'services') params.set('category', decoded.slug);
+    else if (decoded.kind === 'servicesAny') params.set('category', 'services');
+    else params.delete('category');
+    router.replace(`/explore${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false });
+  };
 
   useEffect(() => {
     let active = true;
     supabase.auth.getUser().then(({ data }) => {
       if (!active) return;
       setViewerId(data.user?.id ?? null);
+      setViewerResolved(true);
     });
+    supabase
+      .from('feature_flags')
+      .select('enabled')
+      .eq('key', 'explore_rank_v2_enabled')
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!active) return;
+        setExploreRankV2Enabled(Boolean(data?.enabled));
+      });
     return () => {
       active = false;
     };
@@ -202,16 +238,74 @@ export default function ClientExploreWrapper({
   }, [initialCategory]);
 
   useEffect(() => {
+    if (!embedded) return;
+    let restored = false;
+    try {
+      const raw = window.sessionStorage.getItem(surfaceStateKey);
+      if (raw) {
+        const parsed = JSON.parse(raw) as {
+          query?: string;
+          activeCategory?: string;
+          isFlashMode?: boolean;
+          showCategoryFilter?: boolean;
+        };
+        if (typeof parsed.query === 'string') setQuery(parsed.query);
+        if (typeof parsed.activeCategory === 'string' && parsed.activeCategory.trim()) {
+          setActiveCategory(parsed.activeCategory);
+        }
+        if (typeof parsed.isFlashMode === 'boolean') setIsFlashMode(parsed.isFlashMode);
+        if (typeof parsed.showCategoryFilter === 'boolean') setShowCategoryFilter(parsed.showCategoryFilter);
+        restored = true;
+      }
+    } catch {
+      // ignore malformed persisted state
+    }
+    if (!restored) {
+      setActiveCategory(getModeDefaultCategory(surface));
+    }
+  }, [embedded, surfaceStateKey, surface]);
+
+  useEffect(() => {
+    if (!embedded) return;
+    try {
+      window.sessionStorage.setItem(
+        surfaceStateKey,
+        JSON.stringify({
+          query,
+          activeCategory,
+          isFlashMode,
+          showCategoryFilter,
+        }),
+      );
+    } catch {
+      // ignore storage write failures
+    }
+  }, [embedded, surfaceStateKey, query, activeCategory, isFlashMode, showCategoryFilter]);
+
+  useEffect(() => {
     refreshSeedRef.current = Math.random().toString(36).slice(2);
   }, [surface, activeCategory, query, isFlashMode]);
 
   const normalizeFeedItem = (item: any, fallbackType: 'product' | 'service' = 'product') => {
-    if (item?.seller) return item;
+    if (item?.seller) {
+      return {
+        ...item,
+        product_id: item?.product_id ?? (item?.type === 'service' || item?.service_listing_id ? null : item?.id),
+        service_listing_id: item?.service_listing_id ?? (item?.type === 'service' ? item?.id : null),
+        views_count: Number(item?.views_count || 0),
+        seller: {
+          ...item.seller,
+          logo_url: normalizeWebMediaUrl(item.seller.logo_url) || null,
+        },
+      };
+    }
     const isService = item?.type === 'service' || !!item?.service_listing_id || item?.source_kind === 'service';
     return {
       ...item,
       id: item?.id,
       type: isService ? 'service' : fallbackType,
+      product_id: item?.product_id ?? (isService ? null : item?.id),
+      service_listing_id: item?.service_listing_id ?? (isService ? item?.id : null),
       name: item?.name || item?.product_name || item?.title || item?.caption || 'Item',
       description: item?.description || item?.caption || '',
       image_urls:
@@ -222,6 +316,7 @@ export default function ClientExploreWrapper({
       price: item?.price ?? item?.product_price ?? 0,
       currency_code: item?.currency_code || item?.product_currency || 'NGN',
       stock_quantity: item?.stock_quantity ?? item?.product_stock_quantity ?? 999,
+      views_count: Number(item?.views_count || 0),
       comments_count: item?.comments_count ?? item?.comment_count ?? 0,
       likes_count: item?.likes_count ?? 0,
       wishlist_count: item?.wishlist_count ?? 0,
@@ -229,7 +324,7 @@ export default function ClientExploreWrapper({
         id: item?.seller_id,
         display_name: item?.seller_display_name || 'Store',
         slug: item?.seller_slug,
-        logo_url: item?.seller_logo_url,
+        logo_url: normalizeWebMediaUrl(item?.seller_logo_url) || null,
         is_verified: item?.seller_is_verified,
         subscription_plan: item?.seller_subscription_plan,
         location_city: item?.seller_location_city,
@@ -269,14 +364,252 @@ export default function ClientExploreWrapper({
     return [];
   };
 
+  const enrichEngagement = async (rows: any[]) => {
+    if (!rows.length) return rows;
+    const resolveProductId = (row: any) => String(row?.product_id || row?.id || '');
+    const resolveServiceId = (row: any) => String(row?.service_listing_id || row?.id || '');
+    const productRows = rows.filter((row: any) => (row?.type || 'product') !== 'service' && !row?.service_listing_id);
+    const serviceRows = rows.filter((row: any) => row?.type === 'service' || !!row?.service_listing_id);
+    const productIds = Array.from(new Set(productRows.map((p: any) => resolveProductId(p)).filter(Boolean)));
+    const serviceIds = Array.from(new Set(serviceRows.map((s: any) => resolveServiceId(s)).filter(Boolean)));
+
+    const [
+      productLikesRows,
+      productCommentsRows,
+      productWishlistRows,
+      productLikedRows,
+      productWishRows,
+      serviceLikesRows,
+      serviceCommentsRows,
+      serviceWishlistRows,
+      serviceLikedRows,
+      serviceWishRows,
+    ] = await Promise.all([
+      productIds.length
+        ? supabase.from('product_likes').select('product_id,user_id,created_at').in('product_id', productIds).order('created_at', { ascending: false })
+        : Promise.resolve({ data: [] as any[] }),
+      productIds.length
+        ? supabase.from('product_comments').select('product_id').in('product_id', productIds)
+        : Promise.resolve({ data: [] as any[] }),
+      productIds.length
+        ? supabase.from('wishlist').select('product_id').in('product_id', productIds)
+        : Promise.resolve({ data: [] as any[] }),
+      viewerId && productIds.length
+        ? supabase.from('product_likes').select('product_id').eq('user_id', viewerId).in('product_id', productIds)
+        : Promise.resolve({ data: [] as any[] }),
+      viewerId && productIds.length
+        ? supabase.from('wishlist').select('product_id').eq('user_id', viewerId).in('product_id', productIds)
+        : Promise.resolve({ data: [] as any[] }),
+      serviceIds.length
+        ? supabase.from('service_likes').select('service_listing_id,user_id,created_at').in('service_listing_id', serviceIds).order('created_at', { ascending: false })
+        : Promise.resolve({ data: [] as any[] }),
+      serviceIds.length
+        ? supabase.from('service_comments').select('service_listing_id').in('service_listing_id', serviceIds)
+        : Promise.resolve({ data: [] as any[] }),
+      serviceIds.length
+        ? supabase.from('service_wishlist').select('service_listing_id').in('service_listing_id', serviceIds)
+        : Promise.resolve({ data: [] as any[] }),
+      viewerId && serviceIds.length
+        ? supabase.from('service_likes').select('service_listing_id').eq('user_id', viewerId).in('service_listing_id', serviceIds)
+        : Promise.resolve({ data: [] as any[] }),
+      viewerId && serviceIds.length
+        ? supabase.from('service_wishlist').select('service_listing_id').eq('user_id', viewerId).in('service_listing_id', serviceIds)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+
+    const productLikeCounts = new Map<string, number>();
+    const productCommentCounts = new Map<string, number>();
+    const productWishlistCounts = new Map<string, number>();
+    for (const row of productLikesRows.data || []) productLikeCounts.set(row.product_id, (productLikeCounts.get(row.product_id) || 0) + 1);
+    for (const row of productCommentsRows.data || []) productCommentCounts.set(row.product_id, (productCommentCounts.get(row.product_id) || 0) + 1);
+    for (const row of productWishlistRows.data || []) productWishlistCounts.set(row.product_id, (productWishlistCounts.get(row.product_id) || 0) + 1);
+    const productLikedSet = new Set((productLikedRows as any).data?.map((r: any) => r.product_id) || []);
+    const productWishSet = new Set((productWishRows as any).data?.map((r: any) => r.product_id) || []);
+
+    const serviceLikeCounts = new Map<string, number>();
+    const serviceCommentCounts = new Map<string, number>();
+    const serviceWishlistCounts = new Map<string, number>();
+    for (const row of serviceLikesRows.data || []) serviceLikeCounts.set(row.service_listing_id, (serviceLikeCounts.get(row.service_listing_id) || 0) + 1);
+    for (const row of serviceCommentsRows.data || []) serviceCommentCounts.set(row.service_listing_id, (serviceCommentCounts.get(row.service_listing_id) || 0) + 1);
+    for (const row of serviceWishlistRows.data || []) serviceWishlistCounts.set(row.service_listing_id, (serviceWishlistCounts.get(row.service_listing_id) || 0) + 1);
+    const serviceLikedSet = new Set((serviceLikedRows as any).data?.map((r: any) => r.service_listing_id) || []);
+    const serviceWishSet = new Set((serviceWishRows as any).data?.map((r: any) => r.service_listing_id) || []);
+
+    return rows.map((row: any) => {
+      const isService = row?.type === 'service' || !!row?.service_listing_id;
+      const id = isService ? resolveServiceId(row) : resolveProductId(row);
+      if (isService) {
+        return {
+          ...row,
+          likes_count: serviceLikeCounts.get(id) ?? Number(row.likes_count || 0),
+          comments_count: serviceCommentCounts.get(id) ?? Number(row.comments_count ?? row.comment_count ?? 0),
+          comment_count: serviceCommentCounts.get(id) ?? Number(row.comment_count ?? row.comments_count ?? 0),
+          wishlist_count: serviceWishlistCounts.get(id) ?? Number(row.wishlist_count || 0),
+          is_liked: serviceLikedSet.has(id) || Boolean(row.is_liked),
+          is_wishlisted: serviceWishSet.has(id) || Boolean(row.is_wishlisted || row.is_saved),
+        };
+      }
+      return {
+        ...row,
+        likes_count: productLikeCounts.get(id) ?? Number(row.likes_count || 0),
+        comments_count: productCommentCounts.get(id) ?? Number(row.comments_count ?? row.comment_count ?? 0),
+        comment_count: productCommentCounts.get(id) ?? Number(row.comment_count ?? row.comments_count ?? 0),
+        wishlist_count: productWishlistCounts.get(id) ?? Number(row.wishlist_count || 0),
+        is_liked: productLikedSet.has(id) || Boolean(row.is_liked),
+        is_wishlisted: productWishSet.has(id) || Boolean(row.is_wishlisted || row.is_saved),
+      };
+    });
+  };
+
+  const loadExploreBackupRows = async (limit = 30) => {
+    const [reelsRes, productsRes, servicesRes] = await Promise.all([
+      supabase
+        .from('reels')
+        .select(`
+          id, caption, video_url, thumbnail_url, product_id, service_listing_id, seller_id, created_at,
+          seller:profiles!seller_id(id, display_name, slug, logo_url, is_verified, subscription_plan, loyalty_enabled, loyalty_percentage, location_city, category),
+          product:products!product_id(id, name, price, currency_code, image_urls, is_flash_drop, flash_price, flash_end_time, stock_quantity, is_active),
+          service:service_listings!service_listing_id(id, title, hero_price_min, currency_code, media, is_active)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(limit),
+      supabase
+        .from('products')
+        .select(`*, seller:profiles ( id, display_name, slug, logo_url, is_verified, subscription_plan, loyalty_enabled, loyalty_percentage, location_city, category )`)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(limit),
+      supabase
+        .from('service_listings')
+        .select(`
+          id, title, description, hero_price_min, currency_code, media, service_category, seller_id,
+          seller:profiles (
+            id, display_name, slug, logo_url, is_verified, subscription_plan, loyalty_enabled, loyalty_percentage, location_city, category
+          )
+        `)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(limit),
+    ]);
+
+    const reelRows = (reelsRes.data || [])
+      .filter((r: any) => {
+        const hasProduct = !!r.product_id;
+        const hasService = !!r.service_listing_id;
+        if (hasProduct) return Boolean(r.product?.is_active);
+        if (hasService) return Boolean(r.service?.is_active);
+        return true;
+      })
+      .map((r: any) =>
+        normalizeFeedItem(
+          {
+            id: r.id,
+            type: r.service_listing_id ? 'service' : 'product',
+            product_id: r.product_id || null,
+            service_listing_id: r.service_listing_id || null,
+            name: r.service_listing_id ? String(r.service?.title || 'Service') : String(r.product?.name || 'Product'),
+            description: r.caption || '',
+            price: r.service_listing_id ? Number(r.service?.hero_price_min || 0) / 100 : Number(r.product?.price || 0),
+            currency_code: r.service_listing_id ? (r.service?.currency_code || 'NGN') : (r.product?.currency_code || 'NGN'),
+            image_urls: r.service_listing_id ? resolveServiceMedia(r.service?.media) : (r.product?.image_urls || [r.thumbnail_url].filter(Boolean)),
+            video_url: r.video_url || null,
+            is_flash_drop: r.product?.is_flash_drop || false,
+            flash_price: r.product?.flash_price || null,
+            flash_end_time: r.product?.flash_end_time || null,
+            stock_quantity: r.service_listing_id ? 999 : Number(r.product?.stock_quantity ?? 999),
+            likes_count: 0,
+            comment_count: 0,
+            comments_count: 0,
+            wishlist_count: 0,
+            seller: r.seller,
+            seller_id: r.seller_id,
+          },
+          r.service_listing_id ? 'service' : 'product',
+        ),
+      );
+
+    const productRows = (productsRes.data || []).map((item: any) => normalizeFeedItem(item, 'product'));
+    const serviceRows = (servicesRes.data || []).map((s: any) =>
+      normalizeFeedItem(
+        {
+          id: s.id,
+          service_listing_id: s.id,
+          slug: null,
+          type: 'service',
+          name: String(s.title || 'Service'),
+          title: String(s.title || 'Service'),
+          description: s.description || '',
+          price: Number(s.hero_price_min || 0) / 100,
+          currency_code: s.currency_code || 'NGN',
+          image_urls: resolveServiceMedia(s.media),
+          likes_count: 0,
+          comment_count: 0,
+          comments_count: 0,
+          wishlist_count: 0,
+          is_liked: false,
+          is_wishlisted: false,
+          stock_quantity: 999,
+          seller_id: s.seller_id,
+          seller: s.seller,
+          service_distance_label:
+            s.seller?.location_city && s.seller?.location_state
+              ? `${s.seller.location_city}, ${s.seller.location_state}`
+              : s.seller?.location_city || s.seller?.location_state || null,
+          category: s.service_category || 'services',
+          category_name: s.service_category || 'services',
+        },
+        'service',
+      ),
+    );
+
+    return withStableUniqueKeys([...reelRows, ...productRows, ...serviceRows].slice(0, limit));
+  };
+
   useEffect(() => {
     async function fetchProducts() {
+      if (surface !== 'home' && !viewerResolved) return;
       setLoading(true);
+      setIsRecovering(false);
       try {
         const seed = String(Math.random());
         const userId = viewerId;
         let rpcData: any[] | null = null;
         let rpcError: any = null;
+        const cleanSearch = query.trim();
+        const decodedCategory = safeDecodeCategorySelectionKey(activeCategory);
+        const legacyCategory = (() => {
+          if (decodedCategory.kind === 'all') return 'all';
+          if (decodedCategory.kind === 'productAny') return 'all';
+          if (decodedCategory.kind === 'servicesAny') return 'services';
+          return decodedCategory.slug;
+        })();
+        const v2Category = (() => {
+          if (decodedCategory.kind === 'all') return 'all';
+          if (decodedCategory.kind === 'productAny') return 'product:any';
+          if (decodedCategory.kind === 'servicesAny') return 'services:any';
+          if (decodedCategory.kind === 'product') return `product:${decodedCategory.slug}`;
+          if (decodedCategory.kind === 'services') return `services:${decodedCategory.slug}`;
+          return 'all';
+        })();
+        const callExploreRpc = async (
+          rankedSurface: 'explore_discovery' | 'explore_for_you' | 'spotlight',
+          payloadFactory: (categoryMode: 'legacy' | 'v2') => Record<string, any>,
+        ) => {
+          const rankingPlan = getRankingRpcPlan(rankedSurface, exploreRankV2Enabled);
+          let rpcUsed = rankingPlan.primaryRpc;
+          const primaryMode: 'legacy' | 'v2' = rankingPlan.primaryRpc.includes('_v2') || rankingPlan.primaryRpc.includes('_v3') ? 'v2' : 'legacy';
+          let res = await supabase.rpc(rankingPlan.primaryRpc as any, payloadFactory(primaryMode));
+          if (res.error && rankingPlan.fallbackRpcs.length > 0) {
+            for (const fallback of rankingPlan.fallbackRpcs) {
+              const fallbackMode: 'legacy' | 'v2' = fallback.includes('_v2') || fallback.includes('_v3') ? 'v2' : 'legacy';
+              const tryRes = await supabase.rpc(fallback as any, payloadFactory(fallbackMode));
+              rpcUsed = fallback;
+              res = tryRes;
+              if (!res.error) break;
+            }
+          }
+          return { data: res.data, error: res.error, rpcUsed };
+        };
 
         if (surface === 'home') {
           const home = await fetchHomeFeedData({
@@ -297,41 +630,51 @@ export default function ClientExploreWrapper({
             } as any);
           }
         } else if (surface === 'explore_discovery') {
-          const discovery = await supabase.rpc('get_simple_explore_shuffle', {
+          const discovery = await callExploreRpc('explore_discovery', (mode) => ({
             p_seed: seed,
             p_user_id: userId,
-            p_category: activeCategorySlug || 'all',
-            p_search_query: query || '',
+            p_category: mode === 'v2' ? v2Category : legacyCategory,
+            p_search_query: cleanSearch,
             p_offset: 0,
             p_limit: 30,
             p_location_country: 'NG',
-          });
+          }));
           rpcData = discovery.data;
           rpcError = discovery.error;
         } else if (surface === 'explore_for_you') {
-          const forYou = await supabase.rpc('get_explore_for_you', {
+          const forYou = await callExploreRpc('explore_for_you', (mode) => ({
             p_seed: seed,
             p_user_id: userId,
-            p_category: activeCategorySlug || 'all',
-            p_search_query: query || '',
+            p_category: mode === 'v2' ? v2Category : legacyCategory,
+            p_search_query: cleanSearch,
             p_offset: 0,
             p_limit: 30,
             p_location_country: 'NG',
-          });
+          }));
           rpcData = forYou.data;
           rpcError = forYou.error;
         } else {
-          const spotlight = await supabase.rpc('get_spotlight_feed_smart', {
+          const spotlight = await callExploreRpc('spotlight', () => ({
             p_seed: seed,
             p_user_id: userId,
             p_offset: 0,
             p_limit: 30,
-          });
+          }));
           rpcData = spotlight.data;
           rpcError = spotlight.error;
         }
 
         let rawData = rpcData || [];
+
+        if ((surface === 'explore_discovery' || surface === 'explore_for_you') && (rpcError || rawData.length === 0)) {
+          setIsRecovering(true);
+          const backup = await loadExploreBackupRows(30);
+          if (backup.length > 0) {
+            rawData = backup;
+            rpcError = null;
+          }
+          setIsRecovering(false);
+        }
 
         if ((rpcError || !rpcData) && surface === 'home') {
             const { data: tableData } = await supabase
@@ -344,6 +687,12 @@ export default function ClientExploreWrapper({
         }
 
         let finalData = mapRPCData(rawData);
+        if (viewerId && surface === 'explore_for_you') {
+          finalData = finalData.filter((row: any) => {
+            const sellerId = String(row?.seller?.id || row?.seller_id || row?.creator_id || '');
+            return !sellerId || sellerId !== String(viewerId);
+          });
+        }
 
         if (query.length > 2) {
             const lowerQ = query.toLowerCase();
@@ -465,7 +814,7 @@ export default function ClientExploreWrapper({
               if (current.length < 5) {
                 const profile = likerProfiles.get(row.user_id);
                 if (profile) {
-                  current.push({ id: profile.id, slug: profile.slug, logo_url: profile.logo_url });
+                  current.push({ id: profile.id, slug: profile.slug, logo_url: normalizeWebMediaUrl(profile.logo_url) || null });
                 }
                 latestLikers.set(row.service_listing_id, current);
               }
@@ -629,7 +978,7 @@ export default function ClientExploreWrapper({
               const arr = latestLikers.get(row.product_id) || [];
               if (arr.length < 5) {
                 const profile = likerProfiles.get(row.user_id);
-                if (profile) arr.push({ id: profile.id, slug: profile.slug, logo_url: profile.logo_url });
+                if (profile) arr.push({ id: profile.id, slug: profile.slug, logo_url: normalizeWebMediaUrl(profile.logo_url) || null });
                 latestLikers.set(row.product_id, arr);
               }
             }
@@ -660,6 +1009,31 @@ export default function ClientExploreWrapper({
           }
         }
 
+        if (surface === 'explore_discovery' && finalData.length === 0) {
+          setIsRecovering(true);
+          const backupRows = await loadExploreBackupRows(30);
+          if (backupRows.length > 0) {
+            const videoOnly = backupRows.filter((r: any) => Boolean(r.video_url || r.video_url_720 || r.media_url));
+            const enrichedBackup = await enrichEngagement(videoOnly.length ? videoOnly : backupRows);
+            setProducts(enrichedBackup);
+            setIsRecovering(false);
+            return;
+          }
+          setIsRecovering(false);
+        }
+
+        if (surface === 'explore_discovery') {
+          const videoOnly = finalData.filter((r: any) => Boolean(r.video_url || r.video_url_720 || r.media_url));
+          finalData = videoOnly.length ? videoOnly : finalData;
+        }
+        if ((surface === 'explore_discovery' || surface === 'explore_for_you' || surface === 'spotlight') && !cleanSearch && decodedCategory.kind === 'all') {
+          finalData = finalData
+            .map((row: any, idx: number) => ({ row, rank: idx + seededRandom(`${seed}:${String(row?.id || idx)}`)() * 4 }))
+            .sort((a: any, b: any) => a.rank - b.rank)
+            .map((x: any) => x.row);
+        }
+
+        finalData = await enrichEngagement(finalData);
         setProducts(withStableUniqueKeys(finalData.slice(0, 30)));
       } catch (err) {
           console.error("Fetch error:", err);
@@ -670,7 +1044,7 @@ export default function ClientExploreWrapper({
 
     const timer = setTimeout(() => { fetchProducts(); }, 500);
     return () => clearTimeout(timer);
-  }, [query, activeCategorySlug, isFlashMode, surface, viewerId]);
+  }, [query, activeCategorySlug, isFlashMode, surface, viewerId, viewerResolved, exploreRankV2Enabled]);
 
   useEffect(() => {
     if (surface !== 'home') return;
@@ -699,7 +1073,7 @@ export default function ClientExploreWrapper({
     const start = async () => {
       try {
         const { data, error } = await supabase.rpc('start_explore_session', {
-          p_user_id: null,
+          p_user_id: viewerId,
           p_experiment_key: 'explore_feed_rank_v1',
         });
         if (error || !data || cancelled) return;
@@ -726,7 +1100,35 @@ export default function ClientExploreWrapper({
         p_product_clicks: null,
       });
     };
-  }, []);
+  }, [viewerId]);
+
+  const decodedCategory = safeDecodeCategorySelectionKey(activeCategory);
+  const emptyStateTitle =
+    surface === 'explore_for_you'
+      ? 'No reels here'
+      : surface === 'spotlight'
+        ? 'No reels here'
+        : surface === 'explore_discovery'
+          ? 'No reels here'
+          : 'No reels here';
+  const emptyStateSubtext =
+    surface === 'explore_for_you'
+      ? query.trim()
+        ? 'No reels match your search from people you follow.'
+        : 'Follow stores to see their reels here.'
+      : surface === 'spotlight'
+        ? query.trim()
+          ? 'No spotlight posts match your search.'
+          : 'No spotlight posts yet. Buyers will appear here after successful buys or bookings.'
+      : surface === 'explore_discovery'
+        ? isRecovering
+          ? 'Pulling fresh items for you now...'
+          : decodedCategory.kind !== 'all'
+            ? 'No reels match your selected category yet. Try another category or check back later.'
+            : query.trim()
+              ? 'No reels match your search. Try different keywords or browse All.'
+              : 'No reels yet. Check back later or try another category.'
+      : 'Try adjusting your search or category.';
 
   return (
     <div className={`min-h-screen section-light ${embedded ? 'pt-2 pb-8' : 'pt-20 pb-24'} relative overflow-hidden`}>
@@ -801,9 +1203,9 @@ export default function ClientExploreWrapper({
       </div>
       )}
 
-      {embedded && surface === 'home' && (
+      {embedded && (
         <div className="max-w-3xl mx-auto px-2 sm:px-4 pb-2">
-          <StoryRowWeb seed={refreshSeedRef.current} />
+          {surface === 'home' ? <StoryRowWeb seed={refreshSeedRef.current} /> : null}
           <div className="mt-2 flex items-center gap-2">
             <div className="flex-1">
               <SearchProtocolWeb
@@ -832,45 +1234,69 @@ export default function ClientExploreWrapper({
           </div>
           {showCategoryFilter ? (
             <div className="mt-2 rounded-2xl border border-(--border) bg-(--surface) p-2">
-              <CategoryPulseWeb active={activeCategory} onSelect={setActiveCategory} />
+              <CategoryPulseWeb active={activeCategory} onSelect={handleCategorySelect} />
             </div>
           ) : null}
         </div>
       )}
 
       {/* 2. FEED CONTAINER */}
-      <div className={`max-w-md mx-auto ${embedded ? 'pt-1' : 'pt-2 md:pt-6'} pb-24`}>
+      <div className={`max-w-md mx-auto ${embedded ? 'pt-1' : 'pt-2 md:pt-6'} pb-24 ${embedded ? 'snap-y snap-mandatory' : ''}`}>
          {loading ? (
-            <div className="px-4 space-y-6">
-               {[1,2,3].map(i => (
+            <div className="px-3 md:px-4 space-y-4">
+               {[1, 2].map((i) => (
                   <div key={i} className="animate-pulse">
-                     <div className="flex gap-4 mb-3">
-                        <div className="w-[50px] flex flex-col items-center"><div className="w-11 h-11 bg-slate-200 rounded-2xl" /></div>
-                        <div className="flex-1 space-y-2 pt-1">
-                           <div className="w-24 h-3 bg-slate-200 rounded" />
-                           <div className="w-3/4 h-3 bg-slate-200 rounded" />
+                    <div className="relative mx-auto w-full max-w-md overflow-hidden rounded-3xl border border-(--border) bg-black">
+                      <div className="relative aspect-9/16 w-full min-h-[560px] bg-zinc-800">
+                        <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent" />
+                        <div className="absolute inset-x-3 bottom-3.5">
+                          <div className="pr-[68px]">
+                            <div className="mb-2 flex items-center gap-2.5">
+                              <div className="h-10 w-10 rounded-[16px] bg-white/30" />
+                              <div className="min-w-0 flex-1 space-y-1.5">
+                                <div className="h-3 w-30 max-w-[60%] rounded bg-white/35" />
+                                <div className="h-2.5 w-20 max-w-[45%] rounded bg-white/25" />
+                              </div>
+                            </div>
+                            <div className="space-y-1.5">
+                              <div className="h-3 w-[78%] rounded bg-white/25" />
+                              <div className="h-3 w-[62%] rounded bg-white/25" />
+                            </div>
+                            <div className="mt-2 h-2.5 w-24 rounded bg-white/20" />
+                            <div className="mt-2 h-14 w-[92%] rounded-xl border border-white/20 bg-white/10" />
+                          </div>
+                          <div className="absolute right-0 bottom-3 flex flex-col items-center gap-3">
+                            {[1, 2, 3, 4, 5].map((j) => (
+                              <div key={j} className="h-6 w-6 rounded-full bg-white/30" />
+                            ))}
+                          </div>
                         </div>
-                     </div>
-                     <div className="flex gap-4">
-                        <div className="w-[50px] space-y-4 pt-4 flex flex-col items-center">
-                           {[1,2,3,4].map(j => <div key={j} className="w-6 h-6 bg-slate-200 rounded-full" />)}
-                        </div>
-                        <div className="flex-1">
-                           <div className="aspect-4/5 bg-slate-200 rounded-[24px]" />
-                        </div>
-                     </div>
+                        <div className="absolute inset-x-3 bottom-1.5 h-1.5 rounded-full bg-white/25" />
+                      </div>
+                    </div>
                   </div>
                ))}
             </div>
          ) : products.length > 0 ? (
             <div className="md:px-4">
-               {products.map((item) => (
-                  <HomeFeedCard
-                    key={item.__key || `${item.type || 'item'}:${item.id}`} 
-                    item={item} 
-                    onAddToCart={() => setTrapOpen(true)}
-                  />
-               ))}
+               {products.map((item) => {
+                  const key = item.__key || `${item.type || 'item'}:${item.id}`;
+                  const reelSurface = embedded;
+                  return (
+                    <div
+                      key={key}
+                      className={reelSurface ? 'snap-start min-h-[calc(100vh-170px)] flex items-stretch' : ''}
+                    >
+                      <ExploreReelCard
+                        item={item}
+                        surface={surface === 'home' ? 'explore_discovery' : surface}
+                        surfaceActive={surfaceActive}
+                        onTrap={() => setTrapOpen(true)}
+                        className={reelSurface ? 'h-full' : ''}
+                      />
+                    </div>
+                  );
+               })}
                
                {!embedded && (
                <div className="px-4 mt-8 mb-10">
@@ -899,8 +1325,12 @@ export default function ClientExploreWrapper({
                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-300">
                   <Zap size={24} />
                </div>
-               <h3 className="text-sm font-black text-slate-900 mb-1">NO DROPS FOUND</h3>
-               <p className="text-xs text-slate-500">Try adjusting your search or category.</p>
+               <h3 className="text-sm font-black text-slate-900 mb-1">
+                 {emptyStateTitle}
+               </h3>
+               <p className="text-xs text-slate-500">
+                 {emptyStateSubtext}
+               </p>
             </div>
          )}
       </div>

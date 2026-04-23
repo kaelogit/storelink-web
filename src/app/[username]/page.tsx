@@ -1,4 +1,5 @@
 import { createServerClient } from '@/lib/supabase';
+import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { notFound, redirect } from 'next/navigation';
 import ClientProfileWrapper from './ClientProfileWrapper';
 import { getLocaleForCountry, getSiteNameForCountry } from '@/lib/countryMetadata';
@@ -31,7 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
   const title = `${profile.display_name} (@${profile.slug}) | StoreLink`;
   const description = profile.bio || `Shop unique items and explore the collection from ${profile.display_name} on StoreLink.`;
   // Fallback to a generic StoreLink image if they don't have a logo
-  const image = profile.logo_url || '/brand/og-share.png';
+  const image = normalizeWebMediaUrl(profile.logo_url) || '/brand/og-share.png';
 
   return {
     title,

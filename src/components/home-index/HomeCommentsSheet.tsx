@@ -3,15 +3,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Heart, MessageCircleReply, Send, Trash2, X } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
+import { normalizeWebMediaUrl } from '@/lib/media-url';
 
 export default function HomeCommentsSheet({
   open,
   onClose,
   item,
+  onChanged,
 }: {
   open: boolean;
   onClose: () => void;
   item: any;
+  onChanged?: () => void;
 }) {
   const supabase = useMemo(() => createBrowserClient(), []);
   const [rows, setRows] = useState<any[]>([]);
@@ -24,6 +27,7 @@ export default function HomeCommentsSheet({
   const [pendingLikeIds, setPendingLikeIds] = useState<Set<string>>(new Set());
   const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(new Set());
   const isService = useMemo(() => item?.type === 'service' || !!item?.service_listing_id, [item]);
+  const postOwnerId = useMemo(() => String(item?.seller_id || item?.seller?.id || ''), [item]);
 
   const fetchComments = async (uid: string | null) => {
     if (!item?.id) return [];
@@ -84,6 +88,7 @@ export default function HomeCommentsSheet({
       setText('');
       setReplyTo(null);
       await refresh();
+      onChanged?.();
     }
     setSubmitting(false);
   };
@@ -107,9 +112,11 @@ export default function HomeCommentsSheet({
     if (isService) {
       const res = await supabase.rpc('toggle_service_comment_like', { p_comment_id: commentId, p_user_id: viewerId });
       if (res.error) setRows(snapshot);
+      else onChanged?.();
     } else {
       const res = await supabase.rpc('toggle_comment_like', { p_comment_id: commentId, p_user_id: viewerId });
       if (res.error) setRows(snapshot);
+      else onChanged?.();
     }
     setPendingLikeIds((prev) => {
       const next = new Set(prev);
@@ -126,7 +133,10 @@ export default function HomeCommentsSheet({
     const table = isService ? 'service_comments' : 'product_comments';
     const res = await supabase.from(table).delete().eq('id', commentId);
     if (res.error) setRows(snapshot);
-    else await refresh();
+    else {
+      await refresh();
+      onChanged?.();
+    }
     setPendingDeleteIds((prev) => {
       const next = new Set(prev);
       next.delete(commentId);
@@ -210,12 +220,16 @@ export default function HomeCommentsSheet({
             const row = entry.row;
             const isChild = entry.kind === 'child';
             const mine = viewerId && row.user_id === viewerId;
+            const canDelete = Boolean(mine || (viewerId && postOwnerId && String(viewerId) === postOwnerId));
             return (
               <div key={`${row.id}-${entry.kind}-${index}`} className={`flex items-start gap-2 relative ${isChild ? 'ml-9 -mt-1' : ''}`}>
                 {isChild ? <span className="absolute -left-5 top-[-10px] bottom-4 w-[2px] rounded-full bg-(--border)" /> : null}
-                <div className={`overflow-hidden border ${isChild ? 'h-7 w-7 rounded-[10px]' : 'h-[34px] w-[34px] rounded-xl'} ${row.user_plan === 'diamond' ? 'border-violet-500' : 'border-(--border)'}`}>
+                <div className={`overflow-hidden border ${isChild ? 'h-7 w-7 rounded-[10px]' : 'h-[34px] w-[34px] rounded-xl'} ${String(row.user_plan || '').toLowerCase() === 'diamond' ? 'border-violet-500' : 'border-(--border)'}`}>
                   <img
-                    src={row.user_logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(row.user_slug || 'U')}`}
+                    src={
+                      normalizeWebMediaUrl(row.user_logo) ||
+                      `https://ui-avatars.com/api/?name=${encodeURIComponent(row.user_slug || 'U')}`
+                    }
                     alt={row.user_slug || 'user'}
                     className="h-full w-full object-cover"
                   />
@@ -230,7 +244,7 @@ export default function HomeCommentsSheet({
                     <button type="button" className="text-xs font-bold text-(--muted) inline-flex items-center gap-1" onClick={() => setReplyTo({ id: row.parent_id || row.id, user_slug: row.user_slug })}>
                       <MessageCircleReply size={12} /> Reply
                     </button>
-                    {mine ? (
+                    {canDelete ? (
                       <button type="button" className="text-xs font-bold text-red-500 inline-flex items-center gap-1" onClick={() => deleteComment(row.id)}>
                         <Trash2 size={12} /> Delete
                       </button>

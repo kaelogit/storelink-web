@@ -92,7 +92,7 @@ export default function AppSellerPostServicePage() {
     if (!picked.length) return;
     setIsOptimizing(true);
     try {
-      const optimized = [];
+      const optimized: File[] = [];
       for (const file of picked) optimized.push(await optimizeImageForUpload(file));
       setFiles((prev) => [...prev, ...optimized].slice(0, 4));
       setPreviewUrls((prev) => [...prev, ...optimized.map((f) => URL.createObjectURL(f))].slice(0, 4));

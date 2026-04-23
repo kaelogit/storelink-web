@@ -31,7 +31,7 @@ export default function WebAuthGate({ children }: { children: React.ReactNode })
 
   if (state === 'checking') {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center text-sm text-[var(--muted)]">
+      <div className="min-h-[60vh] flex items-center justify-center text-sm text-(--muted)">
         Checking your session...
       </div>
     );
@@ -40,9 +40,9 @@ export default function WebAuthGate({ children }: { children: React.ReactNode })
   if (state === 'guest') {
     return (
       <div className="min-h-[70vh] flex items-center justify-center px-6">
-        <div className="w-full max-w-xl rounded-3xl border border-[var(--border)] bg-[var(--card)] p-8 text-center">
-          <h1 className="text-2xl font-black text-[var(--foreground)]">Sign in required</h1>
-          <p className="mt-3 text-sm text-[var(--muted)]">
+        <div className="w-full max-w-xl rounded-3xl border border-(--border) bg-(--card) p-8 text-center">
+          <h1 className="text-2xl font-black text-(--foreground)">Sign in required</h1>
+          <p className="mt-3 text-sm text-(--muted)">
             The web app layer is for authenticated users. You can still view shared public pages.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
@@ -54,14 +54,14 @@ export default function WebAuthGate({ children }: { children: React.ReactNode })
             </Link>
             <Link
               href={`/auth/signup?next=${encodeURIComponent(pathname || '/app')}`}
-              className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm font-bold text-[var(--foreground)] hover:bg-[var(--surface)]"
+              className="rounded-xl border border-(--border) px-4 py-2 text-sm font-bold text-(--foreground) hover:bg-(--surface)"
             >
               Create account
             </Link>
             <button
               type="button"
               onClick={() => router.push('/explore')}
-              className="rounded-xl border border-[var(--border)] px-4 py-2 text-sm font-bold text-[var(--muted)] hover:bg-[var(--surface)]"
+              className="rounded-xl border border-(--border) px-4 py-2 text-sm font-bold text-(--muted) hover:bg-(--surface)"
             >
               Continue public browse
             </button>

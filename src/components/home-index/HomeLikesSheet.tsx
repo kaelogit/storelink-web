@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { Heart, Sparkles, X } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
+import { normalizeWebMediaUrl } from '@/lib/media-url';
 
 export default function HomeLikesSheet({
   open,
@@ -194,9 +195,12 @@ export default function HomeLikesSheet({
               tabIndex={0}
               className="w-full text-left flex items-center gap-3 rounded-xl p-1.5 hover:bg-(--surface) cursor-pointer"
             >
-              <div className={`relative h-[34px] w-[34px] overflow-hidden rounded-xl border ${row.profile?.subscription_plan === 'diamond' ? 'border-violet-500' : 'border-(--border)'}`}>
+              <div className={`relative h-[34px] w-[34px] overflow-hidden rounded-xl border ${String(row.profile?.subscription_plan || '').toLowerCase() === 'diamond' ? 'border-violet-500' : 'border-(--border)'}`}>
                 <Image
-                  src={row.profile?.logo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(row.profile?.display_name || row.profile?.slug || 'User')}`}
+                  src={
+                    normalizeWebMediaUrl(row.profile?.logo_url) ||
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(row.profile?.display_name || row.profile?.slug || 'User')}`
+                  }
                   alt={row.profile?.display_name || row.profile?.slug || 'User'}
                   fill
                   className="object-cover"
@@ -206,7 +210,7 @@ export default function HomeLikesSheet({
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-black text-(--foreground) truncate inline-flex items-center gap-1">
                   {row.profile?.display_name || 'User'}
-                  {row.profile?.subscription_plan === 'diamond' ? (
+                  {String(row.profile?.subscription_plan || '').toLowerCase() === 'diamond' ? (
                     <Sparkles size={10} className="text-violet-500 fill-violet-500" />
                   ) : null}
                 </p>

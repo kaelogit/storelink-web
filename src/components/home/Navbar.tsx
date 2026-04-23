@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase';
+import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { 
   LayoutDashboard, Menu, X, ChevronDown, 
   Wand2, ImageMinus, History, Zap, 
@@ -65,7 +66,7 @@ export default function Navbar() {
         id: user.id,
         slug: profile?.slug ?? null,
         display_name: profile?.display_name ?? null,
-        logo_url: profile?.logo_url ?? null,
+        logo_url: normalizeWebMediaUrl(profile?.logo_url) || null,
         email: user.email ?? null,
       });
       setAuthReady(true);
@@ -110,8 +111,8 @@ export default function Navbar() {
       role="banner"
       className={`${isHome ? 'fixed' : 'relative'} top-0 left-0 right-0 z-50 transition-all duration-700 ease-out ${
         !isTransparent
-          ? 'bg-[var(--background)]/90 backdrop-blur-xl border-b border-[var(--border)] shadow-sm py-3'
-          : 'bg-[var(--pitch-black)]/30 backdrop-blur-md border-b border-white/5 py-5'
+          ? 'bg-(--background)/90 backdrop-blur-xl border-b border-(--border) shadow-sm py-3'
+          : 'bg-(--pitch-black)/30 backdrop-blur-md border-b border-white/5 py-5'
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 h-12 flex items-center justify-between gap-4">
@@ -125,7 +126,7 @@ export default function Navbar() {
               <LayoutDashboard size={22}/>
            </div>
            <span className={`font-display font-bold text-xl tracking-tight transition-colors duration-300 ${
-             isTransparent ? 'text-white' : 'text-[var(--foreground)]'
+             isTransparent ? 'text-white' : 'text-(--foreground)'
            }`}>StoreLink.</span>
         </Link>
 
@@ -145,7 +146,7 @@ export default function Navbar() {
               className={`flex items-center gap-1.5 text-sm font-bold transition-colors duration-300 ${
                 isTransparent
                   ? 'text-white hover:text-emerald-400 drop-shadow-md'
-                  : (activeMenu === 'selling' ? 'text-emerald-600' : 'text-[var(--muted)]')
+                  : (activeMenu === 'selling' ? 'text-emerald-600' : 'text-(--muted)')
               }`}
             >
               <span className="hidden lg:inline">Selling</span> Tools <ChevronDown size={14} className={`transition-transform duration-300 ${activeMenu === 'selling' ? 'rotate-180' : ''}`} />
@@ -159,7 +160,7 @@ export default function Navbar() {
                             exit={{ opacity: 0, y: 8, scale: 0.98 }}
                             transition={{ duration: 0.2 }}
                             id="selling-menu"
-                            className="absolute top-full right-0 w-[300px] bg-[var(--card)] rounded-2xl shadow-xl border border-[var(--border)] p-2 mt-4"
+                            className="absolute top-full right-0 w-[300px] bg-(--card) rounded-2xl shadow-xl border border-(--border) p-2 mt-4"
                             role="menu"
                         >
                             <div className="grid gap-1">
@@ -187,7 +188,7 @@ export default function Navbar() {
               className={`flex items-center gap-1.5 text-sm font-bold transition-colors duration-300 ${
                 isTransparent
                   ? 'text-white hover:text-emerald-400 drop-shadow-md'
-                  : (activeMenu === 'shopping' ? 'text-emerald-600' : 'text-[var(--muted)]')
+                  : (activeMenu === 'shopping' ? 'text-emerald-600' : 'text-(--muted)')
               }`}
             >
               Shopping <ChevronDown size={14} className={`transition-transform duration-300 ${activeMenu === 'shopping' ? 'rotate-180' : ''}`} />
@@ -202,7 +203,7 @@ export default function Navbar() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 8, scale: 0.98 }}
                   transition={{ duration: 0.2 }}
-                  className="absolute top-full right-0 w-[300px] bg-[var(--card)] rounded-2xl shadow-xl border border-[var(--border)] p-2 mt-4"
+                  className="absolute top-full right-0 w-[300px] bg-(--card) rounded-2xl shadow-xl border border-(--border) p-2 mt-4"
                 >
                             <div className="grid gap-1">
                                 <DropdownItem icon={<PlayCircle size={18} className="text-red-500"/>} title="Video Shopping" desc="Watch Reels and buy." href="/shop/video" />
@@ -214,8 +215,8 @@ export default function Navbar() {
                 </AnimatePresence>
             </div>
 
-            <Link href="/pricing" className={`px-3 text-sm font-bold transition-colors duration-300 hidden lg:block ${isTransparent ? 'text-white hover:text-emerald-400 drop-shadow-md' : 'text-[var(--muted)] hover:text-emerald-600'}`}>Pricing</Link>
-            <Link href="/safety" className={`px-3 text-sm font-bold transition-colors duration-300 hidden lg:block ${isTransparent ? 'text-white hover:text-emerald-400 drop-shadow-md' : 'text-[var(--muted)] hover:text-emerald-600'}`}>Safety</Link>
+            <Link href="/pricing" className={`px-3 text-sm font-bold transition-colors duration-300 hidden lg:block ${isTransparent ? 'text-white hover:text-emerald-400 drop-shadow-md' : 'text-(--muted) hover:text-emerald-600'}`}>Pricing</Link>
+            <Link href="/safety" className={`px-3 text-sm font-bold transition-colors duration-300 hidden lg:block ${isTransparent ? 'text-white hover:text-emerald-400 drop-shadow-md' : 'text-(--muted) hover:text-emerald-600'}`}>Safety</Link>
         </nav>
 
         {/* 3. THEME TOGGLE + DOWNLOAD */}
@@ -240,7 +241,7 @@ export default function Navbar() {
                 className={`px-4 h-10 rounded-xl font-bold text-xs inline-flex items-center transition-all border disabled:opacity-60 ${
                   isTransparent
                     ? 'bg-white/10 text-white border-white/20 hover:bg-white/20'
-                    : 'bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--surface)]'
+                    : 'bg-(--card) text-(--foreground) border-(--border) hover:bg-(--surface)'
                 }`}
               >
                 {logoutLoading ? 'Signing out…' : 'Log out'}
@@ -253,7 +254,7 @@ export default function Navbar() {
                 className={`px-4 h-10 rounded-xl font-bold text-xs inline-flex items-center transition-all border ${
                   isTransparent
                     ? 'bg-white/10 text-white border-white/20 hover:bg-white/20'
-                    : 'bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--surface)]'
+                    : 'bg-(--card) text-(--foreground) border-(--border) hover:bg-(--surface)'
                 }`}
               >
                 Login
@@ -292,7 +293,7 @@ export default function Navbar() {
              <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
               className={`p-2 rounded-lg transition-colors ${
-                  isTransparent ? 'text-white bg-white/10 backdrop-blur-md' : 'text-[var(--foreground)] bg-[var(--surface)] active:bg-[var(--border)]'
+                  isTransparent ? 'text-white bg-white/10 backdrop-blur-md' : 'text-(--foreground) bg-(--surface) active:bg-(--border)'
               }`}
              >
                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -307,14 +308,14 @@ export default function Navbar() {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-[var(--background)] border-b border-[var(--border)] overflow-hidden absolute top-full left-0 right-0 shadow-xl"
+            className="md:hidden bg-(--background) border-b border-(--border) overflow-hidden absolute top-full left-0 right-0 shadow-xl"
             role="dialog"
             aria-label="Mobile menu"
           >
               <div className="px-6 py-6 space-y-8 max-h-[85vh] overflow-y-auto">
                 {/* Selling Section */}
                 <div className="space-y-3">
-                  <p className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest pl-1">Selling Tools</p>
+                  <p className="text-xs font-bold text-(--muted) uppercase tracking-widest pl-1">Selling Tools</p>
                   <div className="grid grid-cols-1 gap-1">
                       <MobileLink href="/tools/ai" icon={<Wand2 size={18} className="text-purple-600"/>} text="AI Writer" onClick={() => setIsMobileMenuOpen(false)} />
                       <MobileLink href="/tools/studio" icon={<ImageMinus size={18} className="text-blue-600"/>} text="Magic Studio" onClick={() => setIsMobileMenuOpen(false)} />
@@ -325,7 +326,7 @@ export default function Navbar() {
 
                 {/* Shopping Section */}
                 <div className="space-y-3">
-                  <p className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest pl-1">Shopping</p>
+                  <p className="text-xs font-bold text-(--muted) uppercase tracking-widest pl-1">Shopping</p>
                   <div className="grid grid-cols-1 gap-1">
                       <MobileLink href="/shop/video" icon={<PlayCircle size={18} className="text-red-500"/>} text="Video Shopping" onClick={() => setIsMobileMenuOpen(false)} />
                       <MobileLink href="/shop/flash" icon={<Zap size={18} className="text-amber-500"/>} text="Flash Drops" onClick={() => setIsMobileMenuOpen(false)} />
@@ -334,7 +335,7 @@ export default function Navbar() {
                 </div>
 
                 {/* General Links */}
-                <div className="space-y-3 pt-2 border-t border-[var(--border)]">
+                <div className="space-y-3 pt-2 border-t border-(--border)">
                     {authReady && viewer ? (
                       <>
                         <MobileLink href="/app" icon={<LayoutDashboard size={18} className="text-emerald-600"/>} text="Web app" onClick={() => setIsMobileMenuOpen(false)} />
@@ -347,18 +348,18 @@ export default function Navbar() {
                           disabled={logoutLoading}
                           className="flex w-full items-center gap-3 rounded-xl p-3 text-left text-slate-600 transition-colors hover:bg-slate-50 hover:text-emerald-700 disabled:opacity-60"
                         >
-                          <LogOut size={18} className="text-[var(--muted)]" />
+                          <LogOut size={18} className="text-(--muted)" />
                           <span className="text-sm font-bold">{logoutLoading ? 'Signing out…' : 'Log out'}</span>
                         </button>
                       </>
                     ) : authReady ? (
                       <>
-                        <MobileLink href="/auth/login" icon={<Users size={18} className="text-[var(--muted)]"/>} text="Login" onClick={() => setIsMobileMenuOpen(false)} />
-                        <MobileLink href="/auth/signup" icon={<User size={18} className="text-[var(--muted)]"/>} text="Create account" onClick={() => setIsMobileMenuOpen(false)} />
+                        <MobileLink href="/auth/login" icon={<Users size={18} className="text-(--muted)"/>} text="Login" onClick={() => setIsMobileMenuOpen(false)} />
+                        <MobileLink href="/auth/signup" icon={<User size={18} className="text-(--muted)"/>} text="Create account" onClick={() => setIsMobileMenuOpen(false)} />
                       </>
                     ) : null}
-                    <MobileLink href="/pricing" icon={<CreditCard size={18} className="text-[var(--muted)]"/>} text="Pricing Plans" onClick={() => setIsMobileMenuOpen(false)} />
-                    <MobileLink href="/safety" icon={<ShieldCheck size={18} className="text-[var(--muted)]"/>} text="Safety & Trust" onClick={() => setIsMobileMenuOpen(false)} />
+                    <MobileLink href="/pricing" icon={<CreditCard size={18} className="text-(--muted)"/>} text="Pricing Plans" onClick={() => setIsMobileMenuOpen(false)} />
+                    <MobileLink href="/safety" icon={<ShieldCheck size={18} className="text-(--muted)"/>} text="Safety & Trust" onClick={() => setIsMobileMenuOpen(false)} />
                 </div>
 
                 {/* Mobile Download Action */}

@@ -65,10 +65,10 @@ export default function DownloadContent() {
   }, []);
 
   return (
-    <main className="min-h-screen font-sans flex flex-col relative bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
+    <main className="min-h-screen font-sans flex flex-col relative bg-(--background) text-(--foreground) selection:bg-emerald-100">
       {/* Hero: high-end, app-aligned */}
       <section className="relative min-h-[90vh] flex items-center pt-28 pb-20 overflow-hidden">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-[size:40px_40px] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_0%,#000_30%,transparent_70%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-size-[40px_40px] mask-[radial-gradient(ellipse_70%_60%_at_50%_0%,#000_30%,transparent_70%)]" />
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-[radial-gradient(circle,rgba(52,211,153,0.12)_0%,transparent_55%)] pointer-events-none" />
         <div className="absolute bottom-0 right-0 w-[600px] h-[400px] bg-[radial-gradient(circle,rgba(168,85,247,0.08)_0%,transparent_55%)] pointer-events-none" />
 
@@ -83,16 +83,16 @@ export default function DownloadContent() {
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                 The OS for social commerce
               </div>
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-black text-[var(--foreground)] mb-6 leading-[1.05] tracking-tight">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-black text-(--foreground) mb-6 leading-[1.05] tracking-tight">
                 Commerce{' '}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 via-emerald-500 to-emerald-600">
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-600 via-emerald-500 to-emerald-600">
                   without fear.
                 </span>
               </h1>
-              <p className="text-xl text-[var(--muted)] leading-relaxed mb-4 max-w-lg mx-auto lg:mx-0">
+              <p className="text-xl text-(--muted) leading-relaxed mb-4 max-w-lg mx-auto lg:mx-0">
                 The first social marketplace where reputation is currency. Buy and sell through verified stores, shoppable reels, and protected payments—all in one app.
               </p>
-              <p className="text-sm text-[var(--muted)] leading-relaxed mb-8 max-w-lg mx-auto lg:mx-0 font-semibold">
+              <p className="text-sm text-(--muted) leading-relaxed mb-8 max-w-lg mx-auto lg:mx-0 font-semibold">
                 See, buy, and book the people you follow – products and services in one place.
               </p>
 
@@ -102,7 +102,7 @@ export default function DownloadContent() {
                 </p>
               )}
 
-              <Card className="p-2 rounded-[2rem] w-full max-w-md inline-block border-2 border-[var(--border)] shadow-xl shadow-[var(--charcoal)]/5">
+              <Card className="p-2 rounded-4xl w-full max-w-md inline-block border-2 border-(--border) shadow-xl shadow-(--charcoal)/5">
                 {os === 'desktop' && (
                   <div className="flex gap-6 p-5 items-center">
                     <div className="bg-slate-900 p-3 rounded-2xl shrink-0">
@@ -113,8 +113,8 @@ export default function DownloadContent() {
                       />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-black text-[var(--foreground)] text-lg mb-1 tracking-tight">Get the app</h3>
-                      <p className="text-sm text-[var(--muted)] mb-4 leading-snug">
+                      <h3 className="font-black text-(--foreground) text-lg mb-1 tracking-tight">Get the app</h3>
+                      <p className="text-sm text-(--muted) mb-4 leading-snug">
                         Scan with your phone or choose your store below. Free on iOS & Android.
                       </p>
                       {HAS_APP_LINKS ? (
@@ -131,7 +131,7 @@ export default function DownloadContent() {
                           )}
                         </div>
                       ) : (
-                        <p className="text-sm text-[var(--muted)]">Available on App Store and Google Play.</p>
+                        <p className="text-sm text-(--muted)">Available on App Store and Google Play.</p>
                       )}
                     </div>
                   </div>
@@ -152,20 +152,20 @@ export default function DownloadContent() {
                           </Button>
                         )}
                         {((os === 'ios' && !APP_STORE_URL) || (os === 'android' && !PLAY_STORE_URL)) && (
-                          <p className="text-center text-sm text-[var(--muted)]">Scan the QR code at storelink.ng/download on a computer, or open this page on the other device.</p>
+                          <p className="text-center text-sm text-(--muted)">Scan the QR code at storelink.ng/download on a computer, or open this page on the other device.</p>
                         )}
                       </div>
                     ) : (
                       <div className="text-center py-2">
-                        <p className="font-bold text-[var(--foreground)] mb-1">Get the app</p>
-                        <p className="text-sm text-[var(--muted)]">Open storelink.ng/download on a computer and scan the QR code, or download from the App Store or Google Play.</p>
+                        <p className="font-bold text-(--foreground) mb-1">Get the app</p>
+                        <p className="text-sm text-(--muted)">Open storelink.ng/download on a computer and scan the QR code, or download from the App Store or Google Play.</p>
                       </div>
                     )}
                   </div>
                 )}
               </Card>
 
-              <p className="mt-8 text-sm text-[var(--foreground)] font-semibold">
+              <p className="mt-8 text-sm text-(--foreground) font-semibold">
                 Join <span className="font-black text-emerald-600">50,000+</span> sellers and shoppers on StoreLink.
               </p>
             </motion.div>
@@ -177,9 +177,9 @@ export default function DownloadContent() {
               initial={{ opacity: 0, scale: 0.92, rotate: -8 }}
               animate={{ opacity: 1, scale: 1, rotate: -6 }}
               transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-              className="relative w-[320px] md:w-[360px] aspect-[9/19] hover:rotate-0 transition-transform duration-500"
+              className="relative w-[320px] md:w-[360px] aspect-9/19 hover:rotate-0 transition-transform duration-500"
             >
-              <div className="absolute inset-0 bg-[#0a0a0a] rounded-[2.75rem] border-[10px] border-[#1a1a1a] shadow-2xl z-20 overflow-hidden ring-1 ring-white/5">
+              <div className="absolute inset-0 bg-[#0a0a0a] rounded-[2.75rem] border-10 border-[#1a1a1a] shadow-2xl z-20 overflow-hidden ring-1 ring-white/5">
                 <div className="absolute top-6 left-1/2 -translate-x-1/2 w-24 h-7 bg-black rounded-full z-30 border border-white/5" />
                 <div className="relative w-full h-full bg-slate-50 overflow-hidden flex flex-col">
                   <div className="pt-16 px-5 pb-2 flex justify-between items-center z-10 bg-white">
@@ -258,11 +258,11 @@ export default function DownloadContent() {
                     </div>
                     <div className="px-3 pb-24 flex gap-3">
                       <div className="flex-1 flex flex-col gap-3">
-                        <div className="aspect-[3/4] rounded-xl overflow-hidden relative bg-slate-200">
+                        <div className="aspect-3/4 rounded-xl overflow-hidden relative bg-slate-200">
                           <Image src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400" alt="" width={400} height={533} className="object-cover w-full h-full" />
                           <div className="absolute bottom-2 right-2 bg-black/70 px-2 py-1 rounded-lg text-[10px] font-bold text-white">₦45k</div>
                         </div>
-                        <div className="aspect-[3/5] rounded-xl overflow-hidden relative bg-slate-200">
+                        <div className="aspect-3/5 rounded-xl overflow-hidden relative bg-slate-200">
                           <Image src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400" alt="" width={400} height={667} className="object-cover w-full h-full" />
                         </div>
                       </div>
@@ -270,7 +270,7 @@ export default function DownloadContent() {
                         <div className="aspect-square rounded-xl overflow-hidden relative bg-slate-200">
                           <Image src="https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?w=400" alt="" width={400} height={400} className="object-cover w-full h-full" />
                         </div>
-                        <div className="aspect-[3/4] rounded-xl overflow-hidden relative bg-slate-200">
+                        <div className="aspect-3/4 rounded-xl overflow-hidden relative bg-slate-200">
                           <Image src="https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=400" alt="" width={400} height={533} className="object-cover w-full h-full" />
                           <div className="absolute bottom-2 right-2 bg-black/70 px-2 py-1 rounded-lg text-[10px] font-bold text-white">₦80k</div>
                         </div>
@@ -279,21 +279,21 @@ export default function DownloadContent() {
                   </div>
                 </div>
               </div>
-              <div className="absolute top-8 left-8 w-full h-full bg-gradient-to-br from-emerald-500/15 to-purple-500/15 rounded-[2.75rem] blur-3xl -z-10 scale-95" />
+              <div className="absolute top-8 left-8 w-full h-full bg-linear-to-br from-emerald-500/15 to-purple-500/15 rounded-[2.75rem] blur-3xl -z-10 scale-95" />
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* Why download — many reasons */}
-      <section className="py-24 md:py-32 border-t border-[var(--border)] relative overflow-hidden bg-[var(--background)]">
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808006_1px,transparent_1px),linear-gradient(to_bottom,#80808006_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+      <section className="py-24 md:py-32 border-t border-(--border) relative overflow-hidden bg-(--background)">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808006_1px,transparent_1px),linear-gradient(to_bottom,#80808006_1px,transparent_1px)] bg-size-[32px_32px] pointer-events-none" />
         <div className="max-w-6xl mx-auto px-6 relative z-10">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-black text-[var(--foreground)] tracking-tight mb-4">
-              One app. <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-500">Every reason to join.</span>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl font-display font-black text-(--foreground) tracking-tight mb-4">
+              One app. <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-600 to-emerald-500">Every reason to join.</span>
             </h2>
-            <p className="text-lg text-[var(--muted)] max-w-2xl mx-auto font-medium">
+            <p className="text-lg text-(--muted) max-w-2xl mx-auto font-medium">
               Built for Nigeria. Escrow, reels, verification, chat, and payouts—all in one place.
             </p>
           </div>
@@ -305,13 +305,13 @@ export default function DownloadContent() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-40px' }}
                 transition={{ duration: 0.4, delay: i * 0.05 }}
-                className="p-6 md:p-8 rounded-3xl bg-[var(--surface)] border border-[var(--border)] hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-500/5 transition-all duration-300"
+                className="p-6 md:p-8 rounded-3xl bg-(--surface) border border-(--border) hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-500/5 transition-all duration-300"
               >
                 <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center mb-4 text-emerald-600">
                   <r.icon size={24} strokeWidth={2} />
                 </div>
-                <h3 className="font-bold text-[var(--foreground)] mb-2 text-base">{r.title}</h3>
-                <p className="text-sm text-[var(--muted)] leading-relaxed">{r.desc}</p>
+                <h3 className="font-bold text-(--foreground) mb-2 text-base">{r.title}</h3>
+                <p className="text-sm text-(--muted) leading-relaxed">{r.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -319,41 +319,41 @@ export default function DownloadContent() {
       </section>
 
       {/* One app, everything — 3 pillars */}
-      <section className="py-24 md:py-32 border-t border-[var(--border)] relative overflow-hidden bg-slate-50/50">
+      <section className="py-24 md:py-32 border-t border-(--border) relative overflow-hidden bg-slate-50/50">
         <div className="section-orb section-orb-emerald section-orb-bl" aria-hidden />
         <div className="section-orb section-orb-violet section-orb-tr" aria-hidden />
         <div className="max-w-5xl mx-auto px-6 relative z-10">
-          <h2 className="text-2xl md:text-3xl font-display font-bold text-[var(--foreground)] text-center mb-14">
-            One app. <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-500">Everything you need.</span>
+          <h2 className="text-2xl md:text-3xl font-display font-bold text-(--foreground) text-center mb-14">
+            One app. <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-600 to-emerald-500">Everything you need.</span>
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-14">
             <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 rounded-3xl bg-emerald-500/10 border-2 border-emerald-500/20 flex items-center justify-center mb-5 text-emerald-600">
                 <ShieldCheck size={32} strokeWidth={2} />
               </div>
-              <h3 className="font-black text-[var(--foreground)] text-lg mb-2">Escrow protection</h3>
-              <p className="text-sm text-[var(--muted)] leading-relaxed max-w-xs">Pay safely. Funds sit in the vault until you confirm delivery. No scams.</p>
+              <h3 className="font-black text-(--foreground) text-lg mb-2">Escrow protection</h3>
+              <p className="text-sm text-(--muted) leading-relaxed max-w-xs">Pay safely. Funds sit in the vault until you confirm delivery. No scams.</p>
             </div>
             <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 rounded-3xl bg-purple-500/10 border-2 border-purple-500/20 flex items-center justify-center mb-5 text-purple-600">
                 <Sparkles size={32} strokeWidth={2} />
               </div>
-              <h3 className="font-black text-[var(--foreground)] text-lg mb-2">AI that sells</h3>
-              <p className="text-sm text-[var(--muted)] leading-relaxed max-w-xs">Gemini writes captions. Magic Studio removes backgrounds. Pro listings in one tap.</p>
+              <h3 className="font-black text-(--foreground) text-lg mb-2">AI that sells</h3>
+              <p className="text-sm text-(--muted) leading-relaxed max-w-xs">Gemini writes captions. Magic Studio removes backgrounds. Pro listings in one tap.</p>
             </div>
             <div className="flex flex-col items-center text-center">
               <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border-2 border-amber-500/20 flex items-center justify-center mb-5 text-amber-600">
                 <Zap size={32} strokeWidth={2} />
               </div>
-              <h3 className="font-black text-[var(--foreground)] text-lg mb-2">Instant payouts</h3>
-              <p className="text-sm text-[var(--muted)] leading-relaxed max-w-xs">Get paid the moment the buyer accepts. Naira to your Nigerian bank account.</p>
+              <h3 className="font-black text-(--foreground) text-lg mb-2">Instant payouts</h3>
+              <p className="text-sm text-(--muted) leading-relaxed max-w-xs">Get paid the moment the buyer accepts. Naira to your Nigerian bank account.</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Final CTA strip */}
-      <section className="py-16 md:py-20 border-t border-[var(--border)] bg-[var(--foreground)] text-white relative overflow-hidden">
+      <section className="py-16 md:py-20 border-t border-(--border) bg-(--foreground) text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5" />
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
           <h2 className="text-2xl md:text-3xl font-display font-black mb-4 tracking-tight">
@@ -365,12 +365,12 @@ export default function DownloadContent() {
           {HAS_APP_LINKS && (
             <div className="flex flex-wrap items-center justify-center gap-4">
               {APP_STORE_URL && (
-                <Button href={APP_STORE_URL} className="!bg-white !text-[var(--charcoal)] hover:!bg-white/90 font-black gap-2" target="_blank" rel="noopener noreferrer">
+                <Button href={APP_STORE_URL} className="bg-white! text-(--charcoal)! hover:bg-white/90! font-black gap-2" target="_blank" rel="noopener noreferrer">
                   <Apple size={22} /> App Store
                 </Button>
               )}
               {PLAY_STORE_URL && (
-                <Button href={PLAY_STORE_URL} className="!bg-white !text-[var(--charcoal)] hover:!bg-white/90 font-black gap-2" target="_blank" rel="noopener noreferrer">
+                <Button href={PLAY_STORE_URL} className="bg-white! text-(--charcoal)! hover:bg-white/90! font-black gap-2" target="_blank" rel="noopener noreferrer">
                   <PlayStoreLogo /> Google Play
                 </Button>
               )}

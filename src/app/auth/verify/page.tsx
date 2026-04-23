@@ -40,11 +40,11 @@ export default function VerifyPage() {
   return (
     <Section variant="light" className="min-h-[calc(100vh-80px)] flex items-center" container={false}>
       <div className="mx-auto w-full max-w-md px-4 sm:px-6 py-8 sm:py-10">
-        <Card className="rounded-[var(--radius-3xl)] p-6 sm:p-8">
+        <Card className="rounded-3xl p-6 sm:p-8">
           <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Verify account</p>
-          <h1 className="mt-2 text-2xl sm:text-3xl font-black text-[var(--foreground)] tracking-tight">Check your email</h1>
-          <p className="mt-2 text-sm text-[var(--muted)]">
-            We sent a verification link to <span className="font-semibold text-[var(--foreground)]">{email || 'your email'}</span>.
+          <h1 className="mt-2 text-2xl sm:text-3xl font-black text-(--foreground) tracking-tight">Check your email</h1>
+          <p className="mt-2 text-sm text-(--muted)">
+            We sent a verification link to <span className="font-semibold text-(--foreground)">{email || 'your email'}</span>.
             Open it, then login to continue.
           </p>
 

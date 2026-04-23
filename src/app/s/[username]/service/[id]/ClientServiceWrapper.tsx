@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import AppTrapModal from '@/components/ui/DownloadTrap';
 import Button from '@/components/ui/Button';
+import { normalizeWebMediaUrl } from '@/lib/media-url';
 
 type TrapTrigger = 'buy' | 'view' | 'chat';
 
@@ -36,10 +37,18 @@ export default function ClientServiceWrapper({ service, seller }: any) {
   const [trapOpen, setTrapOpen] = useState(false);
   const [trapTrigger, setTrapTrigger] = useState<TrapTrigger>('buy');
 
-  const media = (service.media as string[] | null) || [];
-  const images = Array.isArray(media) ? media : [];
+  const media = (service.media as unknown[] | null) || [];
+  const images = Array.isArray(media)
+    ? media
+        .map((entry: unknown) =>
+          normalizeWebMediaUrl(
+            typeof entry === 'string' ? entry : String((entry as { url?: string })?.url || ''),
+          ),
+        )
+        .filter(Boolean)
+    : [];
   const sellerAvatar =
-    seller.logo_url ||
+    normalizeWebMediaUrl(seller.logo_url) ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(
       seller.display_name || 'Store',
     )}&background=10b981&color=fff`;
@@ -198,7 +207,7 @@ export default function ClientServiceWrapper({ service, seller }: any) {
             <div className="flex-1">
               <div className="flex items-center gap-1.5">
                 <p className="text-sm font-bold text-(--foreground)">{seller.display_name}</p>
-                {seller.subscription_plan === 'diamond' && (
+                {String(seller.subscription_plan || '').toLowerCase() === 'diamond' && (
                   <Gem size={12} className="text-purple-500" fill="currentColor" />
                 )}
               </div>

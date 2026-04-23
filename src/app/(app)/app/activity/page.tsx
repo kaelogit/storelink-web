@@ -31,6 +31,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
+import { normalizeWebMediaUrl } from '@/lib/media-url';
 import {
   aggregateFeed,
   coinsToCurrency,
@@ -55,7 +56,7 @@ function formatRelative(iso: string): string {
 function rowVisual(item: GroupedActivity, profileId: string | undefined, currency: string) {
   const sender = item.senders[0];
   const isMyOrder = item.type === 'ORDER' && item.user_id === profileId;
-  const isDiamond = sender?.subscription_plan === 'diamond';
+  const isDiamond = String(sender?.subscription_plan || '').toLowerCase() === 'diamond';
 
   let Icon: LucideIcon = Zap;
   let colorClass = 'text-(--foreground)';
@@ -681,7 +682,8 @@ function ActivityRow({
   } = v;
   const eventAgeMs = Date.now() - new Date(item.created_at || Date.now()).getTime();
   const isFresh = eventAgeMs <= 15 * 60 * 1000;
-  const thumb = item.products?.image_urls?.[0];
+  const thumbSrc = normalizeWebMediaUrl(item.products?.image_urls?.[0]);
+  const senderAvatarSrc = normalizeWebMediaUrl(sender?.logo_url);
 
   return (
     <button
@@ -703,8 +705,8 @@ function ActivityRow({
                 isDiamond ? 'border-violet-500 ring-2 ring-violet-500/25' : 'border-(--border)'
               }`}
             >
-              {sender?.logo_url ? (
-                <Image src={sender.logo_url} alt="" width={44} height={44} className="object-cover w-full h-full" unoptimized />
+              {senderAvatarSrc ? (
+                <Image src={senderAvatarSrc} alt="" width={44} height={44} className="object-cover w-full h-full" unoptimized />
               ) : (
                 <div className="w-full h-full flex items-center justify-center text-xs font-black text-(--muted)">?</div>
               )}
@@ -751,9 +753,9 @@ function ActivityRow({
           </span>
         ) : item.type === 'FOLLOW' && sender?.slug ? (
           <span className="text-xs font-bold text-(--foreground) px-3 py-1 rounded-lg border border-(--border)">View</span>
-        ) : thumb ? (
+        ) : thumbSrc ? (
           <div className="relative w-11 h-11 rounded-md overflow-hidden border border-(--border) bg-(--surface)">
-            <Image src={thumb} alt="" width={44} height={44} className="object-cover w-full h-full" unoptimized />
+            <Image src={thumbSrc} alt="" width={44} height={44} className="object-cover w-full h-full" unoptimized />
           </div>
         ) : null}
       </div>

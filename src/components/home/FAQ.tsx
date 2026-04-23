@@ -65,10 +65,10 @@ export default function FAQ() {
           </div>
           <h2
             id="faq-heading"
-            className="text-4xl md:text-6xl font-display font-bold text-[var(--foreground)] mb-6 tracking-tight"
+            className="text-4xl md:text-6xl font-display font-bold text-(--foreground) mb-6 tracking-tight"
           >
             Got Questions? <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500 relative inline-block">
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-600 to-teal-500 relative inline-block">
               We've Got Answers.
                <svg className="absolute w-full h-3 -bottom-1 left-0 text-emerald-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
                  <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" opacity="0.4" />
@@ -101,7 +101,7 @@ export default function FAQ() {
                     <span className={`text-lg md:text-xl font-bold transition-colors duration-200 pr-8 ${isOpen ? 'text-white' : 'text-slate-900'}`}>
                       {faq.question}
                     </span>
-                    <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border ${
+                    <div className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border ${
                       isOpen ? 'bg-emerald-500 border-emerald-500 text-white rotate-180' : 'bg-slate-50 border-slate-100 text-slate-400 group-hover:bg-emerald-50 group-hover:border-emerald-100 group-hover:text-emerald-600'
                     }`}>
                       {isOpen ? <Minus size={20} strokeWidth={3} /> : <Plus size={20} strokeWidth={3} />}

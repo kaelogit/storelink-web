@@ -6,45 +6,54 @@ import Link from 'next/link';
 import { Play, Heart, MessageCircle, Share2, Smartphone } from 'lucide-react';
 import AppTrapModal from '../../../components/ui/DownloadTrap';
 import Button from '../../../components/ui/Button';
+import { normalizeWebMediaUrl } from '@/lib/media-url';
 
 export default function ClientReelWrapper({ reel }: any) {
   const [trapOpen, setTrapOpen] = useState(false);
+  const thumbSrc = normalizeWebMediaUrl(reel.thumbnail_url);
+  const sellerAvatarSrc = normalizeWebMediaUrl(reel.seller?.logo_url);
 
   return (
-    <div className="min-h-screen bg-[var(--pitch-black)] flex items-center justify-center relative overflow-hidden">
+    <div className="min-h-screen bg-(--pitch-black) flex items-center justify-center relative overflow-hidden">
+      {thumbSrc ? (
       <div className="absolute inset-0 opacity-30 blur-3xl scale-110">
          <Image 
-           src={reel.thumbnail_url} 
+           src={thumbSrc} 
            alt="Blur BG" 
            fill 
            className="object-cover" 
            unoptimized={true}
          />
       </div>
+      ) : null}
 
-      <div className="relative w-full max-w-[400px] h-[85vh] bg-[var(--charcoal)] md:rounded-[var(--radius-3xl)] overflow-hidden shadow-2xl border border-[var(--border)]">
+      <div className="relative w-full max-w-[400px] h-[85vh] bg-(--charcoal) md:rounded-3xl overflow-hidden shadow-2xl border border-(--border)">
          
          {/* Static Thumbnail (Looks like paused video) */}
+         {thumbSrc ? (
          <Image 
-           src={reel.thumbnail_url} 
+           src={thumbSrc} 
            alt="Reel Preview" 
            fill 
            className="object-cover opacity-80" 
            unoptimized={true}
          />
+         ) : (
+          <div className="absolute inset-0 bg-(--charcoal)" aria-hidden />
+         )}
 
          {/* 3. OVERLAYS */}
-         <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/80" />
+         <div className="absolute inset-0 bg-linear-to-b from-black/20 via-transparent to-black/80" />
 
          {/* Header */}
          <div className="absolute top-6 left-0 right-0 px-4 flex justify-between items-center z-20">
             <Link href="/" className="text-white font-black tracking-tighter text-lg">StoreLink.</Link>
             <div className="flex items-center gap-2">
-               <a href={`storelink://r/${reel.id}`} className="bg-[var(--emerald)]/90 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-[var(--emerald)] text-white text-[10px] font-bold uppercase">
+               <a href={`storelink://r/${reel.id}`} className="bg-(--emerald)/90 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5 hover:bg-(--emerald) text-white text-[10px] font-bold uppercase">
                   <Smartphone size={12} />
                   Open in app
                </a>
-               <Button href={`/download?intent=${encodeURIComponent(`/r/${reel.short_code ?? reel.id}`)}`} size="sm" variant="ghost" className="!bg-black/40 !text-white hover:!bg-black/60 !py-1.5 text-[10px] font-bold uppercase">
+               <Button href={`/download?intent=${encodeURIComponent(`/r/${reel.short_code ?? reel.id}`)}`} size="sm" variant="ghost" className="bg-black/40! text-white! hover:bg-black/60! py-1.5! text-[10px] font-bold uppercase">
                   Get app
                </Button>
             </div>
@@ -54,7 +63,7 @@ export default function ClientReelWrapper({ reel }: any) {
          <button
            type="button"
            onClick={() => setTrapOpen(true)}
-           className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/40 hover:scale-110 transition-transform duration-[var(--duration-150)] z-30 group"
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/40 hover:scale-110 transition-transform duration-(--duration-150) z-30 group"
          >
             <Play size={32} className="text-white fill-white ml-1 group-hover:scale-110 transition-transform" />
          </button>
@@ -79,7 +88,11 @@ export default function ClientReelWrapper({ reel }: any) {
          <div className="absolute bottom-0 left-0 right-0 p-6 pb-8 z-20">
             <div className="flex items-center gap-3 mb-3">
                <div className="w-10 h-10 rounded-full border-2 border-white overflow-hidden relative">
-                  <Image src={reel.seller?.logo_url} alt="Seller" fill className="object-cover" unoptimized={true} />
+                  {sellerAvatarSrc ? (
+                    <Image src={sellerAvatarSrc} alt="Seller" fill className="object-cover" unoptimized={true} />
+                  ) : (
+                    <div className="h-full w-full bg-white/20" aria-hidden />
+                  )}
                </div>
                <div className="flex-1">
                   <h3 className="text-white font-bold text-sm shadow-black drop-shadow-md">
@@ -87,7 +100,7 @@ export default function ClientReelWrapper({ reel }: any) {
                   </h3>
                   <p className="text-white/70 text-xs">@{reel.seller?.slug}</p>
                </div>
-               <Button onClick={() => setTrapOpen(true)} variant="primary" size="sm" className="!py-1.5 text-xs font-bold">
+               <Button onClick={() => setTrapOpen(true)} variant="primary" size="sm" className="py-1.5! text-xs font-bold">
                  View Shop
                </Button>
             </div>

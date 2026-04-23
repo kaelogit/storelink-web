@@ -51,17 +51,17 @@ export default function ContactPage() {
   };
 
   return (
-    <main className="min-h-screen font-sans bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
-      <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-20 border-b border-[var(--border)]">
+    <main className="min-h-screen font-sans bg-(--background) text-(--foreground) selection:bg-emerald-100">
+      <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-20 border-b border-(--border)">
         <div className="max-w-4xl mx-auto text-center">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-5xl md:text-6xl font-display font-bold text-[var(--foreground)] mb-6 tracking-tight"
+            className="text-5xl md:text-6xl font-display font-bold text-(--foreground) mb-6 tracking-tight"
           >
             How can we help?
           </motion.h1>
-          <p className="text-xl text-[var(--muted)] max-w-2xl mx-auto leading-relaxed">
+          <p className="text-xl text-(--muted) max-w-2xl mx-auto leading-relaxed">
             Have a question about the app, a partnership idea, or just want to say hello? 
             Our team is ready to answer.
           </p>
@@ -74,7 +74,7 @@ export default function ContactPage() {
             {/* LEFT: Direct Info */}
             <div className="lg:col-span-1 space-y-10">
                 <div>
-                    <h3 className="text-sm font-bold text-[var(--muted)] uppercase tracking-widest mb-6">Direct Channels</h3>
+                    <h3 className="text-sm font-bold text-(--muted) uppercase tracking-widest mb-6">Direct Channels</h3>
                     <div className="space-y-6">
                         <ContactItem 
                             icon={<MessageSquare className="text-emerald-500" />}
@@ -95,13 +95,13 @@ export default function ContactPage() {
                             link="press@storelink.app"
                         />
                         <div className="flex gap-4 group">
-                            <div className="w-10 h-10 rounded-full bg-[var(--surface)] flex items-center justify-center shrink-0 transition-colors group-hover:bg-[var(--border)]">
+                            <div className="w-10 h-10 rounded-full bg-(--surface) flex items-center justify-center shrink-0 transition-colors group-hover:bg-(--border)">
                                 <Phone className="text-emerald-500" />
                             </div>
                             <div>
-                                <p className="font-bold text-[var(--foreground)]">Phone</p>
-                                <p className="text-[var(--muted)] text-sm mb-1">Talk to our support line.</p>
-                                <a href="tel:+2349125951202" className="text-sm font-bold text-[var(--foreground)] hover:text-emerald-600 transition-colors">
+                                <p className="font-bold text-(--foreground)">Phone</p>
+                                <p className="text-(--muted) text-sm mb-1">Talk to our support line.</p>
+                                <a href="tel:+2349125951202" className="text-sm font-bold text-(--foreground) hover:text-emerald-600 transition-colors">
                                     +2349125951202
                                 </a>
                             </div>
@@ -110,15 +110,15 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                    <h3 className="text-sm font-bold text-[var(--muted)] uppercase tracking-widest mb-6">Office</h3>
+                    <h3 className="text-sm font-bold text-(--muted) uppercase tracking-widest mb-6">Office</h3>
                     <div className="flex gap-4">
-                        <div className="w-10 h-10 rounded-full bg-[var(--surface)] flex items-center justify-center shrink-0 text-[var(--muted)]">
+                        <div className="w-10 h-10 rounded-full bg-(--surface) flex items-center justify-center shrink-0 text-(--muted)">
                             <MapPin size={18} />
                         </div>
                         <div>
-                            <p className="font-bold text-[var(--foreground)]">Coming soon</p>
-                            <p className="text-[var(--muted)] text-sm leading-relaxed mt-1">
-                                Office address updates will be shared here.
+                            <p className="font-bold text-(--foreground)">Home Address</p>
+                            <p className="text-(--muted) text-sm leading-relaxed mt-1">
+                                No 2 Yetunde Longe St Eti Osa Lagos
                             </p>
                         </div>
                     </div>
@@ -126,7 +126,7 @@ export default function ContactPage() {
             </div>
 
             <div className="lg:col-span-2">
-                <Card className="rounded-[var(--radius-3xl)] p-8 md:p-12">
+                <Card className="rounded-3xl p-8 md:p-12">
                     
                     {isSent ? (
                         <motion.div 
@@ -137,8 +137,8 @@ export default function ContactPage() {
                             <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
                                 <CheckCircle2 size={40} />
                             </div>
-                            <h3 className="text-2xl font-bold text-[var(--foreground)] mb-2">Message Sent!</h3>
-                            <p className="text-[var(--muted)]">We&apos;ll get back to you within 24 hours.</p>
+                            <h3 className="text-2xl font-bold text-(--foreground) mb-2">Message Sent!</h3>
+                            <p className="text-(--muted)">We&apos;ll get back to you within 24 hours.</p>
                             <Button variant="ghost" size="sm" onClick={() => setIsSent(false)} className="mt-8">
                                 Send another message
                             </Button>
@@ -153,8 +153,8 @@ export default function ContactPage() {
                             <Input label="Email Address" placeholder="jane@example.com" type="email" value={form.email} onChange={(v) => setForm((prev) => ({ ...prev, email: v }))} />
                             
                             <div>
-                                <label className="block text-xs font-bold text-[var(--foreground)] uppercase tracking-wider mb-2">Topic</label>
-                                <select value={form.topic} onChange={(e) => setForm((prev) => ({ ...prev, topic: e.target.value }))} className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-xl)] px-4 py-4 text-[var(--foreground)] focus:outline-none focus:border-[var(--emerald)] transition-colors duration-[var(--duration-150)] appearance-none cursor-pointer">
+                                <label className="block text-xs font-bold text-(--foreground) uppercase tracking-wider mb-2">Topic</label>
+                                <select value={form.topic} onChange={(e) => setForm((prev) => ({ ...prev, topic: e.target.value }))} className="w-full bg-(--card) border border-(--border) rounded-xl px-4 py-4 text-(--foreground) focus:outline-none focus:border-(--emerald) transition-colors duration-(--duration-150) appearance-none cursor-pointer">
                                     <option>General Inquiry</option>
                                     <option>Report a Bug</option>
                                     <option>Billing Issue</option>
@@ -163,12 +163,12 @@ export default function ContactPage() {
                             </div>
 
                             <div>
-                                <label className="block text-xs font-bold text-[var(--foreground)] uppercase tracking-wider mb-2">Message</label>
+                                <label className="block text-xs font-bold text-(--foreground) uppercase tracking-wider mb-2">Message</label>
                                 <textarea
                                     rows={5}
                                     value={form.message}
                                     onChange={(e) => setForm((prev) => ({ ...prev, message: e.target.value }))}
-                                    className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-xl)] px-4 py-4 text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--emerald)] transition-colors duration-[var(--duration-150)] resize-none"
+                                    className="w-full bg-(--card) border border-(--border) rounded-xl px-4 py-4 text-(--foreground) placeholder:text-(--muted) focus:outline-none focus:border-(--emerald) transition-colors duration-(--duration-150) resize-none"
                                     placeholder="Tell us how we can help..."
                                     required
                                 />
@@ -203,13 +203,13 @@ export default function ContactPage() {
          </div>
       </section>
 
-      <Section variant="light" padding="default" className="border-t border-[var(--border)]">
+      <Section variant="light" padding="default" className="border-t border-(--border)">
          <div className="max-w-4xl mx-auto text-center">
-            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-[var(--radius-2xl)] flex items-center justify-center mx-auto mb-6">
+            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <HelpCircle size={24} />
             </div>
-            <h2 className="text-3xl font-bold text-[var(--foreground)] mb-4">Need answers right now?</h2>
-            <p className="text-[var(--muted)] mb-8">Check out our Help Center for instant answers to common questions about payments, delivery, and account settings.</p>
+            <h2 className="text-3xl font-bold text-(--foreground) mb-4">Need answers right now?</h2>
+            <p className="text-(--muted) mb-8">Check out our Help Center for instant answers to common questions about payments, delivery, and account settings.</p>
             <Button href="/help-center" variant="ghost" size="md" className="text-emerald-600 font-bold">
                 Visit Help Center <ArrowRight size={16} />
             </Button>
@@ -226,13 +226,13 @@ export default function ContactPage() {
 function ContactItem({ icon, title, desc, link }: { icon: React.ReactNode; title: string; desc: string; link: string }) {
     return (
         <div className="flex gap-4 group">
-            <div className="w-10 h-10 rounded-full bg-[var(--surface)] flex items-center justify-center shrink-0 transition-colors group-hover:bg-[var(--border)]">
+            <div className="w-10 h-10 rounded-full bg-(--surface) flex items-center justify-center shrink-0 transition-colors group-hover:bg-(--border)">
                 {icon}
             </div>
             <div>
-                <p className="font-bold text-[var(--foreground)]">{title}</p>
-                <p className="text-[var(--muted)] text-sm mb-1">{desc}</p>
-                <a href={`mailto:${link}`} className="text-sm font-bold text-[var(--foreground)] hover:text-emerald-600 transition-colors">
+                <p className="font-bold text-(--foreground)">{title}</p>
+                <p className="text-(--muted) text-sm mb-1">{desc}</p>
+                <a href={`mailto:${link}`} className="text-sm font-bold text-(--foreground) hover:text-emerald-600 transition-colors">
                     {link}
                 </a>
             </div>
@@ -243,12 +243,12 @@ function ContactItem({ icon, title, desc, link }: { icon: React.ReactNode; title
 function Input({ label, placeholder, value, onChange, type = "text" }: { label: string; placeholder: string; value: string; onChange: (value: string) => void; type?: string }) {
     return (
         <div>
-            <label className="block text-xs font-bold text-[var(--foreground)] uppercase tracking-wider mb-2">{label}</label>
+            <label className="block text-xs font-bold text-(--foreground) uppercase tracking-wider mb-2">{label}</label>
             <input
                 type={type}
                 value={value}
                 onChange={(e) => onChange(e.target.value)}
-                className="w-full bg-[var(--card)] border border-[var(--border)] rounded-[var(--radius-xl)] px-4 py-4 text-[var(--foreground)] placeholder:text-[var(--muted)] focus:outline-none focus:border-[var(--emerald)] transition-colors duration-[var(--duration-150)]"
+                className="w-full bg-(--card) border border-(--border) rounded-xl px-4 py-4 text-(--foreground) placeholder:text-(--muted) focus:outline-none focus:border-(--emerald) transition-colors duration-(--duration-150)"
                 placeholder={placeholder}
                 required
             />

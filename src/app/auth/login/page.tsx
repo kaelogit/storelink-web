@@ -54,12 +54,12 @@ export default function LoginPage() {
         <div className="absolute bottom-0 right-0 h-64 w-64 rounded-full bg-violet-300/20 blur-3xl" />
       </div>
       <div className="mx-auto w-full max-w-md px-4 sm:px-6 py-8 sm:py-10">
-        <Card className="rounded-[var(--radius-3xl)] p-6 sm:p-8">
+        <Card className="rounded-3xl p-6 sm:p-8">
           <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.18em] text-emerald-600">StoreLink web app</p>
-          <h1 className="mt-2 text-2xl sm:text-3xl font-black text-[var(--foreground)] tracking-tight">
-            Welcome <span className="bg-gradient-to-r from-emerald-600 to-violet-600 bg-clip-text text-transparent">back</span>
+          <h1 className="mt-2 text-2xl sm:text-3xl font-black text-(--foreground) tracking-tight">
+            Welcome <span className="bg-linear-to-r from-emerald-600 to-violet-600 bg-clip-text text-transparent">back</span>
           </h1>
-          <p className="mt-2 text-sm text-[var(--muted)]">Login to continue your StoreLink journey.</p>
+          <p className="mt-2 text-sm text-(--muted)">Login to continue your StoreLink journey.</p>
 
           <form onSubmit={onSubmit} className="mt-6 space-y-4">
             <input
@@ -67,7 +67,7 @@ export default function LoginPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email address"
-              className="w-full rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-emerald-500"
+              className="w-full rounded-xl border border-(--border) bg-(--background) px-4 py-3 text-sm outline-none focus:border-emerald-500"
               required
             />
             <input
@@ -75,7 +75,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
-              className="w-full rounded-[var(--radius-xl)] border border-[var(--border)] bg-[var(--background)] px-4 py-3 text-sm outline-none focus:border-emerald-500"
+              className="w-full rounded-xl border border-(--border) bg-(--background) px-4 py-3 text-sm outline-none focus:border-emerald-500"
               required
             />
             {error ? <p className="text-sm text-red-500">{error}</p> : null}
@@ -84,7 +84,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-5 text-sm text-[var(--muted)] space-y-2">
+          <div className="mt-5 text-sm text-(--muted) space-y-2">
             <p>
               No account?{' '}
               <Link href={`/auth/signup?next=${encodeURIComponent(nextPath)}`} className="text-emerald-600 font-semibold">

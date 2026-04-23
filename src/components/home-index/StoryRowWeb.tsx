@@ -7,6 +7,7 @@ import { Play } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createBrowserClient } from '@/lib/supabase';
 import { fetchDiscoveryStoriesFlat } from '@/lib/discovery-stories';
+import { normalizeWebMediaUrl } from '@/lib/media-url';
 
 const GRAY_RING_HIDE_AFTER_MS = 15 * 60 * 1000;
 
@@ -188,7 +189,7 @@ export default function StoryRowWeb({ seed }: { seed: string; compact?: boolean 
                   <div className="relative box-border flex h-[62px] w-[62px] shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-(--background)">
                     <Image
                       src={
-                        story.logo_url ||
+                        normalizeWebMediaUrl(story.logo_url) ||
                         `https://ui-avatars.com/api/?name=${encodeURIComponent(story.display_name || 'Store')}`
                       }
                       alt=""

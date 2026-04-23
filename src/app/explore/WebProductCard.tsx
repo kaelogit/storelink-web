@@ -16,7 +16,9 @@ import {
   Sparkles,
   Coins,
   Wrench,
+  Play,
 } from 'lucide-react';
+import { normalizeWebMediaUrl } from '@/lib/media-url';
 
 // --- HELPER 1: CURRENCY FORMATTER ---
 const formatMoney = (amount: number, currency: string) => {
@@ -25,19 +27,6 @@ const formatMoney = (amount: number, currency: string) => {
     currency: currency || 'NGN',
     minimumFractionDigits: 0
   }).format(amount);
-};
-
-// --- HELPER 2: URL CLEANER (Fixes broken links) ---
-const cleanUrl = (url: string) => {
-  if (!url) return '';
-  try {
-    // Remove accidental quotes if stored as JSON string
-    const clean = url.replace(/["\[\]]/g, ''); 
-    // Encode spaces to %20
-    return clean.replace(/ /g, '%20');
-  } catch (e) {
-    return url;
-  }
 };
 
 export default function WebProductCard({
@@ -80,13 +69,20 @@ export default function WebProductCard({
   const activePrice = isFlashActive && item.flash_price ? item.flash_price : item.price;
   const anchorPrice = item.price;
 
-  const loyaltyEnabled = !isService && item.seller?.loyalty_enabled;
-  const loyaltyPercent = !isService ? item.seller?.loyalty_percentage || 0 : 0;
+  const loyaltyEnabled = !!item.seller?.loyalty_enabled;
+  const loyaltyPercent = Number(item.seller?.loyalty_percentage || 0) || 0;
   const coinReward =
     loyaltyEnabled && loyaltyPercent > 0 ? activePrice * (loyaltyPercent / 100) : 0;
 
-  const images = item.image_urls || [];
-  const isDiamond = item.seller?.subscription_plan === 'diamond';
+  const images = (item.image_urls || [])
+    .map((img: unknown) => (typeof img === 'string' ? normalizeWebMediaUrl(img) : ''))
+    .filter(Boolean);
+  const videoUrl = normalizeWebMediaUrl(item.video_url || item.video_url_720 || item.media_url);
+  const isVideoCard = Boolean(videoUrl) && !isService;
+  const isDiamond = String(item.seller?.subscription_plan || '').toLowerCase() === 'diamond';
+  const sellerLogoSrc =
+    normalizeWebMediaUrl(item.seller?.logo_url) ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(item.seller?.display_name || 'Store')}`;
   const description = item.description || "";
   const isLongDescription = description.length > 90;
   const sellerCity = item?.seller?.location_city;
@@ -142,15 +138,15 @@ export default function WebProductCard({
   };
 
   return (
-    <div className="bg-[var(--card)] p-4 mb-4 rounded-none md:rounded-3xl border-b md:border border-[var(--border)] md:shadow-sm">
+    <div className="bg-(--card) p-4 mb-4 rounded-none md:rounded-3xl border-b md:border border-(--border) md:shadow-sm">
       
       {/* 🏛️ TOP SECTION: SELLER INFO */}
       <div className="flex mb-3">
         {/* Sidebar: Logo */}
         <div className="w-[44px] shrink-0 flex flex-col items-center">
-           <Link href={`/${item.seller?.slug}`} className={`w-[34px] h-[34px] rounded-xl border-[1.5px] overflow-hidden relative ${isDiamond ? 'border-violet-500 ring-2 ring-violet-500/20' : 'border-[var(--border)]'}`}>
+           <Link href={`/${item.seller?.slug}`} className={`w-[34px] h-[34px] rounded-xl border-[1.5px] overflow-hidden relative ${isDiamond ? 'border-violet-500 ring-2 ring-violet-500/20' : 'border-(--border)'}`}>
               <Image 
-                src={cleanUrl(item.seller?.logo_url) || `https://ui-avatars.com/api/?name=${item.seller?.display_name}`} 
+                src={sellerLogoSrc} 
                 alt="Seller" 
                 fill 
                 className="object-cover"
@@ -165,19 +161,19 @@ export default function WebProductCard({
            <div className="flex-1 ml-3">
            <div className="mb-1">
               <div className="flex items-center gap-1.5">
-                 <h3 className="text-xs font-black text-[var(--foreground)] tracking-tight uppercase">
+                 <h3 className="text-xs font-black text-(--foreground) tracking-tight uppercase">
                     {item.seller?.display_name || 'Store'}
                  </h3>
                  {isDiamond && <Gem size={12} className="text-violet-500 fill-violet-500" />}
               </div>
               <div className="flex items-center gap-1">
-                 <span className="text-[11px] font-bold text-[var(--muted)]">@{item.seller?.slug}</span>
+                 <span className="text-[11px] font-bold text-(--muted)">@{item.seller?.slug}</span>
                  {isDiamond && <Sparkles size={10} className="text-violet-400 fill-violet-400" />}
               </div>
            </div>
 
            <div className="flex justify-between items-start mt-1">
-              <Link href={detailHref} className="text-xs font-black text-[var(--foreground)] tracking-tight uppercase flex-1 mr-4 line-clamp-1 hover:underline">
+              <Link href={detailHref} className="text-xs font-black text-(--foreground) tracking-tight uppercase flex-1 mr-4 line-clamp-1 hover:underline">
                  {item.name}
               </Link>
 
@@ -185,12 +181,16 @@ export default function WebProductCard({
                  {isFlashActive ? (
                     <div className="flex items-center gap-1.5">
                        <span className="text-xs font-black text-emerald-600">{formatMoney(activePrice, item.currency_code)}</span>
-                       <span className="text-[10px] font-bold text-[var(--muted)] line-through decoration-[var(--muted)]">{formatMoney(anchorPrice, item.currency_code)}</span>
+                       <span className="text-[10px] font-bold text-(--muted) line-through decoration-(--muted)">{formatMoney(anchorPrice, item.currency_code)}</span>
                        <Zap size={12} className="text-amber-500 fill-amber-500" />
                     </div>
                  ) : (
                     <span className={`text-xs font-black ${isSoldOut ? 'text-red-500' : 'text-emerald-600'}`}>
-                       {isSoldOut ? "SOLD OUT" : formatMoney(activePrice, item.currency_code)}
+                       {isSoldOut
+                         ? 'SOLD OUT'
+                         : isService
+                           ? `From ${formatMoney(activePrice, item.currency_code)}`
+                           : formatMoney(activePrice, item.currency_code)}
                     </span>
                  )}
 
@@ -205,8 +205,8 @@ export default function WebProductCard({
 
            <div className="flex gap-3 mt-2">
               <div className="flex items-center gap-1">
-                 <MapPin size={10} className="text-[var(--muted)]" strokeWidth={3} />
-                 <span className="text-[9px] font-black text-[var(--muted)] tracking-wider">
+                 <MapPin size={10} className="text-(--muted)" strokeWidth={3} />
+                 <span className="text-[9px] font-black text-(--muted) tracking-wider">
                     {(
                       item.service_distance_label ||
                       sellerLocationLabel
@@ -217,8 +217,8 @@ export default function WebProductCard({
               </div>
               {!isService && (
                 <div className="flex items-center gap-1">
-                   <Package size={10} className={isSoldOut ? 'text-red-500' : 'text-[var(--muted)]'} strokeWidth={3} />
-                   <span className={`text-[9px] font-black tracking-wider ${isSoldOut ? 'text-red-500' : 'text-[var(--muted)]'}`}>
+                   <Package size={10} className={isSoldOut ? 'text-red-500' : 'text-(--muted)'} strokeWidth={3} />
+                   <span className={`text-[9px] font-black tracking-wider ${isSoldOut ? 'text-red-500' : 'text-(--muted)'}`}>
                       {isSoldOut ? "0 LEFT" : `${stockQty} LEFT`}
                    </span>
                 </div>
@@ -234,43 +234,43 @@ export default function WebProductCard({
         <div className="w-[44px] shrink-0 flex flex-col items-center gap-6 pt-4">
            
            <button onClick={handleLike} className="flex flex-col items-center gap-1 group">
-              <Heart size={24} className={`transition-colors ${item.is_liked ? 'text-emerald-500 fill-emerald-500' : 'text-[var(--foreground)] group-hover:text-emerald-500'}`} strokeWidth={2.5} />
-              <span className="text-[10px] font-black text-[var(--foreground)]">{likeCount}</span>
+              <Heart size={24} className={`transition-colors ${item.is_liked ? 'text-emerald-500 fill-emerald-500' : 'text-(--foreground) group-hover:text-emerald-500'}`} strokeWidth={2.5} />
+              <span className="text-[10px] font-black text-(--foreground)">{likeCount}</span>
            </button>
 
            <button onClick={handleComments} className="flex flex-col items-center gap-1 group">
-              <MessageCircle size={24} className="text-[var(--foreground)] group-hover:text-emerald-500" strokeWidth={2.5} />
-              <span className="text-[10px] font-black text-[var(--foreground)]">{commentCount}</span>
+              <MessageCircle size={24} className="text-(--foreground) group-hover:text-emerald-500" strokeWidth={2.5} />
+              <span className="text-[10px] font-black text-(--foreground)">{commentCount}</span>
            </button>
 
            {!isSoldOut && (
            <button onClick={handleTrap} className="flex flex-col items-center gap-1 my-1 active:scale-95 transition-transform">
-             <div className="w-9 h-9 rounded-full bg-[var(--foreground)] flex items-center justify-center shadow-lg hover:bg-emerald-600 transition-colors">
+             <div className="w-9 h-9 rounded-full bg-(--foreground) flex items-center justify-center shadow-lg hover:bg-emerald-600 transition-colors">
                 {isService ? (
                   <Wrench size={16} className="text-white" strokeWidth={3} />
                 ) : (
                   <ShoppingBag size={16} className="text-white" strokeWidth={3} />
                 )}
              </div>
-             <span className="text-[9px] font-black text-[var(--foreground)]">
+             <span className="text-[9px] font-black text-(--foreground)">
                 {isService ? 'BOOK' : 'BUY'}
              </span>
            </button>
            )}
 
            <button onClick={handleShare} className="flex flex-col items-center gap-1 group">
-              <Share2 size={22} className="text-[var(--foreground)] group-hover:text-emerald-500" strokeWidth={2.5} />
+              <Share2 size={22} className="text-(--foreground) group-hover:text-emerald-500" strokeWidth={2.5} />
            </button>
 
            <button onClick={handleWishlist} className="flex flex-col items-center gap-1 group">
               <Bookmark
                 size={22}
                 className={`${
-                  item.is_wishlisted ? 'text-emerald-500 fill-emerald-500' : 'text-[var(--foreground)] group-hover:text-emerald-500'
+                  item.is_wishlisted ? 'text-emerald-500 fill-emerald-500' : 'text-(--foreground) group-hover:text-emerald-500'
                 }`}
                 strokeWidth={2.5}
               />
-              <span className="text-[10px] font-black text-[var(--foreground)]">{wishlistCount}</span>
+              <span className="text-[10px] font-black text-(--foreground)">{wishlistCount}</span>
            </button>
 
         </div>
@@ -279,34 +279,52 @@ export default function WebProductCard({
         <div className="flex-1 ml-3">
            
            {/* Visual Hub (Carousel) */}
-           <div className={`relative aspect-[4/5] w-full bg-[var(--surface)] rounded-[24px] overflow-hidden border-[1.5px] border-[var(--border)] mb-3 group ${isDiamond ? 'border-violet-200 dark:border-violet-800' : ''}`}>
+           <div className={`relative aspect-4/5 w-full bg-(--surface) rounded-[24px] overflow-hidden border-[1.5px] border-(--border) mb-3 group ${isDiamond ? 'border-violet-200 dark:border-violet-800' : ''}`}>
               
-              <div 
-                className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                onScroll={(e) => {
-                  const width = e.currentTarget.offsetWidth;
-                  setActiveImageIndex(Math.round(e.currentTarget.scrollLeft / width));
-                }}
-              >
-                {images.length > 0 ? images.map((img: string, idx: number) => (
-                    <Link key={idx} href={detailHref} className="w-full h-full flex-shrink-0 snap-center relative block">
-                       <Image 
-                         src={cleanUrl(img)} 
-                         alt={item.name} 
-                         fill 
-                         className={`object-cover ${isSoldOut ? 'opacity-70 grayscale' : ''}`} 
-                         sizes="(max-width: 640px) 100vw, 400px"
-                         loading="lazy"
-                         unoptimized={true}
-                       />
-                    </Link>
-                 )) : (
-                    <div className="w-full h-full flex items-center justify-center text-[var(--muted)]">
-                       <Package size={40} />
-                    </div>
-                 )}
-              </div>
+              {isVideoCard ? (
+                <Link href={detailHref} className="block h-full w-full relative">
+                  <video
+                    src={videoUrl || undefined}
+                    className={`h-full w-full object-cover ${isSoldOut ? 'opacity-70 grayscale' : ''}`}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    preload="metadata"
+                    poster={images[0] || undefined}
+                  />
+                  <span className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-full border border-white/30 bg-black/45">
+                    <Play size={16} className="text-white" fill="white" />
+                  </span>
+                </Link>
+              ) : (
+                <div 
+                  className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+                  onScroll={(e) => {
+                    const width = e.currentTarget.offsetWidth;
+                    setActiveImageIndex(Math.round(e.currentTarget.scrollLeft / width));
+                  }}
+                >
+                  {images.length > 0 ? images.map((img: string, idx: number) => (
+                      <Link key={idx} href={detailHref} className="w-full h-full shrink-0 snap-center relative block">
+                         <Image 
+                           src={img} 
+                           alt={item.name} 
+                           fill 
+                           className={`object-cover ${isSoldOut ? 'opacity-70 grayscale' : ''}`} 
+                           sizes="(max-width: 640px) 100vw, 400px"
+                           loading="lazy"
+                           unoptimized={true}
+                         />
+                      </Link>
+                   )) : (
+                      <div className="w-full h-full flex items-center justify-center text-(--muted)">
+                         <Package size={40} />
+                      </div>
+                   )}
+                </div>
+              )}
 
               {isSoldOut && (
                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-black/60 backdrop-blur-md px-4 py-2 rounded-lg border border-white -rotate-6">
@@ -314,7 +332,7 @@ export default function WebProductCard({
                  </div>
               )}
 
-              {images.length > 1 && (
+              {!isVideoCard && images.length > 1 && (
                  <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 p-1.5 bg-black/20 backdrop-blur-sm rounded-full w-fit mx-auto">
                     {images.map((_: any, idx: number) => (
                        <div key={idx} className={`w-1.5 h-1.5 rounded-full transition-all ${idx === activeImageIndex ? 'bg-white scale-125' : 'bg-white/40'}`} />
@@ -328,9 +346,12 @@ export default function WebProductCard({
               <div className="flex items-center gap-2 mb-2">
                  <div className="flex -space-x-2">
                     {item.latest_likers?.slice(0, 3).map((liker: any, i: number) => (
-                       <div key={i} className="w-4 h-4 rounded-full border border-white overflow-hidden relative z-[3] first:z-[4]">
+                       <div key={i} className="w-4 h-4 rounded-full border border-white overflow-hidden relative z-3 first:z-4">
                           <Image 
-                            src={cleanUrl(liker.logo_url) || `https://ui-avatars.com/api/?name=${liker.slug}`} 
+                            src={
+                              normalizeWebMediaUrl(liker.logo_url) ||
+                              `https://ui-avatars.com/api/?name=${encodeURIComponent(liker.slug || 'user')}`
+                            } 
                             alt="Liker" 
                             fill 
                             unoptimized={true} // 👈 ADDED HERE
@@ -338,7 +359,7 @@ export default function WebProductCard({
                        </div>
                     ))}
                  </div>
-                 <p className="text-[11px] font-medium text-[var(--foreground)] cursor-pointer" onClick={handleLikes}>
+                 <p className="text-[11px] font-medium text-(--foreground) cursor-pointer" onClick={handleLikes}>
                     {item.latest_likers?.[0]?.slug ? (
                       <>
                         Liked by <span className="font-black">{item.latest_likers?.[0]?.slug}</span>
@@ -352,13 +373,13 @@ export default function WebProductCard({
            )}
 
            <div className="pr-2">
-              <p className={`text-[13px] leading-relaxed font-medium text-[var(--foreground)] ${!expanded ? 'line-clamp-2' : ''}`}>
+              <p className={`text-[13px] leading-relaxed font-medium text-(--foreground) ${!expanded ? 'line-clamp-2' : ''}`}>
                  {description || (isService ? 'Service preview — open in the app to see full details and book.' : 'No description provided.')}
               </p>
               {isLongDescription && (
                  <button 
                    onClick={() => setExpanded(!expanded)}
-                   className="text-[11px] font-black text-[var(--muted)] mt-1 hover:text-[var(--foreground)]"
+                   className="text-[11px] font-black text-(--muted) mt-1 hover:text-(--foreground)"
                  >
                     {expanded ? 'See less' : 'See more'}
                  </button>
