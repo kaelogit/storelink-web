@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Bell, PlusSquare } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useAppShellProfile } from '@/components/app-shell/app-shell-profile';
+import WebRailCartAction from '@/components/cart/WebRailCartAction';
 
 export default function RightRail() {
   const { unreadNotifications } = useAppShellProfile();
@@ -19,6 +20,7 @@ export default function RightRail() {
           showUnreadDot={unreadNotifications > 0}
         />
         <RailAction href="/app/post" label="Post" icon={<PlusSquare size={24} />} ariaLabel="Post" />
+        <WebRailCartAction />
       </div>
     </aside>
   );

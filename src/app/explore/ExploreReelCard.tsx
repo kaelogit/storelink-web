@@ -9,6 +9,7 @@ import HomeCommentsSheet from '@/components/home-index/HomeCommentsSheet';
 import HomeLikesSheet from '@/components/home-index/HomeLikesSheet';
 import { enqueueRankingEventWeb } from '@/lib/rankingEventsWeb';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
+import { useWebCartStore } from '@/store/useWebCartStore';
 
 export default function ExploreReelCard({
   item,
@@ -20,7 +21,7 @@ export default function ExploreReelCard({
   item: any;
   surface: 'explore_discovery' | 'explore_for_you' | 'spotlight';
   surfaceActive?: boolean;
-  onTrap: () => void;
+  onTrap: (item: any) => void;
   className?: string;
 }) {
   const supabase = useMemo(() => createBrowserClient(), []);
@@ -43,6 +44,8 @@ export default function ExploreReelCard({
   const [progressRatio, setProgressRatio] = useState(0);
   const progressRafRef = useRef<number | null>(null);
   const [inViewport, setInViewport] = useState(false);
+  const addProduct = useWebCartStore((s) => s.addProduct);
+  const addService = useWebCartStore((s) => s.addService);
 
   useEffect(() => {
     setCurrent(item);
@@ -607,7 +610,7 @@ export default function ExploreReelCard({
                     )}
                   </div>
                 </div>
-                {!isSpotlight ? <span className="text-[11px] font-semibold text-white/85">{isService ? 'Check availability' : 'Buy'}</span> : null}
+                {!isSpotlight ? <span className="text-[11px] font-semibold text-white/85">{isService ? 'Add to cart' : 'Buy'}</span> : null}
               </Link>
             </div>
 
@@ -624,7 +627,34 @@ export default function ExploreReelCard({
                 <MessageCircle size={22} />
                 <span className="text-[10px] font-bold">{commentCount}</span>
               </button>
-              <button type="button" className="my-1 rounded-full border-2 border-white bg-emerald-500 p-3 text-white" onClick={onTrap}>
+              <button
+                type="button"
+                className="my-1 rounded-full border-2 border-white bg-emerald-500 p-3 text-white"
+                onClick={() => {
+                  if (isService) {
+                    addService({
+                      service_listing_id: String(targetItemId || current?.id || ''),
+                      title: String(current?.name || current?.title || 'Service'),
+                      hero_price: Number(current?.price || 0),
+                      currency_code: currencyCode,
+                      image_url: thumbSrc || null,
+                      seller_slug: current?.seller?.slug || null,
+                      seller_name: current?.seller?.display_name || null,
+                    });
+                  } else {
+                    addProduct({
+                      product_id: String(targetItemId || current?.id || ''),
+                      slug: current?.slug || null,
+                      name: String(current?.name || 'Product'),
+                      price: Number(current?.price || 0),
+                      currency_code: currencyCode,
+                      image_url: thumbSrc || null,
+                      seller_slug: current?.seller?.slug || null,
+                      seller_name: current?.seller?.display_name || null,
+                    });
+                  }
+                }}
+              >
                 {isService ? <Wrench size={18} /> : <ShoppingBag size={18} />}
               </button>
               <button type="button" className="flex items-center justify-center text-white" onClick={() => void handleShare()}>

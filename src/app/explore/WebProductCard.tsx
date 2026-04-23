@@ -19,6 +19,7 @@ import {
   Play,
 } from 'lucide-react';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
+import { useWebCartStore } from '@/store/useWebCartStore';
 
 // --- HELPER 1: CURRENCY FORMATTER ---
 const formatMoney = (amount: number, currency: string) => {
@@ -40,6 +41,8 @@ export default function WebProductCard({
 }: any) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
+  const addProduct = useWebCartStore((s) => s.addProduct);
+  const addService = useWebCartStore((s) => s.addService);
 
   const isService = item.type === 'service' || !!item.service_listing_id;
   const serviceHref =
@@ -99,7 +102,30 @@ export default function WebProductCard({
   const handleTrap = () => {
     if (onAddToCart) {
         onAddToCart(item); 
+        return;
     }
+    if (isService) {
+      addService({
+        service_listing_id: String(item.service_listing_id || item.id || ''),
+        title: String(item.name || item.title || 'Service'),
+        hero_price: Number(activePrice || 0),
+        currency_code: item.currency_code || 'NGN',
+        image_url: images?.[0] || null,
+        seller_slug: item.seller?.slug || null,
+        seller_name: item.seller?.display_name || null,
+      });
+      return;
+    }
+    addProduct({
+      product_id: String(item.product_id || item.id || ''),
+      slug: item.slug || null,
+      name: String(item.name || 'Product'),
+      price: Number(activePrice || 0),
+      currency_code: item.currency_code || 'NGN',
+      image_url: images?.[0] || null,
+      seller_slug: item.seller?.slug || null,
+      seller_name: item.seller?.display_name || null,
+    });
   };
   const handleLike = () => {
     if (typeof onToggleLike === 'function') {
@@ -253,7 +279,7 @@ export default function WebProductCard({
                 )}
              </div>
              <span className="text-[9px] font-black text-(--foreground)">
-                {isService ? 'BOOK' : 'BUY'}
+                {isService ? 'ADD' : 'BUY'}
              </span>
            </button>
            )}

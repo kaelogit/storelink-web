@@ -1,14 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState } from 'react';
+import { Suspense, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase';
 import Section from '@/components/ui/Section';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 
-export default function VerifyPage() {
+function VerifyPageContent() {
   const params = useSearchParams();
   const email = params.get('email') || '';
   const nextPath = params.get('next') || '/app';
@@ -62,6 +62,14 @@ export default function VerifyPage() {
         </Card>
       </div>
     </Section>
+  );
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={null}>
+      <VerifyPageContent />
+    </Suspense>
   );
 }
 

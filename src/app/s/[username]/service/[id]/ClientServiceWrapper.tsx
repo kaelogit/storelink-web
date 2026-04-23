@@ -20,6 +20,7 @@ import {
 import AppTrapModal from '@/components/ui/DownloadTrap';
 import Button from '@/components/ui/Button';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
+import { useWebCartStore } from '@/store/useWebCartStore';
 
 type TrapTrigger = 'buy' | 'view' | 'chat';
 
@@ -36,6 +37,7 @@ export default function ClientServiceWrapper({ service, seller }: any) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [trapOpen, setTrapOpen] = useState(false);
   const [trapTrigger, setTrapTrigger] = useState<TrapTrigger>('buy');
+  const { addService } = useWebCartStore();
 
   const media = (service.media as unknown[] | null) || [];
   const images = Array.isArray(media)
@@ -278,13 +280,23 @@ export default function ClientServiceWrapper({ service, seller }: any) {
             <MessageCircle size={24} strokeWidth={2} />
           </Button>
           <Button
-            onClick={() => handleTrap('buy')}
+            onClick={() =>
+              addService({
+                service_listing_id: String(service.id || ''),
+                title: String(service.title || 'Service'),
+                hero_price: Number(service.hero_price_min || 0) / 100,
+                currency_code: service.currency_code || 'NGN',
+                image_url: images?.[0] || null,
+                seller_slug: seller.slug || null,
+                seller_name: seller.display_name || null,
+              })
+            }
             variant="secondary"
             size="lg"
             className="flex-1 justify-center gap-2 rounded-2xl"
           >
             <CalendarCheck2 size={20} strokeWidth={2.5} />
-            <span className="font-bold text-sm tracking-wide">CHECK AVAILABILITY</span>
+            <span className="font-bold text-sm tracking-wide">ADD TO CART</span>
           </Button>
         </div>
       </div>

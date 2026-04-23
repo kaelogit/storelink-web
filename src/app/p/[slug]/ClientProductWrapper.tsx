@@ -11,6 +11,7 @@ import {
 import AppTrapModal from '../../../components/ui/DownloadTrap';
 import Button from '../../../components/ui/Button';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
+import { useWebCartStore } from '@/store/useWebCartStore';
 // Helper
 const formatPrice = (amount: number, currency: string) => {
   return new Intl.NumberFormat('en-NG', {
@@ -24,6 +25,7 @@ export default function ClientProductWrapper({ product, seller }: any) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [trapOpen, setTrapOpen] = useState(false);
   const [trapTrigger, setTrapTrigger] = useState<'buy' | 'view' | 'chat'>('buy');
+  const { addProduct } = useWebCartStore();
 
   const images = (product.image_urls || [])
     .map((img: unknown) => (typeof img === 'string' ? normalizeWebMediaUrl(img) : ''))
@@ -193,9 +195,25 @@ export default function ClientProductWrapper({ product, seller }: any) {
            <Button onClick={() => handleTrap('chat')} variant="outline" size="lg" className="w-14 p-0! justify-center rounded-2xl">
               <MessageCircle size={24} strokeWidth={2} />
            </Button>
-           <Button onClick={() => handleTrap('buy')} variant="secondary" size="lg" className="flex-1 justify-center gap-2 rounded-2xl">
+           <Button
+             onClick={() =>
+               addProduct({
+                 product_id: String(product.id || ''),
+                 slug: product.slug || null,
+                 name: String(product.name || 'Product'),
+                 price: Number(product.price || 0),
+                 currency_code: product.currency_code || 'NGN',
+                 image_url: images?.[0] || null,
+                 seller_slug: seller.slug || null,
+                 seller_name: seller.display_name || null,
+               })
+             }
+             variant="secondary"
+             size="lg"
+             className="flex-1 justify-center gap-2 rounded-2xl"
+           >
               <ShoppingBag size={20} strokeWidth={2.5} />
-              <span className="font-bold text-sm tracking-wide">BUY NOW</span>
+              <span className="font-bold text-sm tracking-wide">ADD TO CART</span>
            </Button>
         </div>
 

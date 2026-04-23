@@ -12,7 +12,7 @@ export default function HomeFeedCard({
   onAddToCart,
 }: {
   item: any;
-  onAddToCart: () => void;
+  onAddToCart: (item: any) => void;
 }) {
   const [likesOpen, setLikesOpen] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
