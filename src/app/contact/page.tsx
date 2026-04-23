@@ -116,7 +116,7 @@ export default function ContactPage() {
                             <MapPin size={18} />
                         </div>
                         <div>
-                            <p className="font-bold text-(--foreground)">Home Address</p>
+                            <p className="font-bold text-(--foreground)">Address</p>
                             <p className="text-(--muted) text-sm leading-relaxed mt-1">
                                 No 2 Yetunde Longe St Eti Osa Lagos
                             </p>
