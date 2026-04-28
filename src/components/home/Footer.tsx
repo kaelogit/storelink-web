@@ -45,7 +45,7 @@ export default function Footer() {
               Platform
             </h4>
             <ul className="space-y-4 text-sm font-medium tracking-wide">
-              <li><Link href="/explore" className="text-white/80 hover:text-white transition-colors">Explore Market</Link></li>
+              <li><Link href="/" className="text-white/80 hover:text-white transition-colors">Explore Market</Link></li>
               <li><Link href="/download" className="text-white/80 hover:text-white transition-colors">Start Selling</Link></li>
               <li><Link href="/tools/ai" className="text-white/80 hover:text-white transition-colors">Gemini AI Studio</Link></li>
               <li><Link href="/safety" className="text-emerald-400 hover:text-emerald-300 transition-colors">Escrow Protection</Link></li>
@@ -75,7 +75,7 @@ export default function Footer() {
               {categories.map((cat) => (
                 <li key={cat}>
                   <Link 
-                    href={`/explore?category=${cat.toLowerCase().replace(/\s+/g, '-')}`} 
+                    href={`/?category=${cat.toLowerCase().replace(/\s+/g, '-')}`} 
                     className="text-white/70 hover:text-emerald-400 transition-colors"
                   >
                     {cat}

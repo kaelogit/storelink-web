@@ -126,6 +126,21 @@
   scrollbar-width: none;
 }
 
+/* App `(tabs)/profile` nav — Lobster + titleLg (26px), matches mobile `slugHeaderTitle`. */
+.font-app-profile-slug {
+  font-family: var(--font-app-profile-slug), ui-serif, Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  font-size: 1.625rem;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+/** Long home card lists: skip layout for off-screen rows (scroll jank). */
+.home-feed-card-surface {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 480px;
+}
+
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -198,6 +213,16 @@
 .section-light .section-orb-violet {
   background: var(--violet);
   opacity: 0.06;
+}
+/* Same section pattern; respects html.dark / .dark for explore + marketing */
+.dark .section-light {
+  background: linear-gradient(
+    165deg,
+    #0a0a0a 0%,
+    #000000 40%,
+    rgba(16, 185, 129, 0.1) 100%
+  );
+  color: var(--foreground);
 }
 /* Orb positions (use with .section-orb or .section-glow-*; adds position + size) */
 .section-orb-tl { position: absolute; top: -20%; left: -10%; width: 50vmax; height: 50vmax; }

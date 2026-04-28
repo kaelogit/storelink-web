@@ -1,14 +1,26 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Search, Zap, X, Layers, Shirt, Smartphone, Sparkles, Home, Activity, Wrench, Building2, Car, Gem, ArrowRight, Smartphone as PhoneIcon } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import AppTrapModal from '../../components/ui/DownloadTrap';
-import StoryRowWeb from '@/components/home-index/StoryRowWeb';
+const StoryRowWebLazy = dynamic(() => import('@/components/home-index/StoryRowWeb'), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="mx-auto h-[72px] w-full max-w-3xl rounded-2xl border border-(--border) bg-(--surface)/80 animate-pulse"
+      aria-hidden
+    />
+  ),
+});
 import SearchProtocolWeb from '@/components/home-index/SearchProtocolWeb';
 import CategoryPulseWeb from '@/components/home-index/CategoryPulseWeb';
+import HomeCommentsSheet from '@/components/home-index/HomeCommentsSheet';
+import HomeLikesSheet from '@/components/home-index/HomeLikesSheet';
 import ExploreReelCard from '@/app/explore/ExploreReelCard';
+import WebProductCard from '@/app/explore/WebProductCard';
 import { fetchHomeFeedData } from '@/lib/homeFeedData';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { enqueueRankingEventWeb, flushRankingEventQueueNowWeb } from '@/lib/rankingEventsWeb';
@@ -144,7 +156,7 @@ const interleaveHomeMix = (rows: any[], seed: string) => {
 };
 
 const getModeDefaultCategory = (value: 'home' | 'explore_discovery' | 'explore_for_you' | 'spotlight'): string => {
-  if (value === 'explore_for_you') return 'product:any';
+  if (value === 'explore_for_you') return 'all';
   if (value === 'spotlight') return 'services:any';
   return 'all';
 };
@@ -154,15 +166,19 @@ export default function ClientExploreWrapper({
   embedded = false,
   surface = 'home',
   surfaceActive = true,
+  renderStyle = 'auto',
 }: {
   searchParams?: Promise<{ category?: string }>;
   embedded?: boolean;
   surface?: 'home' | 'explore_discovery' | 'explore_for_you' | 'spotlight';
   surfaceActive?: boolean;
+  renderStyle?: 'auto' | 'cards' | 'reels';
 }) {
   const surfaceStateKey = `storelink:web:explore-state:${surface}`;
   const router = useRouter();
+  const pathname = usePathname();
   const urlSearchParams = useSearchParams();
+  const categoryBasePath = (pathname || '').startsWith('/app') ? '/app' : '/';
   const categoryFromUrl = urlSearchParams.get('category')?.toLowerCase() ?? null;
   const initialCategory = useMemo(() => {
     if (!categoryFromUrl) return embedded ? getModeDefaultCategory(surface) : 'All';
@@ -190,11 +206,210 @@ export default function ClientExploreWrapper({
   const productsRef = useRef<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [trapOpen, setTrapOpen] = useState(false);
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [likesOpen, setLikesOpen] = useState(false);
+  const [sheetItem, setSheetItem] = useState<any>(null);
+  const shouldRenderCards = renderStyle === 'cards' || (renderStyle === 'auto' && surface === 'home');
   const [viewerId, setViewerId] = useState<string | null>(null);
   const [viewerResolved, setViewerResolved] = useState(false);
   const [exploreRankV2Enabled, setExploreRankV2Enabled] = useState(false);
   const refreshSeedRef = useRef(Math.random().toString(36).slice(2));
   const loggedImpressionsRef = useRef<Set<string>>(new Set());
+  const pendingEngagementRef = useRef<Set<string>>(new Set());
+  const refreshCommentsForItem = useCallback(async (target: any) => {
+    const itemId = String(target?.service_listing_id || target?.product_id || target?.id || '');
+    if (!itemId) return;
+    const isServiceItem = target?.type === 'service' || !!target?.service_listing_id;
+    const table = isServiceItem ? 'service_comments' : 'product_comments';
+    const fk = isServiceItem ? 'service_listing_id' : 'product_id';
+    const { count } = await supabase.from(table).select('id', { count: 'exact', head: true }).eq(fk, itemId);
+    const nextCount = Number(count || 0);
+    setProducts((prev) =>
+      prev.map((row: any) => {
+        const rowId = String(row?.service_listing_id || row?.product_id || row?.id || '');
+        const rowIsService = row?.type === 'service' || !!row?.service_listing_id;
+        if (rowId !== itemId || rowIsService !== isServiceItem) return row;
+        return {
+          ...row,
+          comments_count: nextCount,
+          comment_count: nextCount,
+        };
+      }),
+    );
+    setSheetItem((prev: any) => {
+      if (!prev) return prev;
+      const prevId = String(prev?.service_listing_id || prev?.product_id || prev?.id || '');
+      const prevIsService = prev?.type === 'service' || !!prev?.service_listing_id;
+      if (prevId !== itemId || prevIsService !== isServiceItem) return prev;
+      return {
+        ...prev,
+        comments_count: nextCount,
+        comment_count: nextCount,
+      };
+    });
+  }, []);
+  const toggleCardLike = useCallback(
+    async (target: any) => {
+      if (!viewerId) return;
+      const itemId = String(target?.service_listing_id || target?.product_id || target?.id || '');
+      if (!itemId) return;
+      const isServiceItem = target?.type === 'service' || !!target?.service_listing_id;
+      const guardKey = `like:${isServiceItem ? 's' : 'p'}:${itemId}`;
+      if (pendingEngagementRef.current.has(guardKey)) return;
+      pendingEngagementRef.current.add(guardKey);
+
+      const wasLiked = Boolean(target?.is_liked);
+      const nextLiked = !wasLiked;
+      const applyLocalState = (liked: boolean, likesCount: number) => {
+        setProducts((prev) =>
+          prev.map((row: any) => {
+            const rowId = String(row?.service_listing_id || row?.product_id || row?.id || '');
+            const rowIsService = row?.type === 'service' || !!row?.service_listing_id;
+            if (rowId !== itemId || rowIsService !== isServiceItem) return row;
+            return { ...row, is_liked: liked, likes_count: likesCount };
+          }),
+        );
+        setSheetItem((prev: any) => {
+          if (!prev) return prev;
+          const prevId = String(prev?.service_listing_id || prev?.product_id || prev?.id || '');
+          const prevIsService = prev?.type === 'service' || !!prev?.service_listing_id;
+          if (prevId !== itemId || prevIsService !== isServiceItem) return prev;
+          return { ...prev, is_liked: liked, likes_count: likesCount };
+        });
+      };
+      const optimisticLikes = Math.max(0, Number(target?.likes_count || 0) + (nextLiked ? 1 : -1));
+      applyLocalState(nextLiked, optimisticLikes);
+
+      try {
+        if (isServiceItem) {
+          if (wasLiked) {
+            await supabase
+              .from('service_likes')
+              .delete()
+              .eq('service_listing_id', itemId)
+              .eq('user_id', viewerId);
+          } else {
+            await supabase.from('service_likes').insert({ service_listing_id: itemId, user_id: viewerId });
+          }
+          const [{ count }, { data: likedRow }] = await Promise.all([
+            supabase
+              .from('service_likes')
+              .select('id', { count: 'exact', head: true })
+              .eq('service_listing_id', itemId),
+            supabase
+              .from('service_likes')
+              .select('id')
+              .eq('service_listing_id', itemId)
+              .eq('user_id', viewerId)
+              .maybeSingle(),
+          ]);
+          applyLocalState(Boolean(likedRow), Number(count || 0));
+        } else {
+          await supabase.rpc('toggle_product_like', { p_product_id: itemId, p_user_id: viewerId });
+          const [{ count }, { data: likedRow }] = await Promise.all([
+            supabase.from('product_likes').select('id', { count: 'exact', head: true }).eq('product_id', itemId),
+            supabase
+              .from('product_likes')
+              .select('id')
+              .eq('product_id', itemId)
+              .eq('user_id', viewerId)
+              .maybeSingle(),
+          ]);
+          applyLocalState(Boolean(likedRow), Number(count || 0));
+        }
+      } catch {
+        applyLocalState(wasLiked, Number(target?.likes_count || 0));
+      } finally {
+        pendingEngagementRef.current.delete(guardKey);
+      }
+    },
+    [viewerId],
+  );
+  const toggleCardWishlist = useCallback(
+    async (target: any) => {
+      if (!viewerId) return;
+      const itemId = String(target?.service_listing_id || target?.product_id || target?.id || '');
+      if (!itemId) return;
+      const isServiceItem = target?.type === 'service' || !!target?.service_listing_id;
+      const guardKey = `wish:${isServiceItem ? 's' : 'p'}:${itemId}`;
+      if (pendingEngagementRef.current.has(guardKey)) return;
+      pendingEngagementRef.current.add(guardKey);
+
+      const wasWishlisted = Boolean(target?.is_wishlisted);
+      const nextWishlisted = !wasWishlisted;
+      const applyLocalState = (wishlisted: boolean, wishCount: number) => {
+        setProducts((prev) =>
+          prev.map((row: any) => {
+            const rowId = String(row?.service_listing_id || row?.product_id || row?.id || '');
+            const rowIsService = row?.type === 'service' || !!row?.service_listing_id;
+            if (rowId !== itemId || rowIsService !== isServiceItem) return row;
+            return { ...row, is_wishlisted: wishlisted, wishlist_count: wishCount };
+          }),
+        );
+        setSheetItem((prev: any) => {
+          if (!prev) return prev;
+          const prevId = String(prev?.service_listing_id || prev?.product_id || prev?.id || '');
+          const prevIsService = prev?.type === 'service' || !!prev?.service_listing_id;
+          if (prevId !== itemId || prevIsService !== isServiceItem) return prev;
+          return { ...prev, is_wishlisted: wishlisted, wishlist_count: wishCount };
+        });
+      };
+      const optimisticWishCount = Math.max(0, Number(target?.wishlist_count || 0) + (nextWishlisted ? 1 : -1));
+      applyLocalState(nextWishlisted, optimisticWishCount);
+
+      try {
+        if (isServiceItem) {
+          const { data } = await supabase
+            .from('service_wishlist')
+            .select('id')
+            .eq('user_id', viewerId)
+            .eq('service_listing_id', itemId)
+            .maybeSingle();
+          if (data?.id) await supabase.from('service_wishlist').delete().eq('id', data.id);
+          else await supabase.from('service_wishlist').insert({ user_id: viewerId, service_listing_id: itemId });
+
+          const [{ count }, { data: wishRow }] = await Promise.all([
+            supabase
+              .from('service_wishlist')
+              .select('id', { count: 'exact', head: true })
+              .eq('service_listing_id', itemId),
+            supabase
+              .from('service_wishlist')
+              .select('id')
+              .eq('service_listing_id', itemId)
+              .eq('user_id', viewerId)
+              .maybeSingle(),
+          ]);
+          applyLocalState(Boolean(wishRow), Number(count || 0));
+        } else {
+          const { data } = await supabase
+            .from('wishlist')
+            .select('id')
+            .eq('user_id', viewerId)
+            .eq('product_id', itemId)
+            .maybeSingle();
+          if (data?.id) await supabase.from('wishlist').delete().eq('id', data.id);
+          else await supabase.from('wishlist').insert({ user_id: viewerId, product_id: itemId });
+
+          const [{ count }, { data: wishRow }] = await Promise.all([
+            supabase.from('wishlist').select('id', { count: 'exact', head: true }).eq('product_id', itemId),
+            supabase
+              .from('wishlist')
+              .select('id')
+              .eq('product_id', itemId)
+              .eq('user_id', viewerId)
+              .maybeSingle(),
+          ]);
+          applyLocalState(Boolean(wishRow), Number(count || 0));
+        }
+      } catch {
+        applyLocalState(wasWishlisted, Number(target?.wishlist_count || 0));
+      } finally {
+        pendingEngagementRef.current.delete(guardKey);
+      }
+    },
+    [viewerId],
+  );
   const handleCategorySelect = (value: string) => {
     setActiveCategory(value);
     if (surface !== 'home') return;
@@ -205,16 +420,26 @@ export default function ClientExploreWrapper({
     else if (decoded.kind === 'services') params.set('category', decoded.slug);
     else if (decoded.kind === 'servicesAny') params.set('category', 'services');
     else params.delete('category');
-    router.replace(`/explore${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false });
+    router.replace(`${categoryBasePath}${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false });
   };
 
   useEffect(() => {
     let active = true;
-    supabase.auth.getUser().then(({ data }) => {
-      if (!active) return;
-      setViewerId(data.user?.id ?? null);
-      setViewerResolved(true);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        if (!active) return;
+        setViewerId(data.session?.user?.id ?? null);
+      })
+      .catch(() => {
+        if (!active) return;
+        setViewerId(null);
+      })
+      .finally(() => {
+        if (!active) return;
+        // Never block explore surfaces on auth lock contention.
+        setViewerResolved(true);
+      });
     supabase
       .from('feature_flags')
       .select('enabled')
@@ -286,17 +511,59 @@ export default function ClientExploreWrapper({
     refreshSeedRef.current = Math.random().toString(36).slice(2);
   }, [surface, activeCategory, query, isFlashMode]);
 
+  /** Reel rows use `reels.id` (uuid) as `item.id` — never treat that as `product_id` for likes. */
+  const productIdForFeedItem = (item: any, isService: boolean) => {
+    if (isService) return null;
+    if (item?.product_id) return item.product_id;
+    const isReelEntity = Boolean(item?.short_code) || Boolean(item?.reel_id);
+    if (isReelEntity) return null;
+    return item?.id ?? null;
+  };
+
   const normalizeFeedItem = (item: any, fallbackType: 'product' | 'service' = 'product') => {
+    const creatorFromRaw =
+      item?.creator && typeof item.creator === 'object'
+        ? item.creator
+        : {
+            id: item?.creator_id || item?.creator?.id || null,
+            display_name: item?.creator_display_name || null,
+            slug: item?.creator_slug || null,
+            logo_url: item?.creator_logo_url || null,
+            subscription_plan: item?.creator_subscription_plan || null,
+          };
+    const isSpotlightFeedRpc =
+      Boolean(item?.is_spotlight) ||
+      Boolean(item?.spotlight_post_id) ||
+      (item?.source_kind != null && String(item.source_kind).trim() !== '');
+    const playbackUrl = item?.video_url || item?.video_url_720 || item?.media_url || null;
+    const spotlightExtras =
+      isSpotlightFeedRpc
+        ? {
+            is_spotlight: true as const,
+            spotlight_post_id: item?.spotlight_post_id || item?.id,
+            ...(playbackUrl ? { video_url: item?.video_url || item?.video_url_720 || playbackUrl } : {}),
+          }
+        : {};
     if (item?.seller) {
+      const isSvc = item?.type === 'service' || !!item?.service_listing_id;
       return {
         ...item,
-        product_id: item?.product_id ?? (item?.type === 'service' || item?.service_listing_id ? null : item?.id),
+        product_id: isSvc ? null : productIdForFeedItem(item, false),
         service_listing_id: item?.service_listing_id ?? (item?.type === 'service' ? item?.id : null),
         views_count: Number(item?.views_count || 0),
         seller: {
           ...item.seller,
           logo_url: normalizeWebMediaUrl(item.seller.logo_url) || null,
         },
+        creator:
+          creatorFromRaw && (creatorFromRaw.id || creatorFromRaw.slug || creatorFromRaw.display_name)
+            ? {
+                ...creatorFromRaw,
+                id: creatorFromRaw.id || item?.creator_id || item?.creator?.id || null,
+                logo_url: normalizeWebMediaUrl(creatorFromRaw.logo_url) || null,
+              }
+            : item?.creator || null,
+        ...spotlightExtras,
       };
     }
     const isService = item?.type === 'service' || !!item?.service_listing_id || item?.source_kind === 'service';
@@ -304,7 +571,7 @@ export default function ClientExploreWrapper({
       ...item,
       id: item?.id,
       type: isService ? 'service' : fallbackType,
-      product_id: item?.product_id ?? (isService ? null : item?.id),
+      product_id: isService ? null : productIdForFeedItem(item, false),
       service_listing_id: item?.service_listing_id ?? (isService ? item?.id : null),
       name: item?.name || item?.product_name || item?.title || item?.caption || 'Item',
       description: item?.description || item?.caption || '',
@@ -332,6 +599,15 @@ export default function ClientExploreWrapper({
         loyalty_percentage: item?.seller_loyalty_percentage,
         category: item?.seller_category,
       },
+      creator:
+        creatorFromRaw && (creatorFromRaw.id || creatorFromRaw.slug || creatorFromRaw.display_name)
+          ? {
+              ...creatorFromRaw,
+              id: creatorFromRaw.id || item?.creator_id || item?.creator?.id || null,
+              logo_url: normalizeWebMediaUrl(creatorFromRaw.logo_url) || null,
+            }
+          : null,
+      ...spotlightExtras,
     };
   };
 
@@ -352,6 +628,20 @@ export default function ClientExploreWrapper({
     return data.map((item) => normalizeFeedItem(item));
   };
 
+  const isReelLikeRow = (row: any) => {
+    if (!row) return false;
+    return Boolean(
+      row?.video_url ||
+        row?.video_url_720 ||
+        row?.media_url ||
+        row?.thumbnail_url ||
+        row?.drawing_overlay_url ||
+        row?.short_code ||
+        row?.reel_id ||
+        row?.source_kind,
+    );
+  };
+
   const resolveServiceMedia = (raw: any): string[] => {
     if (!raw) return [];
     if (Array.isArray(raw)) {
@@ -366,12 +656,21 @@ export default function ClientExploreWrapper({
 
   const enrichEngagement = async (rows: any[]) => {
     if (!rows.length) return rows;
-    const resolveProductId = (row: any) => String(row?.product_id || row?.id || '');
+    const spotlightRows = rows.filter((row: any) => Boolean(row?.is_spotlight || row?.spotlight_post_id || row?.source_kind));
+    const resolveProductId = (row: any) => {
+      if (row?.product_id) return String(row.product_id);
+      const isReelEntity = Boolean(row?.short_code) || Boolean(row?.reel_id);
+      if (isReelEntity) return '';
+      return String(row?.id || '');
+    };
     const resolveServiceId = (row: any) => String(row?.service_listing_id || row?.id || '');
-    const productRows = rows.filter((row: any) => (row?.type || 'product') !== 'service' && !row?.service_listing_id);
+    const productRows = rows.filter(
+      (row: any) => !(row?.is_spotlight || row?.spotlight_post_id || row?.source_kind) && (row?.type || 'product') !== 'service' && !row?.service_listing_id,
+    );
     const serviceRows = rows.filter((row: any) => row?.type === 'service' || !!row?.service_listing_id);
     const productIds = Array.from(new Set(productRows.map((p: any) => resolveProductId(p)).filter(Boolean)));
     const serviceIds = Array.from(new Set(serviceRows.map((s: any) => resolveServiceId(s)).filter(Boolean)));
+    const spotlightIds = Array.from(new Set(spotlightRows.map((s: any) => String(s?.spotlight_post_id || s?.id || '')).filter(Boolean)));
 
     const [
       productLikesRows,
@@ -384,6 +683,8 @@ export default function ClientExploreWrapper({
       serviceWishlistRows,
       serviceLikedRows,
       serviceWishRows,
+      spotlightLikesRows,
+      spotlightCommentsRows,
     ] = await Promise.all([
       productIds.length
         ? supabase.from('product_likes').select('product_id,user_id,created_at').in('product_id', productIds).order('created_at', { ascending: false })
@@ -415,6 +716,12 @@ export default function ClientExploreWrapper({
       viewerId && serviceIds.length
         ? supabase.from('service_wishlist').select('service_listing_id').eq('user_id', viewerId).in('service_listing_id', serviceIds)
         : Promise.resolve({ data: [] as any[] }),
+      spotlightIds.length
+        ? supabase.from('spotlight_likes').select('spotlight_post_id,user_id').in('spotlight_post_id', spotlightIds)
+        : Promise.resolve({ data: [] as any[] }),
+      spotlightIds.length
+        ? supabase.from('spotlight_comments').select('spotlight_post_id,is_deleted').in('spotlight_post_id', spotlightIds)
+        : Promise.resolve({ data: [] as any[] }),
     ]);
 
     const productLikeCounts = new Map<string, number>();
@@ -434,8 +741,27 @@ export default function ClientExploreWrapper({
     for (const row of serviceWishlistRows.data || []) serviceWishlistCounts.set(row.service_listing_id, (serviceWishlistCounts.get(row.service_listing_id) || 0) + 1);
     const serviceLikedSet = new Set((serviceLikedRows as any).data?.map((r: any) => r.service_listing_id) || []);
     const serviceWishSet = new Set((serviceWishRows as any).data?.map((r: any) => r.service_listing_id) || []);
+    const spotlightLikeCounts = new Map<string, number>();
+    const spotlightCommentCounts = new Map<string, number>();
+    for (const row of spotlightLikesRows.data || []) {
+      spotlightLikeCounts.set(row.spotlight_post_id, (spotlightLikeCounts.get(row.spotlight_post_id) || 0) + 1);
+    }
+    for (const row of spotlightCommentsRows.data || []) {
+      if (row.is_deleted) continue;
+      spotlightCommentCounts.set(row.spotlight_post_id, (spotlightCommentCounts.get(row.spotlight_post_id) || 0) + 1);
+    }
 
     return rows.map((row: any) => {
+      const spotlightId = String(row?.spotlight_post_id || row?.id || '');
+      if (spotlightId && (row?.is_spotlight || row?.spotlight_post_id || row?.source_kind)) {
+        return {
+          ...row,
+          likes_count: spotlightLikeCounts.get(spotlightId) ?? Number(row.likes_count || 0),
+          comments_count: spotlightCommentCounts.get(spotlightId) ?? Number(row.comments_count ?? row.comment_count ?? 0),
+          comment_count: spotlightCommentCounts.get(spotlightId) ?? Number(row.comment_count ?? row.comments_count ?? 0),
+          wishlist_count: 0,
+        };
+      }
       const isService = row?.type === 'service' || !!row?.service_listing_id;
       const id = isService ? resolveServiceId(row) : resolveProductId(row);
       if (isService) {
@@ -461,113 +787,155 @@ export default function ClientExploreWrapper({
     });
   };
 
-  const loadExploreBackupRows = async (limit = 30) => {
-    const [reelsRes, productsRes, servicesRes] = await Promise.all([
-      supabase
-        .from('reels')
-        .select(`
-          id, caption, video_url, thumbnail_url, product_id, service_listing_id, seller_id, created_at,
-          seller:profiles!seller_id(id, display_name, slug, logo_url, is_verified, subscription_plan, loyalty_enabled, loyalty_percentage, location_city, category),
-          product:products!product_id(id, name, price, currency_code, image_urls, is_flash_drop, flash_price, flash_end_time, stock_quantity, is_active),
-          service:service_listings!service_listing_id(id, title, hero_price_min, currency_code, media, is_active)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(limit),
-      supabase
-        .from('products')
-        .select(`*, seller:profiles ( id, display_name, slug, logo_url, is_verified, subscription_plan, loyalty_enabled, loyalty_percentage, location_city, category )`)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(limit),
-      supabase
-        .from('service_listings')
-        .select(`
-          id, title, description, hero_price_min, currency_code, media, service_category, seller_id,
-          seller:profiles (
-            id, display_name, slug, logo_url, is_verified, subscription_plan, loyalty_enabled, loyalty_percentage, location_city, category
-          )
-        `)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(limit),
+  const loadExploreBackupRows = async (
+    limit = 30,
+    opts?: { forYouOnly?: boolean; viewerId?: string | null },
+  ) => {
+    const forYouOnly = Boolean(opts?.forYouOnly);
+    const backupViewerId = String(opts?.viewerId || '').trim();
+    let followedSellerIds: string[] | null = null;
+    if (forYouOnly) {
+      if (!backupViewerId) return [];
+      const { data: follows } = await supabase
+        .from('follows')
+        .select('following_id')
+        .eq('follower_id', backupViewerId);
+      followedSellerIds = (follows || []).map((row: any) => String(row?.following_id || '').trim()).filter(Boolean);
+      if (followedSellerIds.length === 0) return [];
+    }
+
+    let reelQuery = supabase
+      .from('reels')
+      .select('id,caption,video_url,thumbnail_url,product_id,service_listing_id,seller_id,created_at,short_code')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (followedSellerIds && followedSellerIds.length > 0) {
+      reelQuery = reelQuery.in('seller_id', followedSellerIds);
+    }
+    const { data: reelRowsRaw } = await reelQuery;
+    const reelRows = reelRowsRaw || [];
+    if (!reelRows.length) return [];
+
+    const sellerIds = Array.from(new Set(reelRows.map((r: any) => String(r.seller_id || '')).filter(Boolean)));
+    const productIds = Array.from(new Set(reelRows.map((r: any) => String(r.product_id || '')).filter(Boolean)));
+    const serviceIds = Array.from(new Set(reelRows.map((r: any) => String(r.service_listing_id || '')).filter(Boolean)));
+
+    const [sellerRes, productRes, serviceRes] = await Promise.all([
+      sellerIds.length
+        ? supabase
+            .from('profiles')
+            .select('id,display_name,slug,logo_url,is_verified,subscription_plan,loyalty_enabled,loyalty_percentage,location_city,category')
+            .in('id', sellerIds)
+        : Promise.resolve({ data: [] as any[] }),
+      productIds.length
+        ? supabase
+            .from('products')
+            .select('id,slug,name,price,currency_code,image_urls,is_flash_drop,flash_price,flash_end_time,stock_quantity')
+            .in('id', productIds)
+        : Promise.resolve({ data: [] as any[] }),
+      serviceIds.length
+        ? supabase
+            .from('service_listings')
+            .select('id,slug,title,hero_price_min,currency_code,media')
+            .in('id', serviceIds)
+        : Promise.resolve({ data: [] as any[] }),
     ]);
 
-    const reelRows = (reelsRes.data || [])
-      .filter((r: any) => {
-        const hasProduct = !!r.product_id;
-        const hasService = !!r.service_listing_id;
-        if (hasProduct) return Boolean(r.product?.is_active);
-        if (hasService) return Boolean(r.service?.is_active);
-        return true;
-      })
-      .map((r: any) =>
-        normalizeFeedItem(
-          {
-            id: r.id,
-            type: r.service_listing_id ? 'service' : 'product',
-            product_id: r.product_id || null,
-            service_listing_id: r.service_listing_id || null,
-            name: r.service_listing_id ? String(r.service?.title || 'Service') : String(r.product?.name || 'Product'),
-            description: r.caption || '',
-            price: r.service_listing_id ? Number(r.service?.hero_price_min || 0) / 100 : Number(r.product?.price || 0),
-            currency_code: r.service_listing_id ? (r.service?.currency_code || 'NGN') : (r.product?.currency_code || 'NGN'),
-            image_urls: r.service_listing_id ? resolveServiceMedia(r.service?.media) : (r.product?.image_urls || [r.thumbnail_url].filter(Boolean)),
-            video_url: r.video_url || null,
-            is_flash_drop: r.product?.is_flash_drop || false,
-            flash_price: r.product?.flash_price || null,
-            flash_end_time: r.product?.flash_end_time || null,
-            stock_quantity: r.service_listing_id ? 999 : Number(r.product?.stock_quantity ?? 999),
-            likes_count: 0,
-            comment_count: 0,
-            comments_count: 0,
-            wishlist_count: 0,
-            seller: r.seller,
-            seller_id: r.seller_id,
-          },
-          r.service_listing_id ? 'service' : 'product',
-        ),
-      );
+    const sellerMap = new Map((sellerRes.data || []).map((row: any) => [String(row.id), row]));
+    const productMap = new Map((productRes.data || []).map((row: any) => [String(row.id), row]));
+    const serviceMap = new Map((serviceRes.data || []).map((row: any) => [String(row.id), row]));
 
-    const productRows = (productsRes.data || []).map((item: any) => normalizeFeedItem(item, 'product'));
-    const serviceRows = (servicesRes.data || []).map((s: any) =>
-      normalizeFeedItem(
+    const mapped = reelRows.map((r: any) => {
+      const product = r.product_id ? productMap.get(String(r.product_id)) : null;
+      const service = r.service_listing_id ? serviceMap.get(String(r.service_listing_id)) : null;
+      const seller = sellerMap.get(String(r.seller_id || '')) || null;
+      const isService = Boolean(r.service_listing_id);
+      return normalizeFeedItem(
         {
-          id: s.id,
-          service_listing_id: s.id,
-          slug: null,
-          type: 'service',
-          name: String(s.title || 'Service'),
-          title: String(s.title || 'Service'),
-          description: s.description || '',
-          price: Number(s.hero_price_min || 0) / 100,
-          currency_code: s.currency_code || 'NGN',
-          image_urls: resolveServiceMedia(s.media),
+          id: r.id,
+          type: isService ? 'service' : 'product',
+          product_id: r.product_id || null,
+          service_listing_id: r.service_listing_id || null,
+          slug: isService ? (service?.slug || null) : (product?.slug || null),
+          service_slug: isService ? (service?.slug || null) : null,
+          name: isService ? String(service?.title || 'Service') : String(product?.name || 'Product'),
+          description: r.caption || '',
+          price: isService ? Number(service?.hero_price_min || 0) / 100 : Number(product?.price || 0),
+          currency_code: isService ? (service?.currency_code || 'NGN') : (product?.currency_code || 'NGN'),
+          image_urls: isService ? resolveServiceMedia(service?.media) : (product?.image_urls || [r.thumbnail_url].filter(Boolean)),
+          video_url: r.video_url || null,
+          thumbnail_url: r.thumbnail_url || null,
+          short_code: r.short_code || null,
+          is_flash_drop: product?.is_flash_drop || false,
+          flash_price: product?.flash_price || null,
+          flash_end_time: product?.flash_end_time || null,
+          stock_quantity: isService ? 999 : Number(product?.stock_quantity ?? 999),
           likes_count: 0,
           comment_count: 0,
           comments_count: 0,
           wishlist_count: 0,
-          is_liked: false,
-          is_wishlisted: false,
-          stock_quantity: 999,
-          seller_id: s.seller_id,
-          seller: s.seller,
-          service_distance_label:
-            s.seller?.location_city && s.seller?.location_state
-              ? `${s.seller.location_city}, ${s.seller.location_state}`
-              : s.seller?.location_city || s.seller?.location_state || null,
-          category: s.service_category || 'services',
-          category_name: s.service_category || 'services',
+          seller,
+          seller_id: r.seller_id,
         },
-        'service',
-      ),
-    );
+        isService ? 'service' : 'product',
+      );
+    });
 
-    return withStableUniqueKeys([...reelRows, ...productRows, ...serviceRows].slice(0, limit));
+    return withStableUniqueKeys(mapped.slice(0, limit));
+  };
+
+  const hydrateSpotlightProfiles = async (rows: any[]) => {
+    const spotlightRows = rows.filter((row: any) => Boolean(row?.is_spotlight || row?.spotlight_post_id || row?.source_kind));
+    if (!spotlightRows.length) return rows;
+    const creatorIds = Array.from(new Set(spotlightRows.map((r: any) => String(r?.creator?.id || r?.creator_id || '')).filter(Boolean)));
+    const sellerIds = Array.from(new Set(spotlightRows.map((r: any) => String(r?.seller?.id || r?.seller_id || '')).filter(Boolean)));
+    const profileIds = Array.from(new Set([...creatorIds, ...sellerIds]));
+    if (!profileIds.length) return rows;
+
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id,display_name,slug,logo_url,subscription_plan,loyalty_enabled,loyalty_percentage')
+      .in('id', profileIds);
+    const profileMap = new Map((profiles || []).map((p: any) => [String(p.id), p]));
+
+    return rows.map((row: any) => {
+      if (!(row?.is_spotlight || row?.spotlight_post_id || row?.source_kind)) return row;
+      const creatorId = String(row?.creator?.id || row?.creator_id || '');
+      const sellerId = String(row?.seller?.id || row?.seller_id || '');
+      const creatorProfile = creatorId ? profileMap.get(creatorId) : null;
+      const sellerProfile = sellerId ? profileMap.get(sellerId) : null;
+      return {
+        ...row,
+        creator: {
+          ...(row?.creator || {}),
+          id: creatorId || row?.creator?.id || null,
+          display_name: creatorProfile?.display_name || row?.creator?.display_name || row?.creator_display_name || null,
+          slug: creatorProfile?.slug || row?.creator?.slug || row?.creator_slug || null,
+          logo_url: normalizeWebMediaUrl(creatorProfile?.logo_url || row?.creator?.logo_url || row?.creator_logo_url) || null,
+          subscription_plan: creatorProfile?.subscription_plan || row?.creator?.subscription_plan || row?.creator_subscription_plan || null,
+        },
+        seller: {
+          ...(row?.seller || {}),
+          id: sellerId || row?.seller?.id || null,
+          display_name: sellerProfile?.display_name || row?.seller?.display_name || row?.seller_display_name || 'Store',
+          slug: sellerProfile?.slug || row?.seller?.slug || row?.seller_slug || '',
+          logo_url: normalizeWebMediaUrl(sellerProfile?.logo_url || row?.seller?.logo_url || row?.seller_logo_url) || null,
+          subscription_plan: sellerProfile?.subscription_plan || row?.seller?.subscription_plan || row?.seller_subscription_plan || null,
+          loyalty_enabled: sellerProfile?.loyalty_enabled ?? row?.seller?.loyalty_enabled ?? row?.seller_loyalty_enabled ?? false,
+          loyalty_percentage: Number(sellerProfile?.loyalty_percentage ?? row?.seller?.loyalty_percentage ?? row?.seller_loyalty_percentage ?? 0),
+        },
+      };
+    });
   };
 
   useEffect(() => {
     async function fetchProducts() {
       if (surface !== 'home' && !viewerResolved) return;
+      if (surface === 'explore_for_you' && !viewerId) {
+        setProducts([]);
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setIsRecovering(false);
       try {
@@ -616,7 +984,7 @@ export default function ClientExploreWrapper({
             supabase,
             userId,
             seed,
-            limit: 50,
+            limit: embedded && surface === 'home' ? 28 : 50,
             locationCountry: 'NG',
           });
           rpcData = home.rows;
@@ -668,7 +1036,10 @@ export default function ClientExploreWrapper({
 
         if ((surface === 'explore_discovery' || surface === 'explore_for_you') && (rpcError || rawData.length === 0)) {
           setIsRecovering(true);
-          const backup = await loadExploreBackupRows(30);
+          const backup = await loadExploreBackupRows(30, {
+            forYouOnly: surface === 'explore_for_you',
+            viewerId,
+          });
           if (backup.length > 0) {
             rawData = backup;
             rpcError = null;
@@ -732,7 +1103,7 @@ export default function ClientExploreWrapper({
           const { data: serviceRows } = await supabase
             .from('service_listings')
             .select(`
-              id, title, description, hero_price_min, currency_code, media, service_category, seller_id,
+              id, slug, title, description, hero_price_min, currency_code, media, service_category, seller_id,
               seller:profiles (
                 id, display_name, slug, logo_url, is_verified, subscription_plan, loyalty_enabled, loyalty_percentage, location_city, category
               )
@@ -746,7 +1117,8 @@ export default function ClientExploreWrapper({
               {
                 id: s.id,
                 service_listing_id: s.id,
-                slug: null,
+                slug: s.slug || null,
+                service_slug: s.slug || null,
                 type: 'service',
                 name: String(s.title || 'Service'),
                 title: String(s.title || 'Service'),
@@ -1013,8 +1385,8 @@ export default function ClientExploreWrapper({
           setIsRecovering(true);
           const backupRows = await loadExploreBackupRows(30);
           if (backupRows.length > 0) {
-            const videoOnly = backupRows.filter((r: any) => Boolean(r.video_url || r.video_url_720 || r.media_url));
-            const enrichedBackup = await enrichEngagement(videoOnly.length ? videoOnly : backupRows);
+            const reelLikeBackup = backupRows.filter((r: any) => isReelLikeRow(r));
+            const enrichedBackup = await enrichEngagement(reelLikeBackup.length ? reelLikeBackup : backupRows);
             setProducts(enrichedBackup);
             setIsRecovering(false);
             return;
@@ -1022,9 +1394,17 @@ export default function ClientExploreWrapper({
           setIsRecovering(false);
         }
 
-        if (surface === 'explore_discovery') {
-          const videoOnly = finalData.filter((r: any) => Boolean(r.video_url || r.video_url_720 || r.media_url));
-          finalData = videoOnly.length ? videoOnly : finalData;
+        if (surface === 'explore_discovery' || surface === 'explore_for_you') {
+          let reelLikeRows = finalData.filter((r: any) => isReelLikeRow(r));
+          if (reelLikeRows.length === 0) {
+            const backupRows = await loadExploreBackupRows(30, {
+              forYouOnly: surface === 'explore_for_you',
+              viewerId,
+            });
+            const backupReelLikeRows = backupRows.filter((r: any) => isReelLikeRow(r));
+            reelLikeRows = backupReelLikeRows.length ? backupReelLikeRows : backupRows;
+          }
+          finalData = reelLikeRows;
         }
         if ((surface === 'explore_discovery' || surface === 'explore_for_you' || surface === 'spotlight') && !cleanSearch && decodedCategory.kind === 'all') {
           finalData = finalData
@@ -1034,6 +1414,41 @@ export default function ClientExploreWrapper({
         }
 
         finalData = await enrichEngagement(finalData);
+        finalData = await hydrateSpotlightProfiles(finalData);
+        finalData = finalData.map((row: any) => {
+          const isService = row?.type === 'service' || !!row?.service_listing_id;
+          if (!isService) return row;
+          const sellerId = String(row?.seller?.id || row?.seller_id || '');
+          const isOwn = !!viewerId && sellerId === String(viewerId);
+          const kmLabel =
+            typeof row?.distance_km === 'number'
+              ? `${Number(row.distance_km).toFixed(1)} km away`
+              : typeof row?.service_distance_km === 'number'
+                ? `${Number(row.service_distance_km).toFixed(1)} km away`
+                : null;
+          const fallbackLocation =
+            row?.seller?.location_city && row?.seller?.location_state
+              ? `${row.seller.location_city}, ${row.seller.location_state}`
+              : row?.seller?.location_city || row?.seller?.location_state || null;
+          const deliveryBadge =
+            row?.service_delivery_badge ||
+            (row?.delivery_type === 'online'
+              ? 'ONLINE'
+              : row?.delivery_type === 'in_person' && row?.location_type === 'at_my_place'
+                ? 'STUDIO ONLY'
+                : row?.delivery_type === 'in_person' && row?.location_type === 'i_travel'
+                  ? 'HOME SERVICE'
+                  : row?.delivery_type === 'in_person' && row?.location_type === 'both'
+                    ? 'HOME & STUDIO'
+                    : row?.delivery_type === 'both'
+                      ? 'HOME & STUDIO'
+                      : null);
+          return {
+            ...row,
+            service_distance_label: isOwn ? 'Your listing' : row?.service_distance_label || kmLabel || fallbackLocation || null,
+            service_delivery_badge: deliveryBadge,
+          };
+        });
         setProducts(withStableUniqueKeys(finalData.slice(0, 30)));
       } catch (err) {
           console.error("Fetch error:", err);
@@ -1042,9 +1457,13 @@ export default function ClientExploreWrapper({
       }
     }
 
-    const timer = setTimeout(() => { fetchProducts(); }, 500);
+    const debounceMs =
+      embedded && surface === 'home' && !query.trim() ? 0 : 320;
+    const timer = setTimeout(() => {
+      void fetchProducts();
+    }, debounceMs);
     return () => clearTimeout(timer);
-  }, [query, activeCategorySlug, isFlashMode, surface, viewerId, viewerResolved, exploreRankV2Enabled]);
+  }, [query, activeCategorySlug, isFlashMode, surface, viewerId, viewerResolved, exploreRankV2Enabled, embedded]);
 
   useEffect(() => {
     if (surface !== 'home') return;
@@ -1141,31 +1560,37 @@ export default function ClientExploreWrapper({
             
             <div className="flex items-center justify-between mb-4 mt-2">
                <div className="flex items-center gap-2">
-                  <h1 className="text-xl font-black text-slate-900 tracking-tighter">STORELINK</h1>
-                  <div className="px-1.5 py-0.5 rounded border border-slate-200 bg-slate-50">
-                     <span className="text-[9px] font-black text-slate-400">NG</span>
+                  <h1 className="text-xl font-black text-(--foreground) tracking-tighter">STORELINK</h1>
+                  <div className="px-1.5 py-0.5 rounded border border-(--border) bg-(--surface)">
+                     <span className="text-[9px] font-black text-(--muted)">NG</span>
                   </div>
                </div>
             </div>
 
-            <div className={`relative flex items-center h-[52px] rounded-2xl px-4 transition-all duration-300 ${isFlashMode ? 'bg-white border-2 border-red-500 shadow-md shadow-red-100' : 'bg-slate-100 border-2 border-transparent'}`}>
-               <Search size={18} className={`mr-3 ${query.length > 0 ? 'text-slate-900' : 'text-slate-400'}`} strokeWidth={3} />
+            <div
+              className={`relative flex items-center h-[52px] rounded-2xl px-4 transition-all duration-300 ${
+                isFlashMode
+                  ? 'bg-(--card) border-2 border-red-500 shadow-md dark:shadow-red-900/20'
+                  : 'bg-(--surface) border-2 border-transparent'
+              }`}
+            >
+               <Search size={18} className={`mr-3 ${query.length > 0 ? 'text-(--foreground)' : 'text-(--muted)'}`} strokeWidth={3} />
                <input 
                  type="text" 
                  placeholder={isFlashMode ? "Hurry! Deals ending soon..." : "Search shops or items..."} 
                  value={query}
                  onChange={(e) => setQuery(e.target.value)}
-                 className="flex-1 bg-transparent text-sm font-bold text-slate-900 placeholder:text-slate-400 outline-none h-full"
+                 className="flex-1 bg-transparent text-sm font-bold text-(--foreground) placeholder:text-(--muted) outline-none h-full"
                />
                {query.length > 0 && (
-                  <button onClick={() => setQuery('')} className="w-5 h-5 rounded-full bg-slate-900 flex items-center justify-center mr-3 hover:bg-slate-700">
-                     <X size={10} className="text-white" strokeWidth={4} />
+                  <button onClick={() => setQuery('')} className="w-5 h-5 rounded-full bg-(--foreground) flex items-center justify-center mr-3 hover:opacity-90">
+                     <X size={10} className="text-(--background)" strokeWidth={4} />
                   </button>
                )}
-               <div className="h-6 w-[1.5px] bg-slate-200 mr-3" />
+               <div className="h-6 w-[1.5px] bg-(--border) mr-3" />
                <button 
                  onClick={() => setIsFlashMode(!isFlashMode)}
-                 className={`p-1.5 rounded-lg transition-colors ${isFlashMode ? 'bg-red-500 text-white shadow-sm' : 'bg-transparent text-amber-500 hover:bg-amber-50'}`}
+                 className={`p-1.5 rounded-lg transition-colors ${isFlashMode ? 'bg-red-500 text-white shadow-sm' : 'bg-transparent text-amber-500 hover:bg-amber-100 dark:hover:bg-amber-900/30'}`}
                >
                   <Zap size={18} fill={isFlashMode ? "currentColor" : "transparent"} strokeWidth={2.5} />
                </button>
@@ -1183,12 +1608,12 @@ export default function ClientExploreWrapper({
                          const params = new URLSearchParams(urlSearchParams);
                          if (cat.slug === 'all') params.delete('category');
                          else params.set('category', cat.slug);
-                         router.push(`/explore?${params.toString()}`, { scroll: false });
+                        router.push(`${categoryBasePath}?${params.toString()}`, { scroll: false });
                        }}
                        className={`flex items-center gap-2 px-4 h-10 rounded-2xl border-[1.5px] whitespace-nowrap transition-all active:scale-95 ${
                          isActive 
-                         ? 'bg-slate-900 border-slate-900 text-white shadow-md' 
-                         : 'bg-white border-slate-200 text-slate-900 hover:bg-slate-50'
+                         ? 'bg-(--foreground) border-(--foreground) text-(--background) shadow-md' 
+                         : 'bg-(--card) border-(--border) text-(--foreground) hover:bg-(--surface)'
                        }`}
                      >
                         <Icon size={14} strokeWidth={isActive ? 2.5 : 2} />
@@ -1205,7 +1630,7 @@ export default function ClientExploreWrapper({
 
       {embedded && (
         <div className="max-w-3xl mx-auto px-2 sm:px-4 pb-2">
-          {surface === 'home' ? <StoryRowWeb seed={refreshSeedRef.current} /> : null}
+          {surface === 'home' ? <StoryRowWebLazy seed={refreshSeedRef.current} /> : null}
           <div className="mt-2 flex items-center gap-2">
             <div className="flex-1">
               <SearchProtocolWeb
@@ -1243,8 +1668,28 @@ export default function ClientExploreWrapper({
       {/* 2. FEED CONTAINER */}
       <div className={`max-w-md mx-auto ${embedded ? 'pt-1' : 'pt-2 md:pt-6'} pb-24 ${embedded ? 'snap-y snap-mandatory' : ''}`}>
          {loading ? (
-            <div className="px-3 md:px-4 space-y-4">
-               {[1, 2].map((i) => (
+            shouldRenderCards ? (
+              <div className="px-3 md:px-4 space-y-4">
+                {[1, 2].map((i) => (
+                  <div key={i} className="animate-pulse rounded-3xl border border-(--border) bg-(--card) p-4">
+                    <div className="mb-3 flex items-center gap-3">
+                      <div className="h-9 w-9 rounded-xl bg-(--surface)" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-3 w-32 rounded bg-(--surface)" />
+                        <div className="h-2.5 w-20 rounded bg-(--surface)" />
+                      </div>
+                    </div>
+                    <div className="h-72 w-full rounded-2xl bg-(--surface)" />
+                    <div className="mt-3 space-y-2">
+                      <div className="h-3 w-2/3 rounded bg-(--surface)" />
+                      <div className="h-3 w-1/2 rounded bg-(--surface)" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="px-3 md:px-4 space-y-4">
+                {[1, 2].map((i) => (
                   <div key={i} className="animate-pulse">
                     <div className="relative mx-auto w-full max-w-md overflow-hidden rounded-3xl border border-(--border) bg-black">
                       <div className="relative aspect-9/16 w-full min-h-[560px] bg-zinc-800">
@@ -1275,25 +1720,45 @@ export default function ClientExploreWrapper({
                       </div>
                     </div>
                   </div>
-               ))}
-            </div>
+                ))}
+              </div>
+            )
          ) : products.length > 0 ? (
             <div className="md:px-4">
                {products.map((item) => {
                   const key = item.__key || `${item.type || 'item'}:${item.id}`;
-                  const reelSurface = embedded;
+                  const reelSurface = embedded && !shouldRenderCards;
                   return (
                     <div
                       key={key}
-                      className={reelSurface ? 'snap-start min-h-[calc(100vh-170px)] flex items-stretch' : ''}
+                      className={`${shouldRenderCards && embedded ? 'home-feed-card-surface' : ''} ${
+                        reelSurface ? 'flex min-h-[calc(100vh-170px)] snap-start items-stretch' : ''
+                      }`.trim()}
                     >
-                      <ExploreReelCard
-                        item={item}
-                        surface={surface === 'home' ? 'explore_discovery' : surface}
-                        surfaceActive={surfaceActive}
-                        onTrap={() => setTrapOpen(true)}
-                        className={reelSurface ? 'h-full' : ''}
-                      />
+                      {shouldRenderCards ? (
+                        <WebProductCard
+                          item={item}
+                          viewerId={viewerId}
+                          onToggleLike={(it: any) => void toggleCardLike(it)}
+                          onToggleWishlist={(it: any) => void toggleCardWishlist(it)}
+                          onOpenComments={(it: any) => {
+                            setSheetItem(it);
+                            setCommentsOpen(true);
+                          }}
+                          onOpenLikes={(it: any) => {
+                            setSheetItem(it);
+                            setLikesOpen(true);
+                          }}
+                        />
+                      ) : (
+                        <ExploreReelCard
+                          item={item}
+                          surface={surface === 'home' ? 'explore_discovery' : surface}
+                          surfaceActive={surfaceActive}
+                          onTrap={() => setTrapOpen(true)}
+                          className={reelSurface ? 'h-full' : ''}
+                        />
+                      )}
                     </div>
                   );
                })}
@@ -1312,7 +1777,7 @@ export default function ClientExploreWrapper({
                      <p className="text-sm font-medium text-(--muted) mb-4">
                         There are 1,000+ more items on the app.
                      </p>
-                     <span className="flex items-center gap-2 text-xs font-black bg-white text-(--foreground) px-4 py-2 rounded-full">
+                     <span className="flex items-center gap-2 text-xs font-black border border-(--border) bg-(--card) text-(--foreground) px-4 py-2 rounded-full">
                         GET THE APP <ArrowRight size={14} />
                      </span>
                   </button>
@@ -1322,13 +1787,13 @@ export default function ClientExploreWrapper({
             </div>
          ) : (
             <div className="flex flex-col items-center justify-center py-20 px-10 text-center">
-               <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-300">
+               <div className="w-16 h-16 bg-(--surface) rounded-full flex items-center justify-center mb-4 text-(--muted)">
                   <Zap size={24} />
                </div>
-               <h3 className="text-sm font-black text-slate-900 mb-1">
+               <h3 className="text-sm font-black text-(--foreground) mb-1">
                  {emptyStateTitle}
                </h3>
-               <p className="text-xs text-slate-500">
+               <p className="text-xs text-(--muted)">
                  {emptyStateSubtext}
                </p>
             </div>
@@ -1340,6 +1805,20 @@ export default function ClientExploreWrapper({
         onClose={() => setTrapOpen(false)} 
         sellerName="StoreLink"
         trigger="view"
+      />
+      <HomeCommentsSheet
+        open={commentsOpen}
+        onClose={() => setCommentsOpen(false)}
+        item={sheetItem}
+        onChanged={() => {
+          if (!sheetItem) return;
+          void refreshCommentsForItem(sheetItem);
+        }}
+      />
+      <HomeLikesSheet
+        open={likesOpen}
+        onClose={() => setLikesOpen(false)}
+        item={sheetItem}
       />
     </div>
   );

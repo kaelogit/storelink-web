@@ -1,81 +1,19 @@
 import { createServerClient } from '@/lib/supabase';
-import { normalizeWebMediaUrl } from '@/lib/media-url';
+import { createServerClient as createServerClientWithCookies } from '@/lib/supabase-server';
 import { notFound, redirect } from 'next/navigation';
 import ClientProfileWrapper from './ClientProfileWrapper';
-import { getLocaleForCountry, getSiteNameForCountry } from '@/lib/countryMetadata';
-import { Metadata } from 'next';
+import type { Metadata } from 'next';
+import { buildProfileShareMetadata, normalizeUsername } from '@/lib/metadata/shareMetadata';
 
-/** Normalize profile path: strip @, trim, lowercase for consistent lookup. */
-export function normalizeUsername(username: string): string {
-  const raw = typeof username === 'string' ? username : '';
-  const withoutAt = raw.startsWith('@') ? raw.slice(1) : raw;
-  return withoutAt.trim().toLowerCase() || '';
-}
+export { normalizeUsername };
 
-// --- 1. DYNAMIC SEO GENERATOR ---
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
   const { username } = await params;
-  const slug = normalizeUsername(username);
-  if (!slug) return { title: 'User Not Found' };
-  const supabase = createServerClient();
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('display_name, bio, logo_url, slug, location_country_code')
-    .ilike('slug', slug)
-    .single();
-
-  if (!profile) {
-    return { title: 'User Not Found' };
-  }
-
-  const title = `${profile.display_name} (@${profile.slug}) | StoreLink`;
-  const description = profile.bio || `Shop unique items and explore the collection from ${profile.display_name} on StoreLink.`;
-  // Fallback to a generic StoreLink image if they don't have a logo
-  const image = normalizeWebMediaUrl(profile.logo_url) || '/brand/og-share.png';
-
-  return {
-    title,
-    description,
-    // This handles Facebook, WhatsApp, LinkedIn, and Discord
-    openGraph: {
-      title,
-      description,
-      url: `https://storelink.ng/@${profile.slug}`,
-      siteName: getSiteNameForCountry(profile.location_country_code),
-      images: [
-        {
-          url: image,
-          width: 800,
-          height: 800,
-          alt: profile.display_name,
-        },
-      ],
-      locale: getLocaleForCountry(profile.location_country_code),
-      type: 'profile',
-    },
-    // This handles Twitter and X
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: [image],
-      creator: '@storelink',
-    },
-    // Useful for WhatsApp/Search Engines
-    alternates: {
-      canonical: `https://storelink.ng/@${profile.slug}`,
-    },
-    // Meta tags for mobile web app look
-    appleWebApp: {
-      title: 'StoreLink',
-      statusBarStyle: 'default',
-    },
-  };
+  return buildProfileShareMetadata(username);
 }
 
 const RESERVED_SLUGS = new Set([
-  'favicon.ico', 'p', 'api', '_next', 'r', 'explore', 'download', 'admin',
+  'favicon.ico', 'p', 'api', '_next', 'r', 'sp', 'spotlight', 'explore', 'download', 'admin',
   'about-us', 'blog', 'careers', 'contact', 'community', 'help-center', 'press',
   'pricing', 'privacy', 'safety', 'terms', 'shop', 'tools',
   'opengraph-image', 'sitemap.xml', 'robots.txt',
@@ -106,7 +44,7 @@ async function getProfileData(username: string) {
   const { data: services } = await supabase
     .from('service_listings')
     .select(
-      'id, title, hero_price_min, currency_code, delivery_type, location_type, service_address, service_areas, media',
+      'id, slug, title, hero_price_min, currency_code, delivery_type, location_type, service_address, service_areas, media',
     )
     .eq('seller_id', profile.id)
     .eq('is_active', true)
@@ -135,6 +73,17 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   const canonical = (data.profile.slug || '').trim();
   if (canonical && requested !== canonical) {
     redirect(`/${canonical}`);
+  }
+
+  const supabaseAuthed = await createServerClientWithCookies();
+  const { data: auth } = await supabaseAuthed.auth.getUser();
+  const viewerId = auth?.user?.id ? String(auth.user.id) : '';
+  const profileId = data.profile?.id != null ? String(data.profile.id) : '';
+  if (viewerId && profileId && viewerId === profileId) {
+    redirect('/app/profile');
+  }
+  if (viewerId && canonical) {
+    redirect(`/app/profile/${encodeURIComponent(canonical)}`);
   }
 
   return (

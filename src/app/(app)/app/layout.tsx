@@ -1,15 +1,21 @@
 import WebAuthGate from '@/components/auth/WebAuthGate';
+import { AppToaster } from '@/components/providers/AppToaster';
 import AppTopBar from '@/components/app-shell/AppTopBar';
 import LeftRail from '@/components/app-shell/LeftRail';
 import RightRail from '@/components/app-shell/RightRail';
 import MobileBottomTabs from '@/components/app-shell/MobileBottomTabs';
 import WebFloatingCart from '@/components/cart/WebFloatingCart';
 import { AppShellProfileProvider } from '@/components/app-shell/app-shell-profile';
+import { createServerClient } from '@/lib/supabase-server';
 import type { ReactNode } from 'react';
 
-export default function AppLayerLayout({ children }: { children: ReactNode }) {
+export default async function AppLayerLayout({ children }: { children: ReactNode }) {
+  const supabase = await createServerClient();
+  const { data } = await supabase.auth.getUser();
+  const initialState = data?.user?.id ? 'authed' : 'guest';
+
   return (
-    <WebAuthGate>
+    <WebAuthGate initialState={initialState}>
       <AppShellProfileProvider>
         <div className="min-h-screen bg-(--background)">
           <AppTopBar />
@@ -19,6 +25,7 @@ export default function AppLayerLayout({ children }: { children: ReactNode }) {
             <div className="mx-auto w-full max-w-3xl">{children}</div>
           </section>
           <WebFloatingCart />
+          <AppToaster />
           <MobileBottomTabs />
         </div>
       </AppShellProfileProvider>

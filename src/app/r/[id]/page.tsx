@@ -1,77 +1,13 @@
 import { createServerClient } from '@/lib/supabase';
-import { redirect } from 'next/navigation';
-import { Metadata } from 'next';
-import { getLocaleForCountry, getSiteNameForCountry } from '@/lib/countryMetadata';
-import ClientReelWrapper from './ClientReelWrapper';
+import { createServerClient as createServerClientWithCookies } from '@/lib/supabase-server';
+import { notFound, redirect } from 'next/navigation';
+import type { Metadata } from 'next';
+import WebFeedDetailShell from '@/components/profile-web/WebFeedDetailShell';
+import { buildReelShareMetadata, getReelByParam } from '@/lib/metadata/shareMetadata';
 
-const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-/** Resolve reel by short_code (e.g. x7kp2mnq) or by id (uuid). */
-async function getReelByParam(param: string) {
-  const supabase = createServerClient();
-  const select = `
-    *,
-    seller:profiles (display_name, slug, logo_url, is_verified, location_country_code)
-  `;
-  const shortCode = (param || '').trim().toLowerCase();
-  const byShortCode = await supabase
-    .from('reels')
-    .select(select)
-    .eq('short_code', shortCode)
-    .maybeSingle();
-  if (byShortCode.data) return byShortCode.data;
-  if (UUID_REGEX.test((param || '').trim())) {
-    const byId = await supabase
-      .from('reels')
-      .select(select)
-      .eq('id', param.trim())
-      .maybeSingle();
-    if (byId.data) return byId.data;
-  }
-  return null;
-}
-
-// --- 1. DYNAMIC SEO (The Hook) ---
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
-  const reel = await getReelByParam(id);
-
-  if (!reel) return { title: 'Reel Not Found' };
-
-  const seller: any = reel.seller;
-  const sellerName = Array.isArray(seller) ? seller[0]?.display_name : seller?.display_name;
-  const sellerCountry = Array.isArray(seller) ? seller[0]?.location_country_code : seller?.location_country_code;
-  const title = `Watch ${sellerName || 'a seller'}'s video on StoreLink`;
-  const desc = reel.description || "Check out this trending product video on StoreLink.";
-  const canonicalCode = reel.short_code || reel.id;
-
-  return {
-    title,
-    description: desc,
-    openGraph: {
-      title,
-      description: desc,
-      url: `https://storelink.ng/r/${canonicalCode}`,
-      siteName: getSiteNameForCountry(sellerCountry),
-      locale: getLocaleForCountry(sellerCountry),
-      images: [
-        {
-          url: reel.thumbnail_url || 'https://storelink.ng/default-reel.png',
-          width: 720,
-          height: 1280,
-          alt: 'Video Preview',
-        },
-      ],
-      type: 'video.other',
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description: desc,
-      images: [reel.thumbnail_url || 'https://storelink.ng/default-reel.png'],
-    },
-    alternates: { canonical: `https://storelink.ng/r/${canonicalCode}` },
-  };
+  return buildReelShareMetadata(id);
 }
 
 // --- 2. THE PAGE ---
@@ -79,17 +15,82 @@ export default async function ReelPage({ params }: { params: Promise<{ id: strin
   const resolvedParams = await params;
   const reel = await getReelByParam(resolvedParams.id);
 
-  if (!reel) {
-    const requested = (resolvedParams.id || '').trim();
-    redirect(`/download?intent=${encodeURIComponent(`/r/${requested}`)}`);
+  if (!reel) return notFound();
+
+  const supabaseAuthed = await createServerClientWithCookies();
+  const { data: auth } = await supabaseAuthed.auth.getUser();
+  if (auth?.user?.id) {
+    redirect(`/app/reels/${encodeURIComponent(String(resolvedParams.id || '').trim())}`);
   }
 
-  // Prefer short_code URL when available and request was by id
-  const requested = (resolvedParams.id || '').trim();
-  const hasShortCode = reel.short_code && reel.short_code.length > 0;
-  if (hasShortCode && UUID_REGEX.test(requested)) {
-    redirect(`/r/${reel.short_code}`);
-  }
+  const supabase = createServerClient();
+  const isService = Boolean(reel?.service_listing_id);
+  const targetId = String(isService ? reel.service_listing_id : reel.product_id || '');
 
-  return <ClientReelWrapper reel={reel} />;
+  const [likesRes, commentsRes, wishlistRes] = await Promise.all([
+    isService
+      ? targetId
+        ? supabase.from('service_likes').select('id', { count: 'exact', head: true }).eq('service_listing_id', targetId)
+        : Promise.resolve({ count: 0 })
+      : targetId
+      ? supabase.from('product_likes').select('id', { count: 'exact', head: true }).eq('product_id', targetId)
+      : Promise.resolve({ count: 0 }),
+    isService
+      ? targetId
+        ? supabase.from('service_comments').select('id', { count: 'exact', head: true }).eq('service_listing_id', targetId)
+        : Promise.resolve({ count: 0 })
+      : targetId
+      ? supabase.from('product_comments').select('id', { count: 'exact', head: true }).eq('product_id', targetId)
+      : Promise.resolve({ count: 0 }),
+    isService
+      ? targetId
+        ? supabase.from('service_wishlist').select('id', { count: 'exact', head: true }).eq('service_listing_id', targetId)
+        : Promise.resolve({ count: 0 })
+      : targetId
+      ? supabase.from('wishlist').select('id', { count: 'exact', head: true }).eq('product_id', targetId)
+      : Promise.resolve({ count: 0 }),
+  ]);
+
+  const seller = Array.isArray(reel?.seller) ? reel.seller[0] : reel?.seller;
+  const media = reel?.service?.media;
+  const serviceMedia = Array.isArray(media)
+    ? media.map((m: any) => (typeof m === 'string' ? m : m?.url)).filter(Boolean)
+    : [];
+  const normalized = {
+    id: reel.id,
+    short_code: reel.short_code || null,
+    slug: isService ? reel?.service?.slug || null : reel?.product?.slug || null,
+    type: isService ? 'service' : 'product',
+    product_id: isService ? null : reel.product_id || null,
+    service_listing_id: isService ? reel.service_listing_id || null : null,
+    name: isService ? reel?.service?.title || 'Service' : reel?.product?.name || 'Product',
+    title: isService ? reel?.service?.title || 'Service' : reel?.product?.name || 'Product',
+    caption: reel.caption || '',
+    description: reel.caption || '',
+    price: isService ? Number(reel?.service?.hero_price_min || 0) / 100 : Number(reel?.product?.price || 0),
+    currency_code: isService ? reel?.service?.currency_code || 'NGN' : reel?.product?.currency_code || 'NGN',
+    image_urls: isService ? serviceMedia : reel?.product?.image_urls || [reel.thumbnail_url].filter(Boolean),
+    video_url: reel.video_url || null,
+    thumbnail_url: reel.thumbnail_url || null,
+    is_flash_drop: Boolean(reel?.product?.is_flash_drop),
+    flash_price: reel?.product?.flash_price || null,
+    flash_end_time: reel?.product?.flash_end_time || null,
+    stock_quantity: isService ? 999 : Number(reel?.product?.stock_quantity ?? 999),
+    likes_count: Number((likesRes as any).count || 0),
+    comments_count: Number((commentsRes as any).count || 0),
+    comment_count: Number((commentsRes as any).count || 0),
+    wishlist_count: Number((wishlistRes as any).count || 0),
+    views_count: Number(reel?.views_count || 0),
+    seller: {
+      id: reel?.seller_id || seller?.id || null,
+      display_name: seller?.display_name || 'Store',
+      slug: seller?.slug || '',
+      logo_url: seller?.logo_url || null,
+      subscription_plan: seller?.subscription_plan || null,
+      loyalty_enabled: seller?.loyalty_enabled || false,
+      loyalty_percentage: Number(seller?.loyalty_percentage || 0),
+    },
+  };
+  const backHref = seller?.slug ? `/${encodeURIComponent(String(seller.slug))}` : '/';
+  return <WebFeedDetailShell item={normalized} surface="explore_discovery" backHref={backHref} />;
 }

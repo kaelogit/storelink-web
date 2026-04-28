@@ -1,14 +1,13 @@
-'use client';
+import type { Metadata } from 'next';
+import { buildStoryShareMetadata } from '@/lib/metadata/shareMetadata';
+import StoryViewerPageClient from './StoryViewerPageClient';
 
-import { useParams } from 'next/navigation';
-import ClientStoryViewer from '@/components/home-index/ClientStoryViewer';
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  return buildStoryShareMetadata(id);
+}
 
-export default function AppStoryViewerPage() {
-  const params = useParams();
-  const raw = params?.id;
-  const id = typeof raw === 'string' ? raw : Array.isArray(raw) ? raw[0] : '';
-  if (!id) {
-    return <div className="p-6 text-sm text-(--muted)">Invalid story link.</div>;
-  }
-  return <ClientStoryViewer storyId={id} />;
+export default async function AppStoryViewerPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  return <StoryViewerPageClient storyId={id} />;
 }

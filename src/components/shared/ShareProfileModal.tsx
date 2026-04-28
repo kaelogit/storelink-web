@@ -6,6 +6,7 @@ import { X, Copy, Check, Share2 } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
+import { buildProfileShareUrl } from '@/lib/sharingContract';
 
 interface ShareProfileModalProps {
   isOpen: boolean;
@@ -19,7 +20,7 @@ interface ShareProfileModalProps {
 
 export default function ShareProfileModal({ isOpen, onClose, profile }: ShareProfileModalProps) {
   const [copied, setCopied] = useState(false);
-  const url = `https://storelink.ng/@${profile.slug}`;
+  const url = buildProfileShareUrl(profile.slug);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(url);

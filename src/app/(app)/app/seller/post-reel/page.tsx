@@ -445,7 +445,7 @@ export default function AppSellerPostReelPage() {
       title="Reel published"
       description="Your reel is live on your seller feed and discovery surfaces."
       tone="emerald"
-      primaryAction={{ label: 'Explore', href: '/app/explore' }}
+      primaryAction={{ label: 'Explore', href: '/app' }}
       secondaryAction={{ label: 'Post hub', href: '/app/post' }}
     />
     </>

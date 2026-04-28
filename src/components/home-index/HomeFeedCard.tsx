@@ -6,6 +6,7 @@ import { createBrowserClient } from '@/lib/supabase';
 import HomeCommentsSheet from './HomeCommentsSheet';
 import HomeLikesSheet from './HomeLikesSheet';
 import { enqueueRankingEventWeb } from '@/lib/rankingEventsWeb';
+import { buildProductShareUrl, buildServiceShareUrl } from '@/lib/sharingContract';
 
 export default function HomeFeedCard({
   item,
@@ -115,10 +116,13 @@ export default function HomeFeedCard({
     }
   };
   const handleShare = async (target: any) => {
-    const href =
-      target?.type === 'service' || target?.service_listing_id
-        ? `${window.location.origin}/s/${target?.seller?.slug}/service/${target?.id}`
-        : `${window.location.origin}/p/${target?.slug || target?.id}`;
+    const isService = target?.type === 'service' || target?.service_listing_id;
+    const serviceToken = String(target?.service_slug || target?.service?.slug || target?.service_listing_id || target?.id || '').trim();
+    const sellerSlug = String(target?.seller?.slug || target?.seller_slug || '').trim();
+    const productToken = String(target?.slug || target?.product?.slug || target?.product_id || target?.id || '').trim();
+    const href = isService
+      ? buildServiceShareUrl(serviceToken, sellerSlug || null)
+      : buildProductShareUrl(productToken);
     try {
       if (navigator.share) {
         await navigator.share({ title: target?.name || 'StoreLink item', url: href });

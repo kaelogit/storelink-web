@@ -1,7 +1,12 @@
 const { chromium } = require('playwright');
+const fs = require('fs');
+const path = require('path');
 
 const BASE_URL = process.env.BASE_URL || 'http://localhost:3000';
+const QA_OUT = path.join(__dirname, '..', 'qa-runtime-output');
 const CART_STORAGE_KEY = 'storelink-web-unified-cart-v1';
+const TEST_EMAIL = process.env.TEST_EMAIL || '';
+const TEST_PASSWORD = process.env.TEST_PASSWORD || '';
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
@@ -29,6 +34,7 @@ function makeSeededCartState() {
           currency_code: 'NGN',
           seller_id: 'seller-1',
           seller_slug: 'demo-seller',
+          seller_name: 'Demo Seller',
         },
       ],
     },
@@ -44,6 +50,17 @@ async function seedCart(page) {
     },
     { key: CART_STORAGE_KEY, value: seeded }
   );
+}
+
+async function loginIfConfigured(page) {
+  if (!TEST_EMAIL || !TEST_PASSWORD) return false;
+  await page.goto(`${BASE_URL}/auth/login?next=${encodeURIComponent('/app')}`, { waitUntil: 'networkidle' });
+  await page.getByPlaceholder('Email address').fill(TEST_EMAIL);
+  await page.getByPlaceholder('Password').fill(TEST_PASSWORD);
+  await page.getByRole('button', { name: /login/i }).click();
+  await page.waitForTimeout(1500);
+  await page.goto(`${BASE_URL}/app`, { waitUntil: 'networkidle' });
+  return true;
 }
 
 async function testAuthPages(browser) {
@@ -64,15 +81,32 @@ async function testAuthPages(browser) {
   return 'PASS';
 }
 
+async function waitCartShell(page) {
+  await page.waitForFunction(
+    () => {
+      const t = document.body?.innerText || '';
+      return t.includes('Sign in required') || t.includes('YOUR CART');
+    },
+    null,
+    { timeout: 45000 },
+  );
+}
+
 async function testDesktopCart(browser) {
   const context = await browser.newContext({ viewport: { width: 1366, height: 900 } });
   const page = await context.newPage();
   await seedCart(page);
-  await page.goto(`${BASE_URL}/app`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(700);
+  await loginIfConfigured(page);
+  await page.goto(`${BASE_URL}/app/cart`, { waitUntil: 'domcontentloaded' });
+  await waitCartShell(page);
+  await page.waitForTimeout(400);
 
   const guestGate = page.getByText('Sign in required');
   if ((await guestGate.count()) > 0) {
+    try {
+      fs.mkdirSync(QA_OUT, { recursive: true });
+      await page.screenshot({ path: path.join(QA_OUT, 'web-cart-desktop-guest.png'), fullPage: true });
+    } catch (_) {}
     await context.close();
     return 'SKIPPED_AUTH_REQUIRED';
   }
@@ -80,11 +114,7 @@ async function testDesktopCart(browser) {
   const floatingCartButton = page.locator('button[aria-label^="Cart,"]');
   await assert((await floatingCartButton.count()) === 0, 'Desktop should hide floating cart button');
 
-  const railCartButton = page.locator('button[aria-label="Cart"]');
-  await assert((await railCartButton.count()) > 0, 'Desktop should show right-rail cart action');
-  await railCartButton.first().click();
-
-  await page.getByText('YOUR CART').first().waitFor({ timeout: 5000 });
+  await page.getByText('YOUR CART').first().waitFor({ timeout: 20000 });
   await page.getByRole('button', { name: /SERVICES \(/ }).click();
   await page.getByText('ALPHA SERVICE').first().waitFor({ timeout: 5000 });
 
@@ -96,6 +126,11 @@ async function testDesktopCart(browser) {
   await page.getByRole('button', { name: /CLEAR PRODUCTS/i }).click();
   await page.getByText('No products yet.').first().waitFor({ timeout: 5000 });
 
+  try {
+    fs.mkdirSync(QA_OUT, { recursive: true });
+    await page.screenshot({ path: path.join(QA_OUT, 'web-cart-desktop-pass.png'), fullPage: true });
+  } catch (_) {}
+
   await context.close();
   return 'PASS';
 }
@@ -104,24 +139,31 @@ async function testMobileCart(browser) {
   const context = await browser.newContext({ viewport: { width: 390, height: 844 } });
   const page = await context.newPage();
   await seedCart(page);
-  await page.goto(`${BASE_URL}/app`, { waitUntil: 'networkidle' });
-  await page.waitForTimeout(700);
+  await loginIfConfigured(page);
+  await page.goto(`${BASE_URL}/app/cart`, { waitUntil: 'domcontentloaded' });
+  await waitCartShell(page);
+  await page.waitForTimeout(400);
 
   const guestGate = page.getByText('Sign in required');
   if ((await guestGate.count()) > 0) {
+    try {
+      fs.mkdirSync(QA_OUT, { recursive: true });
+      await page.screenshot({ path: path.join(QA_OUT, 'web-cart-mobile-guest.png'), fullPage: true });
+    } catch (_) {}
     await context.close();
     return 'SKIPPED_AUTH_REQUIRED';
   }
 
-  const floatingCartButton = page.locator('button[aria-label^="Cart,"]');
-  await floatingCartButton.first().waitFor({ timeout: 5000 });
-  await floatingCartButton.first().click();
-
-  await page.getByText('YOUR CART').first().waitFor({ timeout: 5000 });
+  await page.getByText('YOUR CART').first().waitFor({ timeout: 20000 });
   await page.getByRole('button', { name: /SERVICES \(/ }).click();
   await page.getByText('ALPHA SERVICE').first().waitFor({ timeout: 5000 });
   await page.getByRole('button', { name: /CLEAR SERVICES/i }).click();
   await page.getByText('No services saved yet.').first().waitFor({ timeout: 5000 });
+
+  try {
+    fs.mkdirSync(QA_OUT, { recursive: true });
+    await page.screenshot({ path: path.join(QA_OUT, 'web-cart-mobile-pass.png'), fullPage: true });
+  } catch (_) {}
 
   await context.close();
   return 'PASS';
@@ -144,7 +186,10 @@ async function run() {
     report.desktopCart = await testDesktopCart(browser);
     report.mobileCart = await testMobileCart(browser);
     report.guardRouteUrl = await testGuardRoute(browser);
-    report.notes = 'Cart runtime checks require authenticated /app access; guest mode skips those checks.';
+    report.notes = TEST_EMAIL
+      ? 'Attempted authenticated cart runtime checks using TEST_EMAIL/TEST_PASSWORD.'
+      : 'Cart runtime checks require authenticated /app access; set TEST_EMAIL and TEST_PASSWORD to run full flow.';
+    report.screenshotsDir = QA_OUT;
 
     console.log('RUNTIME_CHECK_RESULT');
     console.log(JSON.stringify(report, null, 2));

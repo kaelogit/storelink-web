@@ -1,9 +1,9 @@
-import ClientExploreWrapper from '@/app/explore/ClientExploreWrapper';
+import AppHomeWrapper from './AppHomeWrapper';
 
 export default function AppHomePage() {
   return (
     <div className="mx-auto max-w-6xl">
-      <ClientExploreWrapper embedded surface="home" />
+      <AppHomeWrapper />
     </div>
   );
 }

@@ -12,6 +12,7 @@ function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get('next') || '/app';
+  const referralCode = (searchParams.get('ref') || '').trim();
   const supabase = useMemo(() => createBrowserClient(), []);
 
   const [email, setEmail] = useState('');
@@ -24,12 +25,19 @@ function LoginPageContent() {
     (async () => {
       const { data } = await supabase.auth.getSession();
       if (cancelled || !data.session?.user) return;
+      if (referralCode) {
+        try {
+          await supabase.rpc('set_my_referred_by', { p_referral_code: referralCode });
+        } catch {
+          // No-op: attribution is best-effort and one-time on backend.
+        }
+      }
       router.replace(nextPath);
     })();
     return () => {
       cancelled = true;
     };
-  }, [supabase, router, nextPath]);
+  }, [supabase, router, nextPath, referralCode]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +51,13 @@ function LoginPageContent() {
     if (signInError) {
       setError(signInError.message);
       return;
+    }
+    if (referralCode) {
+      try {
+        await supabase.rpc('set_my_referred_by', { p_referral_code: referralCode });
+      } catch {
+        // No-op: backend handles invalid/already-set referrals safely.
+      }
     }
     router.push(nextPath);
   };
@@ -87,7 +102,10 @@ function LoginPageContent() {
           <div className="mt-5 text-sm text-(--muted) space-y-2">
             <p>
               No account?{' '}
-              <Link href={`/auth/signup?next=${encodeURIComponent(nextPath)}`} className="text-emerald-600 font-semibold">
+              <Link
+                href={`/auth/signup?next=${encodeURIComponent(nextPath)}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ''}`}
+                className="text-emerald-600 font-semibold"
+              >
                 Create one
               </Link>
             </p>

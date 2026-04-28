@@ -46,7 +46,7 @@ export function getTermsContent(countryCode: string) {
       {
         title: '1. ACCOUNTS & SECURITY',
         bullets: [
-          'You must be at least 18 years old to use StoreLink.',
+          'You must be at least 13 years old to use StoreLink.',
           'You are responsible for maintaining the security of your login credentials. Actions taken from your account are your legal responsibility.',
           'We reserve the right to suspend accounts that exhibit suspicious activity or violate these terms.',
         ],

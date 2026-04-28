@@ -121,8 +121,8 @@ export default function ProfileViewsPage() {
                   type="button"
                   onClick={() =>
                     sender.slug
-                      ? router.push(`/${encodeURIComponent(sender.slug)}`)
-                      : router.push('/app/explore')
+                      ? router.push(`/app/profile/${encodeURIComponent(sender.slug)}`)
+                      : router.push('/app')
                   }
                   className="w-full text-left px-5 py-4 flex items-center gap-3 hover:bg-(--surface) transition-colors"
                 >

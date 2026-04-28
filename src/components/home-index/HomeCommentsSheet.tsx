@@ -1,8 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Heart, MessageCircleReply, Send, Trash2, X } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
+import { firstNonEmptyId } from '@/lib/firstNonEmptyId';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 
 export default function HomeCommentsSheet({
@@ -27,26 +28,58 @@ export default function HomeCommentsSheet({
   const [pendingLikeIds, setPendingLikeIds] = useState<Set<string>>(new Set());
   const [pendingDeleteIds, setPendingDeleteIds] = useState<Set<string>>(new Set());
   const isService = useMemo(() => item?.type === 'service' || !!item?.service_listing_id, [item]);
+  const isSpotlight = useMemo(() => Boolean(item?.is_spotlight || item?.spotlight_post_id || item?.source_kind), [item]);
   const postOwnerId = useMemo(() => String(item?.seller_id || item?.seller?.id || ''), [item]);
+  const commentTargetId = useMemo(() => {
+    if (isSpotlight) return firstNonEmptyId(item?.spotlight_post_id, item?.id, item?.post_id, item?.spotlight_id);
+    if (isService) return firstNonEmptyId(item?.service_listing_id, item?.id);
+    return firstNonEmptyId(item?.product_id, item?.id);
+  }, [isSpotlight, isService, item?.spotlight_post_id, item?.id, item?.post_id, item?.spotlight_id, item?.service_listing_id, item?.product_id]);
 
-  const fetchComments = async (uid: string | null) => {
-    if (!item?.id) return [];
+  const fetchComments = useCallback(async (uid: string | null) => {
+    if (!commentTargetId) return [];
+    if (isSpotlight) {
+      const { data, error } = await supabase
+        .from('spotlight_comments')
+        .select('id, user_id, content, parent_id, created_at, is_deleted')
+        .eq('spotlight_post_id', commentTargetId)
+        .eq('is_deleted', false)
+        .order('created_at', { ascending: true });
+      if (error) return [];
+      const userIds = Array.from(new Set((data || []).map((r: any) => String(r.user_id)).filter(Boolean)));
+      let profileById = new Map<string, any>();
+      if (userIds.length > 0) {
+        const { data: profiles } = await supabase.from('profiles').select('id,slug,logo_url,subscription_plan').in('id', userIds);
+        profileById = new Map((profiles || []).map((p: any) => [String(p.id), p]));
+      }
+      return (data || []).map((r: any) => {
+        const p = profileById.get(String(r.user_id)) || {};
+        return {
+          ...r,
+          user_slug: p.slug || 'user',
+          user_logo: p.logo_url || null,
+          user_plan: p.subscription_plan || null,
+          likes_count: 0,
+          is_liked: false,
+        };
+      });
+    }
     if (isService) {
       const res = await supabase.rpc('get_service_comments_with_merit', {
-        p_service_listing_id: item.id,
+        p_service_listing_id: commentTargetId,
         p_user_id: uid,
       });
       return res.data || [];
     }
     const res = await supabase.rpc('get_comments_with_merit', {
-      p_product_id: item.id,
+      p_product_id: commentTargetId,
       p_user_id: uid,
     });
     return res.data || [];
-  };
+  }, [commentTargetId, isService, isSpotlight, supabase]);
 
   useEffect(() => {
-    if (!open || !item?.id) return;
+    if (!open || !commentTargetId) return;
     let active = true;
     (async () => {
       setLoading(true);
@@ -62,7 +95,7 @@ export default function HomeCommentsSheet({
     return () => {
       active = false;
     };
-  }, [open, item?.id, isService, supabase]);
+  }, [open, commentTargetId, isService, isSpotlight, supabase, fetchComments]);
 
   const refresh = async () => {
     const data = await fetchComments(viewerId);
@@ -71,7 +104,7 @@ export default function HomeCommentsSheet({
 
   const submitComment = async () => {
     const content = text.trim();
-    if (!content || !item?.id || submitting) return;
+    if (!content || !commentTargetId || submitting) return;
     setSubmitting(true);
     const { data: auth } = await supabase.auth.getUser();
     const userId = auth.user?.id;
@@ -79,10 +112,10 @@ export default function HomeCommentsSheet({
       setSubmitting(false);
       return;
     }
-    const table = isService ? 'service_comments' : 'product_comments';
-    const fk = isService ? 'service_listing_id' : 'product_id';
+    const table = isSpotlight ? 'spotlight_comments' : isService ? 'service_comments' : 'product_comments';
+    const fk = isSpotlight ? 'spotlight_post_id' : isService ? 'service_listing_id' : 'product_id';
     const payload: Record<string, any> = { user_id: userId, content, parent_id: replyTo?.id || null };
-    payload[fk] = item.id;
+    payload[fk] = commentTargetId;
     const { error } = await supabase.from(table).insert(payload);
     if (!error) {
       setText('');
@@ -94,7 +127,7 @@ export default function HomeCommentsSheet({
   };
 
   const toggleCommentLike = async (commentId: string) => {
-    if (!viewerId) return;
+    if (!viewerId || isSpotlight) return;
     if (pendingLikeIds.has(commentId)) return;
     setPendingLikeIds((prev) => new Set(prev).add(commentId));
     const snapshot = rows;
@@ -130,7 +163,7 @@ export default function HomeCommentsSheet({
     setPendingDeleteIds((prev) => new Set(prev).add(commentId));
     const snapshot = rows;
     setRows((prev) => prev.filter((r: any) => r.id !== commentId && r.parent_id !== commentId));
-    const table = isService ? 'service_comments' : 'product_comments';
+    const table = isSpotlight ? 'spotlight_comments' : isService ? 'service_comments' : 'product_comments';
     const res = await supabase.from(table).delete().eq('id', commentId);
     if (res.error) setRows(snapshot);
     else {
@@ -251,10 +284,12 @@ export default function HomeCommentsSheet({
                     ) : null}
                   </div>
                 </div>
-                <button type="button" className="pt-0.5 flex flex-col items-center" onClick={() => toggleCommentLike(row.id)}>
-                  <Heart size={14} className={row.is_liked ? 'text-emerald-500 fill-emerald-500' : 'text-(--muted)'} />
-                  <span className="text-[10px] text-(--muted)">{row.likes_count || ''}</span>
-                </button>
+                {!isSpotlight ? (
+                  <button type="button" className="pt-0.5 flex flex-col items-center" onClick={() => toggleCommentLike(row.id)}>
+                    <Heart size={14} className={row.is_liked ? 'text-emerald-500 fill-emerald-500' : 'text-(--muted)'} />
+                    <span className="text-[10px] text-(--muted)">{row.likes_count || ''}</span>
+                  </button>
+                ) : null}
               </div>
             );
           })}

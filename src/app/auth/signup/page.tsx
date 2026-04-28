@@ -12,6 +12,7 @@ function SignupPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const nextPath = searchParams.get('next') || '/app';
+  const referralCode = (searchParams.get('ref') || '').trim();
   const supabase = useMemo(() => createBrowserClient(), []);
 
   const [email, setEmail] = useState('');
@@ -53,7 +54,12 @@ function SignupPageContent() {
       router.push(nextPath);
       return;
     }
-    router.push(`/auth/verify?email=${encodeURIComponent(email.trim().toLowerCase())}&next=${encodeURIComponent(nextPath)}`);
+    const verifyUrl = new URLSearchParams({
+      email: email.trim().toLowerCase(),
+      next: nextPath,
+    });
+    if (referralCode) verifyUrl.set('ref', referralCode);
+    router.push(`/auth/verify?${verifyUrl.toString()}`);
   };
 
   return (
@@ -97,7 +103,10 @@ function SignupPageContent() {
 
           <p className="mt-5 text-sm text-(--muted)">
             Already have an account?{' '}
-            <Link href={`/auth/login?next=${encodeURIComponent(nextPath)}`} className="text-emerald-600 font-semibold">
+            <Link
+              href={`/auth/login?next=${encodeURIComponent(nextPath)}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ''}`}
+              className="text-emerald-600 font-semibold"
+            >
               Login
             </Link>
           </p>

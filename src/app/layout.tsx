@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Space_Grotesk } from "next/font/google"; 
+import { Inter, Lobster, Space_Grotesk } from "next/font/google";
 import { GoogleAnalytics } from '@next/third-parties/google';
 import Navbar from "../components/home/Navbar";
 import { ThemeProvider } from "../components/providers/ThemeProvider";
@@ -15,6 +15,14 @@ const inter = Inter({
 const spaceGrotesk = Space_Grotesk({ 
   subsets: ["latin"], 
   variable: "--font-space",
+  display: "swap",
+});
+
+/** Matches app `(tabs)/profile` nav @slug — `Lobster_400Regular` + `fontSizes.titleLg` (26). */
+const lobster = Lobster({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-app-profile-slug",
   display: "swap",
 });
 
@@ -112,7 +120,9 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className={`${inter.variable} ${spaceGrotesk.variable} font-sans antialiased min-h-screen bg-[var(--background)] text-[var(--foreground)]`}>
+      <body
+        className={`${inter.variable} ${spaceGrotesk.variable} ${lobster.variable} font-sans antialiased min-h-screen bg-[var(--background)] text-[var(--foreground)]`}
+      >
         <ThemeProvider>
         {/* Skip to main content for keyboard/screen reader */}
         <a

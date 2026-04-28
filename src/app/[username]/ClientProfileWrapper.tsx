@@ -1,426 +1,534 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import Image from 'next/image';
-import Link from 'next/link';
-import {
-  MapPin, Star, Store, Video,
-  Layers, Package, Gem, CheckCircle,
-  UserPlus, MessageCircle, Share2, QrCode, Wrench,
-} from 'lucide-react';
-import AppTrapModal from '../../components/ui/DownloadTrap';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ChevronLeft, Flag, Gem, Lock, MoreVertical, Share2, Slash, Store } from 'lucide-react';
 import ShareProfileModal from '../../components/shared/ShareProfileModal';
 import Button from '../../components/ui/Button';
-import { normalizeWebMediaUrl } from '@/lib/media-url';
-
-// Helper for currency format
-const formatPrice = (amount: number, currency: string) => {
-  return new Intl.NumberFormat('en-NG', {
-    style: 'currency',
-    currency: currency || 'NGN',
-    minimumFractionDigits: 0
-  }).format(amount);
-};
+import { canSellAndAppearInFeeds, showDiamondBadge } from '@/lib/sellerStatus';
+import WebProfileHeader from '@/components/profile-web/WebProfileHeader';
+import WebProfileStats from '@/components/profile-web/WebProfileStats';
+import WebProfileTabBar, { type WebPublicProfileTab } from '@/components/profile-web/WebProfileTabBar';
+import WebProfileMasonryGrid from '@/components/profile-web/WebProfileMasonryGrid';
+import { createBrowserClient } from '@/lib/supabase';
+import { fetchPublicCollectionFromManifest } from '@/lib/fetchPublicCollectionFromManifest';
+import { fetchProfileSpotlightPosts } from '@/lib/fetchProfileSpotlight';
+import { ensureAuthAction } from '@/lib/guestActionPrompt';
 
 export default function ClientProfileWrapper({ profile, products, services = [], reels = [] }: any) {
-  const [activeTab, setActiveTab] = useState<'drops' | 'services' | 'reels' | 'collection'>('collection');
-  
-  // TRAP STATE
-  const [trapOpen, setTrapOpen] = useState(false);
-  const [trapTrigger, setTrapTrigger] = useState<'buy' | 'view' | 'chat'>('view');
-  
-  // SHARE STATE
+  const pathname = usePathname();
+  const router = useRouter();
+  const supabase = useMemo(() => createBrowserClient(), []);
+  const [activeTab, setActiveTab] = useState<WebPublicProfileTab>('collection');
+  const defaultTabProfileIdRef = useRef<string | null>(null);
+
   const [shareOpen, setShareOpen] = useState(false);
-  
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const [bioExpanded, setBioExpanded] = useState(false);
 
-  const handleTrap = (trigger: 'buy' | 'view' | 'chat') => {
-    setTrapTrigger(trigger);
-    setTrapOpen(true);
-  };
+  const [collection, setCollection] = useState<any[]>([]);
+  const [spotlight, setSpotlight] = useState<any[]>([]);
+  const [loadingCollection, setLoadingCollection] = useState(false);
+  const [loadingSpotlight, setLoadingSpotlight] = useState(false);
+  const [viewerId, setViewerId] = useState<string | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followsMe, setFollowsMe] = useState(false);
+  const [followBusy, setFollowBusy] = useState(false);
+  const [messageBusy, setMessageBusy] = useState(false);
+  const isAppMode = (pathname || '').startsWith('/app/');
 
-  const avatarUrl =
-    normalizeWebMediaUrl(profile.logo_url) ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.display_name || 'Store')}&background=10b981&color=fff`;
-  
-  const isDiamond = String(profile.subscription_plan || '').toLowerCase() === 'diamond';
-  const bioText = profile.bio || "";
-  const isBioTruncated = bioText.length > 90;
-  const sellerType = String(profile?.seller_type || '').toLowerCase();
+  const isStoreActive = canSellAndAppearInFeeds(profile);
+  const isDiamond = showDiamondBadge(profile);
   const isSeller = !!profile?.is_seller;
-  const sellsProducts = sellerType === 'product' || sellerType === 'both' || (sellerType === '' && products.length > 0);
-  const offersServices = sellerType === 'service' || sellerType === 'both' || (sellerType === '' && services.length > 0);
-  const canShowSellerTabs = isSeller && (sellsProducts || offersServices);
-  const reelsCount = Array.isArray(reels) ? reels.length : 0;
+  const isWardrobePrivate = !!profile?.is_wardrobe_private;
+  const showSellerTabs = isSeller && isStoreActive;
+
+  const displayProducts = showSellerTabs ? products : [];
+  const displayServices = useMemo(
+    () =>
+      showSellerTabs
+        ? (services || []).map((row: any) => ({
+            ...row,
+            seller_slug: row?.seller_slug || profile?.slug || null,
+          }))
+        : [],
+    [showSellerTabs, services, profile?.slug],
+  );
+  const displayReels = isSeller ? reels : [];
 
   useEffect(() => {
-    if (!canShowSellerTabs) {
-      if (activeTab !== 'collection') setActiveTab('collection');
+    const currentProfileId = profile?.id ? String(profile.id) : null;
+    if (!currentProfileId) return;
+    if (defaultTabProfileIdRef.current === currentProfileId) return;
+    defaultTabProfileIdRef.current = currentProfileId;
+    if (isSeller && isStoreActive) setActiveTab('drops');
+    else setActiveTab('collection');
+  }, [profile?.id, isSeller, isStoreActive]);
+
+  useEffect(() => {
+    if (!showSellerTabs) {
+      if (activeTab === 'drops' || activeTab === 'services' || activeTab === 'reels') {
+        setActiveTab('collection');
+      }
+    }
+  }, [showSellerTabs, activeTab]);
+
+  useEffect(() => {
+    const uid = profile?.id != null ? String(profile.id) : '';
+    if (!uid) return;
+    let cancelled = false;
+    void (async () => {
+      setLoadingCollection(true);
+      setLoadingSpotlight(true);
+      try {
+        const [col, spot] = await Promise.all([
+          isWardrobePrivate ? Promise.resolve([]) : fetchPublicCollectionFromManifest(supabase, uid),
+          fetchProfileSpotlightPosts(supabase, uid, isSeller),
+        ]);
+        if (!cancelled) {
+          setCollection(Array.isArray(col) ? col : []);
+          setSpotlight(Array.isArray(spot) ? spot : []);
+        }
+      } catch {
+        if (!cancelled) {
+          setCollection([]);
+          setSpotlight([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingCollection(false);
+          setLoadingSpotlight(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, profile?.id, isSeller, isWardrobePrivate]);
+
+  const promptAuth = (action: string) => {
+    return ensureAuthAction({
+      viewerId,
+      nextPath: pathname || `/${profile.slug}`,
+      action,
+    });
+  };
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!active) return;
+      setViewerId(data.user?.id ?? null);
+    })();
+    return () => {
+      active = false;
+    };
+  }, [supabase]);
+
+  const isSelf = Boolean(viewerId && profile?.id != null && String(viewerId) === String(profile.id));
+
+  useEffect(() => {
+    if (!viewerId || !profile?.id || isSelf) {
+      setIsFollowing(false);
+      setFollowsMe(false);
       return;
     }
-    if (offersServices && !sellsProducts) {
-      if (activeTab !== 'services') setActiveTab('services');
-      return;
+    let cancelled = false;
+    void (async () => {
+      const [{ data: following }, { data: reciprocal }] = await Promise.all([
+        supabase
+          .from('follows')
+          .select('follower_id')
+          .eq('follower_id', viewerId)
+          .eq('following_id', String(profile.id))
+          .maybeSingle(),
+        supabase
+          .from('follows')
+          .select('follower_id')
+          .eq('follower_id', String(profile.id))
+          .eq('following_id', viewerId)
+          .maybeSingle(),
+      ]);
+      if (cancelled) return;
+      setIsFollowing(Boolean(following));
+      setFollowsMe(Boolean(reciprocal));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, viewerId, profile?.id, isSelf]);
+
+  const handleFollowToggle = async () => {
+    if (!promptAuth('Following this profile')) return;
+    if (!viewerId || !profile?.id || followBusy || isSelf) return;
+    const previous = isFollowing;
+    const next = !previous;
+    setFollowBusy(true);
+    setIsFollowing(next);
+    try {
+      if (next) {
+        await supabase
+          .from('follows')
+          .upsert({ follower_id: viewerId, following_id: String(profile.id) }, { ignoreDuplicates: true });
+      } else {
+        await supabase
+          .from('follows')
+          .delete()
+          .eq('follower_id', viewerId)
+          .eq('following_id', String(profile.id));
+      }
+    } catch {
+      setIsFollowing(previous);
+    } finally {
+      setFollowBusy(false);
     }
-    if (sellsProducts) {
-      if (activeTab !== 'drops' && activeTab !== 'services' && activeTab !== 'reels') setActiveTab('drops');
+  };
+
+  const handleMessage = async () => {
+    if (!promptAuth('Messaging this profile')) return;
+    if (!viewerId || !profile?.id || isSelf || messageBusy) return;
+    setMessageBusy(true);
+    try {
+      const { data: chatId } = await supabase.rpc('create_smart_chat', {
+        p_initiator_id: viewerId,
+        p_recipient_id: String(profile.id),
+        p_is_checkout: false,
+      });
+      if (chatId) {
+        router.push(`/app/messages?chat=${encodeURIComponent(String(chatId))}`);
+      } else {
+        router.push('/app/messages');
+      }
+    } catch {
+      router.push('/app/messages');
+    } finally {
+      setMessageBusy(false);
     }
-  }, [canShowSellerTabs, offersServices, sellsProducts, activeTab]);
+  };
+
+  const handleReport = () => {
+    setOptionsOpen(false);
+    if (!promptAuth('Reporting this profile')) return;
+    const slug = String(profile?.slug || '').trim();
+    const subject = slug ? encodeURIComponent(`Report user @${slug}`) : encodeURIComponent('Report user');
+    router.push(`/app/activity/support-new?category=SAFETY&subject=${subject}`);
+  };
+
+  const handleBlock = async () => {
+    setOptionsOpen(false);
+    if (!promptAuth('Blocking this profile')) return;
+    if (!viewerId || !profile?.id || isSelf) return;
+    const okay = window.confirm(`Block @${String(profile.slug || 'user')}?`);
+    if (!okay) return;
+    try {
+      await supabase.from('blocked_users').insert({
+        blocker_id: viewerId,
+        blocked_id: String(profile.id),
+      });
+      await Promise.all([
+        supabase.from('follows').delete().eq('follower_id', viewerId).eq('following_id', String(profile.id)),
+        supabase.from('follows').delete().eq('follower_id', String(profile.id)).eq('following_id', viewerId),
+      ]);
+      router.push('/app');
+    } catch {
+      // Keep this lightweight for now; support screen remains available for fallback reporting.
+    }
+  };
+
+  const emptyLabel = (tab: WebPublicProfileTab) => {
+    if (tab === 'drops') return 'NO PRODUCT YET';
+    if (tab === 'reels') return 'NO CLIPS YET';
+    if (tab === 'services') return 'NO SERVICES YET';
+    if (tab === 'collection') return isWardrobePrivate ? '' : 'NO ITEMS COLLECTED';
+    if (tab === 'spotlight') return isSeller ? 'NO SPOTLIGHT TAGS YET' : 'NO SPOTLIGHT POSTS YET';
+    return 'NOTHING HERE YET';
+  };
 
   return (
-    <div className="min-h-screen bg-(--background) pt-24 pb-10">
+    <div className={`min-h-screen bg-(--background) ${isAppMode ? 'pt-4' : 'pt-24'} pb-10`}>
       <div className="max-w-md mx-auto bg-(--card) min-h-[90vh] shadow-2xl rounded-3xl overflow-hidden relative flex flex-col border border-(--border)">
-        <div className="sticky top-0 z-40 bg-(--card)/95 backdrop-blur-md border-b border-(--border) flex items-center justify-center px-4 py-4">
-           <div className="flex items-center gap-1.5 bg-(--surface) border border-(--border) px-5 py-2 rounded-full shadow-sm">
-              <span className="font-black text-[10px] tracking-[1.5px] text-(--foreground) uppercase">
-                @{profile.slug}
-              </span>
-              {isDiamond && <Gem size={10} className="text-violet-500" fill="currentColor" />}
-           </div>
-        </div>
-
-        <div className="px-6 pt-8 pb-4 flex flex-col items-center bg-(--card)">
-           
-           {/* Avatar */}
-           <div className={`relative p-1 rounded-[36px] mb-4 ${isDiamond ? 'border-2 border-purple-500 shadow-lg shadow-purple-500/20' : ''}`}>
-              <div className="w-[100px] h-[100px] rounded-[30px] bg-(--surface) overflow-hidden relative">
-                 <Image 
-                    src={avatarUrl} 
-                    alt={profile.display_name} 
-                    fill 
-                    className="object-cover" 
-                    unoptimized={true} // 👈 CRITICAL FIX
-                 />
-              </div>
-              {isDiamond && (
-                <div className="absolute -bottom-1.5 -right-1.5 bg-(--card) p-1.5 rounded-xl shadow-sm border border-(--border)">
-                   <Gem size={14} className="text-violet-500" fill="currentColor" />
-                </div>
-              )}
-           </div>
-
-           {/* Name & Verification */}
-           <div className="flex items-center gap-1.5 mb-1.5">
-              <h1 className="text-xl font-black text-(--foreground) tracking-tight text-center">
-                {profile.display_name}
-              </h1>
-              {profile.is_verified && (
-                 <CheckCircle size={18} className="text-emerald-500" fill="rgba(16, 185, 129, 0.1)" />
-              )}
-           </div>
-
-           {/* Meta Row (Category • Location) */}
-           <div className="flex items-center gap-2 mb-4 opacity-60">
-              {profile.category && (
-                <span className="text-[10px] font-bold text-(--foreground) uppercase tracking-wide">
-                  {profile.category}
+        {isAppMode ? (
+          <div className="sticky top-0 z-40 flex items-center justify-between border-b border-(--border) bg-(--card)/95 px-3 py-3 backdrop-blur-md">
+            <button
+              type="button"
+              onClick={() => router.back()}
+              className="flex h-10 w-10 items-center justify-center rounded-xl text-(--foreground) hover:bg-(--surface)"
+              aria-label="Back"
+            >
+              <ChevronLeft size={20} />
+            </button>
+            <div className="flex min-w-0 items-center gap-1.5">
+              <span className="truncate text-base font-black text-(--foreground)">@{profile.slug}</span>
+              {isDiamond ? <Gem size={13} className="shrink-0 text-violet-500" fill="currentColor" /> : null}
+              {profile?.is_seller && !isStoreActive ? (
+                <span className="shrink-0 rounded-md border border-(--border) bg-(--surface) px-1.5 py-0.5 text-[9px] font-black tracking-widest text-(--muted)">
+                  OFFLINE
                 </span>
-              )}
-              {profile.category && (profile.location_city || profile.location_state) && (
-                <span className="text-[10px] text-(--muted)">•</span>
-              )}
-              {(profile.location_city || profile.location_state) && (
-                <div className="flex items-center gap-0.5">
-                   <MapPin size={10} className="text-(--foreground)" />
-                   <span className="text-[10px] font-bold text-(--foreground) uppercase tracking-wide">
-                     {[profile.location_city, profile.location_state].filter(Boolean).join(', ')}
-                   </span>
-                </div>
-              )}
-           </div>
+              ) : null}
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                className="flex h-10 w-10 items-center justify-center rounded-xl text-(--foreground) hover:bg-(--surface)"
+                onClick={() => setOptionsOpen(true)}
+                aria-label="More options"
+              >
+                <MoreVertical size={18} />
+              </button>
+            </div>
+          </div>
+        ) : null}
+        {!isAppMode ? (
+          <div className="sticky top-0 z-40 flex items-center justify-center border-b border-(--border) bg-(--card)/95 px-4 py-4 backdrop-blur-md lg:hidden">
+            <div className="flex items-center gap-1.5 rounded-full border border-(--border) bg-(--surface) px-5 py-2 shadow-sm">
+              <span className="text-[10px] font-black tracking-[1.5px] text-(--foreground) uppercase">@{profile.slug}</span>
+              {isDiamond ? <Gem size={10} className="text-violet-500" fill="currentColor" /> : null}
+              {profile?.is_seller && !isStoreActive ? (
+                <span className="text-[9px] font-black tracking-widest text-(--muted)">OFFLINE</span>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
 
-           {/* Bio */}
-           {bioText && (
-             <div className="mb-6 px-2">
-                <p className="text-sm text-(--muted) text-center leading-relaxed font-normal">
-                   {isBioTruncated && !bioExpanded ? bioText.slice(0, 90).trim() : bioText}
-                   {isBioTruncated && !bioExpanded && <span className="text-(--muted)">...</span>}
-                </p>
-                {isBioTruncated && (
-                  <button 
-                    onClick={() => setBioExpanded(!bioExpanded)}
-                    className="block mx-auto mt-1 text-xs font-bold text-emerald-600"
-                  >
-                    {bioExpanded ? 'see less' : 'see more'}
-                  </button>
-                )}
-             </div>
-           )}
+        <div className="flex flex-col items-center bg-(--card) pb-4">
+          <WebProfileHeader
+            profileData={profile}
+            isSelf={isSelf}
+            isFollowing={isFollowing}
+            followsMe={followsMe}
+            followButtonLoading={followBusy}
+            onFollow={
+              isSelf
+                ? undefined
+                : () => {
+                    void handleFollowToggle();
+                  }
+            }
+            onMessage={
+              isSelf
+                ? undefined
+                : () => {
+                    void handleMessage();
+                  }
+            }
+            onEdit={isSelf ? () => router.push('/app/profile') : undefined}
+            onSharePress={() => setShareOpen(true)}
+            bioExpanded={bioExpanded}
+            onBioExpandedChange={setBioExpanded}
+            isDiamond={isDiamond}
+          />
+          <button
+            type="button"
+            onClick={() => setShareOpen(true)}
+            className="mb-4 text-xs font-black tracking-wide text-emerald-600 underline-offset-2 hover:underline"
+          >
+            Share this profile
+          </button>
 
-           <div className="flex w-full max-w-[340px] gap-3 mb-6">
-              <Button onClick={() => handleTrap('view')} variant="secondary" size="lg" className="flex-1 justify-center gap-2">
-                 <UserPlus size={16} strokeWidth={2.5} />
-                 <span className="text-xs font-black tracking-widest">FOLLOW</span>
-              </Button>
-              <Button onClick={() => handleTrap('chat')} variant="outline" size="lg" className="flex-1 justify-center gap-2">
-                 <MessageCircle size={18} strokeWidth={2} />
-                 <span className="text-xs font-black tracking-widest">MESSAGE</span>
-              </Button>
-              <Button onClick={() => setShareOpen(true)} variant="ghost" size="lg" className="w-12 p-0! justify-center rounded-2xl border border-(--border)">
-                 <QrCode size={20} strokeWidth={2} />
-              </Button>
-           </div>
-
-           <div className="w-full max-w-[340px] flex items-center justify-between py-4 border-t border-b border-(--border) mb-2">
-              <div className="flex flex-col items-center flex-1">
-                 <div className="flex items-center gap-1 text-(--foreground) font-black text-sm">
-                    <Star size={14} className="text-amber-400" fill="currentColor" />
-                    <span>4.9</span>
-                 </div>
-                 <span className="text-[9px] font-bold text-(--muted) uppercase tracking-widest mt-1">Rating</span>
-              </div>
-              <div className="w-px h-6 bg-(--border)" />
-              <div className="flex flex-col items-center flex-1">
-                 <div className="flex items-center gap-1 text-(--foreground) font-black text-sm">
-                    <Package size={14} />
-                    <span>{products.length || profile.product_count || 0}</span>
-                 </div>
-                 <span className="text-[9px] font-bold text-(--muted) uppercase tracking-widest mt-1">Drops</span>
-              </div>
-              <div className="w-px h-6 bg-(--border)" />
-              <div className="flex flex-col items-center flex-1">
-                 <div className="flex items-center gap-1 text-(--foreground) font-black text-sm">
-                    <Layers size={14} />
-                    <span>{profile.wardrobe_count || 0}</span>
-                 </div>
-                 <span className="text-[9px] font-bold text-(--muted) uppercase tracking-widest mt-1">Wardrobe</span>
-              </div>
-           </div>
-
+          <div className="w-full max-w-[360px] border-y border-(--border)">
+            <WebProfileStats
+              profileId={String(profile.id)}
+              profileData={{
+                ...profile,
+                product_count: displayProducts.length || Number(profile.product_count ?? profile.products_count ?? 0),
+                products_count: displayProducts.length || Number(profile.products_count ?? profile.product_count ?? 0),
+                wardrobe_count: isWardrobePrivate ? 0 : collection.length,
+                services_count: (services || []).length,
+              }}
+              isDiamond={isDiamond}
+            />
+          </div>
         </div>
 
-        <div className="sticky top-[70px] bg-(--card) z-30 border-b border-(--border) flex shadow-sm">
-           {canShowSellerTabs && sellsProducts && (
-             <button type="button" onClick={() => setActiveTab('drops')} className={`flex-1 py-4 flex justify-center border-b-2 transition-colors duration-(--duration-150) ${activeTab === 'drops' ? 'border-(--charcoal) text-(--foreground)' : 'border-transparent text-(--muted)'}`}>
-                <Package size={20} strokeWidth={activeTab === 'drops' ? 2.5 : 2} />
-             </button>
-           )}
-           {canShowSellerTabs && offersServices && (
-             <button
-               type="button"
-               onClick={() => setActiveTab('services')}
-                className={`flex-1 py-4 flex justify-center border-b-2 transition-colors duration-(--duration-150) ${
-                 activeTab === 'services' ? 'border-(--charcoal) text-(--foreground)' : 'border-transparent text-(--muted)'
-               }`}
-             >
-                <Wrench size={20} strokeWidth={activeTab === 'services' ? 2.5 : 2} />
-             </button>
-           )}
-           {canShowSellerTabs && (
-             <button
-               type="button"
-               onClick={() => setActiveTab('reels')}
-               className={`flex-1 py-4 flex justify-center border-b-2 transition-colors duration-(--duration-150) ${
-                 activeTab === 'reels' ? 'border-(--charcoal) text-(--foreground)' : 'border-transparent text-(--muted)'
-               }`}
-             >
-                <Video size={20} strokeWidth={activeTab === 'reels' ? 2.5 : 2} />
-             </button>
-           )}
-           <button
-             type="button"
-             onClick={() => setActiveTab('collection')}
-            className={`flex-1 py-4 flex justify-center border-b-2 transition-colors duration-(--duration-150) ${
-              activeTab === 'collection' ? 'border-(--charcoal) text-(--foreground)' : 'border-transparent text-(--muted)'
-             }`}
-           >
-              <Layers size={20} strokeWidth={activeTab === 'collection' ? 2.5 : 2} />
-           </button>
-        </div>
+        <WebProfileTabBar
+          variant="public"
+          activeTab={activeTab}
+          onTab={(t) => setActiveTab(t as WebPublicProfileTab)}
+          isSeller={isSeller}
+          isStoreActive={isStoreActive}
+          isWardrobePrivate={isWardrobePrivate}
+        />
 
-        <div className="flex-1 bg-(--surface) p-1 min-h-[400px]">
-           {activeTab === 'drops' && (
-              <div className="grid grid-cols-2 gap-1">
-                 {products.length > 0 ? products.map((item: any) => {
-                    const productThumb = normalizeWebMediaUrl(item.image_urls?.[0]);
-                    return (
-                    <div key={item.id} role="button" tabIndex={0} onClick={() => handleTrap('buy')} onKeyDown={(e) => e.key === 'Enter' && handleTrap('buy')} className="bg-(--card) p-2.5 rounded-xl cursor-pointer active:scale-95 transition-transform duration-(--duration-150) shadow-sm border border-(--border)">
-                       <div className="aspect-3/4 relative rounded-lg overflow-hidden bg-(--surface) mb-2.5">
-                          {productThumb ? (
-                            <Image 
-                                src={productThumb} 
-                                alt={item.name} 
-                                fill 
-                                className="object-cover" 
-                                unoptimized={true} // 👈 CRITICAL FIX
-                            />
-                          ) : null}
-                       </div>
-                       <p className="font-bold text-[11px] text-(--foreground) truncate leading-tight mb-1">{item.name}</p>
-                       <p className="font-black text-xs text-emerald-600">{formatPrice(item.price, item.currency_code)}</p>
-                    </div>
-                 );
-                 }) : (
-                  <div className="col-span-2 py-20 text-center text-(--muted) text-[10px] font-bold uppercase tracking-widest">
-                     No drops available
-                   </div>
-                 )}
+        <div className="min-h-[400px] flex-1 bg-(--surface) p-0">
+          {activeTab === 'drops' ? (
+            displayProducts.length > 0 ? (
+              <WebProfileMasonryGrid
+                data={displayProducts}
+                activeTab="drops"
+                sellerId={String(profile.id)}
+                loyaltyEnabled={!!profile.loyalty_enabled}
+                loyaltyPercentage={Number(profile.loyalty_percentage ?? 0)}
+                numColumns={2}
+                exploreHref="/"
+              />
+            ) : (
+              <div className="py-20 text-center text-[10px] font-bold uppercase tracking-widest text-(--muted)">
+                {emptyLabel('drops')}
               </div>
-           )}
+            )
+          ) : null}
 
-          {activeTab === 'services' && (
-            <div className="grid grid-cols-1 gap-2 pt-3 px-1">
-              {services.length > 0 && (
-                <p className="text-[10px] font-semibold text-(--muted) tracking-[0.18em] uppercase mb-1 px-1">
+          {activeTab === 'services' ? (
+            displayServices.length > 0 ? (
+              <WebProfileMasonryGrid
+                data={displayServices}
+                activeTab="services"
+                sellerId={String(profile.id)}
+                loyaltyEnabled={!!profile.loyalty_enabled}
+                loyaltyPercentage={Number(profile.loyalty_percentage ?? 0)}
+                numColumns={2}
+                exploreHref="/"
+              />
+            ) : (
+              <div className="px-4 py-3">
+                <p className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-(--muted)">
                   Finish booking in the StoreLink app to secure your service with escrow.
                 </p>
-              )}
-              {services.length > 0 ? (
-                services.map((svc: any) => {
-                  const fromLabel = formatPrice((svc.hero_price_min || 0) / 100, svc.currency_code || profile.currency_code || 'NGN');
-                  let deliveryBadge: string | null = null;
-                  if (svc.delivery_type === 'online') deliveryBadge = 'Online';
-                  else if (svc.delivery_type === 'in_person' && svc.location_type === 'i_travel') deliveryBadge = 'I travel';
-                  else if (svc.delivery_type === 'in_person' && svc.location_type === 'both') deliveryBadge = 'Studio & Home';
-                  else if (svc.delivery_type === 'in_person' && svc.location_type === 'at_my_place') deliveryBadge = 'Studio only';
-                  else if (svc.delivery_type === 'both') deliveryBadge = 'Studio & Home';
-
-                  const media = (svc.media as unknown[] | null) || [];
-                  const firstMedia = Array.isArray(media) && media.length > 0 ? media[0] : null;
-                  const heroRaw =
-                    typeof firstMedia === 'string'
-                      ? firstMedia
-                      : firstMedia && typeof firstMedia === 'object' && firstMedia !== null && 'url' in firstMedia
-                        ? String((firstMedia as { url?: string }).url || '')
-                        : '';
-                  const heroImage = normalizeWebMediaUrl(heroRaw) || null;
-
-                  return (
-                    <button
-                      key={svc.id}
-                      type="button"
-                      onClick={() => handleTrap('view')}
-                      className="w-full text-left bg-(--card) border border-(--border) rounded-2xl overflow-hidden active:scale-[0.98] transition-transform duration-(--duration-150)"
-                    >
-                      <div className="flex">
-                        <div className="w-20 h-20 relative bg-(--surface)">
-                          {heroImage ? (
-                            <Image src={heroImage} alt={svc.title} fill className="object-cover" unoptimized />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-(--muted)">
-                              <Store size={18} />
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 px-3 py-2 flex flex-col justify-center">
-                          <p className="text-[11px] font-black text-(--foreground) uppercase tracking-[0.12em] line-clamp-2">
-                            {svc.title}
-                          </p>
-                          {deliveryBadge && (
-                            <p className="text-[10px] font-bold text-(--muted) mt-0.5 uppercase tracking-[0.16em]">
-                              {deliveryBadge}
-                            </p>
-                          )}
-                          <p className="text-xs font-black text-emerald-600 mt-1">From {fromLabel}</p>
-                          <p className="text-[10px] font-semibold text-(--muted) mt-0.5">
-                            View details & book in the app
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })
-              ) : (
-                <div className="py-12 text-center text-(--muted) text-[10px] font-bold uppercase tracking-widest">
-                  No services published yet
+                <div className="py-12 text-center text-[10px] font-bold uppercase tracking-widest text-(--muted)">
+                  {emptyLabel('services')}
                 </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'reels' && (
-            <div className="grid grid-cols-3 gap-1 p-1">
-              {reelsCount > 0 ? (
-                reels.map((reel: any) => {
-                  const reelThumb = normalizeWebMediaUrl(reel.thumbnail_url);
-                  return (
-                  <button
-                    key={reel.id}
-                    type="button"
-                    onClick={() => handleTrap('view')}
-                    className="relative aspect-9/16 bg-(--card) rounded-xl overflow-hidden border border-(--border)"
-                  >
-                    {reelThumb ? (
-                      <Image src={reelThumb} alt={reel.caption || 'Reel'} fill className="object-cover" unoptimized />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-(--muted)">
-                        <Video size={16} />
-                      </div>
-                    )}
-                    <div className="absolute top-1 right-1 px-1.5 py-0.5 rounded bg-black/50 text-white text-[8px] font-black tracking-wide">
-                      {reel.service_listing_id ? 'SERVICE' : 'PRODUCT'}
-                    </div>
-                  </button>
-                );
-                })
-              ) : (
-                <div className="col-span-3 py-12 text-center text-(--muted) text-[10px] font-bold uppercase tracking-widest">
-                  No reels yet
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'collection' && (
-            <div className="py-16 text-center px-6">
-              <p className="text-(--foreground) text-xs font-black tracking-wide mb-2">CURATION</p>
-              <p className="text-(--muted) text-[11px] font-medium mb-4">
-                Full collection/wardrobe is available in the app.
-              </p>
-              <Button onClick={() => handleTrap('view')} variant="outline" size="sm" className="rounded-full">
-                View on App
-              </Button>
-            </div>
-          )}
-
-           {products.length > 0 && activeTab === 'drops' && (
-             <div className="py-16 text-center pb-32">
-                <p className="text-(--muted) text-[10px] font-bold uppercase tracking-widest mb-4">+ More Items Hidden</p>
-                <Button onClick={() => handleTrap('view')} variant="outline" size="sm" className="rounded-full">
-                   View All on App
-                </Button>
-             </div>
-           )}
-        </div>
-
-        <div className="fixed bottom-0 left-0 right-0 p-4 z-40 md:absolute md:bottom-0">
-           <div className="max-w-md mx-auto bg-(--charcoal) text-white p-3 rounded-2xl flex items-center justify-between shadow-2xl border border-white/10">
-              <div className="flex items-center gap-3">
-                 <div className="w-10 h-10 bg-(--emerald) rounded-xl flex items-center justify-center text-white">
-                    <Store size={20} strokeWidth={2.5} />
-                 </div>
-                 <div>
-                    <p className="text-xs font-bold text-emerald-400">Shop on StoreLink</p>
-                    <p className="text-[10px] text-(--muted) font-medium">Secure payments & buyer protection</p>
-                 </div>
               </div>
-              <a href={`storelink://@${profile.slug}`} className="px-3 py-2.5 bg-(--emerald) text-white text-xs font-black rounded-xl tracking-wide hover:opacity-90 transition-opacity">
-                 Open in app
-              </a>
-              <Button href={`/download?intent=${encodeURIComponent(`/@${profile.slug}`)}`} size="sm" className="bg-white! text-black! hover:bg-slate-100! py-2.5! text-xs">
-                 GET APP
-              </Button>
-           </div>
+            )
+          ) : null}
+
+          {activeTab === 'reels' ? (
+            displayReels.length > 0 ? (
+              <WebProfileMasonryGrid
+                data={displayReels}
+                activeTab="reels"
+                sellerId={String(profile.id)}
+                numColumns={3}
+                exploreHref="/"
+              />
+            ) : (
+              <div className="py-20 text-center text-[10px] font-bold uppercase tracking-widest text-(--muted)">
+                {emptyLabel('reels')}
+              </div>
+            )
+          ) : null}
+
+          {activeTab === 'collection' ? (
+            loadingCollection ? (
+              <div className="flex justify-center py-16">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+              </div>
+            ) : isWardrobePrivate ? (
+              <div className="flex flex-col items-center gap-4 px-6 py-16 text-center">
+                <div className="flex h-[60px] w-[60px] items-center justify-center rounded-full bg-(--card) text-(--foreground)">
+                  <Lock size={24} strokeWidth={2} />
+                </div>
+                <p className="text-sm font-black text-(--foreground)">PRIVATE COLLECTION</p>
+                <p className="text-sm font-medium text-(--muted)">@{profile.slug} keeps their wardrobe private.</p>
+              </div>
+            ) : collection.length > 0 ? (
+              <WebProfileMasonryGrid
+                data={collection}
+                activeTab="collection"
+                sellerId={String(profile.id)}
+                numColumns={2}
+                exploreHref="/"
+              />
+            ) : (
+              <div className="py-20 text-center text-[10px] font-bold uppercase tracking-widest text-(--muted)">
+                {emptyLabel('collection')}
+              </div>
+            )
+          ) : null}
+
+          {activeTab === 'spotlight' ? (
+            loadingSpotlight ? (
+              <div className="flex justify-center py-16">
+                <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+              </div>
+            ) : spotlight.length > 0 ? (
+              <WebProfileMasonryGrid
+                data={spotlight}
+                activeTab="spotlight"
+                sellerId={String(profile.id)}
+                numColumns={3}
+                exploreHref="/"
+              />
+            ) : (
+              <div className="py-20 text-center text-[10px] font-bold uppercase tracking-widest text-(--muted)">
+                {emptyLabel('spotlight')}
+              </div>
+            )
+          ) : null}
         </div>
 
+        {!isAppMode ? (
+          <div className="fixed bottom-0 left-0 right-0 z-40 p-4 md:absolute md:bottom-0">
+            <div className="max-w-md mx-auto flex items-center justify-between rounded-2xl border border-white/10 bg-(--charcoal) p-3 text-white shadow-2xl">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-(--emerald) text-white">
+                  <Store size={20} strokeWidth={2.5} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-emerald-400">Shop on StoreLink</p>
+                  <p className="text-[10px] font-medium text-(--muted)">Secure payments & buyer protection</p>
+                </div>
+              </div>
+              <a
+                href={`storelink://@${profile.slug}`}
+                className="rounded-xl bg-(--emerald) px-3 py-2.5 text-xs font-black tracking-wide text-white transition-opacity hover:opacity-90"
+              >
+                Open in app
+              </a>
+              <Button
+                href={`/download?intent=${encodeURIComponent(`/@${profile.slug}`)}`}
+                size="sm"
+                className="bg-white! py-2.5! text-xs text-black! hover:bg-slate-100!"
+              >
+                GET APP
+              </Button>
+            </div>
+          </div>
+        ) : null}
       </div>
 
-      {/* 🔴 THE TRAP MODAL */}
-      <AppTrapModal 
-        isOpen={trapOpen} 
-        onClose={() => setTrapOpen(false)} 
-        sellerName={profile.display_name}
-        trigger={trapTrigger}
-        intentPath={`/@${profile.slug}`}
-      />
-
-      {/* 🟢 THE SHARE MODAL */}
-      <ShareProfileModal 
-        isOpen={shareOpen} 
-        onClose={() => setShareOpen(false)} 
-        profile={profile}
-      />
-
+      <ShareProfileModal isOpen={shareOpen} onClose={() => setShareOpen(false)} profile={profile} />
+      {optionsOpen ? (
+        <div className="fixed inset-0 z-120 flex items-end justify-center bg-black/40 p-4" onClick={() => setOptionsOpen(false)}>
+          <div
+            className="w-full max-w-md rounded-t-3xl border border-(--border) bg-(--card) p-4 pb-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-(--muted)/40" />
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-(--foreground) hover:bg-(--surface)"
+              onClick={() => {
+                setOptionsOpen(false);
+                setShareOpen(true);
+              }}
+            >
+              <Share2 size={18} />
+              <span className="text-sm font-bold">Share this profile</span>
+            </button>
+            <div className="my-1 h-px w-full bg-(--border)" />
+            <button
+              type="button"
+              className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-rose-500 hover:bg-(--surface)"
+              onClick={handleReport}
+            >
+              <Flag size={16} />
+              <span className="text-sm font-bold">Report user</span>
+            </button>
+            <div className="my-1 h-px w-full bg-(--border)" />
+            {!isSelf ? (
+              <button
+                type="button"
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-rose-500 hover:bg-(--surface)"
+                onClick={() => void handleBlock()}
+              >
+                <Slash size={16} />
+                <span className="text-sm font-bold">Block user</span>
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { Heart, Sparkles, X } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
+import { firstNonEmptyId } from '@/lib/firstNonEmptyId';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 
 export default function HomeLikesSheet({
@@ -24,18 +25,24 @@ export default function HomeLikesSheet({
   const [pendingFollowIds, setPendingFollowIds] = useState<Set<string>>(new Set());
   const [pendingReciprocalUnfollow, setPendingReciprocalUnfollow] = useState<{ id: string; slug: string } | null>(null);
   const isService = useMemo(() => item?.type === 'service' || !!item?.service_listing_id, [item]);
+  const isSpotlight = useMemo(() => Boolean(item?.is_spotlight || item?.spotlight_post_id || item?.source_kind), [item]);
+  const likeTargetId = useMemo(() => {
+    if (isSpotlight) return firstNonEmptyId(item?.spotlight_post_id, item?.id, item?.post_id, item?.spotlight_id);
+    if (isService) return firstNonEmptyId(item?.service_listing_id, item?.id);
+    return firstNonEmptyId(item?.product_id, item?.id);
+  }, [isSpotlight, isService, item?.spotlight_post_id, item?.id, item?.post_id, item?.spotlight_id, item?.service_listing_id, item?.product_id]);
 
   useEffect(() => {
-    if (!open || !item?.id) return;
+    if (!open || !likeTargetId) return;
     let active = true;
     const load = async () => {
       setLoading(true);
-      const table = isService ? 'service_likes' : 'product_likes';
-      const fk = isService ? 'service_listing_id' : 'product_id';
+      const table = isSpotlight ? 'spotlight_likes' : isService ? 'service_likes' : 'product_likes';
+      const fk = isSpotlight ? 'spotlight_post_id' : isService ? 'service_listing_id' : 'product_id';
       const { data } = await supabase
         .from(table)
         .select('user_id, created_at')
-        .eq(fk, item.id)
+        .eq(fk, likeTargetId)
         .order('created_at', { ascending: false })
         .limit(100);
       const userIds = Array.from(new Set((data || []).map((d: any) => d.user_id).filter(Boolean)));
@@ -52,11 +59,11 @@ export default function HomeLikesSheet({
       setRows((data || []).map((r: any) => ({ ...r, profile: profileById.get(r.user_id) || null })));
       setLoading(false);
     };
-    load();
+    void load();
     return () => {
       active = false;
     };
-  }, [open, item?.id, isService, supabase]);
+  }, [open, likeTargetId, isService, isSpotlight, supabase]);
 
   useEffect(() => {
     if (!open) return;
@@ -77,7 +84,7 @@ export default function HomeLikesSheet({
     return () => {
       active = false;
     };
-  }, [open, supabase]);
+  }, [open, likeTargetId, supabase]);
 
   const runUnfollow = async (targetId: string) => {
     if (!viewerId || !targetId || targetId === viewerId) return;
@@ -155,7 +162,7 @@ export default function HomeLikesSheet({
     const slug = row?.profile?.slug;
     if (!slug) return;
     onClose();
-    window.location.href = `/${slug}`;
+    window.location.assign(`/${slug}`);
   };
   if (!open) return null;
   return (

@@ -1,5 +1,6 @@
 import { notFound, redirect } from 'next/navigation';
-import { createServerClient } from '@/lib/supabase';
+import { createServerClient } from '@/lib/supabase-server';
+import { normalizeServiceToken, resolveServiceByToken } from '@/lib/service-route-resolver';
 
 type RouteParams = {
   id: string;
@@ -11,20 +12,18 @@ export default async function LegacyServicePathRedirectPage({
   params: Promise<RouteParams>;
 }) {
   const { id } = await params;
-  const serviceId = id?.trim();
+  const serviceId = normalizeServiceToken(id);
   if (!serviceId) return notFound();
 
-  const supabase = createServerClient();
-  const { data } = await supabase
-    .from('service_listings')
-    .select('id, seller:profiles!seller_id(slug)')
-    .eq('id', serviceId)
-    .eq('is_active', true)
-    .maybeSingle();
+  const supabase = await createServerClient();
+  const resolvedService = await resolveServiceByToken(supabase, serviceId, { activeOnly: false });
+  if (!resolvedService) return notFound();
+  const sellerSlug = String(resolvedService.canonicalSellerSlug || '').trim();
+  if (!sellerSlug) return notFound();
+  const { data: auth } = await supabase.auth.getUser();
+  const isSignedIn = Boolean(auth?.user?.id);
+  const token = encodeURIComponent(String(resolvedService.canonicalServiceTokenRaw));
 
-  const sellerSlug = String((data as any)?.seller?.slug ?? '').trim();
-  if (!data?.id || !sellerSlug) return notFound();
-
-  redirect(`/s/${sellerSlug}/service/${data.id}`);
+  redirect(isSignedIn ? `/app/s/${token}` : `/s/${encodeURIComponent(sellerSlug)}/${token}`);
 }
 

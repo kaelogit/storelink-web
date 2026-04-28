@@ -16,7 +16,11 @@ export default function ThemeToggle() {
   return (
     <button
       type="button"
-      onClick={() => setTheme(isDark ? 'light' : 'dark')}
+      onClick={() => {
+        const next = isDark ? 'light' : 'dark';
+        // Defer: switching theme re-renders and can interrupt pointer capture (releasePointerCapture NotFoundError).
+        window.setTimeout(() => setTheme(next), 0);
+      }}
       aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
       className="p-2 rounded-xl border border-(--border) bg-(--surface) text-(--foreground) hover:bg-(--card) transition-colors duration-150"
     >

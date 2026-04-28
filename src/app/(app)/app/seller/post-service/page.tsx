@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, Camera, Plus, Sparkles, Trash2, Upload, Wand2 } from 'lucide-react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { ArrowLeft, Camera, Plus, Trash2, Upload, Wand2 } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import { PostPublishResultSheet } from '@/components/seller/PostPublishResultSheet';
 import { PostPublishingOverlay } from '@/components/seller/PostPublishingOverlay';
@@ -43,8 +44,17 @@ async function optimizeImageForUpload(file: File): Promise<File> {
   return new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' });
 }
 
-export default function AppSellerPostServicePage() {
+function mediaUrlsFromRow(m: unknown): string[] {
+  if (!m || !Array.isArray(m)) return [];
+  return m
+    .map((x) => (typeof x === 'string' ? x : (x as { url?: string })?.url))
+    .filter((u): u is string => Boolean(u));
+}
+
+function PostServiceForm() {
   const supabase = useMemo(() => createBrowserClient(), []);
+  const searchParams = useSearchParams();
+  const editId = (searchParams.get('id') || '').trim() || null;
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [menuRows, setMenuRows] = useState<MenuRow[]>([{ id: 'row-1', name: '', price: '' }]);
@@ -66,6 +76,8 @@ export default function AppSellerPostServicePage() {
   const [publishStage, setPublishStage] = useState<'uploading' | 'finalizing' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [resultSheetOpen, setResultSheetOpen] = useState(false);
+  const [serverMedia, setServerMedia] = useState<string[]>([]);
+  const [loadEdit, setLoadEdit] = useState(!!editId);
 
   useEffect(() => {
     let active = true;
@@ -82,28 +94,110 @@ export default function AppSellerPostServicePage() {
     };
   }, [supabase]);
 
+  useEffect(() => {
+    if (!editId) {
+      setServerMedia([]);
+      setLoadEdit(false);
+      return;
+    }
+    let a = true;
+    (async () => {
+      setLoadEdit(true);
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const userId = auth.user?.id;
+        if (!userId) {
+          if (a) {
+            setError('Please login again.');
+            setLoadEdit(false);
+          }
+          return;
+        }
+        const { data, error: loadErr } = await supabase
+          .from('service_listings')
+          .select('*')
+          .eq('id', editId)
+          .eq('seller_id', userId)
+          .single();
+        if (!a) return;
+        if (loadErr || !data) {
+          setError('Could not load this listing for editing.');
+          setLoadEdit(false);
+          return;
+        }
+        const row = data as {
+          title?: string;
+          description?: string;
+          media?: unknown;
+          menu?: { name?: string; price_minor?: number }[] | null;
+          delivery_type?: 'in_person' | 'online' | 'both';
+          location_type?: 'at_my_place' | 'i_travel' | 'both' | null;
+          service_areas?: string[] | null;
+          is_active?: boolean;
+        };
+        setTitle(String(row.title || ''));
+        setDescription(String(row.description || ''));
+        if (row.delivery_type) setDeliveryType(row.delivery_type);
+        if (row.location_type != null) setLocationType(row.location_type);
+        if (row.is_active != null) setIsActive(!!row.is_active);
+        setServiceAreasInput(
+          Array.isArray(row.service_areas) ? row.service_areas.join(', ') : '',
+        );
+        setServerMedia(mediaUrlsFromRow(row.media));
+        if (row.menu && Array.isArray(row.menu) && row.menu.length) {
+          setMenuRows(
+            row.menu.map((x, i) => ({
+              id: `row-${i}`,
+              name: String(x.name || '').trim(),
+              price: x.price_minor != null ? String(Math.round(Number(x.price_minor) / 100)) : '',
+            })),
+          );
+        } else {
+          setMenuRows([{ id: 'row-1', name: '', price: '' }]);
+        }
+        setFiles([]);
+        setPreviewUrls([]);
+        setLoadEdit(false);
+      } catch (e) {
+        if (a) {
+          setError('Failed to load listing.');
+          setLoadEdit(false);
+        }
+      }
+    })();
+    return () => {
+      a = false;
+    };
+  }, [editId, supabase]);
+
   const openDiamondSheet = (feature: string) => {
     setDiamondFeatureLabel(feature);
     setDiamondSheetOpen(true);
   };
 
   const onPickImages = async (ev: React.ChangeEvent<HTMLInputElement>) => {
-    const picked = Array.from(ev.target.files || []).slice(0, Math.max(0, 4 - files.length));
+    const room = 4 - serverMedia.length - files.length;
+    const picked = Array.from(ev.target.files || []).slice(0, Math.max(0, room));
     if (!picked.length) return;
     setIsOptimizing(true);
     try {
       const optimized: File[] = [];
       for (const file of picked) optimized.push(await optimizeImageForUpload(file));
-      setFiles((prev) => [...prev, ...optimized].slice(0, 4));
-      setPreviewUrls((prev) => [...prev, ...optimized.map((f) => URL.createObjectURL(f))].slice(0, 4));
+      setFiles((prev) => [...prev, ...optimized].slice(0, room));
+      setPreviewUrls((prev) => [...prev, ...optimized.map((f) => URL.createObjectURL(f))].slice(0, room));
     } finally {
       setIsOptimizing(false);
     }
   };
 
-  const removeImage = (idx: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== idx));
-    setPreviewUrls((prev) => prev.filter((_, i) => i !== idx));
+  const removeImage = (displayIdx: number) => {
+    if (displayIdx < serverMedia.length) {
+      setServerMedia((prev) => prev.filter((_, i) => i !== displayIdx));
+    } else {
+      const j = displayIdx - serverMedia.length;
+      setFiles((prev) => prev.filter((_, i) => i !== j));
+      setPreviewUrls((prev) => prev.filter((_, i) => i !== j));
+    }
   };
 
   const runAIDescription = async (isRewrite: boolean) => {
@@ -135,12 +229,16 @@ export default function AppSellerPostServicePage() {
     }
   };
 
-  const processAIBackground = async (idx: number) => {
+  const processAIBackground = async (displayIdx: number) => {
     if (!isDiamond) {
       openDiamondSheet('AI background clean');
       return;
     }
-    const file = files[idx];
+    if (displayIdx < serverMedia.length) {
+      return;
+    }
+    const j = displayIdx - serverMedia.length;
+    const file = files[j];
     if (!file) return;
     setError(null);
     setIsAIProcessing(true);
@@ -157,9 +255,9 @@ export default function AppSellerPostServicePage() {
       const bytes = Uint8Array.from(atob(String(data.image)), (c) => c.charCodeAt(0));
       const cleaned = new File([bytes], `ai_clean_${Date.now()}.png`, { type: 'image/png' });
       const optimized = await optimizeImageForUpload(cleaned);
-      setFiles((prev) => prev.map((f, i) => (i === idx ? optimized : f)));
+      setFiles((prev) => prev.map((f, i) => (i === j ? optimized : f)));
       const nextPreview = URL.createObjectURL(optimized);
-      setPreviewUrls((prev) => prev.map((u, i) => (i === idx ? nextPreview : u)));
+      setPreviewUrls((prev) => prev.map((u, i) => (i === j ? nextPreview : u)));
     } catch (e: any) {
       setError(e?.message || 'AI background clean failed.');
     } finally {
@@ -219,7 +317,7 @@ export default function AppSellerPostServicePage() {
       if (!profile?.bank_details?.recipient_code) throw new Error('Set up bank details before posting.');
 
       setPublishProgress(14);
-      const uploaded = [];
+      const uploaded: string[] = [];
       for (let i = 0; i < files.length; i += 1) {
         uploaded.push(await uploadFile(userId, files[i], i));
         setPublishProgress(14 + Math.round(((i + 1) / Math.max(1, files.length)) * 62));
@@ -231,9 +329,9 @@ export default function AppSellerPostServicePage() {
         .split(',')
         .map((x) => x.trim())
         .filter(Boolean);
+      const finalMedia = editId ? [...serverMedia, ...uploaded] : uploaded;
 
-      const payload: any = {
-        seller_id: userId,
+      const basePayload: Record<string, unknown> = {
         title: title.trim(),
         description: description.trim(),
         hero_price_min: heroPriceMinor,
@@ -241,32 +339,46 @@ export default function AppSellerPostServicePage() {
         delivery_type: deliveryType,
         location_type: deliveryType === 'online' ? null : locationType || null,
         service_areas: serviceAreas.length ? serviceAreas : null,
-        media: uploaded,
+        media: finalMedia,
         is_active: isActive,
         menu: menu.map((m) => ({ name: m.name, price_minor: m.price * 100 })),
         service_category: profile?.service_category || 'nail_tech',
         location_country_code: profile?.location_country_code || 'NG',
       };
       if (profile?.service_latitude != null && profile?.service_longitude != null) {
-        payload.latitude = profile.service_latitude;
-        payload.longitude = profile.service_longitude;
-        payload.service_address = profile.location || null;
+        basePayload.latitude = profile.service_latitude;
+        basePayload.longitude = profile.service_longitude;
+        basePayload.service_address = profile.location || null;
       }
-      const { error: createError } = await supabase.from('service_listings').insert(payload);
-      if (createError) throw createError;
+      if (editId) {
+        const { error: updateError } = await supabase
+          .from('service_listings')
+          .update(basePayload)
+          .eq('id', editId)
+          .eq('seller_id', userId);
+        if (updateError) throw updateError;
+        setServerMedia((prev) => [...prev, ...uploaded]);
+        setFiles([]);
+        setPreviewUrls([]);
+      } else {
+        const payload: Record<string, unknown> = { ...basePayload, seller_id: userId };
+        const { error: createError } = await supabase.from('service_listings').insert(payload);
+        if (createError) throw createError;
+        setTitle('');
+        setDescription('');
+        setMenuRows([{ id: 'row-1', name: '', price: '' }]);
+        setDeliveryType('in_person');
+        setLocationType('at_my_place');
+        setServiceAreasInput('');
+        setIsActive(true);
+        setServerMedia([]);
+        setFiles([]);
+        setPreviewUrls([]);
+      }
       setPublishProgress(100);
-      setTitle('');
-      setDescription('');
-      setMenuRows([{ id: 'row-1', name: '', price: '' }]);
-      setDeliveryType('in_person');
-      setLocationType('at_my_place');
-      setServiceAreasInput('');
-      setIsActive(true);
-      setFiles([]);
-      setPreviewUrls([]);
       setResultSheetOpen(true);
     } catch (e: any) {
-      setError(e?.message || 'Failed to post service.');
+      setError(e?.message || (editId ? 'Failed to update service.' : 'Failed to post service.'));
     } finally {
       setLoading(false);
       setPublishStage(null);
@@ -280,6 +392,11 @@ export default function AppSellerPostServicePage() {
     return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(Math.min(...prices));
   })();
 
+  const imageTotal = serverMedia.length + files.length;
+  if (loadEdit) {
+    return <div className="py-24 text-center text-sm text-(--muted)">Loading listing…</div>;
+  }
+
   return (
     <>
     <div className="mx-auto max-w-3xl">
@@ -287,32 +404,60 @@ export default function AppSellerPostServicePage() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-widest text-emerald-600">Service Studio</p>
-            <h1 className="mt-1 text-2xl sm:text-3xl font-black text-(--foreground)">Post Service</h1>
+            <h1 className="mt-1 text-2xl sm:text-3xl font-black text-(--foreground)">
+              {editId ? 'Edit service' : 'Post Service'}
+            </h1>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/app/post" className="inline-flex h-10 items-center rounded-xl border border-(--border) px-3 text-xs font-black text-(--foreground)">
+            <Link href={editId ? '/app/seller/inventory' : '/app/post'} className="inline-flex h-10 items-center rounded-xl border border-(--border) px-3 text-xs font-black text-(--foreground)">
               <ArrowLeft size={14} className="mr-1" /> Back
             </Link>
             <button type="button" onClick={handleSubmit} disabled={loading} className="inline-flex h-10 items-center gap-2 px-4 rounded-xl bg-emerald-600 text-white text-sm font-black disabled:opacity-50">
               {!loading ? <Upload size={14} /> : null}
-              {loading ? 'Posting...' : 'Post'}
+              {loading ? (editId ? 'Saving…' : 'Posting...') : editId ? 'Save' : 'Post'}
             </button>
           </div>
         </div>
 
         <div className="mt-5 flex gap-3 overflow-x-auto">
-          {previewUrls.map((url, idx) => (
-            <div key={url} className="relative w-40 h-52 rounded-3xl border border-(--border) overflow-hidden shrink-0">
-              <img src={url} alt="service" className="w-full h-full object-cover" />
-              <button type="button" onClick={() => processAIBackground(idx)} disabled={isAIProcessing || loading} className="absolute top-2 left-2 inline-flex items-center gap-1 bg-black/65 text-white text-[10px] font-black px-2 py-1 rounded-lg disabled:opacity-50">
-                <Wand2 size={10} /> AI CLEAN
+          {serverMedia.map((url, sidx) => (
+            <div key={`srv-${sidx}-${url.slice(0, 20)}`} className="relative w-40 h-52 rounded-3xl border border-(--border) overflow-hidden shrink-0">
+              <img src={url} alt="service" className="h-full w-full object-cover" />
+              <div className="absolute top-2 left-2 text-[8px] font-bold uppercase text-white/90 drop-shadow">Saved</div>
+              <button
+                type="button"
+                onClick={() => processAIBackground(sidx)}
+                disabled
+                className="absolute top-2 left-12 inline-flex items-center gap-1 bg-black/30 text-white text-[10px] font-black px-2 py-1 rounded-lg opacity-50 cursor-not-allowed"
+              >
+                <Wand2 size={10} /> AI
               </button>
-              <button type="button" onClick={() => removeImage(idx)} className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/70 text-white inline-flex items-center justify-center">
+              <button
+                type="button"
+                onClick={() => removeImage(sidx)}
+                className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/70 text-white inline-flex items-center justify-center"
+                aria-label="Remove image"
+              >
                 <Trash2 size={12} />
               </button>
             </div>
           ))}
-          {previewUrls.length < 4 ? (
+          {files.map((_, fidx) => {
+            const dIdx = serverMedia.length + fidx;
+            const u = previewUrls[fidx] || '';
+            return (
+            <div key={`new-${fidx}`} className="relative w-40 h-52 rounded-3xl border border-(--border) overflow-hidden shrink-0">
+              <img src={u} alt="service" className="h-full w-full object-cover" />
+              <button type="button" onClick={() => void processAIBackground(dIdx)} disabled={isAIProcessing || loading} className="absolute top-2 left-2 inline-flex items-center gap-1 bg-black/65 text-white text-[10px] font-black px-2 py-1 rounded-lg disabled:opacity-50">
+                <Wand2 size={10} /> AI CLEAN
+              </button>
+              <button type="button" onClick={() => removeImage(dIdx)} className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/70 text-white inline-flex items-center justify-center" aria-label="Remove image">
+                <Trash2 size={12} />
+              </button>
+            </div>
+            );
+          })}
+          {imageTotal < 4 ? (
             <label className="w-40 h-52 rounded-3xl border border-dashed border-(--border) bg-(--surface) shrink-0 flex flex-col items-center justify-center gap-2 cursor-pointer">
               <Camera size={20} className="text-(--foreground)" />
               <span className="text-xs font-bold text-(--muted)">Add Photo</span>
@@ -470,7 +615,7 @@ export default function AppSellerPostServicePage() {
     </div>
     <PostPublishingOverlay
       open={loading}
-      label="Publishing service"
+      label={editId ? 'Saving service' : 'Publishing service'}
       progress={publishProgress}
       stage={publishStage}
       tone="emerald"
@@ -478,13 +623,28 @@ export default function AppSellerPostServicePage() {
     <PostPublishResultSheet
       open={resultSheetOpen}
       onClose={() => setResultSheetOpen(false)}
-      title="Service is live"
-      description="Your service listing is published and visible to buyers when active."
+      title={editId ? 'Service updated' : 'Service is live'}
+      description={
+        editId
+          ? 'Your service listing was saved. Buyers will see the latest when it is active.'
+          : 'Your service listing is published and visible to buyers when active.'
+      }
       tone="emerald"
       primaryAction={{ label: 'My profile', href: '/app/profile' }}
-      secondaryAction={{ label: 'Post hub', href: '/app/post' }}
+      secondaryAction={
+        editId ? { label: 'Inventory', href: '/app/seller/inventory' } : { label: 'Post hub', href: '/app/post' }
+      }
     />
     </>
   );
 }
 
+export default function AppSellerPostServicePage() {
+  return (
+    <Suspense
+      fallback={<div className="py-24 text-center text-sm text-(--muted)">Loading service studio…</div>}
+    >
+      <PostServiceForm />
+    </Suspense>
+  );
+}

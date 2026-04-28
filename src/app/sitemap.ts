@@ -1,17 +1,15 @@
 import { MetadataRoute } from 'next';
-import { createServerClient } from '@/lib/supabase';
-
-const supabase = createServerClient();
+import { createServerClient } from '@/lib/supabase-server';
 
 const BASE_URL = 'https://storelink.ng';
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const supabase = await createServerClient();
   // ---------------------------------------------------------
   // 1. STATIC ROUTES (Your Core Pages)
   // ---------------------------------------------------------
   const staticRoutes = [
     '', // Homepage
-    '/explore',
     '/download',
     '/pricing',
     '/about-us',
@@ -84,14 +82,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // ---------------------------------------------------------
   const { data: services } = await supabase
     .from('service_listings')
-    .select('id, updated_at, seller:profiles!seller_id(slug)')
+    .select('id, slug, updated_at, seller:profiles!seller_id(slug)')
     .eq('is_active', true)
     .limit(5000);
 
   const serviceMap = (services || [])
     .filter((row: any) => (row as any).seller && (row as any).seller.slug)
     .map((row: any) => ({
-      url: `${BASE_URL}/s/${(row as any).seller.slug}/service/${row.id}`,
+      url: `${BASE_URL}/s/${(row as any).seller.slug}/${(row as any).slug || row.id}`,
       lastModified: new Date(row.updated_at || new Date()),
       changeFrequency: 'weekly' as const,
       priority: 0.6,

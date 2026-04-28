@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
 import {
   Coins,
@@ -88,6 +88,8 @@ function resolveServiceThumb(svc: any): string | null {
 
 export default function ClientStoryViewer({ storyId }: { storyId: string }) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isAppMode = (pathname || '').startsWith('/app');
   const supabase = useMemo(() => createBrowserClient(), []);
   const [userId, setUserId] = useState<string | null>(null);
   const [allStories, setAllStories] = useState<any[]>([]);
@@ -177,7 +179,7 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
 
   const exitViewer = useCallback(() => {
     if (typeof window !== 'undefined' && window.history.length > 1) router.back();
-    else router.push('/app/explore');
+    else router.push('/app');
   }, [router]);
 
   const goNext = useCallback(() => {
@@ -370,7 +372,7 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
     return (
       <div className="mx-auto max-w-md p-8 text-center">
         <p className="text-sm font-bold text-(--foreground)">{loadError || 'Story unavailable.'}</p>
-        <button type="button" className="mt-4 text-sm font-bold text-emerald-600" onClick={() => router.push('/app/explore')}>
+        <button type="button" className="mt-4 text-sm font-bold text-emerald-600" onClick={() => router.push('/app')}>
           Back to explore
         </button>
       </div>
@@ -386,10 +388,14 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
   const textHex = STORY_BG_TEXT[bgKey] || '#ffffff';
 
   const productSlugForLink = product?.slug || resolvedProductSlug;
-  const productHref = productSlugForLink ? `/p/${encodeURIComponent(productSlugForLink)}` : null;
+  const productHref = productSlugForLink
+    ? `${isAppMode ? '/app/p/' : '/p/'}${encodeURIComponent(productSlugForLink)}`
+    : null;
   const serviceHref =
-    seller?.slug && service?.id
-      ? `/s/${encodeURIComponent(seller.slug)}/service/${encodeURIComponent(service.id)}`
+    seller?.slug && (service?.slug || service?.id)
+      ? isAppMode
+        ? `/app/s/${encodeURIComponent(String(service?.slug || service?.id))}`
+        : `/s/${encodeURIComponent(seller.slug)}/${encodeURIComponent(String(service?.slug || service?.id))}`
       : null;
 
   return (
@@ -471,7 +477,7 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
 
         <div className="pointer-events-auto flex items-start justify-between gap-2">
           <Link
-            href={seller?.slug ? `/${encodeURIComponent(seller.slug)}` : '/app/explore'}
+            href={seller?.slug ? `/${encodeURIComponent(seller.slug)}` : '/app'}
             className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-black/20 px-2 py-1.5 backdrop-blur-md"
           >
             <div

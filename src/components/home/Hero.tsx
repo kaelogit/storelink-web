@@ -126,7 +126,7 @@ export default function Hero() {
             <span className="relative z-10">Start Selling & Booking</span>
             <ArrowRight className="relative z-10 group-hover:translate-x-1 transition-transform" size={20} />
           </Link>
-          <Link href="/explore" className="w-full sm:w-auto px-8 py-4 bg-[var(--card)]/80 backdrop-blur-md border-2 border-[var(--border)] text-[var(--foreground)] rounded-2xl font-semibold hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 transition-all flex items-center justify-center gap-2">
+          <Link href="/" className="w-full sm:w-auto px-8 py-4 bg-[var(--card)]/80 backdrop-blur-md border-2 border-[var(--border)] text-[var(--foreground)] rounded-2xl font-semibold hover:border-emerald-500 hover:text-emerald-700 dark:hover:text-emerald-400 hover:bg-emerald-50/50 dark:hover:bg-emerald-950/30 transition-all flex items-center justify-center gap-2">
             <Search size={18} />
             Explore Products & Services
           </Link>

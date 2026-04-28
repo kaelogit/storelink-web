@@ -43,6 +43,9 @@ export default function Navbar() {
   } | null>(null);
 
   const isAppLayer = pathname?.startsWith('/app');
+  const isImmersiveDetail =
+    !!pathname &&
+    /^\/s\/[^/]+\/service\/[^/]+/.test(pathname);
 
   useEffect(() => {
     let mounted = true;
@@ -102,7 +105,7 @@ export default function Navbar() {
     }
   };
 
-  if (isAppLayer) {
+  if (isAppLayer || isImmersiveDetail) {
     return null;
   }
 

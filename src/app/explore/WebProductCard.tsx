@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   Heart,
   MessageCircle,
@@ -32,6 +33,7 @@ const formatMoney = (amount: number, currency: string) => {
 
 export default function WebProductCard({
   item,
+  viewerId,
   onAddToCart,
   onToggleLike,
   onOpenComments,
@@ -39,17 +41,22 @@ export default function WebProductCard({
   onToggleWishlist,
   onShare,
 }: any) {
+  const pathname = usePathname();
+  const isAppMode = (pathname || '').startsWith('/app');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [expanded, setExpanded] = useState(false);
   const addProduct = useWebCartStore((s) => s.addProduct);
   const addService = useWebCartStore((s) => s.addService);
 
   const isService = item.type === 'service' || !!item.service_listing_id;
+  const serviceToken = String(item.service_slug || item.slug || item.service_listing_id || item.id || '').trim();
   const serviceHref =
-    isService && item.seller?.slug && item.service_listing_id
-      ? `/s/${item.seller.slug}/service/${item.service_listing_id}`
+    isService && item.seller?.slug && serviceToken
+      ? isAppMode
+        ? `/app/s/${encodeURIComponent(serviceToken)}`
+        : `/s/${item.seller.slug}/${encodeURIComponent(serviceToken)}`
       : null;
-  const productHref = item.slug ? `/p/${item.slug}` : null;
+  const productHref = item.slug ? `${isAppMode ? '/app/p/' : '/p/'}${item.slug}` : null;
   const detailHref = serviceHref || productHref || '#';
 
   // ---------------------------------------------------------
@@ -95,6 +102,25 @@ export default function WebProductCard({
     sellerCity ||
     sellerState ||
     'LAGOS, NG';
+  const isOwnListing = Boolean(viewerId) && String(item?.seller?.id || item?.seller_id || '') === String(viewerId);
+  const serviceDistanceLabel =
+    item.service_distance_label ||
+    (typeof item.distance_km === 'number' ? `${Number(item.distance_km).toFixed(1)} km away` : null) ||
+    (typeof item.service_distance_km === 'number' ? `${Number(item.service_distance_km).toFixed(1)} km away` : null) ||
+    sellerLocationLabel;
+  const serviceDeliveryBadge =
+    item.service_delivery_badge ||
+    (item.delivery_type === 'online'
+      ? 'ONLINE'
+      : item.delivery_type === 'in_person' && item.location_type === 'at_my_place'
+        ? 'STUDIO ONLY'
+        : item.delivery_type === 'in_person' && item.location_type === 'i_travel'
+          ? 'HOME SERVICE'
+          : item.delivery_type === 'in_person' && item.location_type === 'both'
+            ? 'HOME & STUDIO'
+            : item.delivery_type === 'both'
+              ? 'HOME & STUDIO'
+              : null);
 
   // ---------------------------------------------------------
   // 2. 🔒 THE TRAP HANDLER
@@ -107,8 +133,13 @@ export default function WebProductCard({
     if (isService) {
       addService({
         service_listing_id: String(item.service_listing_id || item.id || ''),
+        seller_id: item.seller?.id || null,
         title: String(item.name || item.title || 'Service'),
         hero_price: Number(activePrice || 0),
+        delivery_type: item.delivery_type || null,
+        location_type: item.location_type || null,
+        service_distance_label: isOwnListing ? 'Your listing' : serviceDistanceLabel || null,
+        service_delivery_badge: serviceDeliveryBadge || null,
         currency_code: item.currency_code || 'NGN',
         image_url: images?.[0] || null,
         seller_slug: item.seller?.slug || null,
@@ -118,9 +149,14 @@ export default function WebProductCard({
     }
     addProduct({
       product_id: String(item.product_id || item.id || ''),
+      seller_id: item.seller?.id || null,
       slug: item.slug || null,
       name: String(item.name || 'Product'),
       price: Number(activePrice || 0),
+      anchor_price: Number(anchorPrice || activePrice || 0),
+      is_flash_active: Boolean(isFlashActive),
+      seller_loyalty_enabled: Boolean(loyaltyEnabled),
+      seller_loyalty_percentage: Number(loyaltyPercent || 0),
       currency_code: item.currency_code || 'NGN',
       image_url: images?.[0] || null,
       seller_slug: item.seller?.slug || null,
@@ -170,7 +206,7 @@ export default function WebProductCard({
       <div className="flex mb-3">
         {/* Sidebar: Logo */}
         <div className="w-[44px] shrink-0 flex flex-col items-center">
-           <Link href={`/${item.seller?.slug}`} className={`w-[34px] h-[34px] rounded-xl border-[1.5px] overflow-hidden relative ${isDiamond ? 'border-violet-500 ring-2 ring-violet-500/20' : 'border-(--border)'}`}>
+           <Link href={`${isAppMode ? '/app/profile/' : '/'}${item.seller?.slug}`} className={`w-[34px] h-[34px] rounded-xl border-[1.5px] overflow-hidden relative ${isDiamond ? 'border-violet-500 ring-2 ring-violet-500/20' : 'border-(--border)'}`}>
               <Image 
                 src={sellerLogoSrc} 
                 alt="Seller" 
@@ -233,14 +269,18 @@ export default function WebProductCard({
               <div className="flex items-center gap-1">
                  <MapPin size={10} className="text-(--muted)" strokeWidth={3} />
                  <span className="text-[9px] font-black text-(--muted) tracking-wider">
-                    {(
-                      item.service_distance_label ||
-                      sellerLocationLabel
-                    )
+                    {(isService ? (isOwnListing ? 'Your listing' : serviceDistanceLabel) : sellerLocationLabel)
                       .toString()
                       .toUpperCase()}
                  </span>
               </div>
+              {isService && serviceDeliveryBadge ? (
+                <div className="flex items-center gap-1">
+                  <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-black tracking-wider text-emerald-700">
+                    {String(serviceDeliveryBadge).toUpperCase()}
+                  </span>
+                </div>
+              ) : null}
               {!isService && (
                 <div className="flex items-center gap-1">
                    <Package size={10} className={isSoldOut ? 'text-red-500' : 'text-(--muted)'} strokeWidth={3} />
@@ -278,9 +318,6 @@ export default function WebProductCard({
                   <ShoppingBag size={16} className="text-white" strokeWidth={3} />
                 )}
              </div>
-             <span className="text-[9px] font-black text-(--foreground)">
-                {isService ? 'ADD' : 'BUY'}
-             </span>
            </button>
            )}
 

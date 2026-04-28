@@ -12,6 +12,7 @@ function VerifyPageContent() {
   const params = useSearchParams();
   const email = params.get('email') || '';
   const nextPath = params.get('next') || '/app';
+  const referralCode = (params.get('ref') || '').trim();
   const supabase = useMemo(() => createBrowserClient(), []);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -55,7 +56,10 @@ function VerifyPageContent() {
             <Button type="button" onClick={resend} disabled={loading || !email} className="w-full">
               {loading ? 'Sending...' : 'Resend verification email'}
             </Button>
-            <Link href={`/auth/login?next=${encodeURIComponent(nextPath)}`} className="block text-center text-sm font-semibold text-emerald-600">
+            <Link
+              href={`/auth/login?next=${encodeURIComponent(nextPath)}${referralCode ? `&ref=${encodeURIComponent(referralCode)}` : ''}`}
+              className="block text-center text-sm font-semibold text-emerald-600"
+            >
               I have verified, continue to login
             </Link>
           </div>

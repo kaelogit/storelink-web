@@ -213,7 +213,7 @@ export default function AppSpotlightPostPage() {
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Link
-                  href="/app/explore"
+                  href="/app"
                   className="inline-flex h-10 items-center gap-2 rounded-xl bg-violet-600 px-4 text-xs font-black text-white"
                 >
                   <Store size={15} /> Shop & explore
@@ -282,7 +282,7 @@ export default function AppSpotlightPostPage() {
       title="Spotlight published"
       description="Your spotlight is live. It can appear in spotlight feeds for other shoppers to discover."
       tone="violet"
-      primaryAction={{ label: 'Explore', href: '/app/explore' }}
+      primaryAction={{ label: 'Explore', href: '/app' }}
       secondaryAction={{ label: 'Post hub', href: '/app/post' }}
     />
     </>

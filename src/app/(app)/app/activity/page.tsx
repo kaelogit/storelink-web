@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowUpRight,
@@ -252,7 +252,11 @@ function rowVisual(item: GroupedActivity, profileId: string | undefined, currenc
 export default function ActivityPage() {
   const supabase = useMemo(() => createBrowserClient(), []);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromDrawer = searchParams.get('fromDrawer') === '1';
+  const backHref = fromDrawer ? '/app/profile?openHub=1' : '/app/profile';
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [isSeller, setIsSeller] = useState(false);
   const [currency, setCurrency] = useState('NGN');
   const [feed, setFeed] = useState<GroupedActivity[]>([]);
   const [todayViews, setTodayViews] = useState(0);
@@ -273,10 +277,11 @@ export default function ActivityPage() {
 
     const { data: profile } = await supabase
       .from('profiles')
-      .select('currency_code')
+      .select('currency_code,is_seller')
       .eq('id', uid)
       .maybeSingle();
     if (profile?.currency_code) setCurrency(String(profile.currency_code).toUpperCase());
+    setIsSeller(Boolean((profile as any)?.is_seller));
 
     await supabase.rpc('reset_unread_notifications', { p_user_id: uid } as any);
 
@@ -514,12 +519,12 @@ export default function ActivityPage() {
 
   const navigateForItem = async (item: GroupedActivity) => {
     if (item.type === 'ORDER') {
-      router.push(`/app/orders`);
+      router.push(item.id ? `/app/orders/${item.id}` : '/app/orders');
       return;
     }
     if ((item.type === 'CART_ADD' || item.type === 'WISHLIST_ADD') && item.product_id) {
       const slug = item.products?.slug;
-      router.push(slug ? `/p/${encodeURIComponent(slug)}` : '/app/explore');
+      router.push(slug ? `/app/p/${encodeURIComponent(slug)}` : '/app');
       return;
     }
     if (item.type === 'COIN') {
@@ -532,12 +537,12 @@ export default function ActivityPage() {
     }
     const primary = item.senders[0];
     if (item.type === 'FOLLOW') {
-      if (primary?.slug) router.push(`/${encodeURIComponent(primary.slug)}`);
-      else router.push('/app/explore');
+      if (primary?.slug) router.push(`/app/profile/${encodeURIComponent(primary.slug)}`);
+      else router.push('/app');
       return;
     }
     if (item.type === 'SERVICE_BOOKING' && item.service_order_id) {
-      router.push('/app/bookings');
+      router.push(`/app/bookings/${item.service_order_id}`);
       return;
     }
     if (item.type === 'SUPPORT') {
@@ -559,7 +564,7 @@ export default function ActivityPage() {
       return;
     }
     if (item.type === 'VERIFICATION') {
-      router.push('/app/settings');
+      router.push(isSeller ? '/app/seller/verification-consent' : '/app/settings');
       return;
     }
     if (item.type === 'PAYOUT') {
@@ -567,17 +572,36 @@ export default function ActivityPage() {
       return;
     }
     if (item.type === 'SPOTLIGHT' && item.spotlight_post_id) {
-      router.push('/app/explore');
+      router.push('/app');
       return;
     }
     if (item.product_id) {
       const slug = item.products?.slug;
-      router.push(slug ? `/p/${encodeURIComponent(slug)}` : '/app/explore');
+      router.push(slug ? `/app/p/${encodeURIComponent(slug)}` : '/app');
     }
   };
 
   return (
     <div className="mx-auto max-w-2xl">
+      <header className="sticky top-0 z-20 -mx-4 mb-4 flex items-center justify-between border-b border-(--border) bg-(--background)/95 px-1 py-3 backdrop-blur-sm lg:hidden">
+        <Link
+          href={backHref}
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-(--surface) text-(--foreground) transition hover:opacity-90"
+          aria-label={fromDrawer ? 'Back to profile menu' : 'Back to profile'}
+        >
+          <ChevronRight className="h-6 w-6 rotate-180" strokeWidth={2.5} />
+        </Link>
+        <h1 className="min-w-0 flex-1 text-center text-[12px] font-black uppercase tracking-[0.18em] text-(--foreground)">Activity</h1>
+        <button
+          type="button"
+          onClick={() => void onRefresh()}
+          disabled={refreshing || loading}
+          className="h-11 w-11 rounded-full bg-(--surface) text-xs font-black text-(--foreground) disabled:opacity-50"
+          aria-label="Refresh activity"
+        >
+          {refreshing ? '…' : '↻'}
+        </button>
+      </header>
       <div className="rounded-3xl border border-(--border) bg-(--card) overflow-hidden">
         <div className="px-5 py-4 border-b border-(--border) flex items-center justify-between gap-3">
           <div>
