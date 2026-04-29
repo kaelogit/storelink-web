@@ -25,6 +25,16 @@ interface Merchant {
   category?: string;
 }
 
+interface ServiceSeller {
+  id: string;
+  display_name: string;
+  slug: string;
+  logo_url?: string;
+  location_city?: string;
+  location_state?: string;
+  subscription_plan?: string;
+}
+
 interface ServiceListing {
   id: string;
   seller_id?: string;
@@ -36,15 +46,7 @@ interface ServiceListing {
   delivery_type?: string;
   location_type?: string;
   media?: any[];
-  seller?: {
-    id: string;
-    display_name: string;
-    slug: string;
-    logo_url?: string;
-    location_city?: string;
-    location_state?: string;
-    subscription_plan?: string;
-  };
+  seller?: ServiceSeller | ServiceSeller[];
   distance_km?: number;
 }
 
@@ -471,7 +473,7 @@ export default function AppSearchPage() {
 
       if (error) throw error;
 
-      let rows = (data || []) as ServiceListing[];
+      let rows = (data || []) as unknown as ServiceListing[];
 
       if (activeQuery.trim()) {
         const q = activeQuery.trim().toLowerCase();
@@ -513,7 +515,8 @@ export default function AppSearchPage() {
     const flattened = servicePages?.pages ? servicePages.pages.flat() : [];
     const dedupedBySeller = new Map<string, any>();
     for (const row of flattened) {
-      const sellerId = String(row?.seller_id ?? row?.seller?.id ?? row?.id ?? '');
+      const seller = Array.isArray(row?.seller) ? row.seller[0] : row?.seller;
+      const sellerId = String(row?.seller_id ?? seller?.id ?? row?.id ?? '');
       if (!sellerId) continue;
       if (!dedupedBySeller.has(sellerId)) {
         dedupedBySeller.set(sellerId, row);
@@ -924,13 +927,14 @@ function MerchantCard({
     );
   } else {
     const service = item as ServiceListing;
-    const sellerId = service.seller?.id || service.id;
-    const sellerName = service.seller?.display_name || 'Store';
-    const sellerSlug = service.seller?.slug || 'store';
-    const sellerLogo = service.seller?.logo_url;
-    const sellerPlan = service.seller?.subscription_plan;
-    const sellerCity = service.seller?.location_city;
-    const sellerState = service.seller?.location_state;
+    const seller = Array.isArray(service.seller) ? service.seller[0] : service.seller;
+    const sellerId = seller?.id || service.seller_id || service.id;
+    const sellerName = seller?.display_name || 'Store';
+    const sellerSlug = seller?.slug || 'store';
+    const sellerLogo = seller?.logo_url;
+    const sellerPlan = seller?.subscription_plan;
+    const sellerCity = seller?.location_city;
+    const sellerState = seller?.location_state;
     const serviceCategory = String(service.service_category || '').replace(/_/g, ' ');
     const deliveryType = service.delivery_type;
     const distanceKm = service.distance_km;
