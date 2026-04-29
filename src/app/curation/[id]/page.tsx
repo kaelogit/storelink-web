@@ -17,10 +17,14 @@ export default async function ProductCurationPage({ params, searchParams }: Page
   if (!productId) return notFound();
 
   const supabase = createServerClient();
+  
+  // Check if it's a UUID or a slug
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(productId);
+  
   const { data: product } = await supabase
     .from('products')
     .select('id,name,description,price,currency_code,image_urls,category,seller_id,seller:profiles!seller_id(id,display_name,logo_url,slug,subscription_plan)')
-    .eq('id', productId)
+    .eq(isUUID ? 'id' : 'slug', productId)
     .maybeSingle();
   if (!product) return notFound();
 

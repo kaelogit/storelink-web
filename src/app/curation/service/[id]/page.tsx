@@ -25,10 +25,14 @@ export default async function ServiceCurationPage({ params, searchParams }: Page
   if (!listingId) return notFound();
 
   const supabase = createServerClient();
+  
+  // Check if it's a UUID or a slug
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(listingId);
+  
   const { data: listing } = await supabase
     .from('service_listings')
     .select('id,slug,title,description,hero_price_min,currency_code,service_category,is_active,media,seller_id,seller:profiles!seller_id(id,display_name,logo_url,slug,subscription_plan)')
-    .eq('id', listingId)
+    .eq(isUUID ? 'id' : 'slug', listingId)
     .maybeSingle();
   if (!listing) return notFound();
 

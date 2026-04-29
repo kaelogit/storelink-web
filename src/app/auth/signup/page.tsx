@@ -38,28 +38,70 @@ function SignupPageContent() {
     setLoading(true);
     setError(null);
     setMessage(null);
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email: email.trim().toLowerCase(),
-      password,
-      options: {
-        emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/auth/login` : undefined,
-      },
-    });
-    setLoading(false);
-    if (signUpError) {
-      setError(signUpError.message);
-      return;
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: cleanEmail,
+        password,
+        options: {
+          data: {
+            display_name: cleanEmail.split('@')[0].toUpperCase(),
+          },
+        },
+      });
+
+      if (signUpError) {
+        if (signUpError.message?.includes('already registered')) {
+          const { error: signInError } = await supabase.auth.signInWithPassword({
+            email: cleanEmail,
+            password,
+          });
+          if (signInError) {
+            throw new Error('This email is already registered. Please log in.');
+          }
+          router.push(nextPath);
+          return;
+        }
+        throw signUpError;
+      }
+
+      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+      const { error: otpError } = await supabase
+        .from('otp_verifications')
+        .upsert({ email: cleanEmail, code: otpCode }, { onConflict: 'email' });
+
+      if (otpError) throw otpError;
+
+      const emailResponse = await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: cleanEmail,
+          type: 'VERIFY_SIGNUP',
+          code: otpCode,
+        }),
+      });
+
+      if (!emailResponse.ok) {
+        const errorData = await emailResponse.json();
+        throw new Error(errorData.error || 'Failed to send verification email');
+      }
+
+      const verifyUrl = new URLSearchParams({
+        email: cleanEmail,
+        next: nextPath,
+        type: 'signup',
+      });
+      if (referralCode) verifyUrl.set('ref', referralCode);
+
+      router.push(`/auth/verify?${verifyUrl.toString()}`);
+    } catch (err: any) {
+      setError(err.message || 'Failed to create account');
+    } finally {
+      setLoading(false);
     }
-    if (data.session) {
-      router.push(nextPath);
-      return;
-    }
-    const verifyUrl = new URLSearchParams({
-      email: email.trim().toLowerCase(),
-      next: nextPath,
-    });
-    if (referralCode) verifyUrl.set('ref', referralCode);
-    router.push(`/auth/verify?${verifyUrl.toString()}`);
   };
 
   return (
