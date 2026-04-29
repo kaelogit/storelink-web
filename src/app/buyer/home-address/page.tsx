@@ -28,7 +28,7 @@ function HomeAddressContent() {
     state?: string;
   } | null>(null);
 
-  // Search logic (Matching Mobile Geocode Logic)
+  // Search logic (Using backend API that supports Google Maps + Nominatim)
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (query.trim().length < 3) return;
@@ -37,21 +37,19 @@ function HomeAddressContent() {
     setError(null);
 
     try {
-      // Using Nominatim for Web Geocoding (Free & matches the reverse geocode used in previous step)
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-          query + ', Nigeria'
-        )}&addressdetails=1&limit=5`,
-        { headers: { 'User-Agent': 'StoreLink/1.0' } }
-      );
+      const response = await fetch('/api/geocode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ q: query }),
+      });
 
       const data = await response.json();
       
-      if (data.length === 0) {
-        setError('No matches found. Try adding a city like "Yaba, Lagos".');
+      if (!response.ok || !data.results || data.results.length === 0) {
+        setError(data.error || 'No addresses found. Try searching with a street name or area.');
         setHits([]);
       } else {
-        setHits(data);
+        setHits(data.results);
       }
     } catch (err) {
       setError('Search failed. Please check your connection.');
@@ -138,7 +136,7 @@ function HomeAddressContent() {
       <div className="flex gap-4 p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
         <MapPin className="text-emerald-600 shrink-0" size={24} strokeWidth={2.5} />
         <p className="text-sm text-[var(--muted)] leading-relaxed">
-          Search for your home address below. We use these coordinates to show you accurate distances to nearby stores.
+          Search for your complete home address (street address, building number, or area name). We use the exact coordinates to show accurate distances to nearby stores and services.
         </p>
       </div>
 
@@ -151,7 +149,7 @@ function HomeAddressContent() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="e.g. No 5 Tejuosho, Yaba, Lagos"
+              placeholder="e.g. 73b Tejuosho Street, Yaba or Lekki Phase 1"
               className="w-full h-14 pl-12 pr-4 bg-[var(--surface)] border border-[var(--border)] rounded-2xl font-semibold focus:outline-none focus:border-emerald-500 transition-colors"
             />
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)]" size={20} />
