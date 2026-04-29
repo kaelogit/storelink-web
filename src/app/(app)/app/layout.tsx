@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import WebAuthGate from '@/components/auth/WebAuthGate';
 import { AppToaster } from '@/components/providers/AppToaster';
 import AppTopBar from '@/components/app-shell/AppTopBar';
@@ -13,6 +14,27 @@ export default async function AppLayerLayout({ children }: { children: ReactNode
   const supabase = await createServerClient();
   const { data } = await supabase.auth.getUser();
   const initialState = data?.user?.id ? 'authed' : 'guest';
+
+  if (data?.user?.id) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_verified,onboarding_completed')
+      .eq('id', data.user.id)
+      .maybeSingle();
+
+    if (profile && !profile.is_verified) {
+      const email = data.user.email ?? '';
+      if (email) {
+        redirect(`/auth/verify?email=${encodeURIComponent(email)}&type=signup`);
+      } else {
+        redirect('/auth/login');
+      }
+    }
+
+    if (profile && !profile.onboarding_completed) {
+      redirect('/onboarding/country-select');
+    }
+  }
 
   return (
     <WebAuthGate initialState={initialState}>

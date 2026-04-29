@@ -13,8 +13,10 @@ function VerifyPageContent() {
   const router = useRouter();
   const email = params.get('email') || '';
   const type = (params.get('type') || 'signup').trim();
-  const nextPath = params.get('next') || '/onboarding/country-select';
+  const nextPath = params.get('next') || (type === 'signup' ? '/onboarding/country-select' : '/app');
   const referralCode = (params.get('ref') || '').trim();
+
+  const effectiveNextPath = type === 'signup' ? '/onboarding/country-select' : nextPath;
   const supabase = useMemo(() => createBrowserClient(), []);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -128,7 +130,7 @@ function VerifyPageContent() {
         }).catch(() => {});
       }
 
-      router.push(nextPath);
+      router.push(effectiveNextPath);
     } catch (err: any) {
       setError(err.message || 'Verification failed. Please try again.');
     } finally {
