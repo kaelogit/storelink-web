@@ -1,12 +1,13 @@
 'use client';
 
+'use client';
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase';
 import { getGeographyForCountry } from '@/lib/geographyResolver';
-import { SUPPORTED_COUNTRIES } from '@/constants/SupportedCountries';
 import { useInfiniteQuery } from '@tanstack/react-query';
-import { Search, X, MapPin, Gem, Store, Navigation, Filter } from 'lucide-react';
+import { Search, X, MapPin, Gem, Store, Navigation } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { hasActivePaidPlan } from '@/lib/sellerStatus';
@@ -276,7 +277,7 @@ export default function AppSearchPage() {
     fetchNextPage: fetchNextStoresPage,
     hasNextPage: hasNextStoresPage,
     isFetchingNextPage: isFetchingNextStoresPage,
-  } = useInfiniteQuery({
+  } = useInfiniteQuery<Merchant[], Error>({
     queryKey: [
       'web-discovery-merchants',
       activeQuery,
@@ -400,7 +401,7 @@ export default function AppSearchPage() {
     hasNextPage: hasNextServicesPage,
     isFetchingNextPage: isFetchingNextServicesPage,
     refetch: refetchServices,
-  } = useInfiniteQuery({
+  } = useInfiniteQuery<ServiceListing[], Error>({
     queryKey: [
       'web-discovery-services',
       activeQuery,
