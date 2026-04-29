@@ -27,6 +27,7 @@ interface Merchant {
 
 interface ServiceListing {
   id: string;
+  seller_id?: string;
   title: string;
   description?: string;
   hero_price_min?: number;
@@ -438,7 +439,7 @@ export default function AppSearchPage() {
           p_offset: offset,
         });
         if (error) throw error;
-        return (data || []) as any[];
+        return (data || []) as ServiceListing[];
       }
 
       // Fallback: simple listing
@@ -470,7 +471,7 @@ export default function AppSearchPage() {
 
       if (error) throw error;
 
-      let rows = (data || []) as any[];
+      let rows = (data || []) as ServiceListing[];
 
       if (activeQuery.trim()) {
         const q = activeQuery.trim().toLowerCase();
