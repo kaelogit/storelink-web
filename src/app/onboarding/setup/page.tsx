@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase';
-import { getGeographyForCountry } from '@/lib/geographyResolver';
 import { uploadFileToR2 } from '@/lib/mediaUpload';
 import { SUPPORTED_COUNTRIES } from '@/constants/SupportedCountries';
 import Button from '@/components/ui/Button';
@@ -19,10 +18,13 @@ interface StoreSetupData {
   contactPhone: string;
   contactEmail: string;
   website: string;
-  address: string;
-  city: string;
-  state: string;
-  logo: File | null;
+  selectedLocation: {
+    lat: number;
+    lon: number;
+    label: string;
+    city?: string;
+    state?: string;
+  } | null;
   isService: boolean;
   isProduct: boolean;
   serviceCategory: string;
@@ -76,10 +78,7 @@ export default function SetupPage() {
     contactPhone: '',
     contactEmail: '',
     website: '',
-    address: '',
-    city: '',
-    state: '',
-    logo: null,
+    selectedLocation: null,
     isService: false,
     isProduct: false,
     serviceCategory: '',
@@ -89,6 +88,83 @@ export default function SetupPage() {
   });
 
   const [profile, setProfile] = useState<any>(null);
+
+  // Location search state
+  const [locationQuery, setLocationQuery] = useState('');
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [locationHits, setLocationHits] = useState<any[]>([]);
+  const [locationError, setLocationError] = useState<string | null>(null);
+  const skipAutoSearchRef = useRef(false);
+
+  // Location search logic
+  const handleLocationSearch = useCallback(async (q: string) => {
+    if (q.trim().length < 3) {
+      setLocationHits([]);
+      setLocationError(null);
+      return;
+    }
+
+    setLocationLoading(true);
+    setLocationError(null);
+
+    try {
+      const response = await fetch('/api/geocode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ q }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.results || data.results.length === 0) {
+        setLocationError(data.error || 'No addresses found. Try searching with a street name or area.');
+        setLocationHits([]);
+      } else {
+        setLocationHits(data.results);
+      }
+    } catch (err) {
+      setLocationError('Search failed. Please check your connection.');
+    } finally {
+      setLocationLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (skipAutoSearchRef.current) {
+        skipAutoSearchRef.current = false;
+        return;
+      }
+
+      if (locationQuery.trim().length >= 3) {
+        handleLocationSearch(locationQuery);
+      } else {
+        setLocationHits([]);
+        setLocationError(null);
+      }
+    }, 350);
+
+    return () => window.clearTimeout(timer);
+  }, [locationQuery, handleLocationSearch]);
+
+  const handleSelectLocation = (hit: any) => {
+    const city = hit.address.city || hit.address.town || hit.address.village || hit.address.hamlet;
+    const state = hit.address.state;
+
+    skipAutoSearchRef.current = true;
+    setFormData(prev => ({
+      ...prev,
+      selectedLocation: {
+        lat: parseFloat(hit.lat),
+        lon: parseFloat(hit.lon),
+        label: hit.display_name,
+        city,
+        state
+      }
+    }));
+    setLocationQuery(hit.display_name);
+    setLocationHits([]);
+  };
 
   // Fetch user profile
   useEffect(() => {
@@ -106,10 +182,6 @@ export default function SetupPage() {
     };
     fetchProfile();
   }, []);
-
-  const geography = getGeographyForCountry(profile?.location_country_code);
-  const stateOptions = geography ? Object.keys(geography.data) : [];
-  const cityOptions = geography && formData.state ? geography.data[formData.state] ?? [] : [];
 
   const phonePrefix = profile?.location_country_code ? 
     (SUPPORTED_COUNTRIES.find(c => c.code === profile.location_country_code)?.phonePrefix ?? '+234') : 
@@ -207,6 +279,10 @@ export default function SetupPage() {
       setError('Contact email is required');
       return;
     }
+    if (!formData.selectedLocation) {
+      setError('Store location is required');
+      return;
+    }
     if (!formData.isService && !formData.isProduct) {
       setError('Please select at least one: Services or Products');
       return;
@@ -270,9 +346,9 @@ export default function SetupPage() {
           contact_phone: phonePrefix + formData.contactPhone.trim(),
           contact_email: formData.contactEmail.trim(),
           website: formData.website.trim() || null,
-          address: formData.address.trim(),
-          city: formData.city.trim(),
-          state: formData.state.trim(),
+          address: formData.selectedLocation.label,
+          city: formData.selectedLocation.city || null,
+          state: formData.selectedLocation.state || null,
           logo_url: logoUrl,
           is_service: formData.isService,
           is_product: formData.isProduct,
@@ -289,6 +365,11 @@ export default function SetupPage() {
         .from('profiles')
         .update({
           onboarding_step: 'pick-categories',
+          service_latitude: formData.selectedLocation.lat,
+          service_longitude: formData.selectedLocation.lon,
+          location: formData.selectedLocation.label,
+          location_city: formData.selectedLocation.city,
+          location_state: formData.selectedLocation.state,
         })
         .eq('id', session.session.user.id);
 
@@ -583,52 +664,70 @@ export default function SetupPage() {
         />
       </Card>
 
-      {/* Location */}
+      {/* Store Location */}
       <Card className="p-6 space-y-6">
         <h3 className="font-black text-lg flex items-center gap-2">
           <MapPin size={20} />
           Store Location
         </h3>
 
-        <Textarea
-          label="Street Address"
-          value={formData.address}
-          onChange={(value) => setFormData(prev => ({ ...prev, address: value }))}
-          placeholder="Enter your store address"
-          rows={2}
-        />
+        <div className="space-y-4">
+          <div className="relative">
+            <div className="relative">
+              <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-(--muted)" />
+              <input
+                type="text"
+                value={locationQuery}
+                onChange={(e) => setLocationQuery(e.target.value)}
+                placeholder="Search for your store address..."
+                className="w-full pl-10 pr-4 py-3 border border-(--border) rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+              {locationLoading && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <Loader2 size={18} className="animate-spin text-(--muted)" />
+                </div>
+              )}
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <label className="text-sm font-black">State</label>
-            <select
-              value={formData.state}
-              onChange={(e) => setFormData(prev => ({ ...prev, state: e.target.value, city: '' }))}
-              className="w-full px-3 py-2 border border-(--border) rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              required
-            >
-              <option value="">Select a state</option>
-              {stateOptions.map((state) => (
-                <option key={state} value={state}>{state}</option>
-              ))}
-            </select>
+            {locationHits.length > 0 && (
+              <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white border border-(--border) rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {locationHits.map((hit, index) => (
+                  <button
+                    key={index}
+                    onClick={() => handleSelectLocation(hit)}
+                    className="w-full px-4 py-3 text-left hover:bg-(--surface) border-b border-(--border) last:border-b-0 flex items-start gap-3"
+                  >
+                    <MapPin size={16} className="text-(--muted) mt-0.5 flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium text-sm truncate">{hit.display_name}</div>
+                      <div className="text-xs text-(--muted) truncate">
+                        {hit.address.city || hit.address.town || hit.address.village || hit.address.hamlet}, {hit.address.state}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {locationError && (
+              <div className="mt-2 text-sm text-red-500 flex items-center gap-2">
+                <AlertCircle size={14} />
+                {locationError}
+              </div>
+            )}
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-black">City</label>
-            <select
-              value={formData.city}
-              onChange={(e) => setFormData(prev => ({ ...prev, city: e.target.value }))}
-              className="w-full px-3 py-2 border border-(--border) rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              disabled={!formData.state}
-              required
-            >
-              <option value="">Select a city</option>
-              {cityOptions.map((town) => (
-                <option key={town} value={town}>{town}</option>
-              ))}
-            </select>
-          </div>
+          {formData.selectedLocation && (
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+              <div className="flex items-center gap-2 text-emerald-700">
+                <Check size={16} />
+                <span className="font-medium">Selected Location</span>
+              </div>
+              <div className="mt-1 text-sm text-emerald-600">
+                {formData.selectedLocation.label}
+              </div>
+            </div>
+          )}
         </div>
       </Card>
 
