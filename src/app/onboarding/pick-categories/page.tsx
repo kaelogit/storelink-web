@@ -8,26 +8,26 @@ import Card from '@/components/ui/Card';
 import { Tag } from 'lucide-react';
 
 const INTEREST_CATEGORIES = [
-  'Fashion & Clothing',
-  'Electronics & Gadgets',
-  'Home & Garden',
-  'Food & Beverage',
-  'Health & Beauty',
-  'Sports & Fitness',
-  'Books & Media',
-  'Art & Crafts',
-  'Automotive',
-  'Travel & Tourism',
-  'Technology',
-  'Music & Entertainment',
-  'Pets & Animals',
-  'Education',
-  'Business & Finance',
-  'Gaming',
-  'Photography',
-  'Cooking & Baking',
-  'Fitness & Wellness',
-  'Parenting',
+  { label: 'Fashion', slug: 'fashion' },
+  { label: 'Electronics', slug: 'electronics' },
+  { label: 'Home', slug: 'home' },
+  { label: 'Food & Beverage', slug: 'food' },
+  { label: 'Health & Beauty', slug: 'beauty' },
+  { label: 'Sports & Fitness', slug: 'sports' },
+  { label: 'Books & Media', slug: 'books' },
+  { label: 'Art & Crafts', slug: 'art' },
+  { label: 'Automotive', slug: 'automotive' },
+  { label: 'Travel & Tourism', slug: 'travel' },
+  { label: 'Technology', slug: 'technology' },
+  { label: 'Music & Entertainment', slug: 'music' },
+  { label: 'Pets & Animals', slug: 'pets' },
+  { label: 'Education', slug: 'education' },
+  { label: 'Business & Finance', slug: 'business' },
+  { label: 'Gaming', slug: 'gaming' },
+  { label: 'Photography', slug: 'photography' },
+  { label: 'Cooking & Baking', slug: 'cooking' },
+  { label: 'Fitness & Wellness', slug: 'wellness' },
+  { label: 'Parenting', slug: 'parenting' },
 ];
 
 export default function PickCategoriesPage() {
@@ -73,22 +73,11 @@ export default function PickCategoriesPage() {
 
       if (!profile) throw new Error('Profile not found');
 
-      // Insert selected categories
-      const categoryInserts = selectedCategories.map(category => ({
-        user_id: profile.id,
-        category_name: category,
-      }));
-
-      const { error: insertError } = await supabase
-        .from('buyer_interested_categories')
-        .insert(categoryInserts);
-
-      if (insertError) throw insertError;
-
-      // Update onboarding step
+      // Save selected categories as a profile array field.
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
+          buyer_interested_categories: selectedCategories,
           onboarding_step: profile.is_seller ? 'follow-stores' : 'collector-setup',
         })
         .eq('id', session.session.user.id);
@@ -134,13 +123,13 @@ export default function PickCategoriesPage() {
       {/* Categories Grid */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {INTEREST_CATEGORIES.map((category) => {
-          const isSelected = selectedCategories.includes(category);
+          const isSelected = selectedCategories.includes(category.slug);
           const isDisabled = !isSelected && selectedCategories.length >= 5;
 
           return (
             <button
-              key={category}
-              onClick={() => toggleCategory(category)}
+              key={category.slug}
+              onClick={() => toggleCategory(category.slug)}
               disabled={isDisabled}
               className={`p-4 border-2 rounded-lg text-center transition-all ${
                 isSelected
@@ -150,7 +139,7 @@ export default function PickCategoriesPage() {
                   : 'border-(--border) hover:border-emerald-500 hover:bg-emerald-500/5'
               }`}
             >
-              <span className="text-sm font-black leading-tight">{category}</span>
+              <span className="text-sm font-black leading-tight">{category.label}</span>
             </button>
           );
         })}
@@ -161,20 +150,23 @@ export default function PickCategoriesPage() {
         <Card className="p-4">
           <h3 className="font-black text-sm mb-3">SELECTED CATEGORIES:</h3>
           <div className="flex flex-wrap gap-2">
-            {selectedCategories.map((category) => (
-              <div
-                key={category}
-                className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full"
-              >
-                <span className="text-xs font-black text-emerald-700">{category}</span>
-                <button
-                  onClick={() => toggleCategory(category)}
-                  className="w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center hover:bg-emerald-600 transition-colors"
+            {selectedCategories.map((categorySlug) => {
+              const category = INTEREST_CATEGORIES.find((item) => item.slug === categorySlug);
+              return (
+                <div
+                  key={categorySlug}
+                  className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full"
                 >
-                  <span className="text-xs text-white leading-none">×</span>
-                </button>
-              </div>
-            ))}
+                  <span className="text-xs font-black text-emerald-700">{category?.label ?? categorySlug}</span>
+                  <button
+                    onClick={() => toggleCategory(categorySlug)}
+                    className="w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center hover:bg-emerald-600 transition-colors"
+                  >
+                    <span className="text-xs text-white leading-none">×</span>
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </Card>
       )}

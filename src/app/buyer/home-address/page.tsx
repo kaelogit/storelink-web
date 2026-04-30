@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { ArrowLeft, MapPin, Search, Check, AlertCircle, Loader2 } from 'lucide-react';
+
+const DEBOUNCE_MS = 350;
 
 function HomeAddressContent() {
   const router = useRouter();
@@ -27,9 +29,10 @@ function HomeAddressContent() {
     city?: string;
     state?: string;
   } | null>(null);
+  const skipAutoSearchRef = useRef(false);
 
   // Search logic (Using backend API that supports Google Maps + Nominatim)
-  const handleSearch = async (e?: React.FormEvent) => {
+  const handleSearch = useCallback(async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (query.trim().length < 3) return;
 
@@ -56,12 +59,31 @@ function HomeAddressContent() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [query]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (skipAutoSearchRef.current) {
+        skipAutoSearchRef.current = false;
+        return;
+      }
+
+      if (query.trim().length >= 3) {
+        handleSearch();
+      } else {
+        setHits([]);
+        setError(null);
+      }
+    }, DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [query, handleSearch]);
 
   const handleSelectHit = (hit: any) => {
     const city = hit.address.city || hit.address.town || hit.address.village || hit.address.hamlet;
     const state = hit.address.state;
     
+    skipAutoSearchRef.current = true;
     setSelectedLocation({
       lat: parseFloat(hit.lat),
       lon: parseFloat(hit.lon),

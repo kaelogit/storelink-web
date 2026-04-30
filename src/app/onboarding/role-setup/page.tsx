@@ -56,6 +56,7 @@ export default function RoleSetupPage() {
       if (!role) throw new Error('Invalid role selected');
 
       // 🔄 DATABASE SYNC: Perfectly matching the Mobile Payload
+      const nextStep = role.isSeller ? '/onboarding/setup' : '/onboarding/pick-categories';
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
@@ -70,8 +71,8 @@ export default function RoleSetupPage() {
 
       if (updateError) throw updateError;
 
-      // 🚀 Route to the location permission explainer
-      router.push('/onboarding/location-permission');
+      // 🚀 Route to the location permission explainer with the correct next step.
+      router.push(`/onboarding/location-permission?next=${encodeURIComponent(nextStep)}`);
     } catch (err: any) {
       console.error('❌ Role Setup Error:', err);
       setError(err?.message || 'Unable to save choice. Please try again.');
