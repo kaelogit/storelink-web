@@ -25,30 +25,32 @@ export async function POST(request: NextRequest) {
     // Try Google Maps Geocoding API if configured
     if (GOOGLE_MAPS_API_KEY) {
       try {
-        const googleResponse = await fetch(
-          `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-            query + ', Nigeria'
-          )}&key=${GOOGLE_MAPS_API_KEY}&region=NG&components=country:NG`
-        );
+        const googleQueries = [query, `${query}, Nigeria`];
+        for (const googleQuery of googleQueries) {
+          const googleResponse = await fetch(
+            `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+              googleQuery
+            )}&key=${GOOGLE_MAPS_API_KEY}&region=NG&components=country:NG`
+          );
 
-        if (googleResponse.ok) {
+          if (!googleResponse.ok) continue;
+
           const googleData = await googleResponse.json();
+          if (!googleData.results || googleData.results.length === 0) continue;
 
-          if (googleData.results && googleData.results.length > 0) {
-            const hits = googleData.results.map((result: any) => ({
-              lat: result.geometry.location.lat,
-              lon: result.geometry.location.lng,
-              display_name: result.formatted_address,
-              address: {
-                city: extractAddressComponent(result, 'locality') || 
-                       extractAddressComponent(result, 'administrative_area_level_3'),
-                state: extractAddressComponent(result, 'administrative_area_level_1'),
-                country: extractAddressComponent(result, 'country'),
-              },
-            }));
+          const hits = googleData.results.map((result: any) => ({
+            lat: result.geometry.location.lat,
+            lon: result.geometry.location.lng,
+            display_name: result.formatted_address,
+            address: {
+              city: extractAddressComponent(result, 'locality') || 
+                     extractAddressComponent(result, 'administrative_area_level_3'),
+              state: extractAddressComponent(result, 'administrative_area_level_1'),
+              country: extractAddressComponent(result, 'country'),
+            },
+          }));
 
-            return NextResponse.json({ results: hits });
-          }
+          return NextResponse.json({ results: hits });
         }
       } catch (err) {
         console.error('Google Maps API error:', err);
@@ -58,9 +60,9 @@ export async function POST(request: NextRequest) {
 
     // Fallback to enhanced Nominatim with better parameters for full addresses
     const nominatimResponse = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+      `https://nominatim.openstreetmap.org/search?format=jsonv2&q=${encodeURIComponent(
         query + ', Nigeria'
-      )}&addressdetails=1&limit=10&countrycodes=ng&viewbox=2.668,4.273,14.678,13.894`,
+      )}&addressdetails=1&limit=10&countrycodes=ng&bounded=1&viewbox=2.668,13.894,14.678,4.273`,
       { 
         headers: { 
           'User-Agent': 'StoreLink/1.0',
