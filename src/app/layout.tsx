@@ -3,6 +3,7 @@ import { Inter, Lobster, Space_Grotesk } from "next/font/google";
 import { GoogleAnalytics } from '@next/third-parties/google';
 import Navbar from "../components/home/Navbar";
 import { ThemeProvider } from "../components/providers/ThemeProvider";
+import { ReactQueryProvider } from "../components/providers/ReactQueryProvider";
 import "./globals.css";
 
 // 1. Load the High-End Fonts
@@ -124,23 +125,25 @@ export default function RootLayout({
         className={`${inter.variable} ${spaceGrotesk.variable} ${lobster.variable} font-sans antialiased min-h-screen bg-[var(--background)] text-[var(--foreground)]`}
       >
         <ThemeProvider>
-        {/* Skip to main content for keyboard/screen reader */}
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-emerald-500 focus:px-4 focus:py-2 focus:text-white focus:outline-none focus:ring-2 focus:ring-emerald-300"
-        >
-          Skip to main content
-        </a>
+          <ReactQueryProvider>
+            {/* Skip to main content for keyboard/screen reader */}
+            <a
+              href="#main-content"
+              className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-emerald-500 focus:px-4 focus:py-2 focus:text-white focus:outline-none focus:ring-2 focus:ring-emerald-300"
+            >
+              Skip to main content
+            </a>
 
-        <div className="bg-noise" aria-hidden="true" />
+            <div className="bg-noise" aria-hidden="true" />
 
-        <Navbar />
+            <Navbar />
 
-        <main id="main-content" className="min-h-screen flex flex-col relative w-full overflow-x-hidden">
-          {children}
-        </main>
+            <main id="main-content" className="min-h-screen flex flex-col relative w-full overflow-x-hidden">
+              {children}
+            </main>
 
-        <GoogleAnalytics gaId="G-LC8PN9CT62" />
+            <GoogleAnalytics gaId="G-LC8PN9CT62" />
+          </ReactQueryProvider>
         </ThemeProvider>
       </body>
     </html>
