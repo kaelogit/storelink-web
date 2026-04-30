@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase';
 import { uploadFileToR2 } from '@/lib/mediaUpload';
@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
-import { Upload, Store, MapPin, Phone, Globe } from 'lucide-react';
+import { Upload, Store, MapPin, Phone, Globe, Search, Loader2, AlertCircle, Check } from 'lucide-react';
 
 interface StoreSetupData {
   storeName: string;
@@ -18,6 +18,7 @@ interface StoreSetupData {
   contactPhone: string;
   contactEmail: string;
   website: string;
+  logo: File | null;
   selectedLocation: {
     lat: number;
     lon: number;
@@ -78,6 +79,7 @@ export default function SetupPage() {
     contactPhone: '',
     contactEmail: '',
     website: '',
+    logo: null,
     selectedLocation: null,
     isService: false,
     isProduct: false,
