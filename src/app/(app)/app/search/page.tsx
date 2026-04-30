@@ -902,7 +902,7 @@ function MerchantCard({
           {isDiamond && <Gem size={14} className="text-violet-500" fill="currentColor" />}
         </div>
 
-        <div className="w-12 h-12 bg-(--surface) rounded-xl flex items-center justify-center mb-3 overflow-hidden">
+        <div className="w-20 h-20 bg-(--surface) rounded-3xl flex items-center justify-center mb-4 mx-auto overflow-hidden border border-(--border)">
           {merchant.logo_url ? (
             <img
               src={merchant.logo_url}
@@ -910,7 +910,7 @@ function MerchantCard({
               className="w-full h-full object-cover"
             />
           ) : (
-            <Store size={20} className="text-(--muted)" />
+            <Store size={28} className="text-(--muted)" />
           )}
         </div>
 
@@ -964,7 +964,7 @@ function MerchantCard({
           {isDiamond && <Gem size={14} className="text-violet-500" fill="currentColor" />}
         </div>
 
-        <div className="w-12 h-12 bg-(--surface) rounded-xl flex items-center justify-center mb-3 overflow-hidden">
+        <div className="w-20 h-20 bg-(--surface) rounded-3xl flex items-center justify-center mb-4 mx-auto overflow-hidden border border-(--border)">
           {sellerLogo ? (
             <img
               src={sellerLogo}
@@ -972,7 +972,7 @@ function MerchantCard({
               className="w-full h-full object-cover"
             />
           ) : (
-            <Store size={20} className="text-(--muted)" />
+            <Store size={28} className="text-(--muted)" />
           )}
         </div>
 
