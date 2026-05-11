@@ -85,8 +85,9 @@ export function resolveSharePathname(pathname: string): ResolvedShareTarget {
   const parts = path.split('/').filter(Boolean);
   if (!parts.length) return { kind: 'unknown', raw: path };
 
-  const stripApp = parts[0] === 'app' ? parts.slice(1) : parts;
-  const head = stripApp[0]?.toLowerCase() || '';
+  let stripApp = parts[0] === "app" ? parts.slice(1) : parts;
+  if (stripApp[0] === "sell") stripApp = stripApp.slice(1);
+  const head = stripApp[0]?.toLowerCase() || "";
 
   if (stripApp.length === 1 && stripApp[0].startsWith('@')) {
     return { kind: 'profile', slug: decodeURIComponent(stripApp[0].slice(1)).trim().toLowerCase() };
