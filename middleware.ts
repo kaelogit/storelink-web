@@ -2,23 +2,35 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 /**
- * Proxies `storelink.ng/sell/*` to the storefront deployment (Next app with `basePath: "/sell"`).
- * Set `STOREFRONT_ORIGIN` on the storelink-web Vercel project, e.g. `https://store-link-storefront-xxx.vercel.app`
- * (no trailing slash). Add domain `storelink.ng` to that storefront project’s allowed domains if required.
+ * Rewrites `storelink.ng/sell/*` to the storefront deployment (Next app with `basePath: "/sell"`).
+ *
+ * Vercel env on **this** project only: `STOREFRONT_ORIGIN`
+ * Example: `https://store-link-storefront-xxxxx.vercel.app` (scheme optional; trailing slashes stripped)
  */
+function normalizeStorefrontOrigin(raw: string | undefined): string | null {
+  const t = raw?.trim().replace(/\/+$/, "");
+  if (!t) return null;
+  if (/^https?:\/\//i.test(t)) return t;
+  return `https://${t}`;
+}
+
 export function middleware(request: NextRequest) {
-  const storefrontOrigin = process.env.STOREFRONT_ORIGIN?.trim().replace(/\/+$/, "");
+  const storefrontOrigin = normalizeStorefrontOrigin(process.env.STOREFRONT_ORIGIN);
   if (!storefrontOrigin) {
     return NextResponse.next();
   }
 
   const { pathname, search } = request.nextUrl;
-  if (pathname === "/sell" || pathname.startsWith("/sell/")) {
-    const target = new URL(pathname + search, storefrontOrigin);
-    return NextResponse.rewrite(target);
+  if (pathname !== "/sell" && !pathname.startsWith("/sell/")) {
+    return NextResponse.next();
   }
 
-  return NextResponse.next();
+  try {
+    const target = new URL(`${pathname}${search}`, storefrontOrigin);
+    return NextResponse.rewrite(target);
+  } catch {
+    return NextResponse.next();
+  }
 }
 
 export const config = {
