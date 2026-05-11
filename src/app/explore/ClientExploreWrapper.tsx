@@ -656,7 +656,32 @@ export default function ClientExploreWrapper({
 
   const enrichEngagement = async (rows: any[]) => {
     if (!rows.length) return rows;
-    const spotlightRows = rows.filter((row: any) => Boolean(row?.is_spotlight || row?.spotlight_post_id || row?.source_kind));
+
+    const serviceListingIdsForActiveCheck = Array.from(
+      new Set(
+        rows
+          .filter((row: any) => row?.type === 'service' || !!row?.service_listing_id)
+          .map((row: any) => String(row?.service_listing_id || (row?.type === 'service' ? row?.id : '') || '').trim())
+          .filter(Boolean),
+      ),
+    );
+    let rowsForEngagement = rows;
+    if (serviceListingIdsForActiveCheck.length > 0) {
+      const { data: activeSvcRows } = await supabase
+        .from('service_listings')
+        .select('id')
+        .in('id', serviceListingIdsForActiveCheck)
+        .eq('is_active', true);
+      const activeServiceIds = new Set((activeSvcRows || []).map((r: any) => String(r.id)));
+      rowsForEngagement = rows.filter((row: any) => {
+        if (row?.type !== 'service' && !row?.service_listing_id) return true;
+        const sid = String(row?.service_listing_id || (row?.type === 'service' ? row?.id : '') || '').trim();
+        return Boolean(sid) && activeServiceIds.has(sid);
+      });
+    }
+    if (!rowsForEngagement.length) return rowsForEngagement;
+
+    const spotlightRows = rowsForEngagement.filter((row: any) => Boolean(row?.is_spotlight || row?.spotlight_post_id || row?.source_kind));
     const resolveProductId = (row: any) => {
       if (row?.product_id) return String(row.product_id);
       const isReelEntity = Boolean(row?.short_code) || Boolean(row?.reel_id);
@@ -664,10 +689,10 @@ export default function ClientExploreWrapper({
       return String(row?.id || '');
     };
     const resolveServiceId = (row: any) => String(row?.service_listing_id || row?.id || '');
-    const productRows = rows.filter(
+    const productRows = rowsForEngagement.filter(
       (row: any) => !(row?.is_spotlight || row?.spotlight_post_id || row?.source_kind) && (row?.type || 'product') !== 'service' && !row?.service_listing_id,
     );
-    const serviceRows = rows.filter((row: any) => row?.type === 'service' || !!row?.service_listing_id);
+    const serviceRows = rowsForEngagement.filter((row: any) => row?.type === 'service' || !!row?.service_listing_id);
     const productIds = Array.from(new Set(productRows.map((p: any) => resolveProductId(p)).filter(Boolean)));
     const serviceIds = Array.from(new Set(serviceRows.map((s: any) => resolveServiceId(s)).filter(Boolean)));
     const spotlightIds = Array.from(new Set(spotlightRows.map((s: any) => String(s?.spotlight_post_id || s?.id || '')).filter(Boolean)));
@@ -751,7 +776,15 @@ export default function ClientExploreWrapper({
       spotlightCommentCounts.set(row.spotlight_post_id, (spotlightCommentCounts.get(row.spotlight_post_id) || 0) + 1);
     }
 
-    return rows.map((row: any) => {
+    const spotlightLikedByViewer = new Set(
+      viewerId
+        ? (spotlightLikesRows.data || [])
+            .filter((r: any) => String(r.user_id) === String(viewerId))
+            .map((r: any) => String(r.spotlight_post_id))
+        : [],
+    );
+
+    return rowsForEngagement.map((row: any) => {
       const spotlightId = String(row?.spotlight_post_id || row?.id || '');
       if (spotlightId && (row?.is_spotlight || row?.spotlight_post_id || row?.source_kind)) {
         return {
@@ -760,6 +793,7 @@ export default function ClientExploreWrapper({
           comments_count: spotlightCommentCounts.get(spotlightId) ?? Number(row.comments_count ?? row.comment_count ?? 0),
           comment_count: spotlightCommentCounts.get(spotlightId) ?? Number(row.comment_count ?? row.comments_count ?? 0),
           wishlist_count: 0,
+          is_liked: spotlightLikedByViewer.has(spotlightId) || Boolean(row.is_liked),
         };
       }
       const isService = row?.type === 'service' || !!row?.service_listing_id;
@@ -836,7 +870,7 @@ export default function ClientExploreWrapper({
       serviceIds.length
         ? supabase
             .from('service_listings')
-            .select('id,slug,title,hero_price_min,currency_code,media')
+            .select('id,slug,title,hero_price_min,currency_code,media,is_active')
             .in('id', serviceIds)
         : Promise.resolve({ data: [] as any[] }),
     ]);
@@ -845,11 +879,13 @@ export default function ClientExploreWrapper({
     const productMap = new Map((productRes.data || []).map((row: any) => [String(row.id), row]));
     const serviceMap = new Map((serviceRes.data || []).map((row: any) => [String(row.id), row]));
 
-    const mapped = reelRows.map((r: any) => {
+    const mapped = reelRows
+      .map((r: any) => {
       const product = r.product_id ? productMap.get(String(r.product_id)) : null;
       const service = r.service_listing_id ? serviceMap.get(String(r.service_listing_id)) : null;
       const seller = sellerMap.get(String(r.seller_id || '')) || null;
       const isService = Boolean(r.service_listing_id);
+      if (isService && (!service || service.is_active !== true)) return null;
       return normalizeFeedItem(
         {
           id: r.id,
@@ -879,7 +915,8 @@ export default function ClientExploreWrapper({
         },
         isService ? 'service' : 'product',
       );
-    });
+    })
+      .filter((m): m is NonNullable<typeof m> => m != null);
 
     return withStableUniqueKeys(mapped.slice(0, limit));
   };
@@ -930,7 +967,7 @@ export default function ClientExploreWrapper({
 
   useEffect(() => {
     async function fetchProducts() {
-      if (surface !== 'home' && !viewerResolved) return;
+      if (!viewerResolved) return;
       if (surface === 'explore_for_you' && !viewerId) {
         setProducts([]);
         setLoading(false);

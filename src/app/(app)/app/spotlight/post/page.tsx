@@ -6,6 +6,7 @@ import { ArrowLeft, Clapperboard, Loader2, Package, Store, Upload, CalendarCheck
 import { createBrowserClient } from '@/lib/supabase';
 import { PostPublishResultSheet } from '@/components/seller/PostPublishResultSheet';
 import { PostPublishingOverlay } from '@/components/seller/PostPublishingOverlay';
+import { captureVideoFrameJpegBlob } from '@/lib/videoPosterWeb';
 
 type EligibleSeller = {
   id: string;
@@ -131,12 +132,35 @@ export default function AppSpotlightPostPage() {
       const videoUrl = await uploadVideo(userId, videoFile);
       setUploadStage('finalizing');
       setUploadProgress(92);
+
+      let thumbnailUrl: string | null = null;
+      try {
+        const frameBlob = await captureVideoFrameJpegBlob(videoFile);
+        if (frameBlob) {
+          const thumbPath = `spotlight/${userId}/spotlight_${Date.now()}_thumb.jpg`;
+          const { error: thumbErr } = await supabase.storage.from('reels').upload(thumbPath, frameBlob, {
+            contentType: 'image/jpeg',
+            upsert: false,
+          });
+          if (!thumbErr) {
+            thumbnailUrl = supabase.storage.from('reels').getPublicUrl(thumbPath).data.publicUrl;
+          }
+        }
+      } catch {
+        thumbnailUrl = null;
+      }
+      if (!thumbnailUrl) {
+        const seller = eligibleSellers.find((s) => String(s.id) === String(selectedSellerId));
+        const logo = seller?.logo_url;
+        thumbnailUrl = typeof logo === 'string' && logo.trim() ? logo.trim() : null;
+      }
+
       const nonce = `${userId}:${Date.now()}:${selectedSellerId}`;
       const { error: rpcError } = await supabase.rpc('upsert_spotlight_post', {
         p_post_id: null,
         p_creator_id: userId,
         p_media_url: videoUrl,
-        p_thumbnail_url: null,
+        p_thumbnail_url: thumbnailUrl,
         p_caption: caption.trim(),
         p_tagged_seller_id: selectedSellerId,
         p_client_nonce: nonce,

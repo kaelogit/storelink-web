@@ -7,6 +7,8 @@ type CurationSurfaceProps = {
   curatorSlug?: string | null;
   curatorHref?: string;
   fallbackPillText: string;
+  /** Optional listing reference (slug) shown like product/service ID pills. */
+  listingRefPill?: string | null;
   hero: React.ReactNode;
   quoteToneClass: string;
   quoteText: string;
@@ -29,6 +31,7 @@ export function CurationSurface({
   curatorSlug,
   curatorHref,
   fallbackPillText,
+  listingRefPill,
   hero,
   quoteToneClass,
   quoteText,
@@ -71,6 +74,14 @@ export function CurationSurface({
         {hero}
 
         <div className="space-y-5 p-5">
+          {listingRefPill ? (
+            <div className="flex flex-wrap gap-2">
+              <span className="inline-flex items-center rounded-full border border-(--border) bg-(--surface) px-2 py-1 text-[9px] font-black tracking-widest text-(--muted) uppercase">
+                Listing · {listingRefPill}
+              </span>
+            </div>
+          ) : null}
+
           <div className={`rounded-3xl border p-5 ${quoteToneClass}`}>
             <Quote size={20} className="text-current/90" />
             <p className="mt-3 text-[17px] leading-7 italic">"{quoteText}"</p>

@@ -6,6 +6,7 @@ import { ArrowLeft, Film, Loader2, Sparkles, Upload } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import { PostPublishResultSheet } from '@/components/seller/PostPublishResultSheet';
 import { PostPublishingOverlay } from '@/components/seller/PostPublishingOverlay';
+import { captureVideoFrameJpegBlob } from '@/lib/videoPosterWeb';
 
 export default function AppSellerPostReelPage() {
   const supabase = useMemo(() => createBrowserClient(), []);
@@ -285,9 +286,43 @@ export default function AppSellerPostReelPage() {
       const videoUrl = await uploadVideo(userId, videoFile);
       setUploadStage('finalizing');
       setUploadProgress(94);
+
+      let thumbnailUrl: string | null = null;
+      try {
+        const frameBlob = await captureVideoFrameJpegBlob(videoFile);
+        if (frameBlob) {
+          const thumbPath = `${userId}/reel_${Date.now()}_thumb.jpg`;
+          const { error: thumbErr } = await supabase.storage.from('reels').upload(thumbPath, frameBlob, {
+            contentType: 'image/jpeg',
+            upsert: false,
+          });
+          if (!thumbErr) {
+            thumbnailUrl = supabase.storage.from('reels').getPublicUrl(thumbPath).data.publicUrl;
+          }
+        }
+      } catch {
+        thumbnailUrl = null;
+      }
+      if (!thumbnailUrl && selectedProductId) {
+        const { data: prow } = await supabase.from('products').select('image_urls').eq('id', selectedProductId).maybeSingle();
+        const first = Array.isArray(prow?.image_urls) ? prow?.image_urls[0] : null;
+        thumbnailUrl = typeof first === 'string' && first.trim() ? first.trim() : null;
+      }
+      if (!thumbnailUrl && selectedServiceId) {
+        const { data: srow } = await supabase.from('service_listings').select('media').eq('id', selectedServiceId).maybeSingle();
+        const media = srow?.media as unknown;
+        if (typeof media === 'string' && media.trim()) thumbnailUrl = media.trim();
+        else if (Array.isArray(media) && media.length > 0) {
+          const m0 = media[0] as { url?: string } | string;
+          if (typeof m0 === 'string' && m0.trim()) thumbnailUrl = m0.trim();
+          else if (m0 && typeof m0 === 'object' && typeof m0.url === 'string') thumbnailUrl = m0.url.trim() || null;
+        }
+      }
+
       const payload: any = {
         seller_id: userId,
         video_url: videoUrl,
+        thumbnail_url: thumbnailUrl,
         caption: caption.trim(),
         duration: null,
         location_state: profile?.location_state || null,
@@ -303,6 +338,7 @@ export default function AppSellerPostReelPage() {
           media_url: videoUrl,
           type: 'video',
           linked_product_id: selectedProductId,
+          thumbnail_url: thumbnailUrl,
           expires_at: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
         });
       }

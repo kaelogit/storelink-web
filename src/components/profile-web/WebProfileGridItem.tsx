@@ -99,7 +99,15 @@ export default function WebProfileGridItem({
 
   let mediaSource: string | null = null;
   if (type === 'reels' || type === 'spotlight') {
-    mediaSource = item.thumbnail_url || item.poster_url || item.video_poster_url || item.video_thumb_url || item.video_thumbnail_url || null;
+    mediaSource =
+      item.thumbnail_url ||
+      item.poster_url ||
+      item.video_poster_url ||
+      item.video_thumb_url ||
+      item.video_thumbnail_url ||
+      resolveProfileGridMediaUrl(item.product as Record<string, unknown>) ||
+      resolveProfileGridMediaUrl(item.service as Record<string, unknown>) ||
+      null;
   } else if (type === 'services' || type === 'wardrobe') {
     mediaSource = resolveProfileGridMediaUrl(item);
   } else {

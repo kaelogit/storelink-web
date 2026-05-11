@@ -52,6 +52,7 @@ export default async function ProductCurationPage({ params, searchParams }: Page
       curatorSlug={String((curator as any)?.slug || '') || null}
       curatorHref={curator ? `/app/profile/${encodeURIComponent(String((curator as any)?.slug || ''))}` : undefined}
       fallbackPillText="CURATED"
+      listingRefPill={String((product as any)?.slug || '').trim() || productId}
       hero={
         <div className="relative aspect-4/5 w-full overflow-hidden bg-black">
           {hero ? (

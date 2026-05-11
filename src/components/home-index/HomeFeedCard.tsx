@@ -38,20 +38,33 @@ export default function HomeFeedCard({
     try {
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id;
-      if (!userId) return;
+      if (!userId) {
+        setCurrent(prev);
+        return;
+      }
+      const serviceId = String(target?.service_listing_id || target?.id || '').trim();
+      const productId = String(target?.product_id || target?.id || '').trim();
       if (target?.type === 'service' || target?.service_listing_id) {
+        if (!serviceId) {
+          setCurrent(prev);
+          return;
+        }
         if (wasLiked) {
-          await supabase.from('service_likes').delete().eq('service_listing_id', target.id).eq('user_id', userId);
+          await supabase.from('service_likes').delete().eq('service_listing_id', serviceId).eq('user_id', userId);
         } else {
-          await supabase.from('service_likes').insert({ service_listing_id: target.id, user_id: userId });
+          await supabase.from('service_likes').insert({ service_listing_id: serviceId, user_id: userId });
         }
       } else {
-        await supabase.rpc('toggle_product_like', { p_product_id: target.id, p_user_id: userId });
+        if (!productId) {
+          setCurrent(prev);
+          return;
+        }
+        await supabase.rpc('toggle_product_like', { p_product_id: productId, p_user_id: userId });
       }
       enqueueRankingEventWeb({
         surface: 'home',
         eventName: wasLiked ? 'hide' : 'like',
-        itemId: String(target.id),
+        itemId: String(target?.service_listing_id || target?.product_id || target.id),
         itemType: target?.type === 'service' || target?.service_listing_id ? 'service' : 'product',
         sellerId: target?.seller?.id || null,
       });
@@ -75,36 +88,49 @@ export default function HomeFeedCard({
     try {
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id;
-      if (!userId) return;
+      if (!userId) {
+        setCurrent(prev);
+        return;
+      }
+      const serviceId = String(target?.service_listing_id || target?.id || '').trim();
+      const productId = String(target?.product_id || target?.id || '').trim();
       if (target?.type === 'service' || target?.service_listing_id) {
+        if (!serviceId) {
+          setCurrent(prev);
+          return;
+        }
         const { data } = await supabase
           .from('service_wishlist')
           .select('id')
           .eq('user_id', userId)
-          .eq('service_listing_id', target.id)
+          .eq('service_listing_id', serviceId)
           .maybeSingle();
         if (data?.id) {
           await supabase.from('service_wishlist').delete().eq('id', data.id);
         } else {
-          await supabase.from('service_wishlist').insert({ user_id: userId, service_listing_id: target.id });
+          await supabase.from('service_wishlist').insert({ user_id: userId, service_listing_id: serviceId });
         }
       } else {
+        if (!productId) {
+          setCurrent(prev);
+          return;
+        }
         const { data } = await supabase
           .from('wishlist')
           .select('id')
           .eq('user_id', userId)
-          .eq('product_id', target.id)
+          .eq('product_id', productId)
           .maybeSingle();
         if (data?.id) {
           await supabase.from('wishlist').delete().eq('id', data.id);
         } else {
-          await supabase.from('wishlist').insert({ user_id: userId, product_id: target.id });
+          await supabase.from('wishlist').insert({ user_id: userId, product_id: productId });
         }
       }
       enqueueRankingEventWeb({
         surface: 'home',
         eventName: 'save',
-        itemId: String(target.id),
+        itemId: String(target?.service_listing_id || target?.product_id || target.id),
         itemType: target?.type === 'service' || target?.service_listing_id ? 'service' : 'product',
         sellerId: target?.seller?.id || null,
         metadata: { saved: !wasWishlisted },
