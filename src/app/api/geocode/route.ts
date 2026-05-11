@@ -1,6 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 const GOOGLE_MAPS_API_KEY = process.env.GOOGLE_MAPS_API_KEY;
+const MAX_CACHE_SIZE = 150;
+const CACHE_TTL_MS = 5 * 60 * 1000;
+const geocodeCache = new Map<string, { expiresAt: number; results: any[] }>();
+
+function getCached(key: string): any[] | null {
+  const hit = geocodeCache.get(key);
+  if (!hit) return null;
+  if (Date.now() > hit.expiresAt) {
+    geocodeCache.delete(key);
+    return null;
+  }
+  return hit.results;
+}
+
+function setCached(key: string, results: any[]) {
+  if (geocodeCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = geocodeCache.keys().next().value;
+    if (firstKey) geocodeCache.delete(firstKey);
+  }
+  geocodeCache.set(key, { expiresAt: Date.now() + CACHE_TTL_MS, results });
+}
 
 /**
  * POST /api/geocode
@@ -27,11 +48,15 @@ export async function POST(request: NextRequest) {
     }
 
     const query = q.trim();
+    const cacheKey = query.toLowerCase();
+    const cachedResults = getCached(cacheKey);
+    if (cachedResults) {
+      return NextResponse.json({ results: cachedResults, cached: true });
+    }
+
     const googleQueries = [
       query,
       `${query}, Nigeria`,
-      `${query}, Lagos, Nigeria`,
-      `${query}, Abuja, Nigeria`,
     ];
 
     let lastErrorMessage: string | null = null;
@@ -68,6 +93,7 @@ export async function POST(request: NextRequest) {
         },
       }));
 
+      setCached(cacheKey, hits);
       return NextResponse.json({ results: hits });
     }
 

@@ -8,12 +8,13 @@ export default function OnboardingLayout({ children }: { children: ReactNode }) 
 
   const stepInfo = useMemo(() => {
     const steps = [
-      { path: '/onboarding/country-select', label: 'Location', progress: 14 },
-      { path: '/onboarding/role-setup', label: 'Role', progress: 28 },
-      { path: '/onboarding/location-permission', label: 'Permissions', progress: 42 },
-      { path: '/onboarding/setup', label: 'Setup', progress: 57 },
-      { path: '/onboarding/collector-setup', label: 'Profile', progress: 71 },
-      { path: '/onboarding/pick-categories', label: 'Interests', progress: 85 },
+      { path: '/onboarding/country-select', label: 'Location', progress: 13 },
+      { path: '/onboarding/role-setup', label: 'Role', progress: 25 },
+      { path: '/onboarding/location-permission', label: 'Permissions', progress: 38 },
+      { path: '/onboarding/setup', label: 'Setup', progress: 50 },
+      { path: '/onboarding/store-address', label: 'Store Address', progress: 62 },
+      { path: '/onboarding/pick-categories', label: 'Interests', progress: 75 },
+      { path: '/onboarding/collector-setup', label: 'Profile', progress: 88 },
       { path: '/onboarding/follow-stores', label: 'Follow', progress: 100 },
     ];
 

@@ -114,7 +114,7 @@ export default function FollowStoresPage() {
 
       if (updateError) throw updateError;
 
-      router.push('/dashboard');
+      router.push('/app/home');
     } catch (err: any) {
       setError(err?.message || 'Failed to complete onboarding');
     } finally {

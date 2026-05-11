@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase';
 import { uploadFileToR2 } from '@/lib/mediaUpload';
@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
-import { Upload, Store, MapPin, Phone, Globe, Search, Loader2, AlertCircle, Check } from 'lucide-react';
+import { Upload, Store, Phone, Globe, AlertCircle } from 'lucide-react';
 
 interface StoreSetupData {
   storeName: string;
@@ -19,13 +19,6 @@ interface StoreSetupData {
   contactEmail: string;
   website: string;
   logo: File | null;
-  selectedLocation: {
-    lat: number;
-    lon: number;
-    label: string;
-    city?: string;
-    state?: string;
-  } | null;
   isService: boolean;
   isProduct: boolean;
   serviceCategory: string;
@@ -80,7 +73,6 @@ export default function SetupPage() {
     contactEmail: '',
     website: '',
     logo: null,
-    selectedLocation: null,
     isService: false,
     isProduct: false,
     serviceCategory: '',
@@ -90,83 +82,6 @@ export default function SetupPage() {
   });
 
   const [profile, setProfile] = useState<any>(null);
-
-  // Location search state
-  const [locationQuery, setLocationQuery] = useState('');
-  const [locationLoading, setLocationLoading] = useState(false);
-  const [locationHits, setLocationHits] = useState<any[]>([]);
-  const [locationError, setLocationError] = useState<string | null>(null);
-  const skipAutoSearchRef = useRef(false);
-
-  // Location search logic
-  const handleLocationSearch = useCallback(async (q: string) => {
-    if (q.trim().length < 3) {
-      setLocationHits([]);
-      setLocationError(null);
-      return;
-    }
-
-    setLocationLoading(true);
-    setLocationError(null);
-
-    try {
-      const response = await fetch('/api/geocode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ q }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok || !data.results || data.results.length === 0) {
-        setLocationError(data.error || 'No addresses found. Try searching with a street name or area.');
-        setLocationHits([]);
-      } else {
-        setLocationHits(data.results);
-      }
-    } catch (err) {
-      setLocationError('Search failed. Please check your connection.');
-    } finally {
-      setLocationLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      if (skipAutoSearchRef.current) {
-        skipAutoSearchRef.current = false;
-        return;
-      }
-
-      if (locationQuery.trim().length >= 3) {
-        handleLocationSearch(locationQuery);
-      } else {
-        setLocationHits([]);
-        setLocationError(null);
-      }
-    }, 350);
-
-    return () => window.clearTimeout(timer);
-  }, [locationQuery, handleLocationSearch]);
-
-  const handleSelectLocation = (hit: any) => {
-    const city = hit.address.city || hit.address.town || hit.address.village || hit.address.hamlet;
-    const state = hit.address.state;
-
-    skipAutoSearchRef.current = true;
-    setFormData(prev => ({
-      ...prev,
-      selectedLocation: {
-        lat: parseFloat(hit.lat),
-        lon: parseFloat(hit.lon),
-        label: hit.display_name,
-        city,
-        state
-      }
-    }));
-    setLocationQuery(hit.display_name);
-    setLocationHits([]);
-  };
 
   // Fetch user profile
   useEffect(() => {
@@ -281,10 +196,6 @@ export default function SetupPage() {
       setError('Contact email is required');
       return;
     }
-    if (!formData.selectedLocation) {
-      setError('Store location is required');
-      return;
-    }
     if (!formData.isService && !formData.isProduct) {
       setError('Please select at least one: Services or Products');
       return;
@@ -348,9 +259,9 @@ export default function SetupPage() {
           contact_phone: phonePrefix + formData.contactPhone.trim(),
           contact_email: formData.contactEmail.trim(),
           website: formData.website.trim() || null,
-          address: formData.selectedLocation.label,
-          city: formData.selectedLocation.city || null,
-          state: formData.selectedLocation.state || null,
+          address: null,
+          city: null,
+          state: null,
           logo_url: logoUrl,
           is_service: formData.isService,
           is_product: formData.isProduct,
@@ -366,18 +277,13 @@ export default function SetupPage() {
       const { error: profileError } = await supabase
         .from('profiles')
         .update({
-          onboarding_step: 'pick-categories',
-          service_latitude: formData.selectedLocation.lat,
-          service_longitude: formData.selectedLocation.lon,
-          location: formData.selectedLocation.label,
-          location_city: formData.selectedLocation.city,
-          location_state: formData.selectedLocation.state,
+          onboarding_step: 'store-address',
         })
         .eq('id', session.session.user.id);
 
       if (profileError) throw profileError;
 
-      router.push('/onboarding/pick-categories');
+      router.push('/onboarding/store-address');
     } catch (err: any) {
       setError(err?.message || 'Failed to create store');
     } finally {
@@ -664,73 +570,6 @@ export default function SetupPage() {
           onChange={(value) => setFormData(prev => ({ ...prev, website: value }))}
           placeholder="https://yourstore.com"
         />
-      </Card>
-
-      {/* Store Location */}
-      <Card className="p-6 space-y-6">
-        <h3 className="font-black text-lg flex items-center gap-2">
-          <MapPin size={20} />
-          Store Location
-        </h3>
-
-        <div className="space-y-4">
-          <div className="relative">
-            <div className="relative">
-              <Search size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-(--muted)" />
-              <input
-                type="text"
-                value={locationQuery}
-                onChange={(e) => setLocationQuery(e.target.value)}
-                placeholder="Search for your store address..."
-                className="w-full pl-10 pr-4 py-3 border border-(--border) rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-              {locationLoading && (
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <Loader2 size={18} className="animate-spin text-(--muted)" />
-                </div>
-              )}
-            </div>
-
-            {locationHits.length > 0 && (
-              <div className="absolute top-full left-0 right-0 z-10 mt-1 bg-white border border-(--border) rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                {locationHits.map((hit, index) => (
-                  <button
-                    key={index}
-                    onClick={() => handleSelectLocation(hit)}
-                    className="w-full px-4 py-3 text-left hover:bg-(--surface) border-b border-(--border) last:border-b-0 flex items-start gap-3"
-                  >
-                    <MapPin size={16} className="text-(--muted) mt-0.5 flex-shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium text-sm truncate">{hit.display_name}</div>
-                      <div className="text-xs text-(--muted) truncate">
-                        {hit.address.city || hit.address.town || hit.address.village || hit.address.hamlet}, {hit.address.state}
-                      </div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {locationError && (
-              <div className="mt-2 text-sm text-red-500 flex items-center gap-2">
-                <AlertCircle size={14} />
-                {locationError}
-              </div>
-            )}
-          </div>
-
-          {formData.selectedLocation && (
-            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-              <div className="flex items-center gap-2 text-emerald-700">
-                <Check size={16} />
-                <span className="font-medium">Selected Location</span>
-              </div>
-              <div className="mt-1 text-sm text-emerald-600">
-                {formData.selectedLocation.label}
-              </div>
-            </div>
-          )}
-        </div>
       </Card>
 
       {/* Error */}

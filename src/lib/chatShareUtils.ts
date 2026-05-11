@@ -12,12 +12,21 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-
 
 export function parseStoreLinkFromText(text: string | null | undefined): ParsedStoreLink | null {
   if (!text || typeof text !== 'string') return null;
-  const match = text.match(
-    /(https?:\/\/storelink\.ng\/((app\/)?(p\/[^\s]+|r\/[^\s/]+|reel\/[^\s/]+|spotlight\/[^\s/]+|sp\/[^\s/]+|story-viewer\/[^\s/]+|service\/[^\s/]+|s\/[^\s/]+\/service\/[^\s/]+|s\/[^\s/]+\/[^\s/]+|s\/[^\s/]+|profile\/[^\s/]+|@[^\s/]+)))[^\s]*/i,
-  );
-  if (!match?.[1]) return null;
-  const normalizedUrl = match[1].trim().replace(/[)\],.!?;:]+$/g, '');
-  return parseStoreLinkUrl(normalizedUrl);
+  const urls = text.match(/https?:\/\/[^\s]+/gi) || [];
+  for (const raw of urls) {
+    const normalizedUrl = raw.trim().replace(/[)\],.!?;:]+$/g, '');
+    try {
+      const u = new URL(normalizedUrl);
+      const host = u.hostname.toLowerCase();
+      if (host === 'storelink.ng' || host === 'www.storelink.ng' || host.endsWith('.storelink.ng')) {
+        const parsed = parseStoreLinkUrl(normalizedUrl);
+        if (parsed) return parsed;
+      }
+    } catch {
+      // Skip malformed URL in message body.
+    }
+  }
+  return null;
 }
 
 export function parseStoreLinkUrl(url: string): ParsedStoreLink | null {

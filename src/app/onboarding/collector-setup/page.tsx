@@ -171,13 +171,13 @@ export default function CollectorSetupPage() {
           discovery_longitude: locationCoords?.longitude || null,
           discovery_city: city || null,
           discovery_state: selectedState || null,
-          onboarding_step: 'pick-categories',
+          onboarding_step: 'follow-stores',
         })
         .eq('id', session.session.user.id);
 
       if (updateError) throw updateError;
 
-      router.push('/onboarding/pick-categories');
+      router.push('/onboarding/follow-stores');
     } catch (err: any) {
       setError(err?.message || 'Failed to save profile');
     } finally {

@@ -30,11 +30,25 @@ function HomeAddressContent() {
     state?: string;
   } | null>(null);
   const skipAutoSearchRef = useRef(false);
+  const searchCacheRef = useRef<Map<string, any[]>>(new Map());
+  const inFlightRef = useRef<AbortController | null>(null);
 
   // Search logic (Using backend API that supports Google Maps + Nominatim)
   const handleSearch = useCallback(async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (query.trim().length < 3) return;
+    const normalizedQuery = query.trim();
+    if (normalizedQuery.length < 3) return;
+
+    const cached = searchCacheRef.current.get(normalizedQuery.toLowerCase());
+    if (cached) {
+      setHits(cached);
+      setError(null);
+      return;
+    }
+
+    if (inFlightRef.current) inFlightRef.current.abort();
+    const controller = new AbortController();
+    inFlightRef.current = controller;
 
     setLoading(true);
     setError(null);
@@ -43,7 +57,8 @@ function HomeAddressContent() {
       const response = await fetch('/api/geocode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ q: query }),
+        body: JSON.stringify({ q: normalizedQuery }),
+        signal: controller.signal,
       });
 
       const data = await response.json();
@@ -53,11 +68,14 @@ function HomeAddressContent() {
         setHits([]);
       } else {
         setHits(data.results);
+        searchCacheRef.current.set(normalizedQuery.toLowerCase(), data.results);
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.name === 'AbortError') return;
       setError('Search failed. Please check your connection.');
     } finally {
       setLoading(false);
+      if (inFlightRef.current === controller) inFlightRef.current = null;
     }
   }, [query]);
 
