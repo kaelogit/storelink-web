@@ -8,7 +8,7 @@ import Button from '../../../components/ui/Button';
 
 export default function AIWriterPage() {
   return (
-    <main className="min-h-screen font-sans bg-[var(--background)] text-[var(--foreground)]">
+    <main className="min-h-dvh font-sans bg-[var(--background)] text-[var(--foreground)]">
       <section className="section-hero pt-24 md:pt-32 pb-20 relative overflow-hidden text-white" aria-labelledby="ai-hero-heading">
         <div className="section-glow-violet" style={{ width: '800px', height: '800px', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} aria-hidden />
         <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" aria-hidden />

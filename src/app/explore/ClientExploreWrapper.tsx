@@ -1587,7 +1587,7 @@ export default function ClientExploreWrapper({
       : 'Try adjusting your search or category.';
 
   return (
-    <div className={`min-h-screen section-light ${embedded ? 'pt-2 pb-8' : 'pt-20 pb-24'} relative overflow-hidden`}>
+    <div className={`min-h-dvh section-light ${embedded ? 'pt-2 pb-8' : 'pt-20 pb-[calc(6rem+env(safe-area-inset-bottom,0px))]'} relative overflow-hidden`}>
       <div className="section-orb section-orb-emerald section-orb-br" aria-hidden />
       <div className="section-orb section-orb-violet section-orb-tr" aria-hidden />
 
@@ -1769,7 +1769,7 @@ export default function ClientExploreWrapper({
                     <div
                       key={key}
                       className={`${shouldRenderCards && embedded ? 'home-feed-card-surface' : ''} ${
-                        reelSurface ? 'flex min-h-[calc(100vh-170px)] snap-start items-stretch' : ''
+                        reelSurface ? 'flex min-h-[calc(100dvh-170px)] snap-start items-stretch' : ''
                       }`.trim()}
                     >
                       {shouldRenderCards ? (

@@ -32,7 +32,7 @@ export default function CommunityPage() {
   }, []);
 
   return (
-    <main className="min-h-screen font-sans bg-[var(--background)] selection:bg-emerald-100">
+    <main className="min-h-dvh font-sans bg-[var(--background)] selection:bg-emerald-100">
 
       <Section variant="light" container={false} padding="none" className="pt-40 pb-20 px-6 relative overflow-hidden">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.05]" />

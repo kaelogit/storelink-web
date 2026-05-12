@@ -51,7 +51,7 @@ export default function ContactPage() {
   };
 
   return (
-    <main className="min-h-screen font-sans bg-(--background) text-(--foreground) selection:bg-emerald-100">
+    <main className="min-h-dvh font-sans bg-(--background) text-(--foreground) selection:bg-emerald-100">
       <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-20 border-b border-(--border)">
         <div className="max-w-4xl mx-auto text-center">
           <motion.h1

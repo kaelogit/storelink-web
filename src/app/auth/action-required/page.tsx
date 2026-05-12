@@ -76,7 +76,7 @@ export default async function AuthActionRequiredPage({ searchParams }: ActionReq
   const ActionIcon = actionMeta.icon;
 
   return (
-    <div className="min-h-screen bg-(--background) px-4 py-10 text-(--foreground)">
+    <div className="min-h-dvh bg-(--background) px-4 py-10 text-(--foreground)">
       <div className="mx-auto w-full max-w-md rounded-3xl border border-(--border) bg-(--card) p-6 shadow-xl">
         <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1">
           <ActionIcon size={12} className="text-emerald-600" />

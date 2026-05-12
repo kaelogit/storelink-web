@@ -49,7 +49,9 @@ async function run() {
   try {
     await gpage.goto(`${BASE}/p/michael-kors`, { waitUntil: 'domcontentloaded' });
     const current = gpage.url();
-    const hasImmersive = await exists(gpage, '.min-h-screen.bg-\\(--background\\)');
+    const hasImmersive =
+      (await exists(gpage, '.min-h-screen.bg-\\(--background\\)')) ||
+      (await exists(gpage, '.min-h-dvh.bg-\\(--background\\)'));
     log({
       endpoint: '/p/michael-kors',
       state: 'guest',
@@ -107,7 +109,9 @@ async function run() {
     const current = gpage.url();
     const body = ((await gpage.textContent('body')) || '').toLowerCase();
     const looks404 = body.includes('404') || body.includes('not found');
-    const serviceRootVisible = await exists(gpage, '.min-h-screen.bg-\\(--background\\)');
+    const serviceRootVisible =
+      (await exists(gpage, '.min-h-screen.bg-\\(--background\\)')) ||
+      (await exists(gpage, '.min-h-dvh.bg-\\(--background\\)'));
     log({
       endpoint: discoveredServicePath,
       state: 'guest',

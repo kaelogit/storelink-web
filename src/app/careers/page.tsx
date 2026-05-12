@@ -58,7 +58,7 @@ const PERKS = [
 
 export default function CareersPage() {
   return (
-    <main className="min-h-screen font-sans bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
+    <main className="min-h-dvh font-sans bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
       <section className="section-dark pt-24 md:pt-32 pb-20 relative overflow-hidden text-white" aria-labelledby="careers-hero-heading">
         <div className="section-spotlight-emerald" aria-hidden />
         <div className="max-w-4xl mx-auto text-center relative z-10 px-4 sm:px-6 lg:px-8">

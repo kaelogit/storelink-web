@@ -48,7 +48,7 @@ export default function SafetyPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   return (
-    <main className="min-h-screen font-sans bg-[var(--background)] text-[var(--foreground)]">
+    <main className="min-h-dvh font-sans bg-[var(--background)] text-[var(--foreground)]">
       {/* Hero */}
       <section className="section-hero pt-24 md:pt-32 pb-24 text-center relative overflow-hidden" aria-labelledby="safety-hero-heading">
         <div className="section-glow-emerald section-orb-tl" style={{ width: '600px', height: '600px', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} aria-hidden />

@@ -17,6 +17,7 @@ import HomeCommentsSheet from '@/components/home-index/HomeCommentsSheet';
 import HomeLikesSheet from '@/components/home-index/HomeLikesSheet';
 import { ensureAuthAction } from '@/lib/guestActionPrompt';
 import { buildProductShareUrl } from '@/lib/sharingContract';
+import { STOREFRONT_GUTTER_X } from '@/lib/mobileLayout';
 // Helper
 const formatPrice = (amount: number, currency: string) => {
   return new Intl.NumberFormat('en-NG', {
@@ -203,11 +204,11 @@ export default function ClientProductWrapper({ product, seller }: any) {
   const isSoldOut = Number.isFinite(rawStock) ? rawStock < 1 : false;
 
   return (
-    <div className="min-h-screen bg-(--background)">
-      <div className="relative flex min-h-screen flex-col overflow-hidden bg-(--card) pb-28">
+    <div className="min-h-dvh bg-(--background)">
+      <div className="relative flex min-h-dvh flex-col overflow-hidden bg-(--card) pb-[calc(7rem+env(safe-area-inset-bottom,0px))]">
         
         {/* 1. NAV BAR (Floating Transparent) */}
-        <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-4">
+        <div className={`absolute left-0 right-0 top-0 z-20 flex items-center justify-between ${STOREFRONT_GUTTER_X} pt-[max(1rem,env(safe-area-inset-top,0px))]`}>
            <button
              type="button"
              onClick={() => {
@@ -286,7 +287,7 @@ export default function ClientProductWrapper({ product, seller }: any) {
         </div>
 
         {/* 3. PRODUCT INFO */}
-        <div className="px-6 pt-8">
+        <div className={`pt-8 ${STOREFRONT_GUTTER_X}`}>
            
            {/* Price & Title */}
            <div className="mb-5">
@@ -448,7 +449,7 @@ export default function ClientProductWrapper({ product, seller }: any) {
 
         </div>
 
-        <div className="absolute bottom-0 left-0 right-0 z-30 flex items-center gap-3 border-t border-(--border) bg-(--card) p-4">
+        <div className={`absolute bottom-0 left-0 right-0 z-30 flex items-center gap-3 border-t border-(--border) bg-(--card) pt-3 ${STOREFRONT_GUTTER_X} pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]`}>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[22px] font-black tracking-tight text-(--foreground)">
               {formatPrice(Number(product?.price || 0), product?.currency_code || 'NGN')}

@@ -33,6 +33,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
+  viewportFit: "cover",
 };
 
 // 3. Rich SEO Metadata
@@ -122,7 +123,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} ${spaceGrotesk.variable} ${lobster.variable} font-sans antialiased min-h-screen bg-[var(--background)] text-[var(--foreground)]`}
+        className={`${inter.variable} ${spaceGrotesk.variable} ${lobster.variable} font-sans antialiased min-h-dvh bg-[var(--background)] text-[var(--foreground)]`}
       >
         <ThemeProvider>
           <ReactQueryProvider>
@@ -138,7 +139,7 @@ export default function RootLayout({
 
             <Navbar />
 
-            <main id="main-content" className="min-h-screen flex flex-col relative w-full overflow-x-hidden">
+            <main id="main-content" className="flex min-h-dvh flex-col relative w-full overflow-x-hidden">
               {children}
             </main>
 

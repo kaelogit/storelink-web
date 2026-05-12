@@ -246,7 +246,7 @@ export default function ClientProfileWrapper({ profile, products, services = [],
   };
 
   return (
-    <div className={`min-h-screen bg-(--background) ${isAppMode ? 'pt-4' : 'pt-24'} pb-10`}>
+    <div className={`min-h-dvh bg-(--background) ${isAppMode ? 'pt-4' : 'pt-24'} pb-10`}>
       <div className="max-w-md mx-auto bg-(--card) min-h-[90vh] shadow-2xl rounded-3xl overflow-hidden relative flex flex-col border border-(--border)">
         {isAppMode ? (
           <div className="sticky top-0 z-40 flex items-center justify-between border-b border-(--border) bg-(--card)/95 px-3 py-3 backdrop-blur-md">

@@ -8,7 +8,7 @@ import Button from '../../../components/ui/Button';
 
 export default function VideoShoppingPage() {
   return (
-    <main className="min-h-screen font-sans bg-[var(--pitch-black)] text-white selection:bg-emerald-500 selection:text-white">
+    <main className="min-h-dvh font-sans bg-[var(--pitch-black)] text-white selection:bg-emerald-500 selection:text-white">
       <section className="section-hero pt-24 md:pt-32 pb-20 relative overflow-hidden" aria-labelledby="video-hero-heading">
         <div className="section-glow-violet section-orb-tl" style={{ width: '500px', height: '500px' }} aria-hidden />
         <div className="section-glow-emerald section-orb-br" style={{ width: '600px', height: '600px' }} aria-hidden />

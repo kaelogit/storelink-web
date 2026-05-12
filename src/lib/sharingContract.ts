@@ -65,6 +65,25 @@ export function buildServiceShareUrl(serviceToken: string, sellerSlug?: string |
   return `${origin}/service/${encodeURIComponent(token)}`;
 }
 
+/** Public curation hub URLs (match mobile deep links; use current web origin when available). */
+export function buildProductCurationShareUrl(productSlugOrId: string, curatorId?: string | null): string {
+  const token = String(productSlugOrId || '').trim();
+  const cid = String(curatorId || '').trim();
+  const origin = getStorelinkWebOrigin();
+  if (!token) return origin;
+  const q = cid ? `?curatorId=${encodeURIComponent(cid)}` : '';
+  return `${origin}/curation/${encodeURIComponent(token)}${q}`;
+}
+
+export function buildServiceCurationShareUrl(serviceSlugOrId: string, curatorId?: string | null): string {
+  const token = String(serviceSlugOrId || '').trim();
+  const cid = String(curatorId || '').trim();
+  const origin = getStorelinkWebOrigin();
+  if (!token) return origin;
+  const q = cid ? `?curatorId=${encodeURIComponent(cid)}` : '';
+  return `${origin}/curation/service/${encodeURIComponent(token)}${q}`;
+}
+
 export type ShareEntityKind = 'profile' | 'product' | 'service' | 'reel' | 'spotlight' | 'story' | 'unknown';
 
 export type ResolvedShareTarget =

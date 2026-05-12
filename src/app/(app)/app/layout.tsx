@@ -39,11 +39,11 @@ export default async function AppLayerLayout({ children }: { children: ReactNode
   return (
     <WebAuthGate initialState={initialState}>
       <AppShellProfileProvider>
-        <div className="min-h-screen bg-(--background)">
+        <div className="min-h-dvh bg-(--background)">
           <AppTopBar />
           <LeftRail />
           <RightRail />
-          <section className="w-full min-h-[calc(100vh-80px)] px-4 md:px-6 pt-4 pb-24 lg:pl-24 lg:pr-24">
+          <section className="w-full min-h-[calc(100dvh-80px)] px-4 md:px-6 pt-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] lg:pl-24 lg:pr-24">
             <div className="mx-auto w-full max-w-3xl">{children}</div>
           </section>
           <WebFloatingCart />

@@ -552,7 +552,7 @@ export default function AppSearchPage() {
     !profile?.discovery_state;
 
   return (
-    <div className="flex flex-col min-h-screen bg-(--background)">
+    <div className="flex flex-col min-h-dvh bg-(--background)">
       {/* Header */}
       <div className="sticky top-[80px] z-20 border-b border-(--border) bg-(--background)/90 backdrop-blur-xl px-4 py-4">
         <div className="flex flex-col gap-1">

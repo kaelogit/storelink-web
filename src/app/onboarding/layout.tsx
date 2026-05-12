@@ -25,7 +25,7 @@ export default function OnboardingLayout({ children }: { children: ReactNode }) 
   }, [pathname]);
 
   return (
-    <div className="min-h-screen bg-(--background) flex flex-col">
+    <div className="min-h-dvh bg-(--background) flex flex-col">
       {/* Progress Bar */}
       <div className="sticky top-0 z-50 border-b border-(--border) bg-(--background)/95 backdrop-blur-sm">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4">

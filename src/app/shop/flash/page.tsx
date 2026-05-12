@@ -25,7 +25,7 @@ export default function FlashDropsPage() {
   }, []);
 
   return (
-    <main className="min-h-screen font-sans bg-[var(--pitch-black)] text-white selection:bg-amber-500 selection:text-black">
+    <main className="min-h-dvh font-sans bg-[var(--pitch-black)] text-white selection:bg-amber-500 selection:text-black">
       <section className="section-hero pt-24 md:pt-32 pb-24 relative overflow-hidden" aria-labelledby="flash-hero-heading">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" aria-hidden />
 

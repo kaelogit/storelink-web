@@ -625,7 +625,7 @@ export default function InventoryClient() {
           role="presentation"
         >
           <div
-            className="max-h-[min(100vh,540px)] w-full overflow-y-auto rounded-t-[30px] border border-(--border) border-b-0 bg-(--background) p-6 pb-12 sm:max-w-md sm:rounded-3xl sm:border-b"
+            className="max-h-[min(100dvh,540px)] w-full overflow-y-auto rounded-t-[30px] border border-(--border) border-b-0 bg-(--background) p-6 pb-12 sm:max-w-md sm:rounded-3xl sm:border-b"
             onMouseDown={(e) => e.stopPropagation()}
             role="dialog"
             aria-labelledby="flash-title"

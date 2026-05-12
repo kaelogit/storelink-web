@@ -10,7 +10,7 @@ import { MEMBERSHIP_FOOTNOTES } from '@/lib/membershipCopy';
 
 export default function PricingPage() {
   return (
-    <main className="min-h-screen bg-(--surface) dark:bg-(--background) font-sans selection:bg-emerald-100 dark:selection:bg-emerald-950 overflow-hidden">
+    <main className="min-h-dvh bg-(--surface) dark:bg-(--background) font-sans selection:bg-emerald-100 dark:selection:bg-emerald-950 overflow-hidden">
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-size-[32px_32px] pointer-events-none mask-[radial-gradient(ellipse_80%_50%_at_50%_0%,#000_20%,transparent_100%)]" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[radial-gradient(circle,rgba(52,211,153,0.15)_0%,transparent_70%)] pointer-events-none" />
 

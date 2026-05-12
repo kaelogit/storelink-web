@@ -10,7 +10,7 @@ import Button from '../../components/ui/Button';
 
 export default function CommunityHubPage() {
   return (
-    <main className="min-h-screen font-sans bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
+    <main className="min-h-dvh font-sans bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
       <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-20 border-b border-[var(--border)] relative overflow-hidden">
         <div className="section-orb section-orb-violet section-orb-tr" aria-hidden />
         <div className="max-w-4xl mx-auto text-center relative z-10 px-4 sm:px-6 lg:px-8">

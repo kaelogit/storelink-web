@@ -104,7 +104,7 @@ export default function WebProfileHeader({
     } else {
       showCountdown = true;
       showUpgradePrompt = true;
-      countdownLabel = 'Upgrade to Diamond for priority reach';
+      countdownLabel = 'Upgrade to Diamond';
       isUrgent = false;
     }
   }

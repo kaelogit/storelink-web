@@ -167,7 +167,7 @@ export default function ClientReelWrapper({ reel }: any) {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-(--pitch-black)">
+    <div className={`relative flex min-h-dvh items-center justify-center overflow-hidden bg-(--pitch-black)`}>
       {thumbSrc ? (
         <div className="absolute inset-0 scale-110 opacity-30 blur-3xl">
           <Image src={thumbSrc} alt="" fill className="object-cover" unoptimized={true} />

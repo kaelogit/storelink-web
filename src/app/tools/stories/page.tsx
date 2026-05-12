@@ -57,7 +57,7 @@ export default function StoriesPage() {
   };
 
   return (
-    <main className="min-h-screen font-sans bg-[var(--background)]">
+    <main className="min-h-dvh font-sans bg-[var(--background)]">
 
       <Section variant="hero" container={false} padding="none" className="pt-40 pb-20 px-6 overflow-hidden !bg-[#0f0505]">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />

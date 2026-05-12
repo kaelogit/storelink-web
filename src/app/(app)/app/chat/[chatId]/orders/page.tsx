@@ -126,7 +126,7 @@ export default function ChatOrdersPage() {
   }, [orders, bookings]);
 
   return (
-    <div className="mx-auto min-h-[calc(100vh-7rem)] max-w-lg px-4 py-6">
+    <div className="mx-auto min-h-[calc(100dvh-7rem)] max-w-lg px-4 py-6">
       <div className="mb-6 flex items-center gap-3">
         <Link
           href={partnerHint ? `/app/chat/${encodeURIComponent(chatId)}` : `/app/messages?chat=${encodeURIComponent(chatId)}`}

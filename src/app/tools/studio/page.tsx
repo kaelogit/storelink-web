@@ -16,7 +16,7 @@ export default function StudioPage() {
   const [sliderPosition, setSliderPosition] = useState(50);
 
   return (
-    <main className="min-h-screen font-sans bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
+    <main className="min-h-dvh font-sans bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
 
       <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-20 text-center border-b border-[var(--border)]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">

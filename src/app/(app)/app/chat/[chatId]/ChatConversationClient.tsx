@@ -346,7 +346,7 @@ export default function ChatConversationClient() {
   }
 
   return (
-    <div className="mx-auto flex h-[calc(100vh-7rem)] max-w-5xl flex-col overflow-hidden rounded-3xl border border-(--border) bg-(--card)">
+    <div className="mx-auto flex h-[calc(100dvh-7rem)] max-w-5xl flex-col overflow-hidden rounded-3xl border border-(--border) bg-(--card)">
       <header className="border-b border-(--border) px-3 py-2">
         <div className="flex items-center gap-2">
           <button

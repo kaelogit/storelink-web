@@ -26,6 +26,7 @@ import HomeCommentsSheet from '@/components/home-index/HomeCommentsSheet';
 import HomeLikesSheet from '@/components/home-index/HomeLikesSheet';
 import { ensureAuthAction } from '@/lib/guestActionPrompt';
 import { buildServiceShareUrl } from '@/lib/sharingContract';
+import { STOREFRONT_GUTTER_X } from '@/lib/mobileLayout';
 
 const formatMoney = (amountMinor: number, currency: string) => {
   const main = (Number(amountMinor) || 0) / 100;
@@ -295,10 +296,10 @@ export default function ClientServiceWrapper({ service, seller }: any) {
   }
 
   return (
-    <div className="min-h-screen bg-(--background)">
-      <div className="relative flex min-h-screen flex-col overflow-hidden bg-(--card) pb-28">
+    <div className="min-h-dvh bg-(--background)">
+      <div className="relative flex min-h-dvh flex-col overflow-hidden bg-(--card) pb-[calc(7rem+env(safe-area-inset-bottom,0px))]">
         {/* Top bar */}
-        <div className="absolute top-0 left-0 right-0 z-20 flex items-center justify-between px-4 pt-4">
+        <div className={`absolute left-0 right-0 top-0 z-20 flex items-center justify-between ${STOREFRONT_GUTTER_X} pt-[max(1rem,env(safe-area-inset-top,0px))]`}>
           <button
             type="button"
             onClick={() => {
@@ -391,7 +392,7 @@ export default function ClientServiceWrapper({ service, seller }: any) {
         </div>
 
         {/* Service info */}
-        <div className="px-6 pt-8">
+        <div className={`pt-8 ${STOREFRONT_GUTTER_X}`}>
           <div className="mb-6">
             <p className="text-xs font-black text-emerald-600 tracking-[0.2em] uppercase mb-1">
               {service.service_category}
@@ -608,7 +609,7 @@ export default function ClientServiceWrapper({ service, seller }: any) {
         </div>
 
         {/* Bottom fixed CTA */}
-        <div className="absolute bottom-0 left-0 right-0 z-30 flex gap-3 border-t border-(--border) bg-(--card) p-4">
+        <div className={`absolute bottom-0 left-0 right-0 z-30 flex gap-3 border-t border-(--border) bg-(--card) pt-3 ${STOREFRONT_GUTTER_X} pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]`}>
           <Button
             onClick={() => {
               if (!promptAuth('Adding services to cart')) return;

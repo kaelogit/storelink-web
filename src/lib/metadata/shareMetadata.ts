@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { createServerClient as createAnonServerClient } from '@/lib/supabase';
 import { createServerClient as createCookieServerClient } from '@/lib/supabase-server';
 import { getLocaleForCountry, getSiteNameForCountry } from '@/lib/countryMetadata';
+import { getProductCurationStatement, getServiceCurationStatement } from '@/lib/curationStatements';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { siteOriginForMetadata } from '@/lib/sharingContract';
 import { normalizeServiceToken, resolveServiceByToken } from '@/lib/service-route-resolver';
@@ -364,5 +365,182 @@ export async function buildStoryShareMetadata(storyIdRaw: string): Promise<Metad
     },
     twitter: { card: 'summary_large_image', title, description, images: [img] },
     alternates: { canonical: `${origin}${canonicalPath}` },
+  };
+}
+
+const CURATION_UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function curationServiceHeroMedia(listing: { media?: unknown }): string {
+  const media = Array.isArray(listing?.media) ? listing.media : [];
+  const first = media[0];
+  if (typeof first === 'string') return first;
+  if (first && typeof first === 'object' && typeof (first as { url?: string }).url === 'string') {
+    return String((first as { url: string }).url);
+  }
+  return '';
+}
+
+/** OG + Twitter cards for `/curation/[id]` (public curated product hubs). */
+export async function buildProductCurationShareMetadata(
+  productIdRaw: string,
+  curatorIdRaw?: string | null,
+): Promise<Metadata> {
+  const productId = String(productIdRaw || '').trim();
+  const origin = siteOriginForMetadata();
+  if (!productId) {
+    return { title: 'Curation | StoreLink' };
+  }
+
+  const supabase = createAnonServerClient();
+  const isUUID = CURATION_UUID_RE.test(productId);
+  const { data: product } = await supabase
+    .from('products')
+    .select(
+      'id,name,description,price,currency_code,image_urls,category,slug,seller_id,seller:profiles!seller_id(location_country_code)',
+    )
+    .eq(isUUID ? 'id' : 'slug', productId)
+    .maybeSingle();
+
+  if (!product) {
+    return { title: 'Curation not found | StoreLink' };
+  }
+
+  const cid = String(curatorIdRaw || '').trim();
+  let curatorName: string | null = null;
+  if (cid) {
+    const { data: cur } = await supabase.from('profiles').select('display_name').eq('id', cid).maybeSingle();
+    curatorName = String((cur as { display_name?: string } | null)?.display_name || '').trim() || null;
+  }
+
+  const name = String((product as { name?: string }).name || 'Product').trim() || 'Product';
+  const priceLabel = new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: String((product as { currency_code?: string }).currency_code || 'NGN'),
+    minimumFractionDigits: 0,
+  }).format(Number((product as { price?: number }).price || 0));
+
+  const statement = getProductCurationStatement((product as { category?: string | null }).category, name);
+  const descFromListing = String((product as { description?: string | null }).description || '').trim();
+  const description =
+    (descFromListing.length >= 40 ? descFromListing.slice(0, 160) : '') ||
+    `${statement} From ${priceLabel}.`;
+
+  const rawImg = (product as { image_urls?: string[] | null }).image_urls?.[0];
+  const mainImage = absoluteMediaForOg(normalizeWebMediaUrl(String(rawImg || '')), origin);
+
+  const shareToken = String(
+    (product as { slug?: string | null; id?: string }).slug || (product as { id?: string }).id || productId,
+  ).trim();
+  const q = cid ? `?curatorId=${encodeURIComponent(cid)}` : '';
+  const canonical = `${origin}/curation/${encodeURIComponent(shareToken)}${q}`;
+
+  const sellerRel = (product as { seller?: { location_country_code?: string | null } | { location_country_code?: string | null }[] | null })
+    .seller;
+  const sellerCountry = Array.isArray(sellerRel)
+    ? sellerRel[0]?.location_country_code ?? null
+    : sellerRel?.location_country_code ?? null;
+
+  const title = curatorName ? `${curatorName} recommends ${name} | StoreLink` : `${name} — curated on StoreLink`;
+
+  return {
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      siteName: getSiteNameForCountry(sellerCountry),
+      images: [{ url: mainImage, width: 800, height: 1000, alt: name }],
+      locale: getLocaleForCountry(sellerCountry),
+      type: 'website',
+    },
+    twitter: { card: 'summary_large_image', title, description, images: [mainImage] },
+    alternates: { canonical },
+  };
+}
+
+/** OG + Twitter cards for `/curation/service/[id]`. */
+export async function buildServiceCurationShareMetadata(
+  listingIdRaw: string,
+  curatorIdRaw?: string | null,
+): Promise<Metadata> {
+  const listingId = String(listingIdRaw || '').trim();
+  const origin = siteOriginForMetadata();
+  if (!listingId) {
+    return { title: 'Service curation | StoreLink' };
+  }
+
+  const supabase = createAnonServerClient();
+  const isUUID = CURATION_UUID_RE.test(listingId);
+  const { data: listing } = await supabase
+    .from('service_listings')
+    .select(
+      'id,slug,title,description,hero_price_min,currency_code,service_category,media,seller_id,seller:profiles!seller_id(display_name,location_country_code)',
+    )
+    .eq(isUUID ? 'id' : 'slug', listingId)
+    .maybeSingle();
+
+  if (!listing) {
+    return { title: 'Curation not found | StoreLink' };
+  }
+
+  const cid = String(curatorIdRaw || '').trim();
+  let curatorName: string | null = null;
+  if (cid) {
+    const { data: cur } = await supabase.from('profiles').select('display_name').eq('id', cid).maybeSingle();
+    curatorName = String((cur as { display_name?: string } | null)?.display_name || '').trim() || null;
+  }
+
+  const seller = Array.isArray((listing as { seller?: unknown }).seller)
+    ? (listing as { seller: { display_name?: string; location_country_code?: string | null }[] }).seller[0]
+    : (listing as { seller?: { display_name?: string; location_country_code?: string | null } }).seller;
+
+  const titleStr = String((listing as { title?: string }).title || 'Service').trim() || 'Service';
+  const fromPrice = Number((listing as { hero_price_min?: number }).hero_price_min || 0) / 100;
+  const priceLabel = new Intl.NumberFormat('en-NG', {
+    style: 'currency',
+    currency: String((listing as { currency_code?: string }).currency_code || 'NGN'),
+    minimumFractionDigits: 0,
+  }).format(fromPrice);
+
+  const statement = getServiceCurationStatement({
+    serviceCategory: (listing as { service_category?: string | null }).service_category,
+    serviceTitle: titleStr,
+    providerDisplayName: seller?.display_name || 'Provider',
+    listingId,
+    curatorId: cid,
+  });
+
+  const descFromListing = String((listing as { description?: string | null }).description || '').trim();
+  const description =
+    (descFromListing.length >= 40 ? descFromListing.slice(0, 160) : '') ||
+    `${statement} From ${priceLabel}.`;
+
+  const heroUrl = curationServiceHeroMedia(listing as { media?: unknown });
+  const mainImage = absoluteMediaForOg(normalizeWebMediaUrl(heroUrl), origin);
+
+  const shareToken = String(
+    (listing as { slug?: string | null; id?: string }).slug || (listing as { id?: string }).id || listingId,
+  ).trim();
+  const q = cid ? `?curatorId=${encodeURIComponent(cid)}` : '';
+  const canonical = `${origin}/curation/service/${encodeURIComponent(shareToken)}${q}`;
+
+  const sellerCountry = seller?.location_country_code ?? null;
+  const pageTitle = curatorName ? `${curatorName} recommends ${titleStr} | StoreLink` : `${titleStr} — curated on StoreLink`;
+
+  return {
+    title: pageTitle,
+    description,
+    openGraph: {
+      title: pageTitle,
+      description,
+      url: canonical,
+      siteName: getSiteNameForCountry(sellerCountry),
+      images: [{ url: mainImage, width: 800, height: 1000, alt: titleStr }],
+      locale: getLocaleForCountry(sellerCountry),
+      type: 'website',
+    },
+    twitter: { card: 'summary_large_image', title: pageTitle, description, images: [mainImage] },
+    alternates: { canonical },
   };
 }

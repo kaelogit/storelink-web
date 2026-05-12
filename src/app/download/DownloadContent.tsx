@@ -65,7 +65,7 @@ export default function DownloadContent() {
   }, []);
 
   return (
-    <main className="min-h-screen font-sans flex flex-col relative bg-(--background) text-(--foreground) selection:bg-emerald-100">
+    <main className="min-h-dvh font-sans flex flex-col relative bg-(--background) text-(--foreground) selection:bg-emerald-100">
       {/* Hero: high-end, app-aligned */}
       <section className="relative min-h-[90vh] flex items-center pt-28 pb-20 overflow-hidden">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808008_1px,transparent_1px),linear-gradient(to_bottom,#80808008_1px,transparent_1px)] bg-size-[40px_40px] mask-[radial-gradient(ellipse_70%_60%_at_50%_0%,#000_30%,transparent_70%)]" />

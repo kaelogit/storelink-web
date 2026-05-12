@@ -14,7 +14,7 @@ export default function WebFeedDetailShell({
   backHref: string;
 }) {
   return (
-    <div className="min-h-screen bg-(--background) pb-10 pt-6">
+    <div className="min-h-dvh bg-(--background) pb-10 pt-6">
       <div className="mx-auto mb-3 flex w-full max-w-md items-center justify-between px-3">
         <Link
           href={backHref}

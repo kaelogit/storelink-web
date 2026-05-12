@@ -32,7 +32,7 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <Section variant="light" className="min-h-[calc(100vh-80px)] flex items-center" container={false}>
+    <Section variant="light" className="min-h-[calc(100dvh-80px)] flex items-center" container={false}>
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
         <div className="absolute -top-20 left-0 h-56 w-56 rounded-full bg-emerald-300/20 blur-3xl" />
         <div className="absolute bottom-0 right-0 h-56 w-56 rounded-full bg-violet-300/20 blur-3xl" />

@@ -573,7 +573,7 @@ export default function MessagesClient() {
   const showMobileChatPane = !!selectedChatId;
 
   return (
-    <div className="mx-auto h-[calc(100vh-7rem)] max-w-7xl overflow-hidden rounded-3xl border border-(--border) bg-(--card)">
+    <div className="mx-auto h-[calc(100dvh-7rem)] max-w-7xl overflow-hidden rounded-3xl border border-(--border) bg-(--card)">
       <div className="grid h-full grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)]">
         <aside className={`${showMobileChatPane ? 'hidden lg:flex' : 'flex'} min-h-0 flex-col border-r border-(--border)`}>
           <div className="border-b border-(--border) p-4">

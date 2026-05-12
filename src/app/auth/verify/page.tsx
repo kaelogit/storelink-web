@@ -147,7 +147,7 @@ function VerifyPageContent() {
   };
 
   return (
-    <Section variant="light" className="min-h-[calc(100vh-80px)] flex items-center" container={false}>
+    <Section variant="light" className="min-h-[calc(100dvh-80px)] flex items-center" container={false}>
       <div className="mx-auto w-full max-w-md px-4 sm:px-6 py-8 sm:py-10">
         <Card className="rounded-3xl p-6 sm:p-8">
           <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Verify account</p>

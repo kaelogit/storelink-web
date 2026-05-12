@@ -28,7 +28,7 @@ const EMPLOYEES = [
 
 export default function AboutPage() {
   return (
-    <main className="min-h-screen font-sans bg-slate-50 text-slate-900 selection:bg-emerald-100 overflow-hidden">
+    <main className="min-h-dvh font-sans bg-slate-50 text-slate-900 selection:bg-emerald-100 overflow-hidden">
       
       {/* ⚡ OPTIMIZED HERO BACKGROUND */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none [mask-image:radial-gradient(ellipse_80%_40%_at_50%_0%,#000_20%,transparent_100%)]" />
