@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ThemeToggle from '../ui/ThemeToggle';
+import StoreLinkLogo from '../ui/StoreLinkLogo';
 
 // Custom Icons
 const AppleIcon = () => (
@@ -119,19 +120,7 @@ export default function Navbar() {
       }`}
     >
       <div className="max-w-7xl mx-auto px-6 h-12 flex items-center justify-between gap-4">
-        {/* LOGO */}
-        <Link href="/" className="flex items-center gap-2.5 z-50 group shrink-0" aria-label="StoreLink home">
-           <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all duration-300 ${
-             isTransparent 
-                ? 'bg-(--card)/5 border-white/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]' // 🟢 Glowing Green on Dark
-                : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50'
-           }`}>
-              <LayoutDashboard size={22}/>
-           </div>
-           <span className={`font-display font-bold text-xl tracking-tight transition-colors duration-300 ${
-             isTransparent ? 'text-white' : 'text-(--foreground)'
-           }`}>StoreLink.</span>
-        </Link>
+        <StoreLinkLogo className="z-50 shrink-0" />
 
         {/* DESKTOP MENU */}
         <nav className="hidden md:flex items-center gap-1 h-full shrink-0" aria-label="Main">

@@ -6,6 +6,7 @@ import { createBrowserClient } from '@/lib/supabase';
 import Section from '@/components/ui/Section';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import StoreLinkLogo from '@/components/ui/StoreLinkLogo';
 
 export default function ResetPasswordPage() {
   const supabase = useMemo(() => createBrowserClient(), []);
@@ -38,6 +39,9 @@ export default function ResetPasswordPage() {
         <div className="absolute bottom-0 right-0 h-56 w-56 rounded-full bg-violet-300/20 blur-3xl" />
       </div>
       <div className="mx-auto w-full max-w-md px-4 sm:px-6 py-8 sm:py-10">
+        <div className="mb-8 flex justify-center">
+          <StoreLinkLogo variant="auth" />
+        </div>
         <Card className="rounded-3xl p-6 sm:p-8">
           <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.18em] text-emerald-600">Account recovery</p>
           <h1 className="mt-2 text-2xl sm:text-3xl font-black text-(--foreground) tracking-tight">

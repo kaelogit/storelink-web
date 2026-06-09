@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { Bookmark, Heart, MessageCircle, MessageSquare, ShoppingBag, UserPlus, WandSparkles } from 'lucide-react';
+import StoreLinkLogo from '@/components/ui/StoreLinkLogo';
 type ActionRequiredPageProps = {
   searchParams: Promise<{
     action?: string;
@@ -77,6 +78,9 @@ export default async function AuthActionRequiredPage({ searchParams }: ActionReq
 
   return (
     <div className="min-h-dvh bg-(--background) px-4 py-10 text-(--foreground)">
+      <div className="mx-auto mb-8 flex w-full max-w-md justify-center">
+        <StoreLinkLogo variant="auth" />
+      </div>
       <div className="mx-auto w-full max-w-md rounded-3xl border border-(--border) bg-(--card) p-6 shadow-xl">
         <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1">
           <ActionIcon size={12} className="text-emerald-600" />

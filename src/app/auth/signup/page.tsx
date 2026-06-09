@@ -7,6 +7,7 @@ import { createBrowserClient } from '@/lib/supabase';
 import Section from '@/components/ui/Section';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import StoreLinkLogo from '@/components/ui/StoreLinkLogo';
 
 function SignupPageContent() {
   const router = useRouter();
@@ -111,9 +112,11 @@ function SignupPageContent() {
         <div className="absolute bottom-0 left-0 h-64 w-64 rounded-full bg-emerald-300/20 blur-3xl" />
       </div>
       <div className="mx-auto w-full max-w-md px-4 sm:px-6 py-8 sm:py-10">
+        <div className="mb-8 flex justify-center">
+          <StoreLinkLogo variant="auth" />
+        </div>
         <Card className="rounded-3xl p-6 sm:p-8">
-          <p className="text-[10px] sm:text-xs font-black uppercase tracking-[0.18em] text-emerald-600">StoreLink web app</p>
-          <h1 className="mt-2 text-2xl sm:text-3xl font-black text-(--foreground) tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-black text-(--foreground) tracking-tight">
             Create <span className="bg-linear-to-r from-emerald-600 to-violet-600 bg-clip-text text-transparent">account</span>
           </h1>
           <p className="mt-2 text-sm text-(--muted)">Get started on the full StoreLink web experience.</p>
