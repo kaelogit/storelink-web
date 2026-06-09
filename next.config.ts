@@ -12,7 +12,6 @@ const nextConfig: NextConfig = {
         destination: '/',
         permanent: true,
       },
-      // Support profile links shared as /@username by redirecting to canonical /username.
       {
         source: '/@:username',
         destination: '/:username',
@@ -28,7 +27,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // No headers needed! Next.js handles opengraph-image.jpg automatically.
 };
 
 export default nextConfig;

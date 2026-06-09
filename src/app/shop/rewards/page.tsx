@@ -28,7 +28,7 @@ export default function RewardsPage() {
   };
 
   return (
-    <main className="min-h-dvh font-sans bg-[var(--pitch-black)] text-white selection:bg-amber-500 selection:text-black">
+    <main className="min-h-dvh font-sans bg-(--pitch-black) text-white selection:bg-amber-500 selection:text-black">
       <section className="section-hero pt-24 md:pt-32 pb-24 relative overflow-hidden" aria-labelledby="rewards-hero-heading">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-amber-600/10 rounded-full blur-[120px] pointer-events-none" aria-hidden />
 
@@ -47,15 +47,15 @@ export default function RewardsPage() {
             
             <h1 id="rewards-hero-heading" className="text-5xl md:text-7xl font-display font-bold text-white mb-8 tracking-tight leading-[1.1]">
               Shop. Earn. <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-yellow-500 to-orange-500">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-amber-300 via-yellow-500 to-orange-500">
                 Repeat.
               </span>
             </h1>
-            <p className="text-xl text-slate-400 leading-relaxed font-medium mb-10 max-w-lg">
+            <p className="text-xl text-(--muted) leading-relaxed font-medium mb-10 max-w-lg">
               The first marketplace with built-in cashback. Sellers set the rules, buyers collect the coins. Turn one-time customers into lifetime fans.
             </p>
 
-            <Button href="/download" size="lg" className="!bg-white !text-black hover:scale-105 gap-3">
+            <Button href="/download" size="lg" className="!bg-(--card) !text-black hover:scale-105 gap-3">
               <Wallet size={20} /> Start Collecting
             </Button>
           </div>
@@ -82,13 +82,13 @@ export default function RewardsPage() {
                 )}
 
                 {/* The Wallet Card */}
-                <div className="bg-gradient-to-br from-zinc-900 to-black border border-white/10 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
+                <div className="bg-linear-to-br from-zinc-900 to-black border border-white/10 rounded-[2.5rem] p-8 shadow-2xl relative overflow-hidden">
                     {/* Background Pattern */}
                     <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-[80px] pointer-events-none" />
                     
                     <div className="relative z-10">
                         <div className="flex justify-between items-center mb-8">
-                            <span className="text-slate-400 text-sm font-bold uppercase tracking-widest">Total Balance</span>
+                            <span className="text-(--muted) text-sm font-bold uppercase tracking-widest">Total Balance</span>
                             <Image src="https://ui-avatars.com/api/?name=Kaelo&bg=amber&color=000" alt="User" width={40} height={40} className="rounded-full border-2 border-amber-500" />
                         </div>
 
@@ -101,14 +101,14 @@ export default function RewardsPage() {
 
                         {/* Recent Activity */}
                         <div className="space-y-4 mb-8">
-                            <div className="flex items-center justify-between p-4 rounded-2xl bg-white/5 border border-white/5">
+                            <div className="flex items-center justify-between p-4 rounded-2xl bg-(--card)/5 border border-white/5">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
                                         <TrendingUp size={18} />
                                     </div>
                                     <div>
                                         <p className="text-white text-sm font-bold">Nike Store Purchase</p>
-                                        <p className="text-slate-500 text-xs">2 mins ago</p>
+                                        <p className="text-(--muted) text-xs">2 mins ago</p>
                                     </div>
                                 </div>
                                 <span className="text-emerald-400 font-bold">+500</span>
@@ -127,7 +127,7 @@ export default function RewardsPage() {
                 </div>
 
                 {/* Background Card Effect */}
-                <div className="absolute -bottom-4 left-4 right-4 h-20 bg-white/5 rounded-[2.5rem] -z-10 blur-xl" />
+                <div className="absolute -bottom-4 left-4 right-4 h-20 bg-(--card)/5 rounded-[2.5rem] -z-10 blur-xl" />
              </div>
           </div>
 
@@ -148,7 +148,7 @@ export default function RewardsPage() {
                         <Lock size={32} className="text-amber-500" />
                     </div>
                     <h3 className="text-2xl font-bold text-white mb-4">For Sellers: Retention</h3>
-                    <p className="text-slate-400 text-lg leading-relaxed mb-8">
+                    <p className="text-(--muted) text-lg leading-relaxed mb-8">
                         Acquiring a new customer is expensive. Keeping one is cheap. 
                         Enable "Loyalty Mode" on your dashboard to automatically reward customers with 1%, 2%, or 5% coin-back on every purchase.
                     </p>
@@ -165,7 +165,7 @@ export default function RewardsPage() {
                         <Gift size={32} className="text-emerald-500" />
                     </div>
                     <h3 className="text-2xl font-bold text-white mb-4">For Shoppers: Savings</h3>
-                    <p className="text-slate-400 text-lg leading-relaxed mb-8">
+                    <p className="text-(--muted) text-lg leading-relaxed mb-8">
                         Why shop where you get nothing back? On StoreLink, your loyalty pays off. 
                         Accumulate coins from your favorite vendors and use them to slash the price of your next order.
                     </p>
@@ -184,7 +184,7 @@ export default function RewardsPage() {
          <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl md:text-5xl font-bold mb-12">The Growth Loop</h2>
             
-            <div className="flex flex-col md:flex-row items-center justify-center gap-8 text-slate-400 font-bold text-lg">
+            <div className="flex flex-col md:flex-row items-center justify-center gap-8 text-(--muted) font-bold text-lg">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-20 h-20 rounded-full bg-zinc-800 flex items-center justify-center border border-zinc-700 text-white">
                         1
@@ -220,8 +220,8 @@ export default function RewardsPage() {
 
 function CheckItem({ text }: { text: string }) {
     return (
-        <li className="flex items-center gap-3 text-slate-300 font-medium">
-            <div className="p-1 rounded-full bg-white/10 text-white">
+        <li className="flex items-center gap-3 text-(--muted) font-medium">
+            <div className="p-1 rounded-full bg-(--card)/10 text-white">
                 <ArrowRight size={10} />
             </div>
             {text}

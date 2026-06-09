@@ -8,7 +8,7 @@ import Button from '../../../components/ui/Button';
 
 export default function VideoShoppingPage() {
   return (
-    <main className="min-h-dvh font-sans bg-[var(--pitch-black)] text-white selection:bg-emerald-500 selection:text-white">
+    <main className="min-h-dvh font-sans bg-(--pitch-black) text-white selection:bg-emerald-500 selection:text-white">
       <section className="section-hero pt-24 md:pt-32 pb-20 relative overflow-hidden" aria-labelledby="video-hero-heading">
         <div className="section-glow-violet section-orb-tl" style={{ width: '500px', height: '500px' }} aria-hidden />
         <div className="section-glow-emerald section-orb-br" style={{ width: '600px', height: '600px' }} aria-hidden />
@@ -28,20 +28,20 @@ export default function VideoShoppingPage() {
             
             <h1 id="video-hero-heading" className="text-5xl md:text-7xl font-display font-bold text-white mb-8 tracking-tight leading-[1.1]">
               Shop the <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-purple-500 to-orange-500">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-red-500 via-purple-500 to-orange-500">
                 Stream.
               </span>
             </h1>
-            <p className="text-xl text-slate-400 leading-relaxed font-medium mb-10 max-w-lg mx-auto lg:mx-0">
+            <p className="text-xl text-(--muted) leading-relaxed font-medium mb-10 max-w-lg mx-auto lg:mx-0">
               Static images lie. Video tells the truth. <br/>
               Scroll through an endless feed of product reels, see the texture, verify the fit, and tap to buy instantly.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Button href="/download" size="lg" className="!bg-white !text-black hover:scale-105 justify-center gap-3">
+                <Button href="/download" size="lg" className="!bg-(--card) !text-black hover:scale-105 justify-center gap-3">
                   <Play size={20} fill="black" /> Start Watching
                 </Button>
-                <Button href="/pricing" variant="outline" size="lg" className="!bg-white/10 !border-white/10 !text-white hover:!bg-white/20 justify-center gap-3 backdrop-blur-md">
+                <Button href="/pricing" variant="outline" size="lg" className="!bg-(--card)/10 !border-white/10 !text-white hover:!bg-(--card)/20 justify-center gap-3 backdrop-blur-md">
                   Start Selling
                 </Button>
             </div>
@@ -65,7 +65,7 @@ export default function VideoShoppingPage() {
                    >
                       <source src="https://assets.mixkit.co/videos/preview/mixkit-girl-in-neon-sign-1232-large.mp4" type="video/mp4" />
                    </video>
-                   <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-black/80" />
+                   <div className="absolute inset-0 bg-linear-to-b from-black/60 via-transparent to-black/80" />
                 </div>
 
                 {/* 📱 UI LAYER */}
@@ -75,7 +75,7 @@ export default function VideoShoppingPage() {
                    <div className="flex justify-between items-center px-2">
                       <div className="flex gap-4 text-white/50 font-bold text-sm">
                          <span>Following</span>
-                         <span className="text-white relative after:content-[''] after:absolute after:-bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-white after:rounded-full">For You</span>
+                         <span className="text-white relative after:content-[''] after:absolute after:-bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1 after:h-1 after:bg-(--card) after:rounded-full">For You</span>
                       </div>
                       <Eye className="text-white" size={20} />
                    </div>
@@ -95,15 +95,15 @@ export default function VideoShoppingPage() {
                       <div className="flex items-center gap-2 mb-2">
                          <h3 className="font-bold text-white text-shadow-sm">@nike_lagos</h3>
                          <CheckCircle2 size={14} className="text-blue-400 fill-blue-400" />
-                         <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded text-white font-bold">Follow</span>
+                         <span className="text-[10px] bg-(--card)/20 px-2 py-0.5 rounded text-white font-bold">Follow</span>
                       </div>
                       <p className="text-white text-sm leading-snug mb-4 font-medium opacity-90">
                          New drop alert! 🔥 The Air Max 90 in Electric Green. Limited stock available. #Nike #Lagos
                       </p>
                       
                       {/* Product Card */}
-                      <div className="bg-white/10 backdrop-blur-md border border-white/10 p-3 rounded-xl flex items-center gap-3">
-                         <div className="w-10 h-10 bg-white/20 rounded-lg overflow-hidden relative">
+                      <div className="bg-(--card)/10 backdrop-blur-md border border-white/10 p-3 rounded-xl flex items-center gap-3">
+                         <div className="w-10 h-10 bg-(--card)/20 rounded-lg overflow-hidden relative">
                             <Image src="https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?w=200" alt="Prod" fill className="object-cover" />
                          </div>
                          <div className="flex-1">
@@ -168,12 +168,12 @@ function ActionIcon({ icon, label, color = "text-white" }: any) {
 
 function Feature({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
    return (
-      <div className="p-8 rounded-[var(--radius-2xl)] bg-white/5 border border-white/5 hover:bg-white/10 transition-colors duration-[var(--duration-150)]">
-         <div className="w-14 h-14 rounded-[var(--radius-2xl)] bg-white/5 flex items-center justify-center mb-6">
+      <div className="p-8 rounded-2xl bg-(--card)/5 border border-white/5 hover:bg-(--card)/10 transition-colors duration-(--duration-150)">
+         <div className="w-14 h-14 rounded-2xl bg-(--card)/5 flex items-center justify-center mb-6">
             {icon}
          </div>
          <h3 className="text-xl font-bold text-white mb-3">{title}</h3>
-         <p className="text-slate-400 leading-relaxed font-medium">{desc}</p>
+         <p className="text-(--muted) leading-relaxed font-medium">{desc}</p>
       </div>
    )
 }

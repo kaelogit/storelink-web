@@ -124,19 +124,19 @@ export default function TheFeed() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
         >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-emerald-400 text-[10px] md:text-xs font-bold uppercase tracking-widest mb-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-(--card)/5 border border-white/10 text-emerald-400 text-[10px] md:text-xs font-bold uppercase tracking-widest mb-6">
             <TrendingUp size={14} />
-            The Live Feed
+            Discovery Layer
           </div>
           
           <h2 id="the-feed-heading" className="text-4xl md:text-7xl font-display font-black mb-4 md:mb-6 tracking-tight text-white leading-tight">
-            Don't Browse. <br className="md:hidden" />
+            Discover with content. <br className="md:hidden" />
             <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-teal-300">
-              Watch.
+              Transact with protection.
             </span>
           </h2>
-          <p className="text-base md:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-light">
-            The first marketplace built like a social network. Scroll through high-res video reels, verify products instantly, and tap to buy.
+          <p className="text-base md:text-xl text-(--muted) max-w-2xl mx-auto leading-relaxed font-light">
+            Content helps you discover what to buy. Reputation and escrow help you decide who to trust before your money moves.
           </p>
         </motion.div>
       </div>
@@ -275,7 +275,7 @@ export default function TheFeed() {
 
                           {/* Glass Product Card */}
                           <div className="mt-0.5 md:mt-1 bg-black/60 border border-white/10 rounded-xl p-2 md:p-2.5 flex items-center gap-2 md:gap-3 w-full">
-                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-white/10 overflow-hidden shrink-0 relative">
+                            <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-(--card)/10 overflow-hidden shrink-0 relative">
                                 {thumbSource && <Image src={thumbSource} fill className="object-cover" alt="prod" sizes="40px" />}
                             </div>
                             <div className="flex flex-col justify-center min-w-0">
@@ -303,8 +303,8 @@ export default function TheFeed() {
                       </div>
 
                       {/* Progress Bar Line */}
-                      <div className="absolute bottom-3 md:bottom-4 left-3 md:left-4 right-3 md:right-4 h-[2px] bg-white/20 rounded-full overflow-hidden">
-                          <div className="h-full w-[40%] bg-white/80 rounded-full" />
+                      <div className="absolute bottom-3 md:bottom-4 left-3 md:left-4 right-3 md:right-4 h-[2px] bg-(--card)/20 rounded-full overflow-hidden">
+                          <div className="h-full w-[40%] bg-(--card)/80 rounded-full" />
                       </div>
                     </div>
                   </div>

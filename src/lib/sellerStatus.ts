@@ -32,6 +32,7 @@ function parseExpiryDate(value: string | null | undefined): Date | null {
 }
 
 export function hasActivePaidPlan(profile: ProfileLike | null | undefined): boolean {
+  if (profile?.is_seller) return true;
   const state = getSellerPlanState(profile);
   return state.plan !== 'none' && state.isActive;
 }
@@ -67,8 +68,7 @@ export function getSellerPlanState(profile: ProfileLike | null | undefined): Sel
 }
 
 export function canSellAndAppearInFeeds(profile: ProfileLike | null | undefined): boolean {
-  if (!profile?.is_seller) return false;
-  return hasActivePaidPlan(profile);
+  return profile?.is_seller === true;
 }
 
 export function showDiamondBadge(profile: ProfileLike | null | undefined): boolean {

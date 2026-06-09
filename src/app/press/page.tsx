@@ -19,7 +19,7 @@ const RELEASES = [
   {
     date: "May 1, 2026",
     title: "StoreLink passes 10,000 Active Merchants in Nigeria.",
-    excerpt: "The social commerce OS is seeing 40% MoM growth as vendors migrate to storelink.",
+    excerpt: "The trust-powered commerce platform is seeing 40% MoM growth as vendors migrate to StoreLink.",
     link: "#"
   }
 ];
@@ -36,23 +36,23 @@ export default function PressPage() {
   const [copied, setCopied] = useState(false);
 
   const copyBoilerplate = () => {
-    navigator.clipboard.writeText("StoreLink is the first Operating System for Social Commerce in Africa. We bridge the gap between social connection and secure transactions, offering merchants a suite of tools including AI listings, Escrow payments, and automated logistics. Founded in Lagos, StoreLink empowers the 'small but mighty' creator-merchant to compete with global giants.");
+    navigator.clipboard.writeText("StoreLink is a trust-powered commerce platform in Africa. We combine social discovery with reputation signals and escrow-protected payments, giving merchants tools like AI listings and protected checkout to grow confidently. Founded in Lagos, StoreLink empowers the small but mighty creator-merchant to compete with global giants.");
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <main className="min-h-dvh font-sans bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
-      <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-20 border-b border-[var(--border)]">
+    <main className="min-h-dvh font-sans bg-(--background) text-(--foreground) selection:bg-emerald-100">
+      <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-20 border-b border-(--border)">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-5xl md:text-6xl font-display font-bold text-[var(--foreground)] mb-6"
+            className="text-5xl md:text-6xl font-display font-bold text-(--foreground) mb-6"
           >
             Newsroom
           </motion.h1>
-          <p className="text-xl text-[var(--muted)] max-w-2xl leading-relaxed">
+          <p className="text-xl text-(--muted) max-w-2xl leading-relaxed">
             Latest news, brand assets, and resources for journalists and creators telling the StoreLink story.
           </p>
           <div className="mt-8 flex gap-4">
@@ -66,34 +66,34 @@ export default function PressPage() {
       <Section variant="light" padding="default">
          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-[var(--foreground)]">About StoreLink (Boilerplate)</h2>
-                <Button variant="ghost" size="sm" onClick={copyBoilerplate} className="text-emerald-600 !bg-emerald-50 hover:!bg-emerald-100 gap-2">
+                <h2 className="text-2xl font-bold text-(--foreground)">About StoreLink (Boilerplate)</h2>
+                <Button variant="ghost" size="sm" onClick={copyBoilerplate} className="text-emerald-600 bg-emerald-50! hover:bg-emerald-100! gap-2 dark:bg-emerald-950/40! dark:hover:bg-emerald-900/40!">
                    {copied ? <span className="text-emerald-700">Copied!</span> : <><Copy size={14} /> Copy Text</>}
                 </Button>
             </div>
-            <Card padding="default" className="p-8 rounded-[var(--radius-2xl)]">
-               <p className="text-[var(--muted)] leading-loose font-medium">
-                  StoreLink is the first Operating System for Social Commerce in Africa. We bridge the gap between social connection and secure transactions, offering merchants a suite of tools including AI listings, Escrow payments, and automated logistics. Founded in Lagos, StoreLink empowers the "small but mighty" creator-merchant to compete with global giants.
+            <Card padding="default" className="p-8 rounded-2xl">
+               <p className="text-(--muted) leading-loose font-medium">
+                  StoreLink is a trust-powered commerce platform in Africa. We combine social discovery with reputation signals and escrow-protected payments, giving merchants tools like AI listings and protected checkout to grow confidently. Founded in Lagos, StoreLink empowers the "small but mighty" creator-merchant to compete with global giants.
                </p>
             </Card>
          </div>
       </Section>
 
-      <Section variant="card" padding="default" className="border-y border-[var(--border)]">
+      <Section variant="card" padding="default" className="border-y border-(--border)">
          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-2xl font-bold text-[var(--foreground)] mb-10">Brand Assets</h2>
+            <h2 className="text-2xl font-bold text-(--foreground) mb-10">Brand Assets</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                {ASSETS.map((asset, i) => (
-                  <Card key={i} padding="compact" className="rounded-[var(--radius-2xl)] hover:shadow-lg transition-all duration-[var(--duration-150)] group">
-                     <div className="aspect-square bg-[var(--surface)] rounded-[var(--radius-xl)] mb-4 relative overflow-hidden flex items-center justify-center border border-[var(--border)]">
-                        <div className="text-[var(--border)] group-hover:scale-110 transition-transform duration-[var(--duration-250)]">
+                  <Card key={i} padding="compact" className="rounded-2xl hover:shadow-lg transition-all duration-(--duration-150) group">
+                     <div className="aspect-square bg-(--surface) rounded-xl mb-4 relative overflow-hidden flex items-center justify-center border border-(--border)">
+                        <div className="text-(--border) group-hover:scale-110 transition-transform duration-(--duration-250)">
                            <ImageIcon size={48} />
                         </div>
                      </div>
-                     <h3 className="font-bold text-[var(--foreground)] mb-1">{asset.title}</h3>
+                     <h3 className="font-bold text-(--foreground) mb-1">{asset.title}</h3>
                      <div className="flex justify-between items-center">
-                        <span className="text-xs font-medium text-[var(--muted)]">{asset.type} • {asset.size}</span>
-                        <button type="button" className="text-emerald-600 hover:bg-emerald-50 p-2 rounded-[var(--radius-lg)] transition-colors duration-[var(--duration-150)]">
+                        <span className="text-xs font-medium text-(--muted)">{asset.type} • {asset.size}</span>
+                        <button type="button" className="text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 p-2 rounded-lg transition-colors duration-(--duration-150)">
                            <Download size={18} />
                         </button>
                      </div>
@@ -105,14 +105,14 @@ export default function PressPage() {
 
       <Section variant="light" padding="default">
          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-2xl font-bold text-[var(--foreground)] mb-10">Press Releases</h2>
+            <h2 className="text-2xl font-bold text-(--foreground) mb-10">Press Releases</h2>
             <div className="space-y-6">
                {RELEASES.map((release, i) => (
-                  <Card key={i} padding="default" className="rounded-[var(--radius-2xl)] p-8 hover:border-emerald-200 transition-colors duration-[var(--duration-150)] group cursor-pointer">
+                  <Card key={i} padding="default" className="rounded-2xl p-8 hover:border-emerald-200 transition-colors duration-(--duration-150) group cursor-pointer">
                      <p className="text-xs font-bold text-emerald-600 mb-2 uppercase tracking-wider">{release.date}</p>
-                     <h3 className="text-xl font-bold text-[var(--foreground)] mb-3 group-hover:text-emerald-700 transition-colors">{release.title}</h3>
-                     <p className="text-[var(--muted)] leading-relaxed mb-4">{release.excerpt}</p>
-                     <div className="flex items-center gap-2 text-sm font-bold text-[var(--foreground)] group-hover:gap-3 transition-all duration-[var(--duration-150)]">
+                     <h3 className="text-xl font-bold text-(--foreground) mb-3 group-hover:text-emerald-700 transition-colors">{release.title}</h3>
+                     <p className="text-(--muted) leading-relaxed mb-4">{release.excerpt}</p>
+                     <div className="flex items-center gap-2 text-sm font-bold text-(--foreground) group-hover:gap-3 transition-all duration-(--duration-150)">
                         Read full story <ArrowUpRight size={16} />
                      </div>
                   </Card>

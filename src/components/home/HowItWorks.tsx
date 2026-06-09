@@ -46,7 +46,7 @@ const steps = [
 
 export default function HowItWorks() {
   return (
-    <section className="section-light py-28 md:py-40 border-t border-slate-200/50" aria-labelledby="how-it-works-heading">
+    <section className="section-light py-28 md:py-40 border-t border-(--border)" aria-labelledby="how-it-works-heading">
       <div className="section-orb section-orb-emerald section-orb-tl" aria-hidden />
 
       <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -63,15 +63,15 @@ export default function HowItWorks() {
               StoreLink Escrow™
             </div>
             
-            <h2 id="how-it-works-heading" className="text-3xl md:text-5xl lg:text-6xl font-display font-bold text-[var(--foreground)] mb-6 tracking-tight">
-              The <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500 relative inline-block">
+            <h2 id="how-it-works-heading" className="text-3xl md:text-5xl lg:text-6xl font-display font-bold text-(--foreground) mb-6 tracking-tight">
+              The <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-600 to-teal-500 relative inline-block">
                 "No-Scam"
                 <svg className="absolute w-full h-2 md:h-3 -bottom-1 left-0 text-emerald-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
                    <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" opacity="0.4" />
                 </svg>
               </span> Guarantee.
             </h2>
-            <p className="text-lg text-slate-500 leading-relaxed max-w-2xl mx-auto">
+            <p className="text-lg text-(--muted) leading-relaxed max-w-2xl mx-auto">
               We replaced risky pay-first or pay-on-delivery behavior with smart Escrow.
               Here is exactly how your money moves for product orders and service bookings on StoreLink.
             </p>
@@ -82,7 +82,7 @@ export default function HowItWorks() {
         <div className="relative">
           
           {/* Connecting Line (Desktop) - Behind the cards */}
-          <div className="hidden lg:block absolute top-[2.5rem] left-[12%] right-[12%] h-0.5 bg-slate-200 z-0">
+          <div className="hidden lg:block absolute top-[2.5rem] left-[12%] right-[12%] h-0.5 bg-(--border) z-0">
              {/* Animated Pulse Line */}
              <motion.div 
                className="absolute top-0 left-0 h-full bg-emerald-400 w-[20%]"
@@ -103,13 +103,13 @@ export default function HowItWorks() {
               >
                 {/* Mobile Connector Line */}
                 {index < steps.length - 1 && (
-                    <div className="lg:hidden absolute left-1/2 -translate-x-1/2 -bottom-8 w-0.5 h-8 bg-slate-200 z-0">
-                       <ArrowDown size={16} className="absolute -bottom-2 -left-[7px] text-slate-300 bg-slate-50" />
+                    <div className="lg:hidden absolute left-1/2 -translate-x-1/2 -bottom-8 w-0.5 h-8 bg-(--border) z-0">
+                       <ArrowDown size={16} className="absolute -bottom-2 -left-[7px] text-(--muted) bg-(--surface)" />
                     </div>
                 )}
 
                 <Link href={step.href} className="block h-full relative z-10">
-                    <Card padding="default" className="rounded-[var(--radius-2xl)] md:rounded-[24px] p-6 md:p-8 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-2 hover:border-emerald-100 transition-all duration-300 h-full flex flex-col relative overflow-hidden group">
+                    <Card padding="default" className="rounded-2xl md:rounded-[24px] p-6 md:p-8 hover:shadow-xl hover:shadow-emerald-500/5 hover:-translate-y-2 hover:border-emerald-100 transition-all duration-300 h-full flex flex-col relative overflow-hidden group">
                       
                       {/* Step Number Watermark */}
                       <span className="absolute -top-4 -right-4 text-[8rem] font-display font-bold text-slate-50 opacity-50 group-hover:text-emerald-50 transition-colors pointer-events-none select-none">
@@ -133,10 +133,10 @@ export default function HowItWorks() {
 
                       {/* Text */}
                       <div className="flex-1 relative z-10">
-                          <h3 className="text-lg font-bold text-slate-900 mb-3 group-hover:text-emerald-700 transition-colors">
+                          <h3 className="text-lg font-bold text-(--foreground) mb-3 group-hover:text-emerald-700 transition-colors">
                             {step.title}
                           </h3>
-                          <p className="text-sm text-slate-500 leading-relaxed font-medium">
+                          <p className="text-sm text-(--muted) leading-relaxed font-medium">
                             {step.desc}
                           </p>
                       </div>

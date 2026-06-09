@@ -251,7 +251,7 @@ export default function ClientReelWrapper({ reel }: any) {
               }
               void el.play().then(() => setIsPlaying(true)).catch(() => {});
             }}
-            className="absolute top-1/2 left-1/2 z-30 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/20 backdrop-blur-sm transition-transform duration-(--duration-150) hover:scale-110 group pointer-events-auto"
+            className="absolute top-1/2 left-1/2 z-30 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-(--card)/20 backdrop-blur-sm transition-transform duration-(--duration-150) hover:scale-110 group pointer-events-auto"
             aria-label="Play video"
           >
             <Play size={32} className="ml-1 text-white group-hover:scale-110 fill-white transition-transform" />
@@ -282,7 +282,7 @@ export default function ClientReelWrapper({ reel }: any) {
         <div className="pointer-events-none absolute right-0 bottom-0 left-0 z-20 p-6 pb-8">
           <div className="pointer-events-auto mb-3 flex items-center gap-3">
             <div className="relative h-10 w-10 overflow-hidden rounded-full border-2 border-white">
-              {sellerAvatarSrc ? <Image src={sellerAvatarSrc} alt="" fill className="object-cover" unoptimized={true} /> : <div className="h-full w-full bg-white/20" aria-hidden />}
+              {sellerAvatarSrc ? <Image src={sellerAvatarSrc} alt="" fill className="object-cover" unoptimized={true} /> : <div className="h-full w-full bg-(--card)/20" aria-hidden />}
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="text-sm font-bold text-white drop-shadow-md">{reel.seller?.display_name}</h3>

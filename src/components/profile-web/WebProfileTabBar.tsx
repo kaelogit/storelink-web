@@ -10,7 +10,6 @@ type WebProfileTabBarProps = {
   activeTab: string;
   onTab: (tab: string) => void;
   isSeller: boolean;
-  isStoreActive: boolean;
   isWardrobePrivate: boolean;
 };
 
@@ -19,10 +18,9 @@ export default function WebProfileTabBar({
   activeTab,
   onTab,
   isSeller,
-  isStoreActive,
   isWardrobePrivate,
 }: WebProfileTabBarProps) {
-  const showSellerTabs = isSeller && isStoreActive;
+  const showSellerTabs = isSeller;
   const collectionTabKey = variant === 'public' ? 'collection' : 'wardrobe';
   const isCollectionActive = activeTab === collectionTabKey;
 

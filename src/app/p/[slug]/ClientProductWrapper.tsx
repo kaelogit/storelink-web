@@ -278,7 +278,7 @@ export default function ClientProductWrapper({ product, seller }: any) {
                    <div 
                      key={idx} 
                      className={`h-1.5 rounded-full transition-all duration-300 ${
-                       activeImageIndex === idx ? 'w-6 bg-white' : 'w-1.5 bg-white/50'
+                       activeImageIndex === idx ? 'w-6 bg-(--card)' : 'w-1.5 bg-(--card)/50'
                      }`} 
                    />
                 ))}
@@ -331,7 +331,7 @@ export default function ClientProductWrapper({ product, seller }: any) {
                     <Image src={sellerAvatar} alt={seller.display_name} fill className="object-cover" />
                  </div>
                  {seller.is_verified && (
-                    <div className="absolute -bottom-1 -right-1 bg-white p-0.5 rounded-full">
+                    <div className="absolute -bottom-1 -right-1 bg-(--card) p-0.5 rounded-full">
                        <CheckCircle size={14} className="text-emerald-500" fill="currentColor" />
                     </div>
                  )}
@@ -353,7 +353,7 @@ export default function ClientProductWrapper({ product, seller }: any) {
 
           {linkedReelId ? (
             <Link href={`${reelHrefBase}${encodeURIComponent(linkedReelId)}`} className="mb-6 flex items-center gap-2 rounded-[18px] bg-black px-4 py-3 text-white">
-              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-black">
+              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-(--card) text-black">
                 <Play size={12} fill="currentColor" />
               </span>
               <span className="text-sm font-bold">Watch Video Review</span>

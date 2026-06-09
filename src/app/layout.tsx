@@ -43,8 +43,8 @@ export const metadata: Metadata = {
     default: "StoreLink | Ready for Discovery",
     template: "%s | StoreLink", 
   },
-  description: "Commerce without fear. The first social marketplace in Africa where reputation is currency.",
-  keywords: ["StoreLink", "Social Commerce", "Nigeria Ecommerce", "Online Shop", "Verified Vendors"],
+  description: "StoreLink is a trust-powered commerce platform in Africa. Reputation and escrow-protected payments make online buying and selling safer.",
+  keywords: ["StoreLink", "Trust-powered commerce", "Escrow payments", "Nigeria ecommerce", "Verified sellers"],
   
   icons: {
     icon: [
@@ -69,8 +69,8 @@ export const metadata: Metadata = {
   },
 
   openGraph: {
-    title: "StoreLink | Ready for Discovery",
-    description: "Commerce without fear. The first social marketplace in Africa where reputation is currency.",
+    title: "StoreLink | Buy and Sell Online Without Fear",
+    description: "The trust layer for commerce in Africa: discover products, verify sellers, and pay through escrow protection.",
     url: 'https://storelink.ng',
     siteName: "StoreLink",
     locale: "en_NG",
@@ -81,7 +81,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: "StoreLink | Commerce without Fear",
-    description: "The professional way to manage and grow your social commerce business.",
+    description: "A trust-powered commerce platform with reputation and escrow-protected payments.",
     creator: '@kaelodev', 
     // ✅ Next.js automatically injects opengraph-image.jpg here too
   },
@@ -104,7 +104,7 @@ export default function RootLayout({
     "name": "StoreLink",
     "url": "https://storelink.ng",
     "logo": "https://storelink.ng/icon.png",
-    "description": "Ready for Discovery.",
+    "description": "A trust-powered commerce platform for safer online buying and selling.",
     "contactPoint": {
       "@type": "ContactPoint",
       "contactType": "customer support",
@@ -123,14 +123,14 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${inter.variable} ${spaceGrotesk.variable} ${lobster.variable} font-sans antialiased min-h-dvh bg-[var(--background)] text-[var(--foreground)]`}
+        className={`${inter.variable} ${spaceGrotesk.variable} ${lobster.variable} font-sans antialiased min-h-dvh bg-(--background) text-(--foreground)`}
       >
         <ThemeProvider>
           <ReactQueryProvider>
             {/* Skip to main content for keyboard/screen reader */}
             <a
               href="#main-content"
-              className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-emerald-500 focus:px-4 focus:py-2 focus:text-white focus:outline-none focus:ring-2 focus:ring-emerald-300"
+              className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-100 focus:rounded-md focus:bg-emerald-500 focus:px-4 focus:py-2 focus:text-white focus:outline-none focus:ring-2 focus:ring-emerald-300"
             >
               Skip to main content
             </a>

@@ -86,7 +86,7 @@ export default function RoleSetupPage() {
       {/* Header */}
       <div className="space-y-3">
         {/* Progress Bar (Matching Mobile's 50% step) */}
-        <div className="w-12 h-1.5 rounded-full bg-[var(--surface)] mb-6">
+        <div className="w-12 h-1.5 rounded-full bg-(--surface) mb-6">
           <div className="w-1/2 h-full rounded-full bg-emerald-500" />
         </div>
 
@@ -98,7 +98,7 @@ export default function RoleSetupPage() {
           WHAT BRINGS YOU TO <br />
           <span className="italic text-emerald-600">STORELINK?</span>
         </h1>
-        <p className="text-base sm:text-lg text-[var(--muted)] font-medium">
+        <p className="text-base sm:text-lg text-(--muted) font-medium">
           This customizes your experience.
         </p>
       </div>
@@ -116,13 +116,13 @@ export default function RoleSetupPage() {
               className={`p-6 cursor-pointer transition-all duration-300 border-2 relative overflow-hidden ${
                 isActive
                   ? 'border-emerald-500 bg-emerald-500/[0.03] shadow-lg shadow-emerald-500/5'
-                  : 'border-transparent hover:border-[var(--border)] bg-[var(--background)]'
+                  : 'border-transparent hover:border-(--border) bg-(--background)'
               }`}
             >
               <div className="flex items-center gap-4 relative z-10">
                 <div
                   className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-colors duration-300 ${
-                    isActive ? 'bg-emerald-500 text-white' : 'bg-[var(--surface)] text-emerald-600'
+                    isActive ? 'bg-emerald-500 text-white' : 'bg-(--surface) text-emerald-600'
                   }`}
                 >
                   <Icon size={28} strokeWidth={2.5} />
@@ -130,7 +130,7 @@ export default function RoleSetupPage() {
                 
                 <div className="flex-1 space-y-1">
                   <h3 className="font-black text-xl tracking-tight">{role.title}</h3>
-                  <p className="text-sm text-[var(--muted)] leading-relaxed max-w-[240px]">
+                  <p className="text-sm text-(--muted) leading-relaxed max-w-[240px]">
                     {role.description}
                   </p>
                 </div>
@@ -147,7 +147,7 @@ export default function RoleSetupPage() {
       </div>
 
       <div className="pt-4 space-y-4">
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[var(--muted)] text-center">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-(--muted) text-center">
           SECURE • GLOBAL • FAST
         </p>
 

@@ -1734,26 +1734,26 @@ export default function ClientExploreWrapper({
                         <div className="absolute inset-x-3 bottom-3.5">
                           <div className="pr-[68px]">
                             <div className="mb-2 flex items-center gap-2.5">
-                              <div className="h-10 w-10 rounded-[16px] bg-white/30" />
+                              <div className="h-10 w-10 rounded-[16px] bg-(--card)/30" />
                               <div className="min-w-0 flex-1 space-y-1.5">
-                                <div className="h-3 w-30 max-w-[60%] rounded bg-white/35" />
-                                <div className="h-2.5 w-20 max-w-[45%] rounded bg-white/25" />
+                                <div className="h-3 w-30 max-w-[60%] rounded bg-(--card)/35" />
+                                <div className="h-2.5 w-20 max-w-[45%] rounded bg-(--card)/25" />
                               </div>
                             </div>
                             <div className="space-y-1.5">
-                              <div className="h-3 w-[78%] rounded bg-white/25" />
-                              <div className="h-3 w-[62%] rounded bg-white/25" />
+                              <div className="h-3 w-[78%] rounded bg-(--card)/25" />
+                              <div className="h-3 w-[62%] rounded bg-(--card)/25" />
                             </div>
-                            <div className="mt-2 h-2.5 w-24 rounded bg-white/20" />
-                            <div className="mt-2 h-14 w-[92%] rounded-xl border border-white/20 bg-white/10" />
+                            <div className="mt-2 h-2.5 w-24 rounded bg-(--card)/20" />
+                            <div className="mt-2 h-14 w-[92%] rounded-xl border border-white/20 bg-(--card)/10" />
                           </div>
                           <div className="absolute right-0 bottom-3 flex flex-col items-center gap-3">
                             {[1, 2, 3, 4, 5].map((j) => (
-                              <div key={j} className="h-6 w-6 rounded-full bg-white/30" />
+                              <div key={j} className="h-6 w-6 rounded-full bg-(--card)/30" />
                             ))}
                           </div>
                         </div>
-                        <div className="absolute inset-x-3 bottom-1.5 h-1.5 rounded-full bg-white/25" />
+                        <div className="absolute inset-x-3 bottom-1.5 h-1.5 rounded-full bg-(--card)/25" />
                       </div>
                     </div>
                   </div>

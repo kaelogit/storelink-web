@@ -68,7 +68,7 @@ export default function WebProductCard({
   const wishlistCount = item.wishlist_count || 0;
   
   const stockQty = Number(item.stock_quantity || 0);
-  const isSoldOut = stockQty < 1;
+  const isSoldOut = !isService && stockQty < 1;
 
   const isFlashActive =
     !isService &&
@@ -103,11 +103,24 @@ export default function WebProductCard({
     sellerState ||
     'LAGOS, NG';
   const isOwnListing = Boolean(viewerId) && String(item?.seller?.id || item?.seller_id || '') === String(viewerId);
-  const serviceDistanceLabel =
+  /** Same idea as mobile ProductCard `serviceMetaText`: region + distance, not distance-only. */
+  const serviceDistancePart = (
     item.service_distance_label ||
-    (typeof item.distance_km === 'number' ? `${Number(item.distance_km).toFixed(1)} km away` : null) ||
-    (typeof item.service_distance_km === 'number' ? `${Number(item.service_distance_km).toFixed(1)} km away` : null) ||
-    sellerLocationLabel;
+    (typeof item.distance_km === 'number' ? `${Number(item.distance_km).toFixed(1)} km away` : '') ||
+    (typeof item.service_distance_km === 'number'
+      ? `${Number(item.service_distance_km).toFixed(1)} km away`
+      : '')
+  ).trim();
+  const serviceMetaLineUpper = (() => {
+    if (!isService) return (sellerLocationLabel || '').toUpperCase();
+    if (isOwnListing) return 'YOUR LISTING';
+    const d = serviceDistancePart;
+    if (!d) return (sellerLocationLabel || '').toUpperCase();
+    if (d.toLowerCase() === 'your listing') return 'YOUR LISTING';
+    const region = [sellerCity, sellerState].filter(Boolean).join(', ') || sellerCity || sellerState || '';
+    if (!region) return d.toUpperCase();
+    return `${region.toUpperCase()} · ${d.toUpperCase()}`;
+  })();
   const serviceDeliveryBadge =
     item.service_delivery_badge ||
     (item.delivery_type === 'online'
@@ -138,7 +151,7 @@ export default function WebProductCard({
         hero_price: Number(activePrice || 0),
         delivery_type: item.delivery_type || null,
         location_type: item.location_type || null,
-        service_distance_label: isOwnListing ? 'Your listing' : serviceDistanceLabel || null,
+        service_distance_label: isOwnListing ? 'Your listing' : serviceDistancePart || null,
         service_delivery_badge: serviceDeliveryBadge || null,
         currency_code: item.currency_code || 'NGN',
         image_url: images?.[0] || null,
@@ -269,9 +282,7 @@ export default function WebProductCard({
               <div className="flex items-center gap-1">
                  <MapPin size={10} className="text-(--muted)" strokeWidth={3} />
                  <span className="text-[9px] font-black text-(--muted) tracking-wider">
-                    {(isService ? (isOwnListing ? 'Your listing' : serviceDistanceLabel) : sellerLocationLabel)
-                      .toString()
-                      .toUpperCase()}
+                    {serviceMetaLineUpper}
                  </span>
               </div>
               {isService && serviceDeliveryBadge ? (
@@ -398,7 +409,7 @@ export default function WebProductCard({
               {!isVideoCard && images.length > 1 && (
                  <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 p-1.5 bg-black/20 backdrop-blur-sm rounded-full w-fit mx-auto">
                     {images.map((_: any, idx: number) => (
-                       <div key={idx} className={`w-1.5 h-1.5 rounded-full transition-all ${idx === activeImageIndex ? 'bg-white scale-125' : 'bg-white/40'}`} />
+                       <div key={idx} className={`w-1.5 h-1.5 rounded-full transition-all ${idx === activeImageIndex ? 'bg-(--card) scale-125' : 'bg-(--card)/40'}`} />
                     ))}
                  </div>
               )}

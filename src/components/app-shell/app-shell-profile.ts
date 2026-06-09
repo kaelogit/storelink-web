@@ -11,15 +11,13 @@ import {
   type ReactNode,
 } from 'react';
 import { createBrowserClient } from '@/lib/supabase';
-import { canSellAndAppearInFeeds, showDiamondBadge } from '@/lib/sellerStatus';
+import { showDiamondBadge } from '@/lib/sellerStatus';
 
 type AppShellProfileValue = {
   isSeller: boolean;
   unreadNotifications: number;
   slug: string | null;
   isDiamond: boolean;
-  /** Seller with store not fully active for feeds (matches profile “OFFLINE” pill). */
-  showOfflineBadge: boolean;
 };
 
 const AppShellProfileContext = createContext<AppShellProfileValue | null>(null);
@@ -33,7 +31,6 @@ export function AppShellProfileProvider({ children }: { children: ReactNode }) {
   const [unreadNotifications, setUnreadNotifications] = useState(0);
   const [slug, setSlug] = useState<string | null>(null);
   const [isDiamond, setIsDiamond] = useState(false);
-  const [showOfflineBadge, setShowOfflineBadge] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -47,7 +44,6 @@ export function AppShellProfileProvider({ children }: { children: ReactNode }) {
         setUnreadNotifications(0);
         setSlug(null);
         setIsDiamond(false);
-        setShowOfflineBadge(false);
         return;
       }
       const { data: profile } = await supabase
@@ -62,7 +58,6 @@ export function AppShellProfileProvider({ children }: { children: ReactNode }) {
       setUnreadNotifications(Number(profile?.unread_notifications_count || 0));
       setSlug(profile?.slug != null && String(profile.slug).trim() ? String(profile.slug).trim() : null);
       setIsDiamond(showDiamondBadge(profile));
-      setShowOfflineBadge(Boolean(profile?.is_seller) && !canSellAndAppearInFeeds(profile));
     };
     void load();
 
@@ -80,8 +75,8 @@ export function AppShellProfileProvider({ children }: { children: ReactNode }) {
   }, [pathname]);
 
   const value = useMemo(
-    () => ({ isSeller, unreadNotifications, slug, isDiamond, showOfflineBadge }),
-    [isSeller, unreadNotifications, slug, isDiamond, showOfflineBadge],
+    () => ({ isSeller, unreadNotifications, slug, isDiamond }),
+    [isSeller, unreadNotifications, slug, isDiamond],
   );
 
   return createElement(AppShellProfileContext.Provider, { value }, children);

@@ -164,7 +164,7 @@ function HomeAddressContent() {
       <div className="flex items-center justify-between">
         <button 
           onClick={() => !isRequired && router.back()}
-          className={`p-2 rounded-full hover:bg-[var(--surface)] transition-colors ${isRequired ? 'opacity-20 cursor-not-allowed' : ''}`}
+          className={`p-2 rounded-full hover:bg-(--surface) transition-colors ${isRequired ? 'opacity-20 cursor-not-allowed' : ''}`}
         >
           <ArrowLeft size={24} />
         </button>
@@ -175,14 +175,14 @@ function HomeAddressContent() {
       {/* Info Box */}
       <div className="flex gap-4 p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20">
         <MapPin className="text-emerald-600 shrink-0" size={24} strokeWidth={2.5} />
-        <p className="text-sm text-[var(--muted)] leading-relaxed">
+        <p className="text-sm text-(--muted) leading-relaxed">
           Search for your complete home address (street address, building number, or area name). We use the exact coordinates to show accurate distances to nearby stores and services.
         </p>
       </div>
 
       {/* Search Input */}
       <div className="space-y-4">
-        <label className="text-[10px] font-black uppercase tracking-widest text-[var(--muted)]">Search Address</label>
+        <label className="text-[10px] font-black uppercase tracking-widest text-(--muted)">Search Address</label>
         <form onSubmit={handleSearch} className="relative flex items-center gap-2">
           <div className="relative flex-1">
             <input
@@ -190,9 +190,9 @@ function HomeAddressContent() {
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="e.g. 73b Tejuosho Street, Yaba or Lekki Phase 1"
-              className="w-full h-14 pl-12 pr-4 bg-[var(--surface)] border border-[var(--border)] rounded-2xl font-semibold focus:outline-none focus:border-emerald-500 transition-colors"
+              className="w-full h-14 pl-12 pr-4 bg-(--surface) border border-(--border) rounded-2xl font-semibold focus:outline-none focus:border-emerald-500 transition-colors"
             />
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--muted)]" size={20} />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-(--muted)" size={20} />
           </div>
           <Button type="submit" disabled={loading} className="h-14 px-6">
             {loading ? <Loader2 className="animate-spin" size={20} /> : 'Search'}
@@ -217,7 +217,7 @@ function HomeAddressContent() {
           >
             <div className="space-y-1">
               <p className="font-bold text-sm leading-tight">{hit.display_name}</p>
-              <p className="text-[10px] text-[var(--muted)] font-medium">
+              <p className="text-[10px] text-(--muted) font-medium">
                 {parseFloat(hit.lat).toFixed(4)}, {parseFloat(hit.lon).toFixed(4)}
               </p>
             </div>

@@ -203,7 +203,7 @@ export default function WebSpotlightDetail({ post, backHref }: SpotlightDetailPr
               }
               void el.play().catch(() => {});
             }}
-            className="pointer-events-auto absolute top-1/2 left-1/2 z-30 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-white/20 backdrop-blur-sm transition-transform duration-(--duration-150) hover:scale-110 group"
+            className="pointer-events-auto absolute top-1/2 left-1/2 z-30 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-white/40 bg-(--card)/20 backdrop-blur-sm transition-transform duration-(--duration-150) hover:scale-110 group"
             aria-label="Play video"
           >
             <Play size={32} className="ml-1 text-white group-hover:scale-110 fill-white transition-transform" />

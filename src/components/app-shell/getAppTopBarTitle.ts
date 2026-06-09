@@ -77,7 +77,7 @@ const rules: {
   { prefix: '/app/help-support', title: 'Help & support', subtitle: '' },
   { prefix: '/app/buyer/home-address', title: 'Delivery address', subtitle: '' },
   { prefix: '/app/cart', title: 'Your cart', subtitle: 'Before checkout' },
-  { prefix: '/app/wishlist', title: 'Wishlist', subtitle: '' },
+  { prefix: '/app/wishlist', title: 'Wishlist', subtitle: 'Saved products & services' },
   { prefix: '/app/wallet', title: 'My wallet', subtitle: '' },
   { prefix: '/app/bookings', title: 'Bookings', subtitle: 'Services' },
   { prefix: '/app/bookings/dispute', title: 'Booking dispute', subtitle: '' },

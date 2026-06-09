@@ -162,7 +162,7 @@ export default function WebProfileMasonryGrid({
                       <span
                         className={`rounded-full border px-2 py-0.5 text-[11px] font-semibold ${
                           item?.is_active === false
-                            ? 'border-slate-400/35 bg-slate-500/15 text-slate-400'
+                            ? 'border-(--border) bg-(--surface)/80 text-(--muted)'
                             : 'border-emerald-500/40 bg-emerald-500/15 text-emerald-600'
                         }`}
                       >

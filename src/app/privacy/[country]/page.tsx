@@ -16,23 +16,23 @@ export default function PrivacyCountryPage() {
   const countryName = COUNTRY_NAMES[countryCode] ?? 'Nigeria';
 
   return (
-    <main className="min-h-dvh font-sans bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
+    <main className="min-h-dvh font-sans bg-(--background) text-(--foreground) selection:bg-emerald-100">
       <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-24">
         <div className="max-w-4xl mx-auto">
           <div className="mb-16">
-            <h1 className="text-4xl md:text-5xl font-display font-bold text-[var(--foreground)] mb-4">
+            <h1 className="text-4xl md:text-5xl font-display font-bold text-(--foreground) mb-4">
               Privacy Policy
             </h1>
-            <p className="text-[var(--muted)] font-bold text-xs tracking-widest uppercase mb-2">
+            <p className="text-(--emerald) font-bold text-xs tracking-widest uppercase mb-2">
               EFFECTIVE DATE: {content.effectiveDate}
             </p>
-            <p className="text-[var(--muted)] text-sm">
+            <p className="text-(--muted) text-sm">
               For users in {countryName}
             </p>
           </div>
 
-          <Card padding="default" className="p-8 md:p-12 rounded-[var(--radius-2xl)] space-y-12">
-            <div className="text-lg text-[var(--muted)] font-medium leading-relaxed border-b border-[var(--border)] pb-8">
+          <Card padding="default" className="p-8 md:p-12 rounded-2xl space-y-12">
+            <div className="text-lg text-(--muted) font-medium leading-relaxed border-b border-(--border) pb-8">
               {content.intro}
             </div>
 
@@ -42,8 +42,8 @@ export default function PrivacyCountryPage() {
           </Card>
 
           {/* Country selector */}
-          <div className="mt-12 p-6 rounded-[var(--radius-xl)] bg-[var(--muted)]/10 border border-[var(--border)]">
-            <p className="text-sm font-bold text-[var(--muted)] uppercase tracking-wider mb-4">
+          <div className="mt-12 p-6 rounded-2xl bg-(--emerald)/10 border border-(--border)">
+            <p className="text-sm font-bold text-(--foreground) uppercase tracking-wider mb-4">
               View privacy policy for another country
             </p>
             <div className="flex flex-wrap gap-2">
@@ -53,8 +53,8 @@ export default function PrivacyCountryPage() {
                   href={`/privacy/${code.toLowerCase()}`}
                   className={`px-4 py-2 rounded-lg text-sm font-semibold transition-colors ${
                     code === countryCode
-                      ? 'bg-[var(--foreground)] text-[var(--background)]'
-                      : 'bg-[var(--surface)] hover:bg-[var(--border)] text-[var(--foreground)]'
+                      ? 'bg-(--emerald) text-white'
+                      : 'bg-(--surface) hover:bg-(--border) text-(--foreground)'
                   }`}
                 >
                   {COUNTRY_NAMES[code]}
@@ -82,18 +82,18 @@ function LegalBlock({
 }) {
   return (
     <div>
-      <h2 className="text-xl font-bold text-[var(--foreground)] mb-6 uppercase tracking-tight">
+      <h2 className="text-xl font-bold text-(--foreground) mb-6 uppercase tracking-tight">
         {section.title}
       </h2>
       <div className="space-y-4">
         {section.intro && (
-          <p className="mb-4 text-[var(--muted)]">{section.intro}</p>
+          <p className="mb-4 text-(--muted)">{section.intro}</p>
         )}
         {section.bullets?.map((text, i) => (
           <Bullet key={i} text={text} />
         ))}
         {section.paragraph && (
-          <p className="text-[var(--muted)] leading-relaxed">{section.paragraph}</p>
+          <p className="text-(--muted) leading-relaxed">{section.paragraph}</p>
         )}
       </div>
     </div>
@@ -103,8 +103,8 @@ function LegalBlock({
 function Bullet({ text }: { text: string }) {
   return (
     <div className="flex gap-4 items-start">
-      <div className="w-1.5 h-1.5 bg-[var(--muted)] rounded-full mt-2.5 shrink-0" />
-      <p className="text-[var(--muted)] leading-relaxed">{text}</p>
+      <div className="w-1.5 h-1.5 bg-(--emerald) rounded-full mt-2.5 shrink-0" />
+      <p className="text-(--muted) leading-relaxed">{text}</p>
     </div>
   );
 }

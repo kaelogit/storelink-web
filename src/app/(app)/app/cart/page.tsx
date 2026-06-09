@@ -7,6 +7,7 @@ import { useWebCartStore } from '@/store/useWebCartStore';
 import { createBrowserClient } from '@/lib/supabase';
 import { WebCartCheckbox } from '@/components/cart/WebCartCheckbox';
 import { WebCartAddressCard } from '@/components/cart/WebCartAddressCard';
+import { normalizeServiceMenu } from '@/lib/normalizeServiceMenu';
 
 const money = (amount: number, currency = 'NGN') =>
   new Intl.NumberFormat('en-NG', {
@@ -14,50 +15,6 @@ const money = (amount: number, currency = 'NGN') =>
     currency,
     minimumFractionDigits: 0,
   }).format(Number(amount || 0));
-
-const normalizeServiceMenu = (input: any): Array<{ name: string; price_minor?: number }> => {
-  const parse = (value: any): any[] => {
-    if (Array.isArray(value)) return value;
-    if (value && typeof value === 'object') {
-      if (Array.isArray((value as any).items)) return (value as any).items;
-      if (Array.isArray((value as any).listings)) return (value as any).listings;
-      if (Array.isArray((value as any).menu)) return (value as any).menu;
-      return [];
-    }
-    if (typeof value === 'string') {
-      const trimmed = value.trim();
-      if (!trimmed) return [];
-      try {
-        const parsed = JSON.parse(trimmed);
-        if (Array.isArray(parsed)) return parsed;
-        if (parsed && typeof parsed === 'object') {
-          if (Array.isArray((parsed as any).items)) return (parsed as any).items;
-          if (Array.isArray((parsed as any).listings)) return (parsed as any).listings;
-          if (Array.isArray((parsed as any).menu)) return (parsed as any).menu;
-        }
-      } catch {
-        return [];
-      }
-    }
-    return [];
-  };
-
-  return parse(input)
-    .map((row: any) => ({
-      name: String(row?.name ?? row?.title ?? '').trim(),
-      price_minor:
-        typeof row?.price_minor === 'number'
-          ? row.price_minor
-          : typeof row?.price === 'number'
-            ? row.price
-            : Number.isFinite(Number(row?.price_minor))
-              ? Number(row.price_minor)
-              : Number.isFinite(Number(row?.price))
-                ? Number(row.price)
-                : undefined,
-    }))
-    .filter((row) => row.name.length > 0);
-};
 
 export default function AppCartPage() {
   const supabase = useMemo(() => createBrowserClient(), []);

@@ -936,7 +936,7 @@ export default function ExploreReelCard({
   ]);
 
   const bottomGlassRowClass =
-    'mt-1.5 flex w-[92%] items-center gap-2 rounded-xl border border-white/20 bg-white/10 px-2 py-2 backdrop-blur-sm';
+    'mt-1.5 flex w-[92%] items-center gap-2 rounded-xl border border-white/20 bg-(--card)/10 px-2 py-2 backdrop-blur-sm';
 
   return (
     <>
@@ -1041,7 +1041,7 @@ export default function ExploreReelCard({
                   <button
                     type="button"
                     onClick={() => setViewsOpen(true)}
-                    className="inline-flex items-center gap-1 rounded-md px-1 py-0.5 hover:bg-white/10"
+                    className="inline-flex items-center gap-1 rounded-md px-1 py-0.5 hover:bg-(--card)/10"
                     aria-label="Who viewed this post"
                   >
                     <Eye size={12} />
@@ -1058,7 +1058,7 @@ export default function ExploreReelCard({
                 </span>
                 <button
                   type="button"
-                  className="rounded-md px-1 py-0.5 hover:bg-white/10"
+                  className="rounded-md px-1 py-0.5 hover:bg-(--card)/10"
                   onClick={() => setLikesOpen(true)}
                   aria-label="Open likes"
                 >
@@ -1069,7 +1069,7 @@ export default function ExploreReelCard({
 
               {bottomGlassListingHref != null ? (
                 <Link href={bottomGlassListingHref} className={bottomGlassRowClass}>
-                  <div className="relative h-9 w-9 overflow-hidden rounded-lg bg-white/10">
+                  <div className="relative h-9 w-9 overflow-hidden rounded-lg bg-(--card)/10">
                     {taggedCardThumbSrc ? <Image src={taggedCardThumbSrc} alt="" fill className="object-cover" unoptimized /> : null}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -1108,7 +1108,7 @@ export default function ExploreReelCard({
                   }}
                   aria-label="Open this listing in the StoreLink app"
                 >
-                  <div className="relative h-9 w-9 overflow-hidden rounded-lg bg-white/10">
+                  <div className="relative h-9 w-9 overflow-hidden rounded-lg bg-(--card)/10">
                     {taggedCardThumbSrc ? <Image src={taggedCardThumbSrc} alt="" fill className="object-cover" unoptimized /> : null}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -1213,8 +1213,8 @@ export default function ExploreReelCard({
           </div>
           {videoSrc ? (
             <div className="absolute inset-x-3 bottom-1.5 z-10">
-              <div className="relative h-1.5 overflow-hidden rounded-full bg-white/30">
-                <div className="h-full rounded-full bg-white" style={{ width: `${Math.round(progressRatio * 100)}%` }} />
+              <div className="relative h-1.5 overflow-hidden rounded-full bg-(--card)/30">
+                <div className="h-full rounded-full bg-(--card)" style={{ width: `${Math.round(progressRatio * 100)}%` }} />
                 <input
                   type="range"
                   min={0}

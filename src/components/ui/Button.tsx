@@ -10,22 +10,22 @@ const variantStyles: Record<
   string
 > = {
   primary:
-    'bg-[var(--emerald)] text-white hover:opacity-90 shadow-sm active:scale-[0.98]',
+    'bg-(--emerald) text-white hover:opacity-90 shadow-sm active:scale-[0.98]',
   secondary:
-    'bg-[var(--charcoal)] text-white hover:opacity-90 active:scale-[0.98]',
+    'bg-(--charcoal) text-white hover:opacity-90 active:scale-[0.98]',
   ghost:
-    'bg-transparent text-[var(--foreground)] hover:bg-[var(--surface)]',
+    'bg-transparent text-(--foreground) hover:bg-(--surface)',
   outline:
-    'bg-transparent border-2 border-[var(--border)] text-[var(--foreground)] hover:border-[var(--emerald)] hover:text-[var(--emerald)]',
+    'bg-transparent border-2 border-(--border) text-(--foreground) hover:border-(--emerald) hover:text-(--emerald)',
 };
 
 const baseStyles =
-  'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-[var(--duration-150)] ease-[var(--ease-out-expo)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--emerald)] focus-visible:outline-offset-2 disabled:opacity-50 disabled:pointer-events-none';
+  'inline-flex items-center justify-center gap-2 font-semibold transition-all duration-(--duration-150) ease-[var(--ease-out-expo)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-(--emerald) focus-visible:outline-offset-2 disabled:opacity-50 disabled:pointer-events-none';
 
 const sizeStyles = {
-  sm: 'h-9 px-4 text-[var(--text-body-md)] rounded-[var(--radius-md)]',
-  md: 'h-11 px-5 text-[var(--text-body-lg)] rounded-[var(--radius-lg)]',
-  lg: 'h-12 px-6 text-[var(--text-subtitle)] rounded-[var(--radius-lg)]',
+  sm: 'h-9 px-4 text-(--text-body-md) rounded-md',
+  md: 'h-11 px-5 text-(--text-body-lg) rounded-lg',
+  lg: 'h-12 px-6 text-(--text-subtitle) rounded-lg',
 };
 
 export interface ButtonProps

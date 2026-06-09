@@ -48,7 +48,7 @@ export default function SellerFeatures() {
   }, []);
 
   return (
-    <section className="relative py-28 md:py-40 bg-slate-50 border-t border-slate-200/50 overflow-hidden" aria-labelledby="seller-features-heading">
+    <section className="relative py-28 md:py-40 bg-(--surface) border-t border-(--border) overflow-hidden" aria-labelledby="seller-features-heading">
       
       {/* ⚡ OPTIMIZED: Replaced heavy 'blur' orbs with zero-cost radial gradients */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-[radial-gradient(circle,rgba(168,85,247,0.08)_0%,transparent_60%)] pointer-events-none" />
@@ -69,13 +69,13 @@ export default function SellerFeatures() {
               Powered by Gemini 2.5
             </div>
             
-            <h2 id="seller-features-heading" className="text-4xl md:text-5xl lg:text-6xl font-display font-black text-slate-900 mb-6 leading-[1.1] tracking-tight">
+            <h2 id="seller-features-heading" className="text-4xl md:text-5xl lg:text-6xl font-display font-black text-(--foreground) mb-6 leading-[1.1] tracking-tight">
               Pro Listings. <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-indigo-600">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-600 to-indigo-600">
                 Zero Effort.
               </span>
             </h2>
-            <p className="text-lg md:text-xl text-slate-500 leading-relaxed font-light max-w-md">
+            <p className="text-lg md:text-xl text-(--muted) leading-relaxed font-light max-w-md">
               Capture once, publish everywhere. Our AI cleans media and writes conversion-ready copy for product listings and service offers instantly.
             </p>
           </motion.div>
@@ -93,12 +93,12 @@ export default function SellerFeatures() {
                 className="p-6 rounded-[24px] border shadow-sm transition-colors duration-500 transform-gpu cursor-default"
             >
               <div className="flex items-start gap-5">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-500 ${isProcessed ? 'bg-purple-600 text-white shadow-lg shadow-purple-200/50' : 'bg-slate-100 text-slate-400'}`}>
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-500 ${isProcessed ? 'bg-purple-600 text-white shadow-lg shadow-purple-200/50' : 'bg-(--surface) text-(--muted)'}`}>
                   <Sparkles size={24} fill={isProcessed ? "currentColor" : "none"} />
                 </div>
                 <div>
-                  <h3 className={`text-xl font-bold mb-1 transition-colors ${isProcessed ? 'text-purple-900' : 'text-slate-900'}`}>Gemini Copywriter</h3>
-                  <p className="text-slate-500 text-sm md:text-base leading-relaxed">Auto-generates SEO descriptions for products and service packages. No more writer's block.</p>
+                  <h3 className={`text-xl font-bold mb-1 transition-colors ${isProcessed ? 'text-purple-900' : 'text-(--foreground)'}`}>Gemini Copywriter</h3>
+                  <p className="text-(--muted) text-sm md:text-base leading-relaxed">Auto-generates SEO descriptions for products and service packages. No more writer's block.</p>
                 </div>
               </div>
             </motion.div>
@@ -113,12 +113,12 @@ export default function SellerFeatures() {
                 className="p-6 rounded-[24px] border shadow-sm transition-colors duration-500 transform-gpu cursor-default"
             >
               <div className="flex items-start gap-5">
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-500 ${!isProcessed ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200/50' : 'bg-slate-100 text-slate-400'}`}>
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 transition-all duration-500 ${!isProcessed ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-200/50' : 'bg-(--surface) text-(--muted)'}`}>
                   <ScanLine size={24} />
                 </div>
                 <div>
-                  <h3 className={`text-xl font-bold mb-1 transition-colors ${!isProcessed ? 'text-emerald-900' : 'text-slate-900'}`}>Magic Studio Vision</h3>
-                  <p className="text-slate-500 text-sm md:text-base leading-relaxed">Computer Vision removes messy backgrounds and standardizes your catalog instantly.</p>
+                  <h3 className={`text-xl font-bold mb-1 transition-colors ${!isProcessed ? 'text-emerald-900' : 'text-(--foreground)'}`}>Magic Studio Vision</h3>
+                  <p className="text-(--muted) text-sm md:text-base leading-relaxed">Computer Vision removes messy backgrounds and standardizes your catalog instantly.</p>
                 </div>
               </div>
             </motion.div>
@@ -126,7 +126,7 @@ export default function SellerFeatures() {
           </div>
 
           <div className="mt-10 pl-2">
-              <Link href="/download" className="group inline-flex items-center gap-3 text-slate-900 font-bold text-sm uppercase tracking-wide hover:text-purple-700 transition-colors">
+              <Link href="/download" className="group inline-flex items-center gap-3 text-(--foreground) font-bold text-sm uppercase tracking-wide hover:text-purple-700 transition-colors">
                 Try the Studio
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </Link>
@@ -147,13 +147,13 @@ export default function SellerFeatures() {
           >
             
             {/* The Canvas Container */}
-            <div className="absolute inset-0 rounded-[2.5rem] border-[8px] border-white/80 bg-white shadow-2xl overflow-hidden z-10 ring-1 ring-slate-900/5">
+            <div className="absolute inset-0 rounded-[2.5rem] border-[8px] border-white/80 bg-(--card) shadow-2xl overflow-hidden z-10 ring-1 ring-slate-900/5">
               
               {/* IMAGE AREA (Top 65%) */}
-              <div className="relative w-full h-[65%] bg-slate-50 overflow-hidden">
+              <div className="relative w-full h-[65%] bg-(--surface) overflow-hidden">
                  
                  {/* LAYER 1 (BOTTOM): Clean/No BG */}
-                 <div className="absolute inset-0 bg-white">
+                 <div className="absolute inset-0 bg-(--card)">
                     {/* 3D Grid Overlay (Now positioned behind the product) */}
                     <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10 bg-[size:20px_20px]" />
                     
@@ -169,7 +169,7 @@ export default function SellerFeatures() {
 
                  {/* LAYER 2 (TOP): Messy/With BG */}
                  <motion.div 
-                    className="absolute inset-0 bg-slate-100 transform-gpu"
+                    className="absolute inset-0 bg-(--surface) transform-gpu"
                     animate={{ 
                        clipPath: isProcessed ? 'inset(0 0 0 100%)' : 'inset(0 0 0 0)' 
                     }}
@@ -187,11 +187,11 @@ export default function SellerFeatures() {
 
                  {/* LAYER 3: The Scanning Laser */}
                  <motion.div 
-                    className="absolute top-0 bottom-0 w-[3px] bg-gradient-to-b from-transparent via-purple-500 to-transparent z-30 transform-gpu"
+                    className="absolute top-0 bottom-0 w-[3px] bg-linear-to-b from-transparent via-purple-500 to-transparent z-30 transform-gpu"
                     animate={{ left: isProcessed ? '100%' : '0%' }}
                     transition={{ duration: 1.5, ease: "easeInOut" }}
                  >
-                    <div className="absolute top-1/2 -translate-y-1/2 -left-[5px] w-3 h-3 bg-white rounded-full shadow-md flex items-center justify-center ring-2 ring-purple-200">
+                    <div className="absolute top-1/2 -translate-y-1/2 -left-[5px] w-3 h-3 bg-(--card) rounded-full shadow-md flex items-center justify-center ring-2 ring-purple-200">
                         <div className="w-1.5 h-1.5 bg-purple-600 rounded-full" />
                     </div>
                  </motion.div>
@@ -204,7 +204,7 @@ export default function SellerFeatures() {
                            initial={{ opacity: 0, y: -10, scale: 0.9 }}
                            animate={{ opacity: 1, y: 0, scale: 1 }}
                            exit={{ opacity: 0, scale: 0.9 }}
-                           className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm text-emerald-800 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border border-emerald-100 flex items-center gap-1.5"
+                           className="absolute top-4 right-4 bg-(--card)/90 backdrop-blur-sm text-emerald-800 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm border border-emerald-100 flex items-center gap-1.5"
                         >
                            <CheckCircle2 size={14} className="text-emerald-500" /> 
                            Background Removed
@@ -215,20 +215,20 @@ export default function SellerFeatures() {
               </div>
 
               {/* CHAT AREA (Bottom 35%) */}
-              <div className="absolute bottom-0 left-0 right-0 top-[65%] bg-slate-50/80 border-t border-slate-100 p-5 flex flex-col z-20 backdrop-blur-md">
+              <div className="absolute bottom-0 left-0 right-0 top-[65%] bg-(--surface)/80 border-t border-(--border) p-5 flex flex-col z-20 backdrop-blur-md">
                   <div className="flex items-center gap-2 mb-4">
                       <Sparkles size={14} className="text-purple-600" />
-                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Gemini Analysis</span>
+                      <span className="text-[10px] font-black text-(--muted) uppercase tracking-widest">Gemini Analysis</span>
                   </div>
                   
                   <div className="flex flex-col gap-3 font-sans">
                       {/* User Input Bubble */}
-                      <div className="self-end bg-white text-slate-700 text-xs px-4 py-2.5 rounded-2xl rounded-tr-sm shadow-sm border border-slate-100 max-w-[85%] font-medium">
+                      <div className="self-end bg-(--card) text-(--foreground) text-xs px-4 py-2.5 rounded-2xl rounded-tr-sm shadow-sm border border-(--border) max-w-[85%] font-medium">
                          "Write a caption for this."
                       </div>
 
                       {/* AI Output Bubble */}
-                      <div className="self-start bg-gradient-to-br from-purple-600 to-indigo-600 text-white text-xs px-4 py-3 rounded-2xl rounded-tl-sm shadow-md max-w-[95%] leading-relaxed">
+                      <div className="self-start bg-linear-to-br from-purple-600 to-indigo-600 text-white text-xs px-4 py-3 rounded-2xl rounded-tl-sm shadow-md max-w-[95%] leading-relaxed">
                          <TypewriterText 
                             isTyping={isProcessed}
                             text="Tom Ford Oud Minérale. A rare blend of aquatic accord and oud wood. 100ml. Condition: Sealed. Price: ₦350k." 

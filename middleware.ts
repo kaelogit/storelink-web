@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { resolveStorefrontSlugRedirectEdge } from "@/lib/storefrontSlugRedirectEdge";
 import {
   RESERVED_STOREFRONT_PATH_SEGMENTS,
   storefrontEdgeRootDomain,
@@ -10,7 +11,7 @@ import {
  * 1) Legacy `storelink.ng/sell/*` → rewrite to `STOREFRONT_ORIGIN` (upstream paths have no `/sell`).
  * 2) Optional 308 redirects when `STOREFRONT_LEGACY_SELL_PATH_REDIRECT=1`:
  *    - `/sell` and `/sell/` → `https://shop.{root}/`
- *    - `/sell/{slug}` (single segment, not reserved) → `https://{slug}.{root}/`
+ *    - `/sell/{slug}` (single segment, not reserved) → `https://{slug}.{root}/` (follows `storefront_slug_redirects` when renamed)
  *
  * Wildcard hosts (`*.storelink.ng`) should point at the storefront project; this app only handles `/sell`.
  */
@@ -57,7 +58,7 @@ function rewriteToStorefront(
   }
 }
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const storefrontOrigin = normalizeStorefrontOrigin(process.env.STOREFRONT_ORIGIN);
   if (!storefrontOrigin) {
     return NextResponse.next();
@@ -81,7 +82,8 @@ export function middleware(request: NextRequest) {
     const onlyOneSegment = trimmed !== "" && !trimmed.includes("/");
 
     if (onlyOneSegment && firstSeg && !RESERVED_STOREFRONT_PATH_SEGMENTS.has(firstSeg)) {
-      const dest = `https://${encodeURIComponent(firstSeg)}.${root}/`;
+      const canonical = (await resolveStorefrontSlugRedirectEdge(firstSeg)) ?? firstSeg;
+      const dest = `https://${encodeURIComponent(canonical)}.${root}/`;
       return NextResponse.redirect(dest, 308);
     }
   }

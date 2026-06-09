@@ -10,7 +10,7 @@ const categories = [
 
 export default function Footer() {
   return (
-    <footer className="bg-[var(--charcoal)] text-white pt-16 md:pt-24 pb-8 md:pb-12 border-t border-white/10" role="contentinfo">
+    <footer className="bg-(--charcoal) text-white pt-16 md:pt-24 pb-8 md:pb-12 border-t border-white/10" role="contentinfo">
       <div className="max-w-7xl mx-auto px-6">
         
         {/* =========================================
@@ -33,8 +33,9 @@ export default function Footer() {
               The Ecosystem
             </h4>
             <p className="text-white/70 text-sm md:text-base leading-relaxed max-w-sm">
-              The first operating system for social commerce. 
-              We bridge the gap between social connection and secure transactions. 
+              A trust-powered commerce platform built for safer online transactions.
+              Social discovery is how you find products. Trust infrastructure is how you pay safely.
+              Reputation helps buyers evaluate sellers, and escrow protects every payment.
               Buy, sell, and grow without fear.
             </p>
           </div>

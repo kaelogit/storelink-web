@@ -3,11 +3,11 @@ import DownloadContent from './DownloadContent';
 
 function DownloadFallback() {
   return (
-    <main className="min-h-dvh font-sans flex flex-col items-center justify-center bg-slate-50">
+    <main className="min-h-dvh font-sans flex flex-col items-center justify-center bg-(--surface)">
       <div className="animate-pulse flex flex-col items-center gap-4">
         <div className="w-12 h-12 rounded-full bg-emerald-200" />
-        <div className="h-4 w-48 rounded bg-slate-200" />
-        <div className="h-4 w-64 rounded bg-slate-200" />
+        <div className="h-4 w-48 rounded bg-(--border)" />
+        <div className="h-4 w-64 rounded bg-(--border)" />
       </div>
     </main>
   );

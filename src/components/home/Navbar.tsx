@@ -123,7 +123,7 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-2.5 z-50 group shrink-0" aria-label="StoreLink home">
            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border transition-all duration-300 ${
              isTransparent 
-                ? 'bg-white/5 border-white/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]' // 🟢 Glowing Green on Dark
+                ? 'bg-(--card)/5 border-white/10 text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]' // 🟢 Glowing Green on Dark
                 : 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-100 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/50'
            }`}>
               <LayoutDashboard size={22}/>
@@ -231,7 +231,7 @@ export default function Navbar() {
                 href="/app"
                 className={`px-4 h-10 rounded-xl font-bold text-xs inline-flex items-center transition-all border ${
                   isTransparent
-                    ? 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                    ? 'bg-(--card)/10 text-white border-white/20 hover:bg-(--card)/20'
                     : 'bg-emerald-600 text-white border-emerald-600 hover:bg-emerald-500'
                 }`}
               >
@@ -243,7 +243,7 @@ export default function Navbar() {
                 disabled={logoutLoading}
                 className={`px-4 h-10 rounded-xl font-bold text-xs inline-flex items-center transition-all border disabled:opacity-60 ${
                   isTransparent
-                    ? 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                    ? 'bg-(--card)/10 text-white border-white/20 hover:bg-(--card)/20'
                     : 'bg-(--card) text-(--foreground) border-(--border) hover:bg-(--surface)'
                 }`}
               >
@@ -256,7 +256,7 @@ export default function Navbar() {
                 href="/auth/login"
                 className={`px-4 h-10 rounded-xl font-bold text-xs inline-flex items-center transition-all border ${
                   isTransparent
-                    ? 'bg-white/10 text-white border-white/20 hover:bg-white/20'
+                    ? 'bg-(--card)/10 text-white border-white/20 hover:bg-(--card)/20'
                     : 'bg-(--card) text-(--foreground) border-(--border) hover:bg-(--surface)'
                 }`}
               >
@@ -278,7 +278,7 @@ export default function Navbar() {
             href="/download"
             className={`group flex items-center gap-3 px-5 h-10 rounded-xl font-bold text-xs transition-all active:scale-95 border ${
                 isTransparent
-                    ? 'bg-white/10 text-white border-white/20 hover:bg-white/20 backdrop-blur-md shadow-lg'
+                    ? 'bg-(--card)/10 text-white border-white/20 hover:bg-(--card)/20 backdrop-blur-md shadow-lg'
                     : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-950 dark:text-emerald-100 border-emerald-100 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50'
             }`}
           >
@@ -296,7 +296,7 @@ export default function Navbar() {
              <button 
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
               className={`p-2 rounded-lg transition-colors ${
-                  isTransparent ? 'text-white bg-white/10 backdrop-blur-md' : 'text-(--foreground) bg-(--surface) active:bg-(--border)'
+                  isTransparent ? 'text-white bg-(--card)/10 backdrop-blur-md' : 'text-(--foreground) bg-(--surface) active:bg-(--border)'
               }`}
              >
                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -349,7 +349,7 @@ export default function Navbar() {
                             setIsMobileMenuOpen(false);
                           }}
                           disabled={logoutLoading}
-                          className="flex w-full items-center gap-3 rounded-xl p-3 text-left text-slate-600 transition-colors hover:bg-slate-50 hover:text-emerald-700 disabled:opacity-60"
+                          className="flex w-full items-center gap-3 rounded-xl p-3 text-left text-(--muted) transition-colors hover:bg-(--surface) hover:text-emerald-700 disabled:opacity-60"
                         >
                           <LogOut size={18} className="text-(--muted)" />
                           <span className="text-sm font-bold">{logoutLoading ? 'Signing out…' : 'Log out'}</span>
@@ -389,13 +389,13 @@ export default function Navbar() {
 // Helper Components
 function DropdownItem({ icon, title, desc, href }: any) {
     return (
-        <Link href={href} className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors group">
-            <div className="mt-0.5 p-1.5 bg-white border border-gray-100 rounded-lg shadow-sm group-hover:border-emerald-200 transition-colors">
+        <Link href={href} className="flex items-start gap-3 p-3 rounded-xl hover:bg-(--surface) transition-colors group">
+            <div className="mt-0.5 p-1.5 bg-(--card) border border-(--border) rounded-lg shadow-sm group-hover:border-emerald-200 transition-colors">
                 {icon}
             </div>
             <div>
-                <h4 className="text-sm font-bold text-slate-900 group-hover:text-emerald-700 transition-colors">{title}</h4>
-                <p className="text-xs text-slate-500 font-medium">{desc}</p>
+                <h4 className="text-sm font-bold text-(--foreground) group-hover:text-emerald-600 transition-colors">{title}</h4>
+                <p className="text-xs text-(--muted) font-medium">{desc}</p>
             </div>
         </Link>
     )
@@ -405,7 +405,7 @@ function MobileLink({ href, icon, text, onClick }: { href: string, icon: any, te
     return (
         <Link 
             href={href} 
-            className="flex items-center gap-3 p-3 rounded-xl text-slate-600 hover:bg-slate-50 hover:text-emerald-700 transition-colors"
+            className="flex items-center gap-3 p-3 rounded-xl text-(--muted) hover:bg-(--surface) hover:text-emerald-700 transition-colors"
             onClick={onClick}
         >
             <span>{icon}</span>

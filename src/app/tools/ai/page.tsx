@@ -8,7 +8,7 @@ import Button from '../../../components/ui/Button';
 
 export default function AIWriterPage() {
   return (
-    <main className="min-h-dvh font-sans bg-[var(--background)] text-[var(--foreground)]">
+    <main className="min-h-dvh font-sans bg-(--background) text-(--foreground)">
       <section className="section-hero pt-24 md:pt-32 pb-20 relative overflow-hidden text-white" aria-labelledby="ai-hero-heading">
         <div className="section-glow-violet" style={{ width: '800px', height: '800px', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} aria-hidden />
         <div className="absolute bottom-0 right-0 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" aria-hidden />
@@ -25,21 +25,21 @@ export default function AIWriterPage() {
           
           <h1 id="ai-hero-heading" className="text-5xl md:text-7xl font-display font-bold mb-8 tracking-tight leading-[1.1]">
             Stop writing. <br/>
-            Start <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300">Selling.</span>
+            Start <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-400 via-pink-400 to-amber-300">Selling.</span>
           </h1>
-          <p className="text-xl text-slate-300 max-w-2xl mx-auto leading-relaxed font-medium mb-12">
+          <p className="text-xl text-(--muted) max-w-2xl mx-auto leading-relaxed font-medium mb-12">
             The world's most advanced AI copywriter is built into your keyboard. 
             It writes SEO-optimized descriptions, viral captions, and professional emails in seconds.
           </p>
 
-          <Button href="/download" variant="primary" size="lg" className="!bg-white !text-purple-950 hover:scale-105 gap-3">
+          <Button href="/download" variant="primary" size="lg" className="!bg-(--card) !text-purple-950 hover:scale-105 gap-3">
             <Wand2 size={20} /> Try It Now
           </Button>
         </div>
       </section>
 
       <section className="py-24 px-6 -mt-20 relative z-20 section-light">
-        <div className="max-w-4xl mx-auto bg-[var(--charcoal)] border border-[var(--border)] rounded-[var(--radius-3xl)] shadow-2xl overflow-hidden">
+        <div className="max-w-4xl mx-auto bg-(--charcoal) border border-(--border) rounded-3xl shadow-2xl overflow-hidden">
            <div className="grid grid-cols-1 md:grid-cols-2">
               
               {/* Left: Input */}
@@ -49,14 +49,14 @@ export default function AIWriterPage() {
                     <div className="w-3 h-3 rounded-full bg-yellow-500" />
                     <div className="w-3 h-3 rounded-full bg-green-500" />
                  </div>
-                 <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">YOUR INPUT</p>
-                 <div className="font-mono text-slate-300 text-lg">
+                 <p className="text-xs font-bold text-(--muted) uppercase tracking-widest mb-2">YOUR INPUT</p>
+                 <div className="font-mono text-(--muted) text-lg">
                     "Red Nike shoes. Good condition. size 42. selling cheap."
                  </div>
               </div>
 
               {/* Right: Output */}
-              <div className="p-10 bg-gradient-to-br from-purple-900/20 to-slate-900 relative overflow-hidden">
+              <div className="p-10 bg-linear-to-br from-purple-900/20 to-slate-900 relative overflow-hidden">
                  <div className="absolute top-0 right-0 p-4">
                     <Sparkles className="text-purple-400 animate-pulse" />
                  </div>
@@ -65,7 +65,7 @@ export default function AIWriterPage() {
                     <p className="text-white font-medium leading-relaxed">
                        <span className="text-purple-300 font-bold">Headline:</span> Iconic Cherry Red Kicks – Street Ready 🍒👟
                     </p>
-                    <p className="text-slate-300 text-sm leading-relaxed">
+                    <p className="text-(--muted) text-sm leading-relaxed">
                        Step out in confidence. These premium red sneakers feature a breathable mesh upper, orthopedic sole support, and a vibrant finish that turns heads. 
                        <br/><br/>
                        ✨ <span className="font-bold text-white">Condition:</span> Like New (9/10)
@@ -87,10 +87,10 @@ export default function AIWriterPage() {
       </section>
 
       {/* ⚡ FEATURES GRID */}
-      <section className="py-24 px-6 bg-white">
+      <section className="py-24 px-6 bg-(--card)">
         <div className="max-w-6xl mx-auto">
            <div className="text-center mb-16">
-              <h2 className="text-4xl font-display font-bold text-slate-900">More than just text.</h2>
+              <h2 className="text-4xl font-display font-bold text-(--foreground)">More than just text.</h2>
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -119,7 +119,7 @@ export default function AIWriterPage() {
             <div className="flex flex-col md:flex-row items-center justify-between mb-16 gap-6">
                 <div>
                     <h2 id="ai-roadmap-heading" className="text-4xl font-display font-bold mb-4">The AI Roadmap.</h2>
-                    <p className="text-slate-400 text-lg max-w-xl">
+                    <p className="text-(--muted) text-lg max-w-xl">
                         We are building the smartest commerce engine in Africa. Here is what's coming to your dashboard soon.
                     </p>
                 </div>
@@ -171,25 +171,25 @@ export default function AIWriterPage() {
 
 function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
-    <div className="p-8 rounded-[var(--radius-2xl)] bg-[var(--surface)] border border-[var(--border)] hover:bg-[var(--card)] hover:shadow-xl transition-all duration-[var(--duration-250)] group">
-       <div className="w-14 h-14 rounded-[var(--radius-2xl)] bg-[var(--card)] shadow-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-[var(--duration-150)]">
+    <div className="p-8 rounded-2xl bg-(--surface) border border-(--border) hover:bg-(--card) hover:shadow-xl transition-all duration-(--duration-250) group">
+       <div className="w-14 h-14 rounded-2xl bg-(--card) shadow-sm flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-(--duration-150)">
           {icon}
        </div>
-       <h3 className="text-xl font-bold text-[var(--foreground)] mb-3">{title}</h3>
-       <p className="text-[var(--muted)] leading-relaxed font-medium">{desc}</p>
+       <h3 className="text-xl font-bold text-(--foreground) mb-3">{title}</h3>
+       <p className="text-(--muted) leading-relaxed font-medium">{desc}</p>
     </div>
   )
 }
 
 function RoadmapCard({ icon, title, desc }: any) {
     return (
-        <div className="flex gap-6 p-6 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-            <div className="shrink-0 w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
+        <div className="flex gap-6 p-6 rounded-3xl bg-(--card)/5 border border-white/10 hover:bg-(--card)/10 transition-colors">
+            <div className="shrink-0 w-12 h-12 rounded-xl bg-(--card)/5 flex items-center justify-center">
                 {icon}
             </div>
             <div>
                 <h4 className="text-lg font-bold text-white mb-2">{title}</h4>
-                <p className="text-sm text-slate-400 leading-relaxed">{desc}</p>
+                <p className="text-sm text-(--muted) leading-relaxed">{desc}</p>
             </div>
         </div>
     )

@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { ChevronLeft, Flag, Gem, Lock, MoreVertical, Share2, Slash, Store } from 'lucide-react';
 import ShareProfileModal from '../../components/shared/ShareProfileModal';
 import Button from '../../components/ui/Button';
-import { canSellAndAppearInFeeds, showDiamondBadge } from '@/lib/sellerStatus';
+import { showDiamondBadge } from '@/lib/sellerStatus';
 import WebProfileHeader from '@/components/profile-web/WebProfileHeader';
 import WebProfileStats from '@/components/profile-web/WebProfileStats';
 import WebProfileTabBar, { type WebPublicProfileTab } from '@/components/profile-web/WebProfileTabBar';
@@ -37,11 +37,10 @@ export default function ClientProfileWrapper({ profile, products, services = [],
   const [messageBusy, setMessageBusy] = useState(false);
   const isAppMode = (pathname || '').startsWith('/app/');
 
-  const isStoreActive = canSellAndAppearInFeeds(profile);
   const isDiamond = showDiamondBadge(profile);
   const isSeller = !!profile?.is_seller;
   const isWardrobePrivate = !!profile?.is_wardrobe_private;
-  const showSellerTabs = isSeller && isStoreActive;
+  const showSellerTabs = isSeller;
 
   const displayProducts = showSellerTabs ? products : [];
   const displayServices = useMemo(
@@ -61,9 +60,9 @@ export default function ClientProfileWrapper({ profile, products, services = [],
     if (!currentProfileId) return;
     if (defaultTabProfileIdRef.current === currentProfileId) return;
     defaultTabProfileIdRef.current = currentProfileId;
-    if (isSeller && isStoreActive) setActiveTab('drops');
+    if (isSeller) setActiveTab('drops');
     else setActiveTab('collection');
-  }, [profile?.id, isSeller, isStoreActive]);
+  }, [profile?.id, isSeller]);
 
   useEffect(() => {
     if (!showSellerTabs) {
@@ -261,11 +260,6 @@ export default function ClientProfileWrapper({ profile, products, services = [],
             <div className="flex min-w-0 items-center gap-1.5">
               <span className="truncate text-base font-black text-(--foreground)">@{profile.slug}</span>
               {isDiamond ? <Gem size={13} className="shrink-0 text-violet-500" fill="currentColor" /> : null}
-              {profile?.is_seller && !isStoreActive ? (
-                <span className="shrink-0 rounded-md border border-(--border) bg-(--surface) px-1.5 py-0.5 text-[9px] font-black tracking-widest text-(--muted)">
-                  OFFLINE
-                </span>
-              ) : null}
             </div>
             <div className="flex items-center gap-1">
               <button
@@ -284,9 +278,6 @@ export default function ClientProfileWrapper({ profile, products, services = [],
             <div className="flex items-center gap-1.5 rounded-full border border-(--border) bg-(--surface) px-5 py-2 shadow-sm">
               <span className="text-[10px] font-black tracking-[1.5px] text-(--foreground) uppercase">@{profile.slug}</span>
               {isDiamond ? <Gem size={10} className="text-violet-500" fill="currentColor" /> : null}
-              {profile?.is_seller && !isStoreActive ? (
-                <span className="text-[9px] font-black tracking-widest text-(--muted)">OFFLINE</span>
-              ) : null}
             </div>
           </div>
         ) : null}
@@ -346,7 +337,6 @@ export default function ClientProfileWrapper({ profile, products, services = [],
           activeTab={activeTab}
           onTab={(t) => setActiveTab(t as WebPublicProfileTab)}
           isSeller={isSeller}
-          isStoreActive={isStoreActive}
           isWardrobePrivate={isWardrobePrivate}
         />
 
@@ -478,7 +468,7 @@ export default function ClientProfileWrapper({ profile, products, services = [],
               <Button
                 href={`/download?intent=${encodeURIComponent(`/@${profile.slug}`)}`}
                 size="sm"
-                className="bg-white! py-2.5! text-xs text-black! hover:bg-slate-100!"
+                className="bg-(--card)! py-2.5! text-xs text-black! hover:bg-(--surface)!"
               >
                 GET APP
               </Button>

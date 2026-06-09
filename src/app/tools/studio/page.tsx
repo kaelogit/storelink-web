@@ -16,9 +16,9 @@ export default function StudioPage() {
   const [sliderPosition, setSliderPosition] = useState(50);
 
   return (
-    <main className="min-h-dvh font-sans bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
+    <main className="min-h-dvh font-sans bg-(--background) text-(--foreground) selection:bg-emerald-100">
 
-      <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-20 text-center border-b border-[var(--border)]">
+      <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-20 text-center border-b border-(--border)">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
              initial={{ opacity: 0, y: 20 }}
@@ -28,13 +28,13 @@ export default function StudioPage() {
              <ImageMinus size={14} />
              Magic Studio™
           </motion.div>
-          <h1 className="text-5xl md:text-7xl font-display font-bold text-[var(--foreground)] mb-8 tracking-tight">
+          <h1 className="text-5xl md:text-7xl font-display font-bold text-(--foreground) mb-8 tracking-tight">
             A Pro Photo Studio <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500">
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-600 to-teal-500">
               in your Pocket.
             </span>
           </h1>
-          <p className="text-xl text-[var(--muted)] max-w-2xl mx-auto leading-relaxed font-medium mb-10">
+          <p className="text-xl text-(--muted) max-w-2xl mx-auto leading-relaxed font-medium mb-10">
             No green screen. No Photoshop. Just point your camera, and our Computer Vision engine removes backgrounds, fixes lighting, and standardizes your catalog instantly.
           </p>
           <Button href="/download" variant="secondary" size="lg" className="gap-3">
@@ -47,10 +47,10 @@ export default function StudioPage() {
       <section className="section-card py-24 px-6 relative">
          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-12">
-                <p className="text-xs font-bold text-[var(--muted)] uppercase tracking-widest mb-2">TRY IT YOURSELF</p>
-                <h2 className="text-3xl font-bold text-[var(--foreground)]">Drag to Clean</h2>
+                <p className="text-xs font-bold text-(--muted) uppercase tracking-widest mb-2">TRY IT YOURSELF</p>
+                <h2 className="text-3xl font-bold text-(--foreground)">Drag to Clean</h2>
             </div>
-            <div className="relative aspect-[4/3] md:aspect-[21/9] rounded-[var(--radius-3xl)] overflow-hidden border-8 border-[var(--border)] shadow-2xl select-none group cursor-ew-resize">
+            <div className="relative aspect-[4/3] md:aspect-[21/9] rounded-3xl overflow-hidden border-8 border-(--border) shadow-2xl select-none group cursor-ew-resize">
                
                {/* Background Layer (AFTER) - The Clean Result */}
                <Image 
@@ -103,7 +103,7 @@ export default function StudioPage() {
 
                {/* Visual Handle */}
                <div 
-                 className="absolute top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-xl flex items-center justify-center pointer-events-none z-20"
+                 className="absolute top-1/2 -translate-y-1/2 w-12 h-12 bg-(--card) rounded-full shadow-xl flex items-center justify-center pointer-events-none z-20"
                  style={{ left: `calc(${sliderPosition}% - 24px)` }}
                >
                   <div className="flex gap-1">
@@ -123,7 +123,7 @@ export default function StudioPage() {
             {/* Left: Text */}
             <div className="relative z-10">
                <h2 id="studio-engineered-heading" className="text-4xl font-display font-bold mb-6 text-white">Engineered for Commerce.</h2>
-               <p className="text-slate-400 text-lg leading-relaxed mb-10">
+               <p className="text-(--muted) text-lg leading-relaxed mb-10">
                   This isn't just a generic eraser. Our model is trained specifically on retail objects—perfumes, shoes, bags. It understands edges, shadows, and reflections to create a natural look.
                </p>
                
@@ -176,7 +176,7 @@ export default function StudioPage() {
                       whileHover={{ scale: 1.05, rotate: 2 }}
                       className="bg-emerald-900/50 p-3 rounded-3xl aspect-square translate-y-12 rotate-[3deg] shadow-2xl border border-emerald-500/30 backdrop-blur-md"
                    >
-                      <div className="w-full h-full relative rounded-2xl overflow-hidden bg-white flex items-center justify-center p-4">
+                      <div className="w-full h-full relative rounded-2xl overflow-hidden bg-(--card) flex items-center justify-center p-4">
                          <Image 
                             src={AFTER_IMG} 
                             alt="Clean" 
@@ -204,12 +204,12 @@ export default function StudioPage() {
 function ListItem({ icon, title, desc }: any) {
    return (
       <div className="flex gap-5 group">
-         <div className="mt-1 w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-white/10 transition-colors">
+         <div className="mt-1 w-12 h-12 rounded-2xl bg-(--card)/5 border border-white/10 flex items-center justify-center shrink-0 group-hover:bg-(--card)/10 transition-colors">
             {icon}
          </div>
          <div>
             <h4 className="text-lg font-bold text-white mb-2 group-hover:text-emerald-400 transition-colors">{title}</h4>
-            <p className="text-sm text-slate-400 font-medium leading-relaxed max-w-sm">{desc}</p>
+            <p className="text-sm text-(--muted) font-medium leading-relaxed max-w-sm">{desc}</p>
          </div>
       </div>
    )

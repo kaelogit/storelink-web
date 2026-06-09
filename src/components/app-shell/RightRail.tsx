@@ -43,7 +43,7 @@ function RailAction({
     <Link
       href={href}
       aria-label={ariaLabel ?? label}
-      className="inline-flex items-center justify-center group-hover:justify-start gap-3 rounded-2xl px-3 py-2.5 text-slate-700 dark:text-slate-200 hover:text-emerald-600 hover:bg-(--surface)"
+      className="inline-flex items-center justify-center group-hover:justify-start gap-3 rounded-2xl px-3 py-2.5 text-(--foreground) hover:text-emerald-600 hover:bg-(--surface)"
     >
       <div className="relative w-10 h-10 rounded-xl border border-(--border) bg-(--surface) flex items-center justify-center shrink-0">
         {icon}

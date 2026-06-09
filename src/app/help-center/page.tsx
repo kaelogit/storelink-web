@@ -10,7 +10,7 @@ import Button from '../../components/ui/Button';
 
 // 📚 KNOWLEDGE BASE CATEGORIES
 const CATEGORIES = [
-  { id: 'all', name: 'All Topics', icon: HelpCircle, color: 'text-slate-500', bg: 'bg-slate-100' },
+  { id: 'all', name: 'All Topics', icon: HelpCircle, color: 'text-(--muted)', bg: 'bg-(--surface)' },
   { id: 'buying', name: 'Buying', icon: ShoppingBag, color: 'text-blue-500', bg: 'bg-blue-50' },
   { id: 'selling', name: 'Selling', icon: Store, color: 'text-purple-500', bg: 'bg-purple-50' },
   { id: 'safety', name: 'Escrow & Safety', icon: ShieldCheck, color: 'text-emerald-500', bg: 'bg-emerald-50' },
@@ -192,7 +192,7 @@ export default function HelpCenterPage() {
                                     >
                                         <div className="px-6 pb-6 pt-0 relative z-10">
                                             <div className="h-px w-full bg-slate-800 mb-4 opacity-50" />
-                                            <p className="text-slate-300 leading-relaxed font-medium">
+                                            <p className="text-(--muted) leading-relaxed font-medium">
                                                 {faq.answer}
                                             </p>
                                         </div>
@@ -217,14 +217,14 @@ export default function HelpCenterPage() {
       <section className="section-dark py-24 px-6 border-t border-(--border)" aria-labelledby="help-cta-heading">
          <div className="section-spotlight-emerald" aria-hidden />
          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-            <div className="w-16 h-16 bg-white/10 rounded-2xl flex items-center justify-center mx-auto mb-6 backdrop-blur-md">
+            <div className="w-16 h-16 bg-(--card)/10 rounded-2xl flex items-center justify-center mx-auto mb-6 backdrop-blur-md">
                 <HelpCircle size={32} className="text-white" />
             </div>
             <h2 id="help-cta-heading" className="text-3xl md:text-4xl font-bold mb-4 text-white">Still can't find an answer?</h2>
-            <p className="text-slate-400 text-lg mb-8 max-w-xl mx-auto">
+            <p className="text-(--muted) text-lg mb-8 max-w-xl mx-auto">
                 Our support team is based in Lagos and available 24/7. We usually reply in under 30 minutes.
             </p>
-            <Button href="/contact" variant="primary" size="lg" className="bg-white! text-(--charcoal)! hover:bg-emerald-50! justify-center gap-2">
+            <Button href="/contact" variant="primary" size="lg" className="bg-(--card)! text-(--charcoal)! hover:bg-emerald-50! justify-center gap-2">
                 Chat with Support <ArrowRight size={20} />
             </Button>
          </div>

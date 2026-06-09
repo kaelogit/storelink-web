@@ -64,7 +64,7 @@ export default function AppTrapModal({ isOpen, onClose, sellerName, trigger, int
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="absolute inset-0 bg-[var(--pitch-black)]/60 backdrop-blur-sm"
+            className="absolute inset-0 bg-(--pitch-black)/60 backdrop-blur-sm"
           />
 
           {/* Modal */}
@@ -73,27 +73,27 @@ export default function AppTrapModal({ isOpen, onClose, sellerName, trigger, int
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="relative w-full max-w-sm z-10 rounded-t-[var(--radius-3xl)] md:rounded-[var(--radius-3xl)] p-8 shadow-2xl bg-[var(--card)] border border-[var(--border)]"
+            className="relative w-full max-w-sm z-10 rounded-t-3xl md:rounded-3xl p-8 shadow-2xl bg-(--card) border border-(--border)"
           >
-             <div className="w-12 h-1.5 rounded-full mx-auto mb-6 md:hidden bg-[var(--border)]" />
+             <div className="w-12 h-1.5 rounded-full mx-auto mb-6 md:hidden bg-(--border)" />
 
              <button 
                onClick={onClose}
                aria-label="Close"
-               className="absolute top-6 right-6 p-2 rounded-full bg-[var(--surface)] text-[var(--muted)] hover:bg-[var(--border)] transition-colors duration-[var(--duration-150)]"
+               className="absolute top-6 right-6 p-2 rounded-full bg-(--surface) text-(--muted) hover:bg-(--border) transition-colors duration-(--duration-150)"
              >
                <X size={20} />
              </button>
 
              <div className="text-center">
-                <div className={`w-20 h-20 rounded-[var(--radius-2xl)] flex items-center justify-center mx-auto mb-6 transition-colors duration-[var(--duration-150)] ${trigger === 'buy' || trigger === 'explore' ? 'bg-red-100 text-red-600' : 'bg-[var(--emerald)]/10 text-[var(--emerald)]'}`}>
+                <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 transition-colors duration-(--duration-150) ${trigger === 'buy' || trigger === 'explore' ? 'bg-red-100 text-red-600' : 'bg-(--emerald)/10 text-(--emerald)'}`}>
                     <Smartphone size={40} strokeWidth={1.5} />
                 </div>
                 
-                <h3 className="text-[var(--text-heading)] font-black text-[var(--foreground)] mb-3 leading-tight">
+                <h3 className="text-(--text-heading) font-black text-(--foreground) mb-3 leading-tight">
                   {activeContent.title}
                 </h3>
-                <p className="text-[var(--muted)] text-[var(--text-body-md)] mb-10 leading-relaxed font-medium">
+                <p className="text-(--muted) text-(--text-body-md) mb-10 leading-relaxed font-medium">
                   {activeContent.desc}
                 </p>
 
@@ -103,7 +103,7 @@ export default function AppTrapModal({ isOpen, onClose, sellerName, trigger, int
                      Download on App Store
                    </Button>
                    <Button href={downloadHref} variant="outline" size="lg" className="w-full">
-                     <div className="w-5 h-5 rounded-[var(--radius-sm)] bg-[var(--charcoal)] flex items-center justify-center">
+                     <div className="w-5 h-5 rounded-sm bg-(--charcoal) flex items-center justify-center">
                         <Play size={10} className="text-white fill-white ml-0.5" />
                      </div>
                      Get it on Google Play
@@ -112,7 +112,7 @@ export default function AppTrapModal({ isOpen, onClose, sellerName, trigger, int
 
                 <button 
                   onClick={onClose}
-                  className="mt-6 text-[var(--text-label)] font-bold text-[var(--muted)] uppercase tracking-widest hover:text-[var(--foreground)] transition-colors duration-[var(--duration-150)]"
+                  className="mt-6 text-(--text-label) font-bold text-(--muted) uppercase tracking-widest hover:text-(--foreground) transition-colors duration-(--duration-150)"
                 >
                   Maybe Later
                 </button>

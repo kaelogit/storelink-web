@@ -25,7 +25,7 @@ export default function FlashDropsPage() {
   }, []);
 
   return (
-    <main className="min-h-dvh font-sans bg-[var(--pitch-black)] text-white selection:bg-amber-500 selection:text-black">
+    <main className="min-h-dvh font-sans bg-(--pitch-black) text-white selection:bg-amber-500 selection:text-black">
       <section className="section-hero pt-24 md:pt-32 pb-24 relative overflow-hidden" aria-labelledby="flash-hero-heading">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[800px] bg-amber-500/10 rounded-full blur-[120px] pointer-events-none" aria-hidden />
 
@@ -44,15 +44,15 @@ export default function FlashDropsPage() {
             
             <h1 id="flash-hero-heading" className="text-5xl md:text-7xl font-display font-bold text-white mb-8 tracking-tight leading-[1.1]">
               Create a <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-500 to-red-500">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-amber-400 via-orange-500 to-red-500">
                 Frenzy.
               </span>
             </h1>
-            <p className="text-xl text-slate-400 leading-relaxed font-medium mb-10 max-w-lg">
+            <p className="text-xl text-(--muted) leading-relaxed font-medium mb-10 max-w-lg">
               Turn a regular discount into an event. Set a timer, drop the price, and watch your followers race to checkout before the clock hits zero.
             </p>
 
-            <Button href="/download" size="lg" className="!bg-white !text-black hover:scale-105 gap-3">
+            <Button href="/download" size="lg" className="!bg-(--card) !text-black hover:scale-105 gap-3">
               <Flame size={20} className="text-orange-600" fill="currentColor" /> Start a Drop
             </Button>
           </div>
@@ -85,29 +85,29 @@ export default function FlashDropsPage() {
                 <div className="flex justify-between items-start mb-6">
                    <div>
                       <h3 className="text-2xl font-black text-white mb-1">Travis Scott x Nike</h3>
-                      <p className="text-slate-400 text-sm font-medium">Limited Size Run • Priority Shipping</p>
+                      <p className="text-(--muted) text-sm font-medium">Limited Size Run • Priority Shipping</p>
                    </div>
                    <div className="text-right">
                       <p className="text-emerald-400 text-xl font-black">₦85,000</p>
-                      <p className="text-slate-500 text-xs font-bold line-through">₦140,000</p>
+                      <p className="text-(--muted) text-xs font-bold line-through">₦140,000</p>
                    </div>
                 </div>
 
                 {/* Live Stock Bar */}
                 <div className="bg-slate-800 h-3 rounded-full overflow-hidden mb-2">
                    <motion.div 
-                     className="h-full bg-gradient-to-r from-orange-500 to-red-500"
+                     className="h-full bg-linear-to-r from-orange-500 to-red-500"
                      animate={{ width: `${stock}%` }}
                      transition={{ duration: 0.5 }}
                    />
                 </div>
                 <div className="flex justify-between text-xs font-bold mb-6">
                    <span className="text-orange-500 flex items-center gap-1"><Flame size={12} fill="currentColor"/> Selling Fast</span>
-                   <span className="text-slate-400">{stock}% Left</span>
+                   <span className="text-(--muted)">{stock}% Left</span>
                 </div>
 
                 {/* Button */}
-                <button className="w-full py-4 bg-white text-black rounded-2xl font-black text-lg hover:bg-slate-200 transition-colors flex items-center justify-center gap-2">
+                <button className="w-full py-4 bg-(--card) text-black rounded-2xl font-black text-lg hover:bg-(--border) transition-colors flex items-center justify-center gap-2">
                    <Zap size={20} fill="black" /> FLASH BUY
                 </button>
 
@@ -122,7 +122,7 @@ export default function FlashDropsPage() {
          <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
                <h2 className="text-4xl font-display font-bold text-white">The Psychology of Hype.</h2>
-               <p className="text-slate-400 mt-4 text-lg">Why selling with a timer works better than a static listing.</p>
+               <p className="text-(--muted) mt-4 text-lg">Why selling with a timer works better than a static listing.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -177,23 +177,23 @@ export default function FlashDropsPage() {
 
 function FeatureCard({ icon, title, desc }: any) {
    return (
-      <div className="p-8 rounded-[2rem] bg-white/5 border border-white/5 hover:bg-white/10 transition-colors hover:border-amber-500/30 group">
-         <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+      <div className="p-8 rounded-[2rem] bg-(--card)/5 border border-white/5 hover:bg-(--card)/10 transition-colors hover:border-amber-500/30 group">
+         <div className="w-14 h-14 rounded-2xl bg-(--card)/5 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
             {icon}
          </div>
          <h3 className="text-xl font-bold text-white mb-3 group-hover:text-amber-400 transition-colors">{title}</h3>
-         <p className="text-slate-400 leading-relaxed font-medium">{desc}</p>
+         <p className="text-(--muted) leading-relaxed font-medium">{desc}</p>
       </div>
    )
 }
 
 function Step({ num, title, desc }: any) {
    return (
-      <div className="flex gap-6 items-start p-6 rounded-3xl border border-white/5 bg-white/5">
+      <div className="flex gap-6 items-start p-6 rounded-3xl border border-white/5 bg-(--card)/5">
          <span className="text-4xl font-black text-white/10">{num}</span>
          <div>
             <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-            <p className="text-slate-400">{desc}</p>
+            <p className="text-(--muted)">{desc}</p>
          </div>
       </div>
    )

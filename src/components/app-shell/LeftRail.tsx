@@ -20,7 +20,7 @@ export default function LeftRail() {
                 key={item.id}
                 href={item.href}
                 className={`inline-flex items-center justify-center group-hover:justify-start gap-3 rounded-2xl px-3 py-2.5 ${
-                  active ? 'text-white' : 'text-slate-700 dark:text-slate-200 hover:text-emerald-600 hover:bg-(--surface)'
+                  active ? 'text-white' : 'text-(--foreground) hover:text-emerald-600 hover:bg-(--surface)'
                 }`}
               >
                 <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${

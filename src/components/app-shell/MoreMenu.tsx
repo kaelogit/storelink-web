@@ -53,7 +53,7 @@ export default function MoreMenu() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex w-full items-center justify-center gap-3 rounded-2xl px-3 py-2 group-hover:justify-start text-slate-700 hover:text-emerald-600 hover:bg-(--surface) dark:text-slate-200"
+        className="inline-flex w-full items-center justify-center gap-3 rounded-2xl px-3 py-2 group-hover:justify-start text-(--foreground) hover:text-emerald-600 hover:bg-(--surface)"
       >
         <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-(--border) bg-(--surface)">
           <Menu size={24} />

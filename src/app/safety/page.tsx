@@ -48,7 +48,7 @@ export default function SafetyPage() {
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   return (
-    <main className="min-h-dvh font-sans bg-[var(--background)] text-[var(--foreground)]">
+    <main className="min-h-dvh font-sans bg-(--background) text-(--foreground)">
       {/* Hero */}
       <section className="section-hero pt-24 md:pt-32 pb-24 text-center relative overflow-hidden" aria-labelledby="safety-hero-heading">
         <div className="section-glow-emerald section-orb-tl" style={{ width: '600px', height: '600px', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} aria-hidden />
@@ -63,12 +63,12 @@ export default function SafetyPage() {
           </motion.div>
           <h1 id="safety-hero-heading" className="text-5xl md:text-7xl font-display font-bold mb-6 tracking-tight text-white">
             Commerce without <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-300">Fear.</span>
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-teal-300">Fear.</span>
           </h1>
-          <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-medium mb-10">
+          <p className="text-xl text-(--muted) max-w-2xl mx-auto leading-relaxed font-medium mb-10">
             We built an operating system where trust isn't optional—it's hardcoded. Escrow, verification, disputes, and encryption work together so you can buy and sell with confidence.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-6 text-sm font-semibold text-slate-300">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-sm font-semibold text-(--muted)">
             <span className="flex items-center gap-2"><CheckCircle2 size={18} className="text-emerald-400" /> Escrow on every order</span>
             <span className="flex items-center gap-2"><CheckCircle2 size={18} className="text-emerald-400" /> Verified sellers</span>
             <span className="flex items-center gap-2"><CheckCircle2 size={18} className="text-emerald-400" /> Fair dispute resolution</span>
@@ -77,11 +77,11 @@ export default function SafetyPage() {
       </section>
 
       {/* How Escrow Works — step by step */}
-      <Section variant="light" padding="default" className="border-t border-[var(--border)]">
+      <Section variant="light" padding="default" className="border-t border-(--border)">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-[var(--foreground)] mb-4">How the Vault works</h2>
-            <p className="text-lg text-[var(--muted)] max-w-2xl mx-auto">Your money is held safely until you're happy. Four simple steps.</p>
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-(--foreground) mb-4">How the Vault works</h2>
+            <p className="text-lg text-(--muted) max-w-2xl mx-auto">Your money is held safely until you're happy. Four simple steps.</p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {ESCROW_STEPS.map((item, i) => (
@@ -92,10 +92,10 @@ export default function SafetyPage() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.08 }}
               >
-                <Card padding="default" className="h-full rounded-3xl border-2 border-slate-200/80 hover:border-emerald-200 hover:shadow-lg transition-all duration-300">
+                <Card padding="default" className="h-full rounded-3xl border-2 border-(--border)/80 hover:border-emerald-200 hover:shadow-lg transition-all duration-300">
                   <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 font-black text-lg mb-4">{item.step}</div>
-                  <h3 className="text-xl font-bold text-[var(--foreground)] mb-2">{item.title}</h3>
-                  <p className="text-sm text-[var(--muted)] leading-relaxed">{item.desc}</p>
+                  <h3 className="text-xl font-bold text-(--foreground) mb-2">{item.title}</h3>
+                  <p className="text-sm text-(--muted) leading-relaxed">{item.desc}</p>
                 </Card>
               </motion.div>
             ))}
@@ -104,7 +104,7 @@ export default function SafetyPage() {
       </Section>
 
       {/* Three pillars: Escrow, Verification, Disputes */}
-      <Section variant="light" padding="default" className="bg-slate-50/50">
+      <Section variant="light" padding="default" className="bg-(--surface)/50">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="md:col-span-2">
@@ -114,11 +114,11 @@ export default function SafetyPage() {
                   <div className="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-600 mb-6">
                     <Lock size={28} strokeWidth={2} />
                   </div>
-                  <h3 className="text-2xl font-bold text-[var(--foreground)] mb-3">The StoreLink Vault (Escrow)</h3>
-                  <p className="text-[var(--muted)] leading-relaxed text-lg mb-4">
+                  <h3 className="text-2xl font-bold text-(--foreground) mb-3">The StoreLink Vault (Escrow)</h3>
+                  <p className="text-(--muted) leading-relaxed text-lg mb-4">
                     We eliminated "pay and pray" anxiety. When you pay, the money doesn't go to the seller—it stays in our secure Vault. The seller sees that funds are secured and ships with confidence, but they can't touch a dime until <span className="font-bold text-emerald-700">you receive and tap "I Accept".</span>
                   </p>
-                  <p className="text-sm text-[var(--muted)] font-medium">No acceptance, no release. You're in control.</p>
+                  <p className="text-sm text-(--muted) font-medium">No acceptance, no release. You're in control.</p>
                 </div>
               </Card>
             </motion.div>
@@ -129,10 +129,10 @@ export default function SafetyPage() {
                   <ScanFace size={28} strokeWidth={2} />
                 </div>
                 <h3 className="text-2xl font-bold mb-3">Verified sellers</h3>
-                <p className="text-slate-400 leading-relaxed mb-4">
+                <p className="text-(--muted) leading-relaxed mb-4">
                   Sellers with the <span className="text-blue-400 font-bold">blue Verified tick</span> have passed our identity check: valid government ID and facial recognition. You know who you're dealing with.
                 </p>
-                <p className="text-sm text-slate-500 mt-auto">We also show ratings and "About this store" so you can see their track record.</p>
+                <p className="text-sm text-(--muted) mt-auto">We also show ratings and "About this store" so you can see their track record.</p>
               </div>
             </motion.div>
 
@@ -142,8 +142,8 @@ export default function SafetyPage() {
                   <Scale size={28} strokeWidth={2} />
                 </div>
                 <div className="flex-1">
-                  <h3 className="text-2xl font-bold text-[var(--foreground)] mb-3">Fair disputes</h3>
-                  <p className="text-[var(--muted)] leading-relaxed mb-4">
+                  <h3 className="text-2xl font-bold text-(--foreground) mb-3">Fair disputes</h3>
+                  <p className="text-(--muted) leading-relaxed mb-4">
                     Item damaged? Wrong size? Didn't arrive? Raise a dispute in the app before you tap "I Accept". Our team reviews the evidence—chat history, photos, tracking—and decides: refund you from the Vault, release to the seller, or partial split. We act as the neutral judge so both sides get a fair outcome.
                   </p>
                   <Link href="/help-center">
@@ -162,19 +162,19 @@ export default function SafetyPage() {
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
             <Card padding="default" className="rounded-3xl p-8 md:p-10 shadow-xl flex flex-col md:flex-row gap-8 items-center">
               <div className="flex-1">
-                <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-600 mb-6">
+                <div className="w-14 h-14 rounded-2xl bg-(--surface) flex items-center justify-center text-(--muted) mb-6">
                   <CreditCard size={28} strokeWidth={2} />
                 </div>
-                <h3 className="text-2xl font-bold text-[var(--foreground)] mb-3">Payment & data security</h3>
-                <p className="text-[var(--muted)] leading-relaxed mb-4">
+                <h3 className="text-2xl font-bold text-(--foreground) mb-3">Payment & data security</h3>
+                <p className="text-(--muted) leading-relaxed mb-4">
                   We don't store your card details. All payments are processed by <strong>Paystack</strong>, a leading Nigerian payment gateway with PCI-DSS compliance. Your data is encrypted in transit (TLS) and at rest. We never see or store your full card number.
                 </p>
-                <p className="text-sm text-[var(--muted)] font-medium">Bank payouts to sellers use verified Nigerian bank accounts only.</p>
+                <p className="text-sm text-(--muted) font-medium">Bank payouts to sellers use verified Nigerian bank accounts only.</p>
               </div>
-              <div className="w-full md:w-80 bg-slate-100 border border-slate-200 rounded-2xl p-6 flex flex-col gap-3">
-                <div className="h-2 w-4/5 bg-slate-200 rounded-full" />
+              <div className="w-full md:w-80 bg-(--surface) border border-(--border) rounded-2xl p-6 flex flex-col gap-3">
+                <div className="h-2 w-4/5 bg-(--border) rounded-full" />
                 <div className="h-2 w-2/3 bg-emerald-200 rounded-full" />
-                <div className="h-2 w-full bg-slate-200 rounded-full" />
+                <div className="h-2 w-full bg-(--border) rounded-full" />
                 <div className="flex items-center gap-2 mt-2">
                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
                   <span className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Encrypted & compliant</span>
@@ -189,8 +189,8 @@ export default function SafetyPage() {
       <Section variant="card" padding="default">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-display font-bold text-[var(--foreground)]">Safety best practices</h2>
-            <p className="text-[var(--muted)] mt-4 text-lg">How to stay 100% safe on StoreLink.</p>
+            <h2 className="text-3xl md:text-4xl font-display font-bold text-(--foreground)">Safety best practices</h2>
+            <p className="text-(--muted) mt-4 text-lg">How to stay 100% safe on StoreLink.</p>
           </div>
           <div className="space-y-4">
             {SAFETY_TIPS.map((tip, i) => (
@@ -208,8 +208,8 @@ export default function SafetyPage() {
                     </div>
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-[var(--foreground)] mb-2">{tip.title}</h3>
-                    <p className="text-sm text-[var(--muted)] leading-relaxed font-medium">{tip.desc}</p>
+                    <h3 className="text-lg font-bold text-(--foreground) mb-2">{tip.title}</h3>
+                    <p className="text-sm text-(--muted) leading-relaxed font-medium">{tip.desc}</p>
                   </div>
                 </Card>
               </motion.div>
@@ -219,22 +219,22 @@ export default function SafetyPage() {
       </Section>
 
       {/* Red flags — what to avoid */}
-      <Section variant="light" padding="default" className="bg-slate-50/50">
+      <Section variant="light" padding="default" className="bg-(--surface)/50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-display font-bold text-[var(--foreground)]">Red flags to watch for</h2>
-            <p className="text-[var(--muted)] mt-4">If you see these, stop and report.</p>
+            <h2 className="text-3xl font-display font-bold text-(--foreground)">Red flags to watch for</h2>
+            <p className="text-(--muted) mt-4">If you see these, stop and report.</p>
           </div>
           <Card padding="default" className="rounded-3xl p-8 border-2 border-amber-200/60 bg-amber-50/20">
             <ul className="space-y-4">
               {RED_FLAGS.map((flag, i) => (
                 <li key={i} className="flex items-start gap-3">
                   <AlertTriangle size={20} className="text-amber-600 shrink-0 mt-0.5" />
-                  <span className="text-[var(--foreground)] font-medium">{flag}</span>
+                  <span className="text-(--foreground) font-medium">{flag}</span>
                 </li>
               ))}
             </ul>
-            <p className="mt-6 text-sm text-[var(--muted)] font-medium">
+            <p className="mt-6 text-sm text-(--muted) font-medium">
               If you're unsure, contact us before paying. Report suspicious accounts or messages from the app (profile → Report).
             </p>
             <Link href="/contact" className="inline-block mt-4">
@@ -248,8 +248,8 @@ export default function SafetyPage() {
       <Section variant="light" padding="default">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-display font-bold text-[var(--foreground)]">Safety FAQs</h2>
-            <p className="text-[var(--muted)] mt-4">Quick answers to common questions.</p>
+            <h2 className="text-3xl font-display font-bold text-(--foreground)">Safety FAQs</h2>
+            <p className="text-(--muted) mt-4">Quick answers to common questions.</p>
           </div>
           <div className="space-y-3">
             {SAFETY_FAQ.map((faq, i) => (
@@ -263,11 +263,11 @@ export default function SafetyPage() {
                   <div className="flex items-start gap-3 min-w-0">
                     <HelpCircle size={20} className="text-emerald-600 shrink-0 mt-0.5" />
                     <div>
-                      <h3 className="font-bold text-[var(--foreground)]">{faq.q}</h3>
-                      {openFaq === i && <p className="mt-3 text-sm text-[var(--muted)] leading-relaxed">{faq.a}</p>}
+                      <h3 className="font-bold text-(--foreground)">{faq.q}</h3>
+                      {openFaq === i && <p className="mt-3 text-sm text-(--muted) leading-relaxed">{faq.a}</p>}
                     </div>
                   </div>
-                  <ChevronRight size={20} className={`text-slate-400 shrink-0 transition-transform ${openFaq === i ? 'rotate-90' : ''}`} />
+                  <ChevronRight size={20} className={`text-(--muted) shrink-0 transition-transform ${openFaq === i ? 'rotate-90' : ''}`} />
                 </div>
               </Card>
             ))}
@@ -281,11 +281,11 @@ export default function SafetyPage() {
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
           <ShieldCheck size={48} className="text-emerald-400 mx-auto mb-6" />
           <h2 className="text-3xl md:text-4xl font-display font-bold mb-4 tracking-tight">Ready to shop with confidence?</h2>
-          <p className="text-slate-400 font-medium mb-8 max-w-xl mx-auto">
+          <p className="text-(--muted) font-medium mb-8 max-w-xl mx-auto">
             Download StoreLink and pay through the Vault on every order. Buyers and sellers are protected.
           </p>
           <Link href="/download">
-            <Button className="bg-white text-slate-900 hover:bg-slate-100 font-bold gap-2">
+            <Button className="bg-(--card) text-(--foreground) hover:bg-(--surface) font-bold gap-2">
               Get the app <ChevronRight size={18} />
             </Button>
           </Link>

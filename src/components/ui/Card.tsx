@@ -26,7 +26,7 @@ export default function Card({
   ...rest
 }: CardProps) {
   const combined = [
-    'bg-[var(--card)] rounded-[var(--radius-2xl)] border border-[var(--border)]',
+    'bg-(--card) rounded-2xl border border-(--border)',
     'shadow-[0_1px_3px_0_rgba(0,0,0,0.05)]',
     paddingMap[padding],
     className,

@@ -6,6 +6,10 @@ import Link from 'next/link';
 
 const faqs = [
   {
+    question: "Why is StoreLink safer than paying sellers directly?",
+    answer: "Because every transaction is escrow-first. Buyers pay into StoreLink Vault, sellers only receive funds after delivery or booking completion is confirmed, and disputes can be reviewed before release."
+  },
+  {
     question: "How do I get on the 'Viral Feed'?",
     answer: "It is about engagement. The algorithm rewards stores that build a community. Post high-quality reels, reply to comments, and grow your follower count. The more your products and services trend with likes, shares, and saves, the more we push them to new buyers and clients."
   },
@@ -51,7 +55,7 @@ export default function FAQ() {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   return (
-    <section className="section-light py-28 md:py-40 border-t border-slate-200/50" aria-labelledby="faq-heading">
+    <section className="section-light py-28 md:py-40 border-t border-(--border)" aria-labelledby="faq-heading">
       <div className="section-orb section-orb-emerald section-orb-br" aria-hidden />
       <div className="section-orb section-orb-violet section-orb-tr" aria-hidden />
       
@@ -59,7 +63,7 @@ export default function FAQ() {
         
         {/* Header */}
         <div className="text-center mb-16 md:mb-24">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-200 text-slate-600 text-xs font-bold uppercase tracking-wider mb-6 shadow-sm hover:border-emerald-200 transition-colors cursor-default">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-(--card) border border-(--border) text-(--muted) text-xs font-bold uppercase tracking-wider mb-6 shadow-sm hover:border-emerald-200 transition-colors cursor-default">
             <HelpCircle size={14} className="text-emerald-600" />
             Knowledge Base
           </div>
@@ -75,8 +79,8 @@ export default function FAQ() {
               </svg>
             </span>
           </h2>
-          <p className="text-lg text-slate-500 max-w-2xl mx-auto">
-            Everything you need to know about buying, booking, selling, and growing on StoreLink.
+          <p className="text-lg text-(--muted) max-w-2xl mx-auto">
+            Everything you need to know about trust, escrow protection, buying safely, and selling confidently on StoreLink.
           </p>
         </div>
 
@@ -90,7 +94,7 @@ export default function FAQ() {
                   className={`group rounded-3xl overflow-hidden transition-all duration-300 border ${
                     isOpen 
                       ? 'bg-[#0f172a] border-slate-800 shadow-2xl shadow-emerald-900/20 ring-1 ring-emerald-500/20' 
-                      : 'bg-white border-slate-100 hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-500/5'
+                      : 'bg-(--card) border-(--border) hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-500/5'
                   }`}
                 >
                   <button
@@ -98,11 +102,11 @@ export default function FAQ() {
                     className="w-full flex items-center justify-between p-6 md:p-8 text-left relative z-10 focus:outline-none"
                     aria-expanded={isOpen}
                   >
-                    <span className={`text-lg md:text-xl font-bold transition-colors duration-200 pr-8 ${isOpen ? 'text-white' : 'text-slate-900'}`}>
+                    <span className={`text-lg md:text-xl font-bold transition-colors duration-200 pr-8 ${isOpen ? 'text-white' : 'text-(--foreground)'}`}>
                       {faq.question}
                     </span>
                     <div className={`shrink-0 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300 border ${
-                      isOpen ? 'bg-emerald-500 border-emerald-500 text-white rotate-180' : 'bg-slate-50 border-slate-100 text-slate-400 group-hover:bg-emerald-50 group-hover:border-emerald-100 group-hover:text-emerald-600'
+                      isOpen ? 'bg-emerald-500 border-emerald-500 text-white rotate-180' : 'bg-(--surface) border-(--border) text-(--muted) group-hover:bg-emerald-50 dark:group-hover:bg-emerald-950/30 group-hover:border-emerald-100 group-hover:text-emerald-600'
                     }`}>
                       {isOpen ? <Minus size={20} strokeWidth={3} /> : <Plus size={20} strokeWidth={3} />}
                     </div>
@@ -111,7 +115,7 @@ export default function FAQ() {
                     <div className="relative">
                       <div className="px-6 md:px-8 pb-8 pt-0 relative z-10">
                         <div className="h-px w-full bg-slate-800/50 mb-6" />
-                        <p className="text-slate-300 leading-relaxed text-base md:text-lg font-medium">
+                        <p className="text-(--muted) leading-relaxed text-base md:text-lg font-medium">
                           {faq.answer}
                         </p>
                       </div>
@@ -126,12 +130,12 @@ export default function FAQ() {
 
         {/* Still have questions? */}
         <div className="mt-20 text-center">
-            <div className="inline-flex items-center gap-4 bg-white p-2 pr-6 rounded-full border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+            <div className="inline-flex items-center gap-4 bg-(--card) p-2 pr-6 rounded-full border border-(--border) shadow-sm hover:shadow-md transition-shadow">
                 <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600">
                     <MessageCircle size={20} />
                 </div>
                 <div className="text-left">
-                    <p className="text-xs font-bold text-slate-900 uppercase tracking-wide">Still have questions?</p>
+                    <p className="text-xs font-bold text-(--foreground) uppercase tracking-wide">Still have questions?</p>
                     <Link href="/contact" className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline">
                         Chat with our team &rarr;
                     </Link>

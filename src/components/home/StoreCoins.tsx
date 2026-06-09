@@ -38,7 +38,7 @@ export default function StoreCoins() {
   }, []);
 
   return (
-    <section className="section-card py-28 md:py-40 px-4 md:px-6 border-t border-slate-100" aria-labelledby="store-coins-heading">
+    <section className="section-card py-28 md:py-40 px-4 md:px-6 border-t border-(--border)" aria-labelledby="store-coins-heading">
       <div className="section-orb section-orb-emerald section-orb-tl absolute" style={{ top: '20%', left: '-5%' }} aria-hidden />
       <div className="section-orb section-orb-violet section-orb-tr absolute" style={{ top: '60%' }} aria-hidden />
       <div className="max-w-7xl mx-auto relative z-10">
@@ -54,7 +54,7 @@ export default function StoreCoins() {
           
           {/* Background Texture & Gradients */}
           <div className="absolute inset-0 opacity-30 bg-[url('/noise.png')] mix-blend-overlay pointer-events-none"></div>
-          <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-gradient-to-b from-amber-500/10 to-orange-600/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+          <div className="absolute top-0 right-0 w-[800px] h-[800px] bg-linear-to-b from-amber-500/10 to-orange-600/5 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2 pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-[150px] translate-y-1/2 -translate-x-1/2 pointer-events-none" />
 
           {/* Floating Gold Particles (Background) */}
@@ -94,17 +94,17 @@ export default function StoreCoins() {
               
               <h2 id="store-coins-heading" className="text-4xl md:text-6xl lg:text-7xl font-display font-bold text-white mb-6 leading-[0.95] tracking-tight">
                 Shop. Earn. <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-300 via-orange-400 to-amber-500 animate-gradient-x">
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-amber-300 via-orange-400 to-amber-500 animate-gradient-x">
                   Stick Together.
                 </span>
               </h2>
               
-              <p className="text-slate-400 text-base md:text-xl mb-10 max-w-lg font-medium leading-relaxed mx-auto lg:mx-0">
+              <p className="text-(--muted) text-base md:text-xl mb-10 max-w-lg font-medium leading-relaxed mx-auto lg:mx-0">
                 Shop from vendors with <span className="text-white font-bold">Loyalty Enabled</span>. Earn coins on every order and use them for discounts on your next buy.
               </p>
 
               {/* Seller Note (Glass Card) */}
-              <div className="mb-10 p-6 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 border border-white/10 text-left max-w-md mx-auto lg:mx-0 backdrop-blur-md hover:border-amber-500/30 transition-colors cursor-default group">
+              <div className="mb-10 p-6 rounded-2xl bg-linear-to-br from-white/10 to-white/5 border border-white/10 text-left max-w-md mx-auto lg:mx-0 backdrop-blur-md hover:border-amber-500/30 transition-colors cursor-default group">
                  <div className="flex items-center gap-2 mb-2">
                     <div className="relative flex h-2 w-2">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -112,14 +112,14 @@ export default function StoreCoins() {
                     </div>
                     <p className="text-amber-400 text-xs font-bold uppercase tracking-wider group-hover:text-amber-300 transition-colors">Pro Tip for Sellers</p>
                  </div>
-                 <p className="text-slate-300 text-sm leading-relaxed group-hover:text-white transition-colors">
+                 <p className="text-(--muted) text-sm leading-relaxed group-hover:text-white transition-colors">
                    Turn on Loyalty to lock in repeat customers. It's the ultimate tool to turn a one-time buyer into a forever fan.
                  </p>
               </div>
               
               <Link 
                 href="/shop/rewards" 
-                className="inline-flex items-center gap-3 text-white border border-white/20 bg-white/5 px-8 py-4 rounded-2xl font-bold hover:bg-white hover:text-slate-900 transition-all active:scale-95 group shadow-lg shadow-black/20"
+                className="inline-flex items-center gap-3 text-white border border-white/20 bg-(--card)/5 px-8 py-4 rounded-2xl font-bold hover:bg-(--card) hover:text-(--foreground) transition-all active:scale-95 group shadow-lg shadow-black/20"
               >
                 Start Earning
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
@@ -143,7 +143,7 @@ export default function StoreCoins() {
                 {/* Card Header */}
                 <div className="flex justify-between items-start mb-10 relative">
                   <div>
-                    <p className="text-slate-400 text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                    <p className="text-(--muted) text-[10px] font-bold uppercase tracking-widest mb-2 flex items-center gap-1.5">
                         <Wallet size={12} /> Total Balance
                     </p>
                     <div className="flex items-center gap-2">
@@ -153,13 +153,13 @@ export default function StoreCoins() {
                       </h3>
                     </div>
                   </div>
-                  <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-white/10 to-transparent border border-white/10 flex items-center justify-center shadow-lg">
+                  <div className="w-12 h-12 rounded-2xl bg-linear-to-br from-white/10 to-transparent border border-white/10 flex items-center justify-center shadow-lg">
                     <Coins size={20} className="text-amber-200" />
                   </div>
                 </div>
 
                 {/* The "Available" Bar */}
-                <div className="h-14 w-full bg-gradient-to-r from-amber-500/10 to-amber-600/5 border border-amber-500/20 rounded-xl flex items-center px-4 justify-between mb-8 hover:bg-amber-500/20 transition-colors cursor-pointer group/bar">
+                <div className="h-14 w-full bg-linear-to-r from-amber-500/10 to-amber-600/5 border border-amber-500/20 rounded-xl flex items-center px-4 justify-between mb-8 hover:bg-amber-500/20 transition-colors cursor-pointer group/bar">
                    <div className="flex flex-col">
                       <span className="text-amber-500/80 font-bold text-[9px] uppercase tracking-widest group-hover/bar:text-amber-400">Status</span>
                       <span className="text-slate-200 font-bold text-xs group-hover/bar:text-white">Active & Redeemable</span>
@@ -178,24 +178,24 @@ export default function StoreCoins() {
                   
                   <div className="space-y-3">
                     {/* Item 1 */}
-                    <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+                    <div className="flex items-center justify-between p-3 rounded-2xl bg-(--card)/5 border border-white/5 hover:bg-(--card)/10 transition-colors">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-300 text-xs font-black">GF</div>
                         <div>
                           <p className="text-white text-xs font-bold">GadgetFlow</p>
-                          <p className="text-slate-500 text-[10px] font-medium">Purchase Reward</p>
+                          <p className="text-(--muted) text-[10px] font-medium">Purchase Reward</p>
                         </div>
                       </div>
                       <span className="text-emerald-400 text-xs font-bold bg-emerald-500/10 px-2 py-1 rounded-md border border-emerald-500/20">+250</span>
                     </div>
 
                     {/* Item 2 */}
-                    <div className="flex items-center justify-between p-3 rounded-2xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors">
+                    <div className="flex items-center justify-between p-3 rounded-2xl bg-(--card)/5 border border-white/5 hover:bg-(--card)/10 transition-colors">
                       <div className="flex items-center gap-3">
                         <div className="w-9 h-9 rounded-full bg-pink-500/20 border border-pink-500/30 flex items-center justify-center text-pink-300 text-xs font-black">LW</div>
                         <div>
                           <p className="text-white text-xs font-bold">Luxe Wear</p>
-                          <p className="text-slate-500 text-[10px] font-medium">Purchase Reward</p>
+                          <p className="text-(--muted) text-[10px] font-medium">Purchase Reward</p>
                         </div>
                       </div>
                       <span className="text-emerald-400 text-xs font-bold bg-emerald-500/10 px-2 py-1 rounded-md border border-emerald-500/20">+120</span>

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { createBrowserClient } from '@/lib/supabase';
-import { canSellAndAppearInFeeds, showDiamondBadge } from '@/lib/sellerStatus';
+import { showDiamondBadge } from '@/lib/sellerStatus';
 import { fetchProfileSpotlightPosts } from '@/lib/fetchProfileSpotlight';
 import WebProfileHeader from '@/components/profile-web/WebProfileHeader';
 import WebProfileNavBar from '@/components/profile-web/WebProfileNavBar';
@@ -94,12 +94,11 @@ export default function AppProfileClient() {
       setLoggingOut(false);
     }
   };
-  const isStoreActive = canSellAndAppearInFeeds(profile);
   const isWardrobePrivate = !!profile?.is_wardrobe_private;
 
   useEffect(() => {
     if (!profile?.id) return;
-    if (isSeller && isStoreActive) {
+    if (isSeller) {
       if (!sellerDefaultAppliedRef.current) {
         setActiveTab(() => {
           const hasDrops = drops.length > 0;
@@ -113,18 +112,17 @@ export default function AppProfileClient() {
       return;
     }
     sellerDefaultAppliedRef.current = false;
-    if (!isSeller || !isStoreActive) {
+    if (!isSeller) {
       if (activeTab === 'drops' || activeTab === 'reels' || activeTab === 'services') {
         setActiveTab('wardrobe');
       }
     }
-  }, [profile, isSeller, isStoreActive, activeTab, drops.length, services.length]);
+  }, [profile, isSeller, activeTab, drops.length, services.length]);
 
   useEffect(() => {
     if (!profile?.id) return;
     let cancelled = false;
     const uid = String(profile.id);
-    const storeOn = canSellAndAppearInFeeds(profile);
     void (async () => {
       const [dropsRes, reelsRes, wardrobeRes, servicesRes] = await Promise.all([
         isSeller
@@ -134,7 +132,7 @@ export default function AppProfileClient() {
           ? supabase.from('reels').select('id', { count: 'exact', head: true }).eq('seller_id', uid)
           : Promise.resolve({ count: 0 } as { count: number | null }),
         supabase.from('orders').select('id', { count: 'exact', head: true }).eq('user_id', uid).eq('status', 'COMPLETED'),
-        isSeller && storeOn
+        isSeller
           ? supabase
               .from('service_listings')
               .select('id', { count: 'exact', head: true })
@@ -160,14 +158,13 @@ export default function AppProfileClient() {
     let cancelled = false;
     const uid = String(profile.id);
     const seller = profile.is_seller === true;
-    const storeOn = canSellAndAppearInFeeds(profile);
 
     void (async () => {
       setGridsLoading(true);
       try {
         const [dropsRes, reelsRes, servicesRes, productOrdersRes, serviceOrdersRes, hiddenRes, spotlightData] =
           await Promise.all([
-            seller && storeOn
+            seller
               ? supabase
                   .from('products')
                   .select('*')
@@ -182,7 +179,7 @@ export default function AppProfileClient() {
                   .eq('seller_id', uid)
                   .order('created_at', { ascending: false })
               : Promise.resolve({ data: [] as any[] }),
-            seller && storeOn
+            seller
               ? supabase
                   .from('service_listings')
                   .select('*')
@@ -343,7 +340,6 @@ export default function AppProfileClient() {
       <WebProfileNavBar
         slug={slug}
         isDiamond={isDiamond}
-        showOfflineBadge={isSeller && !isStoreActive}
         showRightMenu
         onMenuPress={() => setMenuOpen(true)}
       />
@@ -372,7 +368,6 @@ export default function AppProfileClient() {
           activeTab={activeTab}
           onTab={(t) => setActiveTab(t as WebSelfProfileTab)}
           isSeller={isSeller}
-          isStoreActive={isStoreActive}
           isWardrobePrivate={isWardrobePrivate}
         />
 

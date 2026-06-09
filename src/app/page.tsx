@@ -15,10 +15,10 @@ export default function Home() {
   return (
     <main className="min-h-dvh relative overflow-x-hidden">
       <Hero />
+      <HowItWorks />
       <Comparison />
       <SellerFeatures />
       <TheFeed />
-      <HowItWorks />
       <StoreCoins />
       <FAQ />
       <FinalCTA />

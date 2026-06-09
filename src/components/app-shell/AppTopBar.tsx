@@ -14,7 +14,7 @@ function isAppHomePath(pathname: string | null): boolean {
 export default function AppTopBar() {
   const pathname = usePathname();
   const centerLabel = getAppTopBarTitle(pathname);
-  const { isSeller, unreadNotifications, slug, isDiamond, showOfflineBadge } = useAppShellProfile();
+  const { isSeller, unreadNotifications, slug, isDiamond } = useAppShellProfile();
   const showMobileHomeChrome = isAppHomePath(pathname);
   const isProfileRoute = Boolean(pathname?.startsWith('/app/profile'));
   const downloadHref =
@@ -45,11 +45,6 @@ export default function AppTopBar() {
                 {slug ? `@${slug}` : 'Profile'}
               </p>
               {slug && isDiamond ? <Gem size={16} className="shrink-0 text-violet-500" fill="currentColor" /> : null}
-              {slug && showOfflineBadge ? (
-                <span className="shrink-0 rounded-lg border border-(--border) bg-(--surface) px-2 py-0.5 text-[9px] font-black tracking-widest text-(--muted)">
-                  OFFLINE
-                </span>
-              ) : null}
             </div>
           ) : (
             <>

@@ -10,25 +10,25 @@ import Button from '../../components/ui/Button';
 
 export default function CommunityHubPage() {
   return (
-    <main className="min-h-dvh font-sans bg-[var(--background)] text-[var(--foreground)] selection:bg-emerald-100">
-      <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-20 border-b border-[var(--border)] relative overflow-hidden">
+    <main className="min-h-dvh font-sans bg-(--background) text-(--foreground) selection:bg-emerald-100">
+      <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-20 border-b border-(--border) relative overflow-hidden">
         <div className="section-orb section-orb-violet section-orb-tr" aria-hidden />
         <div className="max-w-4xl mx-auto text-center relative z-10 px-4 sm:px-6 lg:px-8">
           <motion.div
              initial={{ opacity: 0, y: 20 }}
              animate={{ opacity: 1, y: 0 }}
-             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--card)] border border-[var(--border)] text-[var(--muted)] text-xs font-bold uppercase tracking-wider mb-8 shadow-sm"
+             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-(--card) border border-(--border) text-(--muted) text-xs font-bold uppercase tracking-wider mb-8 shadow-sm"
           >
              <Users size={14} />
              The Merchant Club
           </motion.div>
-          <h1 className="text-5xl md:text-7xl font-display font-bold text-[var(--foreground)] mb-6 tracking-tight">
+          <h1 className="text-5xl md:text-7xl font-display font-bold text-(--foreground) mb-6 tracking-tight">
             You are not <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-500">
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-600 to-indigo-500">
               building alone.
             </span>
           </h1>
-          <p className="text-xl text-[var(--muted)] max-w-2xl mx-auto leading-relaxed mb-10">
+          <p className="text-xl text-(--muted) max-w-2xl mx-auto leading-relaxed mb-10">
             Join 45,000+ African entrepreneurs sharing growth hacks, sourcing tips, and support. 
             StoreLink is more than software; it's a movement.
           </p>
@@ -47,8 +47,8 @@ export default function CommunityHubPage() {
          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
                 <div>
-                    <h2 className="text-3xl font-display font-bold text-[var(--foreground)]">Events & Meetups</h2>
-                    <p className="text-[var(--muted)] mt-2">Learn from the best. Connect with peers.</p>
+                    <h2 className="text-3xl font-display font-bold text-(--foreground)">Events & Meetups</h2>
+                    <p className="text-(--muted) mt-2">Learn from the best. Connect with peers.</p>
                 </div>
                 <Button href="#" variant="ghost" size="md" className="text-emerald-600 font-bold gap-2">
                     View Full Calendar <ArrowRight size={16} />
@@ -81,17 +81,17 @@ export default function CommunityHubPage() {
          </div>
       </section>
 
-      <section className="section-dark py-24 px-6 text-white relative overflow-hidden rounded-[var(--radius-3xl)] mx-4 md:mx-10 mb-10" aria-labelledby="community-ambassador-heading">
+      <section className="section-dark py-24 px-6 text-white relative overflow-hidden rounded-3xl mx-4 md:mx-10 mb-10" aria-labelledby="community-ambassador-heading">
          <div className="section-spotlight-violet" aria-hidden />
          <div className="max-w-4xl mx-auto text-center relative z-10 px-4 sm:px-6 lg:px-8">
-            <div className="w-16 h-16 bg-yellow-500/20 text-yellow-400 rounded-[var(--radius-2xl)] flex items-center justify-center mx-auto mb-8 border border-yellow-500/30">
+            <div className="w-16 h-16 bg-yellow-500/20 text-yellow-400 rounded-2xl flex items-center justify-center mx-auto mb-8 border border-yellow-500/30">
                <Star size={32} fill="currentColor" />
             </div>
             <h2 id="community-ambassador-heading" className="text-3xl md:text-5xl font-display font-bold mb-6">Become a City Lead.</h2>
-            <p className="text-slate-400 text-lg mb-10 max-w-xl mx-auto">
+            <p className="text-(--muted) text-lg mb-10 max-w-xl mx-auto">
                 Are you a leader in your local commerce scene? Represent StoreLink in your city, host events, and earn exclusive perks.
             </p>
-            <Button variant="primary" size="lg" href="#" className="!bg-white !text-[var(--charcoal)] hover:!bg-slate-200 justify-center">
+            <Button variant="primary" size="lg" href="#" className="!bg-(--card) !text-(--foreground) hover:!bg-(--border) justify-center">
                 Apply for Leadership
             </Button>
          </div>
@@ -99,8 +99,8 @@ export default function CommunityHubPage() {
 
       <Section variant="light" padding="tight">
          <div className="max-w-2xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-            <p className="text-[var(--muted)] font-medium mb-4">
-                Looking for the <span className="text-[var(--foreground)] font-bold">Follow Button</span> feature for your store?
+            <p className="text-(--muted) font-medium mb-4">
+                Looking for the <span className="text-(--foreground) font-bold">Follow Button</span> feature for your store?
             </p>
             <Button href="/tools/community" variant="ghost" size="md" className="text-emerald-600 font-bold gap-2">
                 Explore Social Commerce Tools <ArrowRight size={16} />
@@ -116,20 +116,20 @@ export default function CommunityHubPage() {
 function EventCard({ date, title, type, location, image }: any) {
     return (
         <div className="group cursor-pointer">
-            <div className="relative aspect-video rounded-2xl overflow-hidden mb-4 bg-slate-200">
+            <div className="relative aspect-video rounded-2xl overflow-hidden mb-4 bg-(--border)">
                 <Image src={image} alt={title} fill className="object-cover group-hover:scale-105 transition-transform duration-500" />
-                <div className="absolute top-4 left-4 bg-[var(--card)] px-3 py-1 rounded-[var(--radius-lg)] text-xs font-black text-[var(--foreground)] uppercase tracking-widest shadow-lg">
+                <div className="absolute top-4 left-4 bg-(--card) px-3 py-1 rounded-lg text-xs font-black text-(--foreground) uppercase tracking-widest shadow-lg">
                     {type}
                 </div>
             </div>
             <div className="flex gap-4">
                 <div className="text-center shrink-0">
                     <p className="text-xs font-bold text-red-500 uppercase tracking-widest mb-1">{date.split(' ')[0]}</p>
-                    <p className="text-2xl font-black text-[var(--foreground)]">{date.split(' ')[1]}</p>
+                    <p className="text-2xl font-black text-(--foreground)">{date.split(' ')[1]}</p>
                 </div>
                 <div>
-                    <h3 className="font-bold text-[var(--foreground)] text-lg mb-1 group-hover:text-emerald-600 transition-colors">{title}</h3>
-                    <div className="flex items-center gap-1.5 text-[var(--muted)] text-sm">
+                    <h3 className="font-bold text-(--foreground) text-lg mb-1 group-hover:text-emerald-600 transition-colors">{title}</h3>
+                    <div className="flex items-center gap-1.5 text-(--muted) text-sm">
                         <MapPin size={14} />
                         {location}
                     </div>

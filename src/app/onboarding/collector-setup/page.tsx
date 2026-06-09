@@ -238,11 +238,11 @@ export default function CollectorSetupPage() {
                   <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
                 ) : usernameAvailable === true ? (
                   <div className="w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center">
-                    <div className="w-2 h-2 bg-white rounded-full" />
+                    <div className="w-2 h-2 bg-(--card) rounded-full" />
                   </div>
                 ) : usernameAvailable === false ? (
                   <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                    <div className="w-1 h-1 bg-white rounded-full" />
+                    <div className="w-1 h-1 bg-(--card) rounded-full" />
                   </div>
                 ) : null}
               </div>

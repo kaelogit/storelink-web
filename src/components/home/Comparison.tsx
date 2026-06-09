@@ -12,11 +12,11 @@ const bentoItems = [
   {
     id: 'platform',
     colSpan: 'md:col-span-2', 
-    bgClass: 'bg-white',
-    borderClass: 'border-slate-200',
-    textClass: 'text-slate-900',
-    title: "The Super App Ecosystem",
-    desc: "Stop juggling WhatsApp, Instagram, and bank apps. We combined discovery, secure checkout, and service bookings into one operating system.",
+    bgClass: 'bg-(--card)',
+    borderClass: 'border-(--border)',
+    textClass: 'text-(--foreground)',
+    title: "Trust Infrastructure",
+    desc: "StoreLink is not another social app. It is the trust layer for commerce: discovery, reputation, escrow, and safe payouts in one system.",
     icon: Layers,
     accentColor: "emerald",
     href: "/download",
@@ -24,15 +24,15 @@ const bentoItems = [
       <div className="absolute right-0 bottom-0 w-full h-full overflow-hidden pointer-events-none opacity-50 transition-opacity duration-500 group-hover:opacity-100">
          {/* ⚡ OPTIMIZED: Replaced expensive 'blur-3xl' with a cheap CSS radial-gradient */}
          <div className="absolute -right-[10%] -bottom-[20%] w-[300px] h-[300px] bg-[radial-gradient(circle,rgba(52,211,153,0.15)_0%,transparent_70%)] transition-transform duration-700 group-hover:scale-110" />
-         <div className="absolute right-[10%] bottom-[10%] w-[100px] md:w-[150px] h-[100px] md:h-[150px] border border-slate-100 rounded-full" />
-         <div className="absolute right-[15%] bottom-[15%] w-[60px] md:w-[100px] h-[60px] md:h-[100px] border border-slate-100 rounded-full" />
+         <div className="absolute right-[10%] bottom-[10%] w-[100px] md:w-[150px] h-[100px] md:h-[150px] border border-(--border) rounded-full" />
+         <div className="absolute right-[15%] bottom-[15%] w-[60px] md:w-[100px] h-[60px] md:h-[100px] border border-(--border) rounded-full" />
       </div>
     )
   },
   {
     id: 'ai',
     colSpan: 'md:col-span-1', 
-    bgClass: 'bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900', 
+    bgClass: 'bg-linear-to-br from-indigo-900 via-purple-900 to-slate-900', 
     borderClass: 'border-white/10',
     textClass: 'text-white',
     title: "Gemini AI Studio",
@@ -53,9 +53,9 @@ const bentoItems = [
   {
     id: 'safety',
     colSpan: 'md:col-span-1', 
-    bgClass: 'bg-white',
-    borderClass: 'border-slate-200',
-    textClass: 'text-slate-900',
+    bgClass: 'bg-(--card)',
+    borderClass: 'border-(--border)',
+    textClass: 'text-(--foreground)',
     title: "Escrow Protection",
     desc: "No more trust anxiety. We hold funds in escrow for both product orders and service bookings until completion is confirmed.",
     icon: ShieldCheck,
@@ -78,15 +78,15 @@ const bentoItems = [
     bgClass: 'bg-slate-950', 
     borderClass: 'border-slate-800',
     textClass: 'text-white',
-    title: "Social Commerce",
-    desc: "Do not just buy in silence. Follow vendors, discover service pros, and share your Spotlight curations with the community.",
+    title: "Reputation Engine",
+    desc: "Seller identity, verification, delivery behavior, and buyer feedback all compound into visible trust signals before you pay.",
     icon: Users,
     accentColor: "white", 
     href: "/tools/community", 
     visual: (
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-[0.05]" />
-        <div className="absolute right-0 top-0 w-2/3 h-full bg-gradient-to-l from-slate-950 via-slate-900/80 to-transparent" />
+        <div className="absolute right-0 top-0 w-2/3 h-full bg-linear-to-l from-slate-950 via-slate-900/80 to-transparent" />
         {/* ⚡ OPTIMIZED: Added hover expansion to the glowing dots for extra flair */}
         <div className="absolute top-1/4 right-1/4 w-1.5 h-1.5 bg-emerald-400 rounded-full shadow-[0_0_12px_rgba(52,211,153,0.9)] transition-transform duration-500 group-hover:scale-150" />
         <div className="absolute bottom-1/3 right-1/3 w-1.5 h-1.5 bg-purple-400 rounded-full shadow-[0_0_12px_rgba(192,132,252,0.9)] transition-transform duration-500 group-hover:scale-150" />
@@ -97,7 +97,7 @@ const bentoItems = [
 
 export default function Comparison() {
   return (
-    <section className="section-light py-28 md:py-40 border-t border-slate-200/50 relative overflow-hidden" aria-labelledby="comparison-heading">
+    <section className="section-light py-28 md:py-40 border-t border-(--border)/50 relative overflow-hidden" aria-labelledby="comparison-heading">
       {/* ⚡ OPTIMIZED: Converted external CSS orbs to radial gradients to protect scroll performance */}
       <div className="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] bg-[radial-gradient(circle,rgba(52,211,153,0.05)_0%,transparent_50%)] pointer-events-none" aria-hidden />
       <div className="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] bg-[radial-gradient(circle,rgba(168,85,247,0.05)_0%,transparent_50%)] pointer-events-none" aria-hidden />
@@ -106,24 +106,24 @@ export default function Comparison() {
         
         {/* Section Header */}
         <div className="max-w-3xl mx-auto text-center mb-16 md:mb-24">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-slate-200 shadow-sm text-slate-500 text-[10px] md:text-[11px] font-bold uppercase tracking-widest mb-6 hover:border-emerald-200 transition-colors cursor-default">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-(--card) border border-(--border) shadow-sm text-(--muted) text-[10px] md:text-[11px] font-bold uppercase tracking-widest mb-6 hover:border-emerald-200 transition-colors cursor-default">
             <Zap size={12} className="text-amber-500 fill-amber-500" />
-            <span>Why We Built This</span>
+            <span>Why StoreLink Wins</span>
           </div>
           <h2
             id="comparison-heading"
-            className="text-4xl md:text-5xl lg:text-6xl font-display font-black text-slate-900 mb-4 md:mb-6 tracking-tight leading-[1.1]"
+            className="text-4xl md:text-5xl lg:text-6xl font-display font-black text-(--foreground) mb-4 md:mb-6 tracking-tight leading-[1.1]"
           >
-            It's not just an App. <br />
-            It's an <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-teal-500 relative inline-block">
-              Upgrade.
+            Commerce is not broken by <br />
+            products. It is broken by <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-600 to-teal-500 relative inline-block">
+              trust gaps.
               <svg className="absolute w-full h-2 md:h-3 -bottom-1 left-0 text-emerald-200 -z-10" viewBox="0 0 100 10" preserveAspectRatio="none">
                  <path d="M0 5 Q 50 10 100 5" stroke="currentColor" strokeWidth="8" fill="none" opacity="0.4" />
               </svg>
             </span>
           </h2>
-          <p className="text-lg md:text-xl text-slate-500 leading-relaxed max-w-xl md:max-w-2xl mx-auto font-light">
-            We bridged the gap between social connection and secure transactions, creating the first true OS for the social economy.
+          <p className="text-lg md:text-xl text-(--muted) leading-relaxed max-w-xl md:max-w-2xl mx-auto font-light">
+            Every day, buyers send money to strangers and hope for the best. StoreLink replaces that risk with verified reputation and escrow-protected payments.
           </p>
         </div>
 
@@ -133,7 +133,7 @@ export default function Comparison() {
             <Link key={item.id} href={item.href} className={`${item.colSpan} block group h-full`}>
               <div
                 /* ⚡ OPTIMIZED: Added transform-gpu so hover states process on the graphics card instead of CPU */
-                className={`h-full relative rounded-[24px] md:rounded-[32px] overflow-hidden transition-all duration-300 border active:scale-[0.98] hover:shadow-2xl hover:shadow-slate-200/50 transform-gpu ${item.bgClass} ${item.borderClass} ${item.textClass}`}
+                className={`h-full relative rounded-[24px] md:rounded-[32px] overflow-hidden transition-all duration-300 border active:scale-[0.98] hover:shadow-2xl hover:shadow-black/10/50 transform-gpu ${item.bgClass} ${item.borderClass} ${item.textClass}`}
               >
                 {/* Visual Layer */}
                 {item.visual}
@@ -146,21 +146,21 @@ export default function Comparison() {
                     <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl flex items-center justify-center mb-4 md:mb-6 shadow-sm ring-1 ring-inset ring-black/5 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3 ${
                       item.accentColor === 'emerald' ? 'bg-emerald-50 text-emerald-600' :
                       item.accentColor === 'blue' ? 'bg-blue-50 text-blue-600' :
-                      'bg-white/10 text-white backdrop-blur-md ring-white/20'
+                      'bg-(--card)/10 text-white backdrop-blur-md ring-white/20'
                     }`}>
                       <item.icon size={24} className="md:w-[28px] md:h-[28px]" strokeWidth={1.5} />
                     </div>
                     
                     <h3 className="text-xl md:text-2xl font-bold tracking-tight mb-2 md:mb-3 group-hover:translate-x-1 transition-transform duration-300">{item.title}</h3>
                     
-                    <p className={`text-sm md:text-base font-medium leading-relaxed max-w-sm opacity-90 ${item.accentColor === 'white' ? 'text-slate-300' : 'text-slate-500'}`}>
+                    <p className={`text-sm md:text-base font-medium leading-relaxed max-w-sm opacity-90 ${item.accentColor === 'white' ? 'text-(--muted)' : 'text-(--muted)'}`}>
                       {item.desc}
                     </p>
                   </div>
 
                   {/* Bottom: Action Arrow (Mobile Optimized) */}
                   <div className={`flex items-center gap-2 text-sm font-bold mt-6 md:mt-8 transition-all duration-300 group-hover:translate-x-2 ${
-                     item.accentColor === 'white' ? 'text-white' : 'text-slate-900'
+                     item.accentColor === 'white' ? 'text-white' : 'text-(--foreground)'
                   }`}>
                     {/* 📱 MOBILE: Text is visible by default. DESKTOP: Hidden until hover. */}
                     <span className="opacity-100 translate-x-0 md:opacity-0 md:-translate-x-2 md:group-hover:opacity-100 md:group-hover:translate-x-0 transition-all duration-300">
@@ -168,7 +168,7 @@ export default function Comparison() {
                     </span>
                     
                     <div className={`p-1.5 rounded-full transition-colors ${
-                        item.accentColor === 'white' ? 'bg-white/20 group-hover:bg-white text-white group-hover:text-slate-900' : 'bg-slate-100 group-hover:bg-slate-900 text-slate-900 group-hover:text-white'
+                        item.accentColor === 'white' ? 'bg-(--card)/20 group-hover:bg-(--card) text-white group-hover:text-(--foreground)' : 'bg-(--surface) group-hover:bg-slate-900 text-(--foreground) group-hover:text-white'
                     }`}>
                         <ArrowRight size={16} />
                     </div>

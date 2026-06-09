@@ -81,7 +81,7 @@ export default function DownloadContent() {
             >
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 text-xs font-black uppercase tracking-widest mb-8">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                The OS for social commerce
+                Trust-powered commerce in Africa
               </div>
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-display font-black text-(--foreground) mb-6 leading-[1.05] tracking-tight">
                 Commerce{' '}
@@ -90,10 +90,10 @@ export default function DownloadContent() {
                 </span>
               </h1>
               <p className="text-xl text-(--muted) leading-relaxed mb-4 max-w-lg mx-auto lg:mx-0">
-                The first social marketplace where reputation is currency. Buy and sell through verified stores, shoppable reels, and protected payments—all in one app.
+                Buy and sell online without fear. Discover through content, evaluate sellers through reputation, and pay through escrow-protected transactions.
               </p>
               <p className="text-sm text-(--muted) leading-relaxed mb-8 max-w-lg mx-auto lg:mx-0 font-semibold">
-                See, buy, and book the people you follow – products and services in one place.
+                Thousands of listings are already live across products and services.
               </p>
 
               {intentPath && (
@@ -181,23 +181,23 @@ export default function DownloadContent() {
             >
               <div className="absolute inset-0 bg-[#0a0a0a] rounded-[2.75rem] border-10 border-[#1a1a1a] shadow-2xl z-20 overflow-hidden ring-1 ring-white/5">
                 <div className="absolute top-6 left-1/2 -translate-x-1/2 w-24 h-7 bg-black rounded-full z-30 border border-white/5" />
-                <div className="relative w-full h-full bg-slate-50 overflow-hidden flex flex-col">
-                  <div className="pt-16 px-5 pb-2 flex justify-between items-center z-10 bg-white">
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-slate-100">
-                      <Users size={22} className="text-slate-800" strokeWidth={2.5} />
+                <div className="relative w-full h-full bg-(--surface) overflow-hidden flex flex-col">
+                  <div className="pt-16 px-5 pb-2 flex justify-between items-center z-10 bg-(--card)">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-(--surface)">
+                      <Users size={22} className="text-(--foreground)" strokeWidth={2.5} />
                     </div>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-black tracking-widest text-slate-900 uppercase">@store</span>
+                      <span className="text-xs font-black tracking-widest text-(--foreground) uppercase">@store</span>
                       <Gem size={10} className="text-purple-600 fill-purple-600" />
                     </div>
-                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-slate-100">
-                      <Menu size={22} className="text-slate-800" strokeWidth={2.5} />
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center bg-(--surface)">
+                      <Menu size={22} className="text-(--foreground)" strokeWidth={2.5} />
                     </div>
                   </div>
-                  <div className="flex-1 overflow-hidden relative bg-white">
+                  <div className="flex-1 overflow-hidden relative bg-(--card)">
                     <div className="px-5 flex flex-col items-center mt-4">
                       <div className="relative mb-4">
-                        <div className="p-1 rounded-[36px] border-2 border-purple-500 shadow-[0_0_24px_rgba(168,85,247,0.25)] bg-white">
+                        <div className="p-1 rounded-[36px] border-2 border-purple-500 shadow-[0_0_24px_rgba(168,85,247,0.25)] bg-(--card)">
                           <div className="w-24 h-24 rounded-[30px] overflow-hidden relative">
                             <Image
                               src="https://ui-avatars.com/api/?name=Store&background=000&color=fff&size=128"
@@ -208,15 +208,15 @@ export default function DownloadContent() {
                             />
                           </div>
                         </div>
-                        <div className="absolute -bottom-2 -right-2 bg-white p-1.5 rounded-xl shadow-lg border border-slate-100">
+                        <div className="absolute -bottom-2 -right-2 bg-(--card) p-1.5 rounded-xl shadow-lg border border-(--border)">
                           <Gem size={14} className="text-purple-600 fill-purple-600" />
                         </div>
                       </div>
                       <div className="flex items-center gap-1 mb-1">
-                        <h2 className="text-xl font-black text-slate-900 tracking-tight">Your Store</h2>
+                        <h2 className="text-xl font-black text-(--foreground) tracking-tight">Your Store</h2>
                         <CheckCircle2 size={18} className="text-emerald-500 fill-emerald-50" />
                       </div>
-                      <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 mb-4 uppercase tracking-wide">
+                      <div className="flex items-center gap-2 text-[10px] font-bold text-(--muted) mb-4 uppercase tracking-wide">
                         <span>Lagos, NG</span>
                         <MapPin size={10} />
                       </div>
@@ -224,53 +224,53 @@ export default function DownloadContent() {
                         <div className="flex-1 bg-slate-900 text-white h-12 rounded-2xl flex items-center justify-center gap-2 text-xs font-black tracking-wider shadow-lg shadow-slate-900/15">
                           <Edit3 size={14} /> EDIT PROFILE
                         </div>
-                        <div className="w-12 h-12 bg-white border border-slate-200 rounded-2xl flex items-center justify-center text-slate-800 shadow-sm">
+                        <div className="w-12 h-12 bg-(--card) border border-(--border) rounded-2xl flex items-center justify-center text-(--foreground) shadow-sm">
                           <Share2 size={18} />
                         </div>
                       </div>
                       <div className="flex items-center justify-between w-full px-4 mb-6">
                         <div className="text-center">
-                          <p className="text-lg font-black text-slate-900 leading-none">—</p>
-                          <p className="text-[9px] font-bold text-slate-400 tracking-widest mt-1">DROPS</p>
+                          <p className="text-lg font-black text-(--foreground) leading-none">—</p>
+                          <p className="text-[9px] font-bold text-(--muted) tracking-widest mt-1">DROPS</p>
                         </div>
-                        <div className="w-px h-8 bg-slate-200" />
+                        <div className="w-px h-8 bg-(--border)" />
                         <div className="text-center">
                           <p className="text-lg font-black text-purple-600 leading-none">—</p>
-                          <p className="text-[9px] font-bold text-slate-400 tracking-widest mt-1">FOLLOWERS</p>
+                          <p className="text-[9px] font-bold text-(--muted) tracking-widest mt-1">FOLLOWERS</p>
                         </div>
-                        <div className="w-px h-8 bg-slate-200" />
+                        <div className="w-px h-8 bg-(--border)" />
                         <div className="text-center">
-                          <p className="text-lg font-black text-slate-900 leading-none">—</p>
-                          <p className="text-[9px] font-bold text-slate-400 tracking-widest mt-1">FOLLOWING</p>
+                          <p className="text-lg font-black text-(--foreground) leading-none">—</p>
+                          <p className="text-[9px] font-bold text-(--muted) tracking-widest mt-1">FOLLOWING</p>
                         </div>
                       </div>
-                      <div className="flex w-full border-b border-slate-200 mb-4">
+                      <div className="flex w-full border-b border-(--border) mb-4">
                         <div className="flex-1 flex items-center justify-center pb-3 border-b-2 border-slate-900">
-                          <Package size={20} className="text-slate-900" strokeWidth={2.5} />
+                          <Package size={20} className="text-(--foreground)" strokeWidth={2.5} />
                         </div>
                         <div className="flex-1 flex items-center justify-center pb-3 border-b-2 border-transparent">
-                          <Video size={20} className="text-slate-400" strokeWidth={2} />
+                          <Video size={20} className="text-(--muted)" strokeWidth={2} />
                         </div>
                         <div className="flex-1 flex items-center justify-center pb-3 border-b-2 border-transparent">
-                          <Layers size={20} className="text-slate-400" strokeWidth={2} />
+                          <Layers size={20} className="text-(--muted)" strokeWidth={2} />
                         </div>
                       </div>
                     </div>
                     <div className="px-3 pb-24 flex gap-3">
                       <div className="flex-1 flex flex-col gap-3">
-                        <div className="aspect-3/4 rounded-xl overflow-hidden relative bg-slate-200">
+                        <div className="aspect-3/4 rounded-xl overflow-hidden relative bg-(--border)">
                           <Image src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400" alt="" width={400} height={533} className="object-cover w-full h-full" />
                           <div className="absolute bottom-2 right-2 bg-black/70 px-2 py-1 rounded-lg text-[10px] font-bold text-white">₦45k</div>
                         </div>
-                        <div className="aspect-3/5 rounded-xl overflow-hidden relative bg-slate-200">
+                        <div className="aspect-3/5 rounded-xl overflow-hidden relative bg-(--border)">
                           <Image src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=400" alt="" width={400} height={667} className="object-cover w-full h-full" />
                         </div>
                       </div>
                       <div className="flex-1 flex flex-col gap-3">
-                        <div className="aspect-square rounded-xl overflow-hidden relative bg-slate-200">
+                        <div className="aspect-square rounded-xl overflow-hidden relative bg-(--border)">
                           <Image src="https://images.unsplash.com/photo-1600185365926-3a2ce3cdb9eb?w=400" alt="" width={400} height={400} className="object-cover w-full h-full" />
                         </div>
-                        <div className="aspect-3/4 rounded-xl overflow-hidden relative bg-slate-200">
+                        <div className="aspect-3/4 rounded-xl overflow-hidden relative bg-(--border)">
                           <Image src="https://images.unsplash.com/photo-1552374196-1ab2a1c593e8?w=400" alt="" width={400} height={533} className="object-cover w-full h-full" />
                           <div className="absolute bottom-2 right-2 bg-black/70 px-2 py-1 rounded-lg text-[10px] font-bold text-white">₦80k</div>
                         </div>
@@ -319,7 +319,7 @@ export default function DownloadContent() {
       </section>
 
       {/* One app, everything — 3 pillars */}
-      <section className="py-24 md:py-32 border-t border-(--border) relative overflow-hidden bg-slate-50/50">
+      <section className="py-24 md:py-32 border-t border-(--border) relative overflow-hidden bg-(--surface)/50">
         <div className="section-orb section-orb-emerald section-orb-bl" aria-hidden />
         <div className="section-orb section-orb-violet section-orb-tr" aria-hidden />
         <div className="max-w-5xl mx-auto px-6 relative z-10">
@@ -365,12 +365,12 @@ export default function DownloadContent() {
           {HAS_APP_LINKS && (
             <div className="flex flex-wrap items-center justify-center gap-4">
               {APP_STORE_URL && (
-                <Button href={APP_STORE_URL} className="bg-white! text-(--charcoal)! hover:bg-white/90! font-black gap-2" target="_blank" rel="noopener noreferrer">
+                <Button href={APP_STORE_URL} className="bg-(--card)! text-(--charcoal)! hover:bg-(--card)/90! font-black gap-2" target="_blank" rel="noopener noreferrer">
                   <Apple size={22} /> App Store
                 </Button>
               )}
               {PLAY_STORE_URL && (
-                <Button href={PLAY_STORE_URL} className="bg-white! text-(--charcoal)! hover:bg-white/90! font-black gap-2" target="_blank" rel="noopener noreferrer">
+                <Button href={PLAY_STORE_URL} className="bg-(--card)! text-(--charcoal)! hover:bg-(--card)/90! font-black gap-2" target="_blank" rel="noopener noreferrer">
                   <PlayStoreLogo /> Google Play
                 </Button>
               )}

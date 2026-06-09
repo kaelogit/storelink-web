@@ -341,28 +341,28 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
           <div className="absolute left-0 right-0 top-0 z-10 flex flex-col gap-2 px-3 pt-3">
             <div className="flex gap-1">
               {[0, 1, 2].map((i) => (
-                <div key={i} className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/10">
-                  <div className="h-full w-1/3 animate-pulse rounded-full bg-white/25" />
+                <div key={i} className="h-0.5 flex-1 overflow-hidden rounded-full bg-(--card)/10">
+                  <div className="h-full w-1/3 animate-pulse rounded-full bg-(--card)/25" />
                 </div>
               ))}
             </div>
             <div className="flex items-start justify-between gap-2">
-              <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2 py-1.5 backdrop-blur-sm">
-                <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-white/15" />
+              <div className="flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-white/10 bg-(--card)/5 px-2 py-1.5 backdrop-blur-sm">
+                <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-(--card)/15" />
                 <div className="flex flex-1 flex-col gap-2 py-0.5">
-                  <div className="h-2.5 w-28 animate-pulse rounded bg-white/20" />
-                  <div className="h-2 w-36 animate-pulse rounded bg-white/10" />
+                  <div className="h-2.5 w-28 animate-pulse rounded bg-(--card)/20" />
+                  <div className="h-2 w-36 animate-pulse rounded bg-(--card)/10" />
                 </div>
               </div>
-              <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-white/15" />
+              <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-(--card)/15" />
             </div>
           </div>
           <div className="absolute inset-0 flex items-center justify-center px-8">
-            <div className="aspect-9/16 w-full max-w-[min(100%,420px)] animate-pulse rounded-3xl bg-white/10" />
+            <div className="aspect-9/16 w-full max-w-[min(100%,420px)] animate-pulse rounded-3xl bg-(--card)/10" />
           </div>
           <div className="pointer-events-none absolute bottom-0 left-0 right-0 z-10 flex flex-col gap-2 px-3 pb-[max(16px,env(safe-area-inset-bottom))] pt-2">
-            <div className="mx-auto h-11 w-28 animate-pulse rounded-full bg-white/10" />
-            <div className="h-16 w-full animate-pulse rounded-2xl bg-white/10" />
+            <div className="mx-auto h-11 w-28 animate-pulse rounded-full bg-(--card)/10" />
+            <div className="h-16 w-full animate-pulse rounded-2xl bg-(--card)/10" />
           </div>
         </div>
       </div>
@@ -463,9 +463,9 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
       <div className="pointer-events-none absolute left-0 right-0 top-0 z-20 flex flex-col gap-2 px-3 pt-3">
         <div className="flex gap-1">
           {allStories.map((_, i) => (
-            <div key={i} className="h-0.5 flex-1 overflow-hidden rounded-full bg-white/25">
+            <div key={i} className="h-0.5 flex-1 overflow-hidden rounded-full bg-(--card)/25">
               <div
-                className="h-full bg-white transition-[width] duration-100 ease-linear"
+                className="h-full bg-(--card) transition-[width] duration-100 ease-linear"
                 style={{
                   width: `${i < activeIndex ? 100 : i === activeIndex ? progress * 100 : 0}%`,
                   backgroundColor: isDiamond ? '#a78bfa' : '#fff',
@@ -481,7 +481,7 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
             className="flex min-w-0 flex-1 items-center gap-2 rounded-xl bg-black/20 px-2 py-1.5 backdrop-blur-md"
           >
             <div
-              className={`relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-white/20 bg-white/10 ${
+              className={`relative h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-white/20 bg-(--card)/10 ${
                 isDiamond ? 'ring-2 ring-violet-500' : ''
               }`}
             >
@@ -565,7 +565,7 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
                 unoptimized
               />
             ) : (
-              <div className="h-12 w-12 rounded-xl bg-white/10" />
+              <div className="h-12 w-12 rounded-xl bg-(--card)/10" />
             )}
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1.5">
@@ -593,7 +593,7 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
               <p className="truncate text-[11px] font-black uppercase tracking-tight">{product.name}</p>
             </div>
             {!isSoldOut ? (
-              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-black">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(--card) text-black">
                 <ShoppingBag size={18} strokeWidth={2.5} />
               </span>
             ) : null}
@@ -610,7 +610,7 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
             {serviceThumbUri ? (
               <Image src={serviceThumbUri} alt="" width={48} height={48} className="rounded-xl object-cover" unoptimized />
             ) : (
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-(--card)/10">
                 <Wrench size={20} className="text-white/80" />
               </div>
             )}
@@ -631,7 +631,7 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
               </div>
               <p className="truncate text-[11px] font-black uppercase tracking-tight">{service.name}</p>
             </div>
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-black">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(--card) text-black">
               <Wrench size={18} strokeWidth={2.5} />
             </span>
           </Link>

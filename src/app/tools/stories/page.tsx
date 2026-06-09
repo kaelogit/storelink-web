@@ -57,7 +57,7 @@ export default function StoriesPage() {
   };
 
   return (
-    <main className="min-h-dvh font-sans bg-[var(--background)]">
+    <main className="min-h-dvh font-sans bg-(--background)">
 
       <Section variant="hero" container={false} padding="none" className="pt-40 pb-20 px-6 overflow-hidden !bg-[#0f0505]">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
@@ -71,7 +71,7 @@ export default function StoriesPage() {
             <motion.div
                initial={{ opacity: 0, y: 20 }}
                animate={{ opacity: 1, y: 0 }}
-               className="inline-flex items-center gap-2 px-4 py-2 rounded-[var(--radius-full)] bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-bold uppercase tracking-wider mb-8 backdrop-blur-md"
+               className="inline-flex items-center gap-2 px-4 py-2 rounded-3xl bg-orange-500/10 border border-orange-500/30 text-orange-400 text-xs font-bold uppercase tracking-wider mb-8 backdrop-blur-md"
             >
                <History size={14} />
                Story Row™
@@ -79,22 +79,22 @@ export default function StoriesPage() {
             
             <h1 className="text-5xl md:text-7xl font-display font-bold mb-8 tracking-tight leading-[1.1] text-white">
               Keep your store <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 via-pink-500 to-purple-500">
+              <span className="text-transparent bg-clip-text bg-linear-to-r from-orange-400 via-pink-500 to-purple-500">
                 Alive.
               </span>
             </h1>
-            <p className="text-xl text-[var(--muted)] leading-relaxed font-medium mb-10 max-w-lg">
+            <p className="text-xl text-(--muted) leading-relaxed font-medium mb-10 max-w-lg">
               Not every update needs a photoshoot. Post raw, ephemeral updates that vanish in <span className="text-orange-400 font-bold">12 hours</span>. Build urgency, show behind-the-scenes, and sell in the moment.
             </p>
 
-            <Button href="/download" size="lg" className="gap-3 !rounded-[var(--radius-2xl)] font-black text-lg hover:scale-105 transition-transform duration-[var(--duration-150)] shadow-[0_0_40px_-10px_rgba(249,115,22,0.5)] !bg-white !text-black hover:!bg-white/90">
+            <Button href="/download" size="lg" className="gap-3 !rounded-2xl font-black text-lg hover:scale-105 transition-transform duration-(--duration-150) shadow-[0_0_40px_-10px_rgba(249,115,22,0.5)] !bg-(--card) !text-black hover:!bg-(--card)/90">
               <Plus size={20} /> Post a Story
             </Button>
           </div>
 
           {/* Interactive Phone Demo */}
           <div className="flex justify-center lg:justify-end">
-             <div className="relative w-[320px] aspect-[9/18] bg-[var(--pitch-black)] rounded-[var(--radius-3xl)] border-[8px] border-[var(--border)] shadow-2xl overflow-hidden ring-1 ring-white/10 select-none cursor-pointer" onClick={handleTap}>
+             <div className="relative w-[320px] aspect-[9/18] bg-black rounded-3xl border-[8px] border-(--border) shadow-2xl overflow-hidden ring-1 ring-white/10 select-none cursor-pointer" onClick={handleTap}>
                 {/* Dynamic Island */}
                 <div className="absolute top-5 left-1/2 -translate-x-1/2 w-28 h-8 bg-black rounded-full z-30" />
 
@@ -106,7 +106,7 @@ export default function StoriesPage() {
                      animate={{ opacity: 1 }}
                      exit={{ opacity: 0 }}
                      transition={{ duration: 0.2 }}
-                     className="absolute inset-0 bg-[var(--charcoal)]"
+                     className="absolute inset-0 bg-(--charcoal)"
                    >
                       <Image 
                         src={STORIES[activeStory].url} 
@@ -114,7 +114,7 @@ export default function StoriesPage() {
                         fill 
                         className="object-cover opacity-90" 
                       />
-                      <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/60" />
+                      <div className="absolute inset-0 bg-linear-to-b from-black/40 via-transparent to-black/60" />
                    </motion.div>
                 </AnimatePresence>
 
@@ -126,9 +126,9 @@ export default function StoriesPage() {
                       {/* Progress Bars */}
                       <div className="flex gap-1 mb-3">
                          {STORIES.map((_, i) => (
-                            <div key={i} className="h-1 flex-1 bg-white/30 rounded-full overflow-hidden">
+                            <div key={i} className="h-1 flex-1 bg-(--card)/30 rounded-full overflow-hidden">
                                <motion.div 
-                                 className="h-full bg-white"
+                                 className="h-full bg-(--card)"
                                  initial={{ width: i < activeStory ? '100%' : '0%' }}
                                  animate={{ width: i === activeStory ? `${progress}%` : i < activeStory ? '100%' : '0%' }}
                                  transition={{ ease: "linear", duration: i === activeStory ? 0.1 : 0 }}
@@ -139,7 +139,7 @@ export default function StoriesPage() {
 
                       {/* User Info */}
                       <div className="flex items-center gap-3">
-                         <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-yellow-400 to-purple-600 p-0.5">
+                         <div className="w-8 h-8 rounded-full bg-linear-to-tr from-yellow-400 to-purple-600 p-0.5">
                             <div className="w-full h-full bg-black rounded-full overflow-hidden border border-black">
                                <Image src="https://ui-avatars.com/api/?name=Kaelo+Store&background=000&color=fff" alt="User" width={32} height={32} />
                             </div>
@@ -160,7 +160,7 @@ export default function StoriesPage() {
                         key={STORIES[activeStory].id}
                         initial={{ scale: 0.8, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="bg-white/20 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl"
+                        className="bg-(--card)/20 backdrop-blur-md border border-white/20 px-4 py-2 rounded-xl"
                       >
                          <p className="text-white font-bold text-sm">🔥 {STORIES[activeStory].tag}</p>
                       </motion.div>
@@ -188,11 +188,11 @@ export default function StoriesPage() {
         </div>
       </Section>
 
-      <Section variant="light" className="relative z-20 rounded-t-[var(--radius-3xl)] -mt-10">
+      <Section variant="light" className="relative z-20 rounded-t-3xl -mt-10">
          <div className="max-w-6xl mx-auto">
             <div className="text-center mb-16">
-               <h2 className="text-4xl font-display font-bold text-[var(--foreground)]">Why use Story Row?</h2>
-               <p className="text-[var(--muted)] mt-4 text-lg">The feed is for your catalogue. Stories are for your personality.</p>
+               <h2 className="text-4xl font-display font-bold text-(--foreground)">Why use Story Row?</h2>
+               <p className="text-(--muted) mt-4 text-lg">The feed is for your catalogue. Stories are for your personality.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -215,9 +215,9 @@ export default function StoriesPage() {
          </div>
       </Section>
 
-      <Section variant="light" className="border-t border-[var(--border)] pb-32">
+      <Section variant="light" className="border-t border-(--border) pb-32">
          <div className="max-w-6xl mx-auto px-4 md:px-0">
-            <h2 className="text-3xl font-bold text-[var(--foreground)] mb-12">What to post today.</h2>
+            <h2 className="text-3xl font-bold text-(--foreground) mb-12">What to post today.</h2>
             
             {/* ✅ UPDATED: Using your custom Nigerian AI Images */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
@@ -236,19 +236,19 @@ export default function StoriesPage() {
 
 function Feature({ icon, title, desc }: any) {
    return (
-      <div className="p-8 rounded-[var(--radius-3xl)] bg-[var(--surface)] border border-[var(--border)] hover:shadow-xl transition-shadow duration-[var(--duration-150)]">
-         <div className="w-12 h-12 rounded-[var(--radius-2xl)] bg-[var(--card)] shadow-sm flex items-center justify-center mb-4">
+      <div className="p-8 rounded-3xl bg-(--surface) border border-(--border) hover:shadow-xl transition-shadow duration-(--duration-150)">
+         <div className="w-12 h-12 rounded-2xl bg-(--card) shadow-sm flex items-center justify-center mb-4">
             {icon}
          </div>
-         <h3 className="text-xl font-bold text-[var(--foreground)] mb-2">{title}</h3>
-         <p className="text-[var(--muted)] leading-relaxed font-medium">{desc}</p>
+         <h3 className="text-xl font-bold text-(--foreground) mb-2">{title}</h3>
+         <p className="text-(--muted) leading-relaxed font-medium">{desc}</p>
       </div>
    )
 }
 
 function InspirationCard({ title, img }: any) {
    return (
-      <div className="relative aspect-[3/4] md:aspect-[4/5] rounded-[var(--radius-2xl)] overflow-hidden group cursor-pointer border border-slate-200/50 shadow-sm hover:shadow-xl transition-all duration-300">
+      <div className="relative aspect-[3/4] md:aspect-[4/5] rounded-2xl overflow-hidden group cursor-pointer border border-(--border)/50 shadow-sm hover:shadow-xl transition-all duration-300">
          <Image 
             src={img} 
             alt={title} 
@@ -256,7 +256,7 @@ function InspirationCard({ title, img }: any) {
             className="object-cover group-hover:scale-105 transition-transform duration-500" 
          />
          {/* Upgraded Gradient Overlay so text pops against the image */}
-         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
+         <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent opacity-80 group-hover:opacity-90 transition-opacity duration-300" />
          
          <div className="absolute bottom-4 md:bottom-6 left-4 md:left-6 right-4">
             <p className="text-white font-bold text-base md:text-xl tracking-tight leading-tight">{title}</p>

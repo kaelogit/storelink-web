@@ -51,7 +51,7 @@ function txConfig(item: CoinTx, isDark: boolean) {
     return {
       icon: <ShoppingBag size={18} className="text-(--foreground)" />,
       color: 'text-(--foreground)',
-      bg: isDark ? 'bg-white/10' : 'bg-black/5',
+      bg: isDark ? 'bg-(--card)/10' : 'bg-black/5',
       sign: '-',
       title: 'Coins used',
       fullTitle: 'Discount applied at checkout',
@@ -62,7 +62,7 @@ function txConfig(item: CoinTx, isDark: boolean) {
     return {
       icon: <ShoppingBag size={18} className="text-(--muted)" />,
       color: 'text-(--muted)',
-      bg: isDark ? 'bg-white/8' : 'bg-black/5',
+      bg: isDark ? 'bg-(--card)/8' : 'bg-black/5',
       sign: '',
       title: 'Payment recorded',
       fullTitle: 'Order payment event',
@@ -232,14 +232,14 @@ export default function WalletClient() {
 
       <section className="rounded-[30px] border border-amber-400/40 bg-linear-to-br from-amber-400 to-amber-500 p-6 text-white shadow-lg">
         <div className="flex items-center gap-2">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-(--card)/20">
             <Coins size={18} className="fill-white" />
           </span>
           <p className="text-[12px] font-black tracking-[0.12em]">STORE COIN BALANCE</p>
         </div>
         <p className="mt-4 text-5xl font-black tracking-tight">{Number(profile.coin_balance || 0).toLocaleString()}</p>
         <div className="mt-5 flex items-center justify-between gap-3">
-          <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-[11px] font-bold">
+          <span className="inline-flex items-center gap-1 rounded-full bg-(--card)/20 px-3 py-1 text-[11px] font-bold">
             <ShieldCheck size={13} />
             LIFETIME VALIDITY
           </span>

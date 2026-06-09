@@ -60,7 +60,7 @@ function rowVisual(item: GroupedActivity, profileId: string | undefined, currenc
 
   let Icon: LucideIcon = Zap;
   let colorClass = 'text-(--foreground)';
-  let miniBadgeBg = 'bg-slate-500';
+  let miniBadgeBg = 'bg-(--surface)0';
   let label = '';
 
   switch (item.type) {
@@ -148,12 +148,12 @@ function rowVisual(item: GroupedActivity, profileId: string | undefined, currenc
       } else if (txType === 'ORDER_PAYMENT') {
         Icon = Wallet;
         colorClass = 'text-(--muted)';
-        miniBadgeBg = 'bg-slate-500';
+        miniBadgeBg = 'bg-(--surface)0';
         label = 'Order payment recorded';
       } else if (txType === 'SPEND' || txType === 'REDEMPTION') {
         Icon = ShoppingBag;
         colorClass = 'text-(--muted)';
-        miniBadgeBg = 'bg-slate-500';
+        miniBadgeBg = 'bg-(--surface)0';
         label = 'Store coins used';
       } else if (txType === 'FOUNDER_SIGNUP_GIFT') {
         Icon = Gift;
@@ -200,7 +200,7 @@ function rowVisual(item: GroupedActivity, profileId: string | undefined, currenc
     case 'SYSTEM':
       Icon = Info;
       colorClass = 'text-(--muted)';
-      miniBadgeBg = 'bg-slate-500';
+      miniBadgeBg = 'bg-(--surface)0';
       label = (item as { message?: string }).message || 'System update';
       break;
     case 'SPOTLIGHT':
