@@ -19,7 +19,7 @@ export default function MoreMenu() {
       if (!user || !active) return;
       const { data: profile } = await supabase
         .from('profiles')
-        .select('id, is_seller, seller_type')
+        .select('id, is_seller, seller_type, location_country_code, verification_status, kyc_status, business_verification_status')
         .eq('id', user.id)
         .maybeSingle();
       if (!active) return;
@@ -28,6 +28,10 @@ export default function MoreMenu() {
           id: String(profile.id),
           is_seller: profile.is_seller,
           seller_type: profile.seller_type,
+          location_country_code: profile.location_country_code,
+          verification_status: profile.verification_status,
+          kyc_status: profile.kyc_status,
+          business_verification_status: profile.business_verification_status,
         });
       } else {
         setHubProfile(null);

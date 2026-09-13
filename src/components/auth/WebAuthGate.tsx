@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Compass, Loader2, Sparkles } from 'lucide-react';
+import { Compass, Loader2 } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import { isGuestReadableAppRoute } from '@/lib/guestAppRoutes';
+import StoreLinkLogo from '@/components/ui/StoreLinkLogo';
 
 type GateState = 'checking' | 'authed' | 'guest';
 
@@ -45,9 +46,8 @@ export default function WebAuthGate({
         <div className="absolute inset-0 -z-10 bg-linear-to-b from-emerald-500/10 via-transparent to-violet-500/10" />
         <div className="mx-auto flex w-full max-w-xl items-center justify-center">
           <div className="w-full rounded-[28px] border border-(--border) bg-(--card)/95 p-7 shadow-xl backdrop-blur">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1">
-              <Sparkles size={14} className="text-emerald-600" />
-              <span className="text-[10px] font-black uppercase tracking-[0.16em] text-emerald-700">StoreLink Web</span>
+            <div className="mb-6 flex justify-center">
+              <StoreLinkLogo variant="auth" />
             </div>
             <h1 className="text-2xl font-black leading-tight text-(--foreground)">Preparing your discovery experience</h1>
             <p className="mt-2 text-sm text-(--muted)">
@@ -81,9 +81,12 @@ export default function WebAuthGate({
     return (
       <div className="min-h-[70vh] flex items-center justify-center px-6">
         <div className="w-full max-w-xl rounded-3xl border border-(--border) bg-(--card) p-8 text-center">
+          <div className="mb-6 flex justify-center">
+            <StoreLinkLogo variant="auth" />
+          </div>
           <h1 className="text-2xl font-black text-(--foreground)">Sign in required</h1>
           <p className="mt-3 text-sm text-(--muted)">
-            This part of StoreLink is for signed-in shoppers (cart, orders, messages). Shared products and services open without an account.
+            You can browse Home, Explore, and Discover without an account. Sign in for messages, profile, likes, and checkout.
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link

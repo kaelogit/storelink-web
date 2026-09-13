@@ -47,6 +47,32 @@ function txConfig(item: CoinTx, isDark: boolean) {
       isGift: false,
     };
   }
+  if (type === 'ADMIN_DEBIT') {
+    const headline = (item.description || '').trim() || 'Store Coins adjusted by support';
+    return {
+      icon: <ShieldCheck size={18} className="text-(--foreground)" />,
+      color: 'text-(--foreground)',
+      bg: isDark ? 'bg-(--card)/10' : 'bg-black/5',
+      sign: '-',
+      title: 'Coins adjusted',
+      fullTitle: headline,
+      isGift: false,
+    };
+  }
+
+  if (type === 'ADMIN_ADJUSTMENT') {
+    const headline = (item.description || '').trim() || 'Store Coins credited by support';
+    return {
+      icon: <ShieldCheck size={18} className="text-(--foreground)" />,
+      color: 'text-(--foreground)',
+      bg: isDark ? 'bg-(--card)/10' : 'bg-black/5',
+      sign: '+',
+      title: 'Coins credited',
+      fullTitle: headline,
+      isGift: false,
+    };
+  }
+
   if (type === 'SPEND' || type === 'REDEMPTION') {
     return {
       icon: <ShoppingBag size={18} className="text-(--foreground)" />,

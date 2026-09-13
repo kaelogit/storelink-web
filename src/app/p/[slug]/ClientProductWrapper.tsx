@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   ChevronLeft, Share2, ShieldCheck,
-  MessageCircle, ShoppingBag, Gem, CheckCircle, Info, Heart, Bookmark,
-  Image as ImageIcon, ChevronRight, Play, Sparkles, Truck
+  MessageCircle, ShoppingBag, Gem, CheckCircle, Heart, Bookmark,
+  Image as ImageIcon, ChevronRight, Play, Sparkles, Truck, Package
 } from 'lucide-react';
 import Button from '../../../components/ui/Button';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
@@ -15,9 +15,15 @@ import { useWebCartStore } from '@/store/useWebCartStore';
 import { createBrowserClient } from '@/lib/supabase';
 import HomeCommentsSheet from '@/components/home-index/HomeCommentsSheet';
 import HomeLikesSheet from '@/components/home-index/HomeLikesSheet';
+import SimilarProductsRailWeb from '@/components/product/SimilarProductsRailWeb';
 import { ensureAuthAction } from '@/lib/guestActionPrompt';
 import { buildProductShareUrl } from '@/lib/sharingContract';
+import { openShareSheet } from '@/lib/openShareSheet';
 import { STOREFRONT_GUTTER_X } from '@/lib/mobileLayout';
+import { fetchSimilarProducts, type SimilarProductRow } from '@/lib/similarProducts';
+import { formatProductCategoryLabel, resolveProductListingCategory } from '@/constants/ProductCategories';
+import { productCheckoutCtaWeb } from '@/lib/verticalCheckout';
+import { toast } from 'sonner';
 // Helper
 const formatPrice = (amount: number, currency: string) => {
   return new Intl.NumberFormat('en-NG', {
@@ -40,6 +46,7 @@ export default function ClientProductWrapper({ product, seller }: any) {
   const [descExpanded, setDescExpanded] = useState(false);
   const [linkedReelId, setLinkedReelId] = useState<string | null>(null);
   const [moreFromStore, setMoreFromStore] = useState<any[]>([]);
+  const [similarProducts, setSimilarProducts] = useState<SimilarProductRow[]>([]);
   const [engagement, setEngagement] = useState<{
     likesCount: number;
     commentsCount: number;
@@ -131,16 +138,68 @@ export default function ClientProductWrapper({ product, seller }: any) {
       if (!product?.id || !product?.seller_id) return;
       const [{ data: reels }, { data: siblings }] = await Promise.all([
         supabase.from('reels').select('id').eq('product_id', product.id).order('created_at', { ascending: false }).limit(1),
-        supabase.from('products').select('id,slug,name,price,currency_code,image_urls').eq('seller_id', product.seller_id).neq('id', product.id).limit(10),
+        supabase
+          .from('products')
+          .select('id,slug,name,price,currency_code,image_urls')
+          .eq('seller_id', product.seller_id)
+          .eq('is_active', true)
+          .neq('id', product.id)
+          .limit(10),
       ]);
       if (!active) return;
       setLinkedReelId(reels?.[0]?.id ? String(reels[0].id) : null);
-      setMoreFromStore(siblings || []);
+      const siblingRows = siblings || [];
+      setMoreFromStore(siblingRows);
+      const similar = await fetchSimilarProducts({
+        supabase,
+        productId: String(product.id),
+        locationCountry: seller?.location_country || 'Nigeria',
+        excludeProductIds: siblingRows.map((row: any) => String(row.id)),
+      });
+      if (!active) return;
+      setSimilarProducts(similar);
     })();
     return () => {
       active = false;
     };
-  }, [supabase, product?.id, product?.seller_id]);
+  }, [supabase, product?.id, product?.seller_id, seller?.location_country]);
+
+  const categoryLabel = formatProductCategoryLabel(
+    resolveProductListingCategory(product?.category, seller?.category),
+  );
+
+  const rawStock = Number(product?.stock_quantity ?? 1000);
+  const stockCount = Number.isFinite(rawStock) ? rawStock : 1000;
+  const isSoldOut = stockCount < 1;
+  const stockLabel = isSoldOut
+    ? 'Sold Out'
+    : stockCount < 10
+      ? `Only ${stockCount} left`
+      : 'In Stock & Ready to Ship';
+
+  const handleShare = () => {
+    openShareSheet({
+      surface: 'product',
+      shareType: 'product',
+      url: buildProductShareUrl(String(product.slug || product.id || '')),
+      title: String(product.name || 'Product'),
+      imageUrl: images?.[0] || undefined,
+      viewerId,
+      ownerId: seller?.id || product.seller_id || null,
+      sellerSlug: seller?.slug || null,
+      menuActions: seller?.slug
+        ? [
+            {
+              id: 'visit_shop',
+              label: `Visit @${seller.slug}`,
+              onPress: () => {
+                router.push(`/${encodeURIComponent(String(seller.slug))}`);
+              },
+            },
+          ]
+        : undefined,
+    });
+  };
 
   const handleToggleLike = async () => {
     if (!promptAuth('Liking items') || !product?.id || pendingLike) return;
@@ -200,9 +259,6 @@ export default function ClientProductWrapper({ product, seller }: any) {
     }
   };
 
-  const rawStock = Number(product?.stock_quantity ?? 1000);
-  const isSoldOut = Number.isFinite(rawStock) ? rawStock < 1 : false;
-
   return (
     <div className="min-h-dvh bg-(--background)">
       <div className="relative flex min-h-dvh flex-col overflow-hidden bg-(--card) pb-[calc(7rem+env(safe-area-inset-bottom,0px))]">
@@ -227,14 +283,8 @@ export default function ClientProductWrapper({ product, seller }: any) {
                 <Bookmark size={18} strokeWidth={2.2} fill={engagement.isSaved ? 'currentColor' : 'none'} />
              </button>
              <button
-               onClick={() => {
-                 const url = buildProductShareUrl(String(product.slug || product.id || ''));
-                 if (navigator.share) {
-                   void navigator.share({ title: product.name, text: `Check out ${product.name} on StoreLink`, url });
-                 } else {
-                   void navigator.clipboard.writeText(url);
-                 }
-               }}
+               type="button"
+               onClick={() => void handleShare()}
               className="w-11 h-11 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors"
              >
                 <Share2 size={20} strokeWidth={2} />
@@ -298,6 +348,11 @@ export default function ClientProductWrapper({ product, seller }: any) {
                 {formatPrice(product.price, product.currency_code)}
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
+                {categoryLabel ? (
+                  <span className="px-2 py-1 rounded-full bg-(--surface) border border-(--border) text-[9px] font-black tracking-widest text-(--foreground) uppercase">
+                    {categoryLabel}
+                  </span>
+                ) : null}
                 {(seller.location_city || seller.location_state) && (
                   <span className="px-2 py-1 rounded-full bg-(--surface) border border-(--border) text-[9px] font-black tracking-widest text-(--muted) uppercase">
                     {[seller.location_city, seller.location_state].filter(Boolean).join(', ')}
@@ -308,6 +363,10 @@ export default function ClientProductWrapper({ product, seller }: any) {
                     DIAMOND
                   </span>
                 )}
+              </div>
+              <div className={`mt-3 inline-flex items-center gap-1.5 text-sm font-semibold ${isSoldOut ? 'text-red-500' : 'text-(--muted)'}`}>
+                <Package size={14} />
+                {stockLabel}
               </div>
               <div className="mt-4 flex items-center gap-4 border-y border-(--border) px-1 py-3 text-[11px] font-black text-(--muted) uppercase tracking-widest">
                 <button type="button" onClick={() => setLikesOpen(true)} className="inline-flex items-center gap-1 transition-colors duration-200">
@@ -447,6 +506,8 @@ export default function ClientProductWrapper({ product, seller }: any) {
             )}
           </div>
 
+          <SimilarProductsRailWeb items={similarProducts} isAppMode={isAppMode} />
+
         </div>
 
         <div className={`absolute bottom-0 left-0 right-0 z-30 flex items-center gap-3 border-t border-(--border) bg-(--card) pt-3 ${STOREFRONT_GUTTER_X} pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]`}>
@@ -457,9 +518,11 @@ export default function ClientProductWrapper({ product, seller }: any) {
           </div>
            <Button
              onClick={() => {
-               if (!promptAuth('Adding items to cart')) return;
+               if (isSoldOut) return;
+               // Guest cart is local until checkout (same as mobile).
                addProduct({
                  product_id: String(product.id || ''),
+                 seller_id: String(product.seller_id || seller?.id || ''),
                  slug: product.slug || null,
                  name: String(product.name || 'Product'),
                  price: Number(product.price || 0),
@@ -467,7 +530,9 @@ export default function ClientProductWrapper({ product, seller }: any) {
                  image_url: images?.[0] || null,
                  seller_slug: seller.slug || null,
                  seller_name: seller.display_name || null,
+                 requires_shipping: (product as { requires_shipping?: boolean | null }).requires_shipping !== false,
                });
+               toast.success('Added to bag');
              }}
              variant="secondary"
              size="lg"
@@ -475,7 +540,13 @@ export default function ClientProductWrapper({ product, seller }: any) {
             className="max-w-[210px] flex-1 justify-center gap-2 rounded-full py-3.5 disabled:opacity-60"
            >
               <ShoppingBag size={20} strokeWidth={2.5} />
-              <span className="font-bold text-sm tracking-wide">{isSoldOut ? 'SOLD OUT' : 'ADD TO BAG'}</span>
+              <span className="font-bold text-sm tracking-wide">
+                {isSoldOut
+                  ? 'SOLD OUT'
+                  : productCheckoutCtaWeb(
+                      resolveProductListingCategory(product?.category, seller?.category),
+                    )}
+              </span>
            </Button>
         </div>
       </div>

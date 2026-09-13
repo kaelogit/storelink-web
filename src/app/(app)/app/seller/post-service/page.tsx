@@ -3,12 +3,42 @@
 import Link from 'next/link';
 import { Suspense, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, Camera, Plus, Trash2, Upload, Wand2 } from 'lucide-react';
+import { ArrowLeft, Camera, ChevronRight, Plus, ShieldCheck, Trash2, Upload, Wand2 } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
+import { uploadFileToR2 } from '@/lib/mediaUpload';
 import { PostPublishResultSheet } from '@/components/seller/PostPublishResultSheet';
 import { PostPublishingOverlay } from '@/components/seller/PostPublishingOverlay';
+import { ServiceTrustPaymentSheet } from '@/components/seller/ServiceTrustPaymentSheet';
+import {
+  serviceCategoriesByGroup,
+  canonicalizeServiceCategorySlug,
+  isPickerServiceCategorySlug,
+  productLeafForServiceCategory,
+  serviceCategorySupportsMenuDuration,
+  serviceCategorySupportsAvailability,
+} from '@/constants/ServiceCategories';
+import { getVerticalFulfillmentCopy, travelFeeLabels } from '@/lib/verticalFulfillmentCopy';
+import {
+  parseAvailabilitySettings,
+  WEEKDAY_LABELS,
+  type WeekdayIndex,
+} from '@/lib/foodAvailability';
+import {
+  LISTING_LOCK_BANNER_BODY,
+  LISTING_LOCK_BANNER_TITLE,
+  isListingContentLocked,
+  mapListingLockError,
+} from '@/lib/listingContentLock';
+import {
+  depositConfigFromListing,
+  depositListingFieldsFromConfig,
+  isDepositConfigValid,
+  type DepositMode,
+} from '@/lib/depositPaymentHolds';
+import { trustPaymentSummaryLine } from '@/lib/serviceTrustPaymentCopy';
+import { LISTING_MAX_IMAGES } from '@/constants/listingMedia';
 
-type MenuRow = { id: string; name: string; price: string };
+type MenuRow = { id: string; name: string; price: string; durationMinutes?: string };
 type DescriptionStyle = 'luxury_lagos' | 'friendly_relatable' | 'sharp_minimal' | 'bold_standout';
 
 async function optimizeImageForUpload(file: File): Promise<File> {
@@ -57,10 +87,24 @@ function PostServiceForm() {
   const editId = (searchParams.get('id') || '').trim() || null;
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [serviceCategory, setServiceCategory] = useState('');
   const [menuRows, setMenuRows] = useState<MenuRow[]>([{ id: 'row-1', name: '', price: '' }]);
   const [deliveryType, setDeliveryType] = useState<'in_person' | 'online' | 'both'>('in_person');
   const [locationType, setLocationType] = useState<'at_my_place' | 'i_travel' | 'both' | ''>('at_my_place');
   const [serviceAreasInput, setServiceAreasInput] = useState('');
+  const [travelFeeMajor, setTravelFeeMajor] = useState('');
+  const [cancellationPolicy, setCancellationPolicy] = useState('');
+  const [depositPolicy, setDepositPolicy] = useState('');
+  const [depositEnabled, setDepositEnabled] = useState(false);
+  const [depositMode, setDepositMode] = useState<DepositMode>('percent');
+  const [depositPercentInput, setDepositPercentInput] = useState('30');
+  const [depositFixedMajor, setDepositFixedMajor] = useState('');
+  const [trustPaymentOpen, setTrustPaymentOpen] = useState(false);
+  const [maxJobsPerDay, setMaxJobsPerDay] = useState('');
+  const [availWeekdays, setAvailWeekdays] = useState<WeekdayIndex[]>([1, 2, 3, 4, 5, 6]);
+  const [windowStart, setWindowStart] = useState('09:00');
+  const [windowEnd, setWindowEnd] = useState('18:00');
+  const [blackoutDates, setBlackoutDates] = useState<string[]>([]);
   const [isActive, setIsActive] = useState(true);
   const [files, setFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
@@ -78,6 +122,8 @@ function PostServiceForm() {
   const [resultSheetOpen, setResultSheetOpen] = useState(false);
   const [serverMedia, setServerMedia] = useState<string[]>([]);
   const [loadEdit, setLoadEdit] = useState(!!editId);
+  const [contentLockedAt, setContentLockedAt] = useState<string | null>(null);
+  const contentLocked = isListingContentLocked({ content_locked_at: contentLockedAt });
 
   useEffect(() => {
     let active = true;
@@ -85,18 +131,23 @@ function PostServiceForm() {
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id;
       if (!active || !userId) return;
-      const { data: profile } = await supabase.from('profiles').select('subscription_plan').eq('id', userId).maybeSingle();
+      const { data: profile } = await supabase.from('profiles').select('subscription_plan, service_category').eq('id', userId).maybeSingle();
       if (!active) return;
       setIsDiamond(String(profile?.subscription_plan || '').toLowerCase() === 'diamond');
+      if (!editId) {
+        const fromProfile = canonicalizeServiceCategorySlug(profile?.service_category);
+        if (isPickerServiceCategorySlug(fromProfile)) setServiceCategory(fromProfile);
+      }
     })();
     return () => {
       active = false;
     };
-  }, [supabase]);
+  }, [supabase, editId]);
 
   useEffect(() => {
     if (!editId) {
       setServerMedia([]);
+      setContentLockedAt(null);
       setLoadEdit(false);
       return;
     }
@@ -129,17 +180,55 @@ function PostServiceForm() {
           title?: string;
           description?: string;
           media?: unknown;
-          menu?: { name?: string; price_minor?: number }[] | null;
+          menu?: { name?: string; price_minor?: number; duration_minutes?: number }[] | null;
           delivery_type?: 'in_person' | 'online' | 'both';
           location_type?: 'at_my_place' | 'i_travel' | 'both' | null;
           service_areas?: string[] | null;
           is_active?: boolean;
+          service_category?: string | null;
+          content_locked_at?: string | null;
+          travel_fee_minor?: number | null;
+          cancellation_policy?: string | null;
+          deposit_policy?: string | null;
+          deposit_enabled?: boolean | null;
+          deposit_mode?: string | null;
+          deposit_percent?: number | string | null;
+          deposit_minor?: number | null;
+          availability_settings?: unknown;
         };
         setTitle(String(row.title || ''));
         setDescription(String(row.description || ''));
+        setServiceCategory(canonicalizeServiceCategorySlug(row.service_category));
         if (row.delivery_type) setDeliveryType(row.delivery_type);
         if (row.location_type != null) setLocationType(row.location_type);
         if (row.is_active != null) setIsActive(!!row.is_active);
+        setContentLockedAt(row.content_locked_at ?? null);
+        {
+          const travelMinor = Number(row.travel_fee_minor) || 0;
+          setTravelFeeMajor(travelMinor > 0 ? String(Math.round(travelMinor / 100)) : '');
+        }
+        setCancellationPolicy(String(row.cancellation_policy || ''));
+        setDepositPolicy(String(row.deposit_policy || ''));
+        {
+          const cfg = depositConfigFromListing(row);
+          setDepositEnabled(!!cfg.enabled);
+          if (cfg.mode === 'fixed' || cfg.mode === 'percent') setDepositMode(cfg.mode);
+          if (cfg.mode === 'percent' && cfg.percent != null) {
+            setDepositPercentInput(String(cfg.percent));
+          }
+          if (cfg.mode === 'fixed' && cfg.fixedMinor != null && cfg.fixedMinor > 0) {
+            setDepositFixedMajor(String(Math.round(cfg.fixedMinor / 100)));
+          }
+        }
+        {
+          const parsedAvail = parseAvailabilitySettings(row.availability_settings);
+          if (parsedAvail?.max_jobs_per_day) setMaxJobsPerDay(String(parsedAvail.max_jobs_per_day));
+          else setMaxJobsPerDay('');
+          if (parsedAvail?.weekdays?.length) setAvailWeekdays(parsedAvail.weekdays);
+          if (parsedAvail?.window_start) setWindowStart(parsedAvail.window_start);
+          if (parsedAvail?.window_end) setWindowEnd(parsedAvail.window_end);
+          setBlackoutDates(Array.isArray(parsedAvail?.blackout_dates) ? [...parsedAvail.blackout_dates] : []);
+        }
         setServiceAreasInput(
           Array.isArray(row.service_areas) ? row.service_areas.join(', ') : '',
         );
@@ -150,10 +239,14 @@ function PostServiceForm() {
               id: `row-${i}`,
               name: String(x.name || '').trim(),
               price: x.price_minor != null ? String(Math.round(Number(x.price_minor) / 100)) : '',
+              durationMinutes:
+                x.duration_minutes != null && Number(x.duration_minutes) > 0
+                  ? String(Math.floor(Number(x.duration_minutes)))
+                  : '',
             })),
           );
         } else {
-          setMenuRows([{ id: 'row-1', name: '', price: '' }]);
+          setMenuRows([{ id: 'row-1', name: '', price: '', durationMinutes: '' }]);
         }
         setFiles([]);
         setPreviewUrls([]);
@@ -176,15 +269,16 @@ function PostServiceForm() {
   };
 
   const onPickImages = async (ev: React.ChangeEvent<HTMLInputElement>) => {
-    const room = 4 - serverMedia.length - files.length;
+    if (contentLocked) return;
+    const room = LISTING_MAX_IMAGES - serverMedia.length - files.length;
     const picked = Array.from(ev.target.files || []).slice(0, Math.max(0, room));
     if (!picked.length) return;
     setIsOptimizing(true);
     try {
       const optimized: File[] = [];
       for (const file of picked) optimized.push(await optimizeImageForUpload(file));
-      setFiles((prev) => [...prev, ...optimized].slice(0, room));
-      setPreviewUrls((prev) => [...prev, ...optimized.map((f) => URL.createObjectURL(f))].slice(0, room));
+      setFiles((prev) => [...prev, ...optimized]);
+      setPreviewUrls((prev) => [...prev, ...optimized.map((f) => URL.createObjectURL(f))]);
     } finally {
       setIsOptimizing(false);
     }
@@ -270,33 +364,117 @@ function PostServiceForm() {
   };
 
   const addRow = () => {
-    setMenuRows((prev) => [...prev, { id: `row-${prev.length + 1}`, name: '', price: '' }]);
+    setMenuRows((prev) => [...prev, { id: `row-${prev.length + 1}`, name: '', price: '', durationMinutes: '' }]);
   };
 
   const removeRow = (id: string) => {
     setMenuRows((prev) => (prev.length <= 1 ? prev : prev.filter((r) => r.id !== id)));
   };
 
+  const buildAvailabilitySettings = () => {
+    if (!serviceCategorySupportsAvailability(serviceCategory)) return null;
+    const max = Number(String(maxJobsPerDay).replace(/[^\d]/g, '')) || 0;
+    const settings: Record<string, unknown> = {
+      ...(max > 0 ? { max_jobs_per_day: max } : {}),
+      ...(availWeekdays.length ? { weekdays: availWeekdays } : {}),
+      window_start: windowStart,
+      window_end: windowEnd,
+      ...(blackoutDates.length ? { blackout_dates: [...blackoutDates].sort() } : {}),
+    };
+    return Object.keys(settings).length ? settings : null;
+  };
+
   const uploadFile = async (userId: string, file: File, index: number) => {
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
     const path = `${userId}/service_${Date.now()}_${index}.${ext}`;
-    const { error } = await supabase.storage.from('service-images').upload(path, file, {
-      contentType: file.type || `image/${ext === 'png' ? 'png' : 'jpeg'}`,
-      upsert: false,
-    });
-    if (error) throw error;
-    const { data } = supabase.storage.from('service-images').getPublicUrl(path);
-    return data.publicUrl;
+    return uploadFileToR2(file, `service-images/${path}`);
   };
 
   const handleSubmit = async () => {
     setError(null);
     setResultSheetOpen(false);
+    if (editId && contentLocked) {
+      setLoading(true);
+      setPublishStage('finalizing');
+      setPublishProgress(70);
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const userId = auth.user?.id;
+        if (!userId) throw new Error('Please login again.');
+        const offersTravel =
+          deliveryType !== 'online' &&
+          (locationType === 'i_travel' || locationType === 'both') &&
+          canonicalizeServiceCategorySlug(serviceCategory) !== 'catering';
+        const availability_settings = buildAvailabilitySettings();
+        const depositFields = depositListingFieldsFromConfig({
+          enabled: depositEnabled,
+          mode: depositMode,
+          percent: Number(depositPercentInput) || null,
+          fixedMinor: Math.max(
+            0,
+            Math.floor(Number(String(depositFixedMajor).replace(/[^\d.]/g, '')) || 0) * 100,
+          ),
+        });
+        if (
+          depositEnabled &&
+          !isDepositConfigValid({
+            enabled: true,
+            mode: depositMode,
+            percent: Number(depositPercentInput) || null,
+            fixedMinor: depositFields.deposit_minor,
+          })
+        ) {
+          setError('Deposit incomplete: set a percent (1–90) or a fixed amount greater than 0.');
+          setLoading(false);
+          setPublishStage(null);
+          return;
+        }
+        const { error: updateError } = await supabase
+          .from('service_listings')
+          .update({
+            is_active: isActive,
+            travel_fee_minor: offersTravel
+              ? Math.max(0, Math.floor(Number(String(travelFeeMajor).replace(/[^\d.]/g, '')) || 0) * 100)
+              : 0,
+            cancellation_policy: cancellationPolicy.trim()
+              ? cancellationPolicy.trim().slice(0, 500)
+              : null,
+            deposit_policy: depositPolicy.trim() ? depositPolicy.trim().slice(0, 500) : null,
+            ...depositFields,
+            ...(availability_settings
+              ? { availability_settings }
+              : serviceCategorySupportsAvailability(serviceCategory)
+                ? { availability_settings: null }
+                : {}),
+          })
+          .eq('id', editId)
+          .eq('seller_id', userId);
+        if (updateError) throw new Error(mapListingLockError(updateError.message));
+        setPublishProgress(100);
+        setResultSheetOpen(true);
+      } catch (e: any) {
+        setError(mapListingLockError(e?.message || 'Failed to update service.'));
+      } finally {
+        setLoading(false);
+        setPublishStage(null);
+        setPublishProgress(0);
+      }
+      return;
+    }
+
     const menu = menuRows
-      .map((r) => ({ name: r.name.trim(), price: Number(r.price.replace(/[^\d]/g, '')) }))
+      .map((r) => ({
+        name: r.name.trim(),
+        price: Number(r.price.replace(/[^\d]/g, '')),
+        durationMinutes: Number(String(r.durationMinutes || '').replace(/[^\d]/g, '')) || 0,
+      }))
       .filter((r) => r.name && r.price > 0);
     if (!title.trim() || menu.length === 0) {
       setError('Add service title and at least one menu option with valid price.');
+      return;
+    }
+    if (!isPickerServiceCategorySlug(serviceCategory)) {
+      setError('Choose a service category for this listing.');
       return;
     }
     setLoading(true);
@@ -341,10 +519,59 @@ function PostServiceForm() {
         service_areas: serviceAreas.length ? serviceAreas : null,
         media: finalMedia,
         is_active: isActive,
-        menu: menu.map((m) => ({ name: m.name, price_minor: m.price * 100 })),
-        service_category: profile?.service_category || 'nail_tech',
-        location_country_code: profile?.location_country_code || 'NG',
+        menu: menu.map((m) => ({
+          name: m.name,
+          price_minor: m.price * 100,
+          ...(serviceCategorySupportsMenuDuration(serviceCategory) && m.durationMinutes > 0
+            ? { duration_minutes: Math.floor(m.durationMinutes) }
+            : {}),
+        })),
+        travel_fee_minor:
+          deliveryType !== 'online' &&
+          (locationType === 'i_travel' || locationType === 'both') &&
+          canonicalizeServiceCategorySlug(serviceCategory) !== 'catering'
+            ? Math.max(0, Math.floor(Number(String(travelFeeMajor).replace(/[^\d.]/g, '')) || 0) * 100)
+            : 0,
+        cancellation_policy: cancellationPolicy.trim()
+          ? cancellationPolicy.trim().slice(0, 500)
+          : null,
+        deposit_policy: depositPolicy.trim() ? depositPolicy.trim().slice(0, 500) : null,
+        ...depositListingFieldsFromConfig({
+          enabled: depositEnabled,
+          mode: depositMode,
+          percent: Number(depositPercentInput) || null,
+          fixedMinor: Math.max(
+            0,
+            Math.floor(Number(String(depositFixedMajor).replace(/[^\d.]/g, '')) || 0) * 100,
+          ),
+        }),
       };
+      if (
+        depositEnabled &&
+        !isDepositConfigValid({
+          enabled: true,
+          mode: depositMode,
+          percent: Number(depositPercentInput) || null,
+          fixedMinor: Math.max(
+            0,
+            Math.floor(Number(String(depositFixedMajor).replace(/[^\d.]/g, '')) || 0) * 100,
+          ),
+        })
+      ) {
+        setError('Deposit incomplete: set a percent (1–90) or a fixed amount greater than 0.');
+        setLoading(false);
+        setPublishStage(null);
+        return;
+      }
+      const availability_settings = buildAvailabilitySettings();
+      if (availability_settings) basePayload.availability_settings = availability_settings;
+      else if (serviceCategorySupportsAvailability(serviceCategory)) {
+        basePayload.availability_settings = null;
+      }
+      if (!editId) {
+        basePayload.service_category = canonicalizeServiceCategorySlug(serviceCategory);
+        basePayload.location_country_code = profile?.location_country_code || 'NG';
+      }
       if (profile?.service_latitude != null && profile?.service_longitude != null) {
         basePayload.latitude = profile.service_latitude;
         basePayload.longitude = profile.service_longitude;
@@ -356,7 +583,7 @@ function PostServiceForm() {
           .update(basePayload)
           .eq('id', editId)
           .eq('seller_id', userId);
-        if (updateError) throw updateError;
+        if (updateError) throw new Error(mapListingLockError(updateError.message));
         setServerMedia((prev) => [...prev, ...uploaded]);
         setFiles([]);
         setPreviewUrls([]);
@@ -378,7 +605,7 @@ function PostServiceForm() {
       setPublishProgress(100);
       setResultSheetOpen(true);
     } catch (e: any) {
-      setError(e?.message || (editId ? 'Failed to update service.' : 'Failed to post service.'));
+      setError(mapListingLockError(e?.message || (editId ? 'Failed to update service.' : 'Failed to post service.')));
     } finally {
       setLoading(false);
       setPublishStage(null);
@@ -419,6 +646,13 @@ function PostServiceForm() {
           </div>
         </div>
 
+        {contentLocked ? (
+          <div className="mt-4 rounded-2xl border border-amber-400/40 bg-amber-500/10 px-4 py-3">
+            <p className="text-xs font-black uppercase tracking-widest text-amber-700">{LISTING_LOCK_BANNER_TITLE}</p>
+            <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">{LISTING_LOCK_BANNER_BODY}</p>
+          </div>
+        ) : null}
+
         <div className="mt-5 flex gap-3 overflow-x-auto">
           {serverMedia.map((url, sidx) => (
             <div key={`srv-${sidx}-${url.slice(0, 20)}`} className="relative w-40 h-52 rounded-3xl border border-(--border) overflow-hidden shrink-0">
@@ -457,7 +691,7 @@ function PostServiceForm() {
             </div>
             );
           })}
-          {imageTotal < 4 ? (
+          {imageTotal < LISTING_MAX_IMAGES ? (
             <label className="w-40 h-52 rounded-3xl border border-dashed border-(--border) bg-(--surface) shrink-0 flex flex-col items-center justify-center gap-2 cursor-pointer">
               <Camera size={20} className="text-(--foreground)" />
               <span className="text-xs font-bold text-(--muted)">Add Photo</span>
@@ -469,7 +703,40 @@ function PostServiceForm() {
         <div className="mt-6 space-y-4">
           <div>
             <label className="text-xs font-black tracking-widest text-(--muted)">SERVICE TITLE</label>
-            <input value={title} onChange={(e) => setTitle(e.target.value)} className="mt-2 w-full h-12 rounded-xl border border-(--border) bg-(--surface) px-4 text-sm font-semibold text-(--foreground)" placeholder="e.g. Luxury Gel Nails" />
+            <input value={title} onChange={(e) => setTitle(e.target.value)} disabled={contentLocked} className="mt-2 w-full h-12 rounded-xl border border-(--border) bg-(--surface) px-4 text-sm font-semibold text-(--foreground) disabled:opacity-60" placeholder="e.g. Luxury Gel Nails" />
+          </div>
+
+          <div>
+            <label className="text-xs font-black tracking-widest text-(--muted)">SERVICE CATEGORY *</label>
+            <div className="mt-2 space-y-3">
+              {serviceCategoriesByGroup().map(({ group, label, items }) => (
+                <div key={group}>
+                  <p className="mb-1.5 text-[10px] font-black uppercase tracking-widest text-(--muted)">{label}</p>
+                  <div className="flex flex-wrap gap-2">
+                    {items.map((svc) => {
+                      const selected = serviceCategory === svc.slug;
+                      return (
+                        <button
+                          key={svc.slug}
+                          type="button"
+                          onClick={() => {
+                            if (!contentLocked) setServiceCategory(svc.slug);
+                          }}
+                          disabled={contentLocked}
+                          className={`h-9 rounded-xl border px-3 text-[11px] font-black ${
+                            selected
+                              ? 'border-emerald-600 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
+                              : 'border-(--border) bg-(--surface) text-(--muted)'
+                          }`}
+                        >
+                          {svc.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div>
@@ -501,7 +768,8 @@ function PostServiceForm() {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value.slice(0, 500))}
-              className="mt-2 w-full h-28 rounded-xl border border-(--border) bg-(--surface) px-4 py-3 text-sm font-medium text-(--foreground) resize-none"
+              disabled={contentLocked}
+              className="mt-2 w-full h-28 rounded-xl border border-(--border) bg-(--surface) px-4 py-3 text-sm font-medium text-(--foreground) resize-none disabled:opacity-60"
               placeholder="Tell buyers what you do, what’s included, and what to expect."
             />
             <p className="mt-1 text-xs text-(--muted)">{description.length}/500</p>
@@ -514,25 +782,57 @@ function PostServiceForm() {
             </div>
             <div className="mt-2 space-y-2">
               {menuRows.map((row) => (
-                <div key={row.id} className="grid grid-cols-[1fr_120px_28px] gap-2 items-center">
-                  <input
-                    value={row.name}
-                    onChange={(e) => updateRow(row.id, { name: e.target.value })}
-                    className="h-11 rounded-xl border border-(--border) bg-(--surface) px-3 text-sm font-semibold text-(--foreground)"
-                    placeholder="Menu option"
-                  />
-                  <input
-                    value={row.price}
-                    onChange={(e) => updateRow(row.id, { price: e.target.value.replace(/[^\d]/g, '') })}
-                    className="h-11 rounded-xl border border-(--border) bg-(--surface) px-3 text-sm font-black text-emerald-600"
-                    placeholder="₦0"
-                  />
-                  <button type="button" onClick={() => removeRow(row.id)} className="h-7 w-7 rounded-full text-(--muted) hover:bg-(--surface)">
-                    <Trash2 size={12} />
-                  </button>
+                <div key={row.id} className="space-y-2">
+                  <div className="grid grid-cols-[1fr_120px_28px] gap-2 items-center">
+                    <input
+                      value={row.name}
+                      onChange={(e) => updateRow(row.id, { name: e.target.value })}
+                      disabled={contentLocked}
+                      className="h-11 rounded-xl border border-(--border) bg-(--surface) px-3 text-sm font-semibold text-(--foreground) disabled:opacity-60"
+                      placeholder="Menu option"
+                    />
+                    <input
+                      value={row.price}
+                      onChange={(e) => updateRow(row.id, { price: e.target.value.replace(/[^\d]/g, '') })}
+                      disabled={contentLocked}
+                      className="h-11 rounded-xl border border-(--border) bg-(--surface) px-3 text-sm font-black text-emerald-600 disabled:opacity-60"
+                      placeholder="₦0"
+                    />
+                    <button type="button" onClick={() => removeRow(row.id)} disabled={contentLocked} className="h-7 w-7 rounded-full text-(--muted) hover:bg-(--surface) disabled:opacity-40">
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                  {serviceCategorySupportsMenuDuration(serviceCategory) ? (
+                    <input
+                      value={row.durationMinutes || ''}
+                      onChange={(e) =>
+                        updateRow(row.id, { durationMinutes: e.target.value.replace(/[^\d]/g, '') })
+                      }
+                      disabled={contentLocked}
+                      inputMode="numeric"
+                      className="h-10 w-full rounded-xl border border-(--border) bg-(--surface) px-3 text-sm font-semibold text-(--foreground) disabled:opacity-60"
+                      placeholder={
+                        productLeafForServiceCategory(serviceCategory) === 'fashion'
+                          ? 'Turnaround mins (e.g. 120)'
+                          : productLeafForServiceCategory(serviceCategory) === 'real-estate'
+                            ? 'Viewing mins (e.g. 45)'
+                            : productLeafForServiceCategory(serviceCategory) === 'wellness'
+                              ? 'Session mins (e.g. 60)'
+                          : productLeafForServiceCategory(serviceCategory) === 'automotive'
+                            ? 'Service mins (e.g. 60)'
+                            : productLeafForServiceCategory(serviceCategory) === 'home'
+                              ? 'Job mins (e.g. 60)'
+                              : productLeafForServiceCategory(serviceCategory) === 'electronics'
+                                ? 'Repair mins (e.g. 60)'
+                                : productLeafForServiceCategory(serviceCategory) === 'events'
+                                  ? 'Coverage mins (e.g. 240)'
+                                  : 'Duration mins (e.g. 45)'
+                  }
+                    />
+                  ) : null}
                 </div>
               ))}
-              <button type="button" onClick={addRow} className="inline-flex items-center gap-2 h-9 px-3 rounded-full border border-(--border) bg-(--surface) text-xs font-black text-(--muted)">
+              <button type="button" onClick={addRow} disabled={contentLocked} className="inline-flex items-center gap-2 h-9 px-3 rounded-full border border-(--border) bg-(--surface) text-xs font-black text-(--muted) disabled:opacity-40">
                 <Plus size={12} /> Add option
               </button>
             </div>
@@ -559,17 +859,29 @@ function PostServiceForm() {
               <div>
                 <label className="text-xs font-black tracking-widest text-(--muted)">IN-PERSON MODE</label>
                 <div className="mt-2 grid grid-cols-3 gap-2">
-                  {(['at_my_place', 'i_travel', 'both'] as const).map((type) => (
+                  {(() => {
+                    const locCopy = getVerticalFulfillmentCopy(serviceCategory);
+                    return [
+                      { key: 'at_my_place' as const, label: locCopy.sellerAtMyPlace },
+                      { key: 'i_travel' as const, label: locCopy.sellerITravel },
+                      { key: 'both' as const, label: locCopy.sellerBoth },
+                    ];
+                  })().map((opt) => (
                     <button
-                      key={type}
+                      key={opt.key}
                       type="button"
-                      onClick={() => setLocationType(type)}
-                      className={`h-10 rounded-xl border text-xs font-black ${locationType === type ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' : 'border-(--border) bg-(--surface) text-(--muted)'}`}
+                      onClick={() => setLocationType(opt.key)}
+                      className={`h-10 rounded-xl border text-xs font-black ${locationType === opt.key ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700 dark:text-emerald-300' : 'border-(--border) bg-(--surface) text-(--muted)'}`}
                     >
-                      {type === 'at_my_place' ? 'At my place' : type === 'i_travel' ? 'I travel' : 'Both'}
+                      {opt.label}
                     </button>
                   ))}
                 </div>
+                {serviceCategory ? (
+                  <p className="mt-2 text-xs text-(--muted)">
+                    {getVerticalFulfillmentCopy(serviceCategory).sellerLocationHelp}
+                  </p>
+                ) : null}
               </div>
               <div>
                 <label className="text-xs font-black tracking-widest text-(--muted)">SERVICE AREAS</label>
@@ -580,8 +892,159 @@ function PostServiceForm() {
                   placeholder="e.g. Lekki, Ikeja, Ajah"
                 />
               </div>
+              {(locationType === 'i_travel' || locationType === 'both') &&
+              canonicalizeServiceCategorySlug(serviceCategory) !== 'catering' ? (
+                <div>
+                  <label className="text-xs font-black tracking-widest text-(--muted)">
+                    {travelFeeLabels(serviceCategory).sellerSection}
+                  </label>
+                  <p className="mt-1 text-xs text-(--muted)">
+                    {travelFeeLabels(serviceCategory).sellerHint}
+                  </p>
+                  <input
+                    value={travelFeeMajor}
+                    onChange={(e) => setTravelFeeMajor(e.target.value.replace(/[^\d.]/g, ''))}
+                    inputMode="decimal"
+                    className="mt-2 w-full h-11 rounded-xl border border-(--border) bg-(--surface) px-4 text-sm font-semibold text-(--foreground)"
+                    placeholder="Amount"
+                  />
+                </div>
+              ) : null}
             </>
           )}
+
+          {serviceCategorySupportsAvailability(serviceCategory) ? (
+            <div>
+              <label className="text-xs font-black tracking-widest text-(--muted)">
+                AVAILABILITY & CAPACITY
+              </label>
+              <p className="mt-1 text-xs text-(--muted)">
+                {productLeafForServiceCategory(serviceCategory) === 'fashion'
+                  ? 'Buyers see when you can take fittings. You still confirm each booking.'
+                  : productLeafForServiceCategory(serviceCategory) === 'real-estate'
+                    ? 'Buyers see when you can take viewings. You still confirm each booking.'
+                    : productLeafForServiceCategory(serviceCategory) === 'wellness'
+                      ? 'Buyers see when you can take sessions. You still confirm each booking.'
+                      : productLeafForServiceCategory(serviceCategory) === 'automotive'
+                        ? 'Buyers see when you can take jobs. You still confirm each booking.'
+                        : productLeafForServiceCategory(serviceCategory) === 'home'
+                          ? 'Buyers see when you can take jobs. You still confirm each booking.'
+                          : productLeafForServiceCategory(serviceCategory) === 'electronics'
+                            ? 'Buyers see when you can take repairs. You still confirm each booking.'
+                            : productLeafForServiceCategory(serviceCategory) === 'events'
+                              ? 'Buyers see when you can take events. You still confirm each booking.'
+                              : canonicalizeServiceCategorySlug(serviceCategory) === 'catering'
+                            ? 'Buyers see when you can take orders. You still confirm each booking.'
+                            : 'Buyers see when you can take appointments. You still confirm each booking.'}
+              </p>
+              <input
+                value={maxJobsPerDay}
+                onChange={(e) => setMaxJobsPerDay(e.target.value.replace(/[^\d]/g, ''))}
+                inputMode="numeric"
+                className="mt-2 w-full h-11 rounded-xl border border-(--border) bg-(--surface) px-4 text-sm font-semibold text-(--foreground)"
+                placeholder={
+                  productLeafForServiceCategory(serviceCategory) === 'wellness'
+                    ? 'Max sessions per day (e.g. 3)'
+                    : productLeafForServiceCategory(serviceCategory) === 'fashion'
+                      ? 'Max fittings per day (e.g. 3)'
+                      : productLeafForServiceCategory(serviceCategory) === 'real-estate'
+                        ? 'Max viewings per day (e.g. 3)'
+                        : canonicalizeServiceCategorySlug(serviceCategory) === 'catering'
+                          ? 'Max orders per day (e.g. 3)'
+                          : productLeafForServiceCategory(serviceCategory) === 'electronics'
+                            ? 'Max repairs per day (e.g. 5)'
+                            : productLeafForServiceCategory(serviceCategory) === 'events'
+                              ? 'Max events per day (e.g. 2)'
+                              : 'Max jobs per day (e.g. 3)'
+                }
+              />
+              <p className="mt-3 text-[10px] font-black tracking-widest text-(--muted)">DAYS OPEN</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {WEEKDAY_LABELS.map((d) => {
+                  const on = availWeekdays.includes(d.key);
+                  return (
+                    <button
+                      key={d.key}
+                      type="button"
+                      onClick={() =>
+                        setAvailWeekdays((prev) =>
+                          on ? prev.filter((x) => x !== d.key) : [...prev, d.key].sort(),
+                        )
+                      }
+                      className={`h-9 rounded-full border px-3 text-xs font-black ${
+                        on
+                          ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-700'
+                          : 'border-(--border) bg-(--surface) text-(--muted)'
+                      }`}
+                    >
+                      {d.short}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <input
+                  value={windowStart}
+                  onChange={(e) => setWindowStart(e.target.value)}
+                  className="h-11 rounded-xl border border-(--border) bg-(--surface) px-3 text-sm font-semibold text-(--foreground)"
+                  placeholder="Start HH:mm"
+                />
+                <input
+                  value={windowEnd}
+                  onChange={(e) => setWindowEnd(e.target.value)}
+                  className="h-11 rounded-xl border border-(--border) bg-(--surface) px-3 text-sm font-semibold text-(--foreground)"
+                  placeholder="End HH:mm"
+                />
+              </div>
+              <p className="mt-3 text-[10px] font-black tracking-widest text-(--muted)">CLOSED DATES</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {blackoutDates.map((d) => (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => setBlackoutDates((prev) => prev.filter((x) => x !== d))}
+                    className="h-9 rounded-full border border-(--border) bg-(--surface) px-3 text-xs font-bold text-(--foreground)"
+                  >
+                    {d} ×
+                  </button>
+                ))}
+                <input
+                  type="date"
+                  className="h-9 rounded-full border border-emerald-600/40 bg-emerald-50 dark:bg-emerald-900/20 px-3 text-xs font-black text-emerald-700"
+                  onChange={(e) => {
+                    const iso = e.target.value;
+                    if (!iso) return;
+                    setBlackoutDates((prev) => (prev.includes(iso) ? prev : [...prev, iso].sort()));
+                    e.target.value = '';
+                  }}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          <button
+            type="button"
+            onClick={() => setTrustPaymentOpen(true)}
+            className="flex w-full items-center justify-between gap-3 rounded-2xl border border-(--border) bg-(--surface) px-4 py-3 text-left"
+          >
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <ShieldCheck size={16} className="shrink-0 text-(--muted)" />
+                <span className="text-sm font-bold text-(--foreground)">Trust & payment</span>
+              </div>
+              <p className="mt-1 text-xs font-semibold text-(--muted)">
+                {trustPaymentSummaryLine({
+                  cancellationPolicy,
+                  depositEnabled,
+                  depositMode,
+                  depositPercentInput,
+                  depositFixedMajor,
+                  depositPolicy,
+                })}
+              </p>
+            </div>
+            <ChevronRight size={18} className="shrink-0 text-(--muted)" />
+          </button>
 
           <label className="flex items-center justify-between rounded-2xl border border-(--border) bg-(--surface) px-4 py-3">
             <span className="text-sm font-bold text-(--foreground)">Service is visible in your store</span>
@@ -612,6 +1075,24 @@ function PostServiceForm() {
           </div>
         </div>
       ) : null}
+      <ServiceTrustPaymentSheet
+        open={trustPaymentOpen}
+        onClose={() => setTrustPaymentOpen(false)}
+        serviceCategory={serviceCategory}
+        contentLocked={contentLocked}
+        cancellationPolicy={cancellationPolicy}
+        onCancellationPolicyChange={setCancellationPolicy}
+        depositEnabled={depositEnabled}
+        onDepositEnabledChange={setDepositEnabled}
+        depositMode={depositMode}
+        onDepositModeChange={setDepositMode}
+        depositPercentInput={depositPercentInput}
+        onDepositPercentChange={setDepositPercentInput}
+        depositFixedMajor={depositFixedMajor}
+        onDepositFixedChange={setDepositFixedMajor}
+        depositPolicy={depositPolicy}
+        onDepositPolicyChange={setDepositPolicy}
+      />
     </div>
     <PostPublishingOverlay
       open={loading}

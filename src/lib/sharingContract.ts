@@ -3,6 +3,8 @@
  * Keep aligned with `store-link-mobile/src/lib/shareUtils.ts`.
  */
 
+import { defaultFulfillmentMode } from '@/lib/verticalCheckout';
+
 const DEFAULT_ORIGIN = 'https://storelink.ng';
 
 /** Server-only metadata / OG URLs (no `window`). */
@@ -57,12 +59,72 @@ export function buildProfileShareUrl(slug: string): string {
 }
 
 export function buildServiceShareUrl(serviceToken: string, sellerSlug?: string | null): string {
-  const token = String(serviceToken || '').trim();
-  const seller = String(sellerSlug || '').trim();
-  const origin = getStorelinkWebOrigin();
-  if (!token) return origin;
-  if (seller) return `${origin}/s/${encodeURIComponent(seller)}/${encodeURIComponent(token)}`;
-  return `${origin}/service/${encodeURIComponent(token)}`;
+    const token = String(serviceToken || '').trim();
+    const seller = String(sellerSlug || '').trim();
+    const origin = getStorelinkWebOrigin();
+    if (!token) return origin;
+    if (seller) return `${origin}/s/${encodeURIComponent(seller)}/${encodeURIComponent(token)}`;
+    return `${origin}/service/${encodeURIComponent(token)}`;
+}
+
+export type ServiceBookingPrefill = {
+    menuName?: string | null;
+    menuPriceMinor?: number | null;
+    fulfillment?: 'home' | 'studio' | string | null;
+    mode?: 'request' | 'quick';
+    scheduledAt?: string | null;
+    address?: string | null;
+    buyerNote?: string | null;
+};
+
+/** Query string for web bridge + mobile service-checkout deep links. */
+export function buildServiceBookingQuery(prefill: ServiceBookingPrefill): string {
+    const params = new URLSearchParams();
+    const menuName = String(prefill.menuName || '').trim();
+    if (menuName) params.set('menuName', menuName);
+    if (typeof prefill.menuPriceMinor === 'number' && Number.isFinite(prefill.menuPriceMinor) && prefill.menuPriceMinor > 0) {
+        params.set('menuPriceMinor', String(Math.round(prefill.menuPriceMinor)));
+    }
+    const fulfillment = String(prefill.fulfillment || '').trim().toLowerCase();
+    if (fulfillment) params.set('fulfillment', fulfillment);
+    const scheduledAt = String(prefill.scheduledAt || '').trim();
+    if (scheduledAt) params.set('scheduledAt', scheduledAt);
+    const address = String(prefill.address || '').trim();
+    if (address) params.set('address', address.slice(0, 500));
+    const buyerNote = String(prefill.buyerNote || '').trim();
+    if (buyerNote) params.set('buyerNote', buyerNote.slice(0, 500));
+    params.set('mode', prefill.mode === 'quick' ? 'quick' : 'request');
+    params.set('fromCart', '1');
+    params.set('openCheckout', '1');
+    return params.toString();
+}
+
+/** App/universal-link path opened after install (mobile resolves to service checkout). */
+export function buildServiceBookingIntentPath(serviceToken: string, prefill: ServiceBookingPrefill): string {
+    const token = String(serviceToken || '').trim();
+    const q = buildServiceBookingQuery(prefill);
+    return `/service-checkout/${encodeURIComponent(token)}?${q}`;
+}
+
+/** Logged-in web app bridge route (shows Continue in app UI). */
+export function buildServiceBookingWebPath(serviceToken: string, prefill: ServiceBookingPrefill): string {
+    const token = String(serviceToken || '').trim();
+    const q = buildServiceBookingQuery(prefill);
+    return `/app/service-booking/${encodeURIComponent(token)}?${q}`;
+}
+
+export function inferServiceFulfillmentMode(service: {
+    delivery_type?: string | null;
+    location_type?: string | null;
+    service_category?: string | null;
+}): 'home' | 'studio' {
+    return (
+      defaultFulfillmentMode({
+        deliveryType: service?.delivery_type,
+        locationType: service?.location_type,
+        serviceCategory: service?.service_category,
+      }) || 'home'
+    );
 }
 
 /** Public curation hub URLs (match mobile deep links; use current web origin when available). */

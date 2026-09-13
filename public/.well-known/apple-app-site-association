@@ -10,8 +10,14 @@
           "/reel/*",
           "/@*",
           "/service/*",
-          "/s/*/service/*",
-          "/spotlight/*"
+          "/s/*",
+          "/sp/*",
+          "/spotlight/*",
+          "/story-viewer/*",
+          "/curation/*",
+          "/u/*",
+          "/profile/*",
+          "/app/*"
         ]
       }
     ]

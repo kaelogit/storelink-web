@@ -9,6 +9,15 @@ import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import StoreLinkLogo from '@/components/ui/StoreLinkLogo';
 
+const RESEND_COOLDOWN_SEC = 300;
+
+function formatResendCountdown(totalSeconds: number): string {
+  const seconds = Math.max(0, Math.min(totalSeconds, RESEND_COOLDOWN_SEC));
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${String(secs).padStart(2, '0')}`;
+}
+
 function VerifyPageContent() {
   const params = useSearchParams();
   const router = useRouter();
@@ -24,7 +33,7 @@ function VerifyPageContent() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [timer, setTimer] = useState(0);
+  const [timer, setTimer] = useState(RESEND_COOLDOWN_SEC);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,6 +44,31 @@ function VerifyPageContent() {
     }
     inputRef.current?.focus();
   }, [email, router]);
+
+  useEffect(() => {
+    if (!email) return;
+    let cancelled = false;
+    const syncCooldown = async () => {
+      const { data: otpRow } = await supabase
+        .from('otp_verifications')
+        .select('created_at')
+        .eq('email', email.toLowerCase())
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (cancelled) return;
+      if (otpRow?.created_at) {
+        const elapsedSec = Math.floor((Date.now() - new Date(otpRow.created_at).getTime()) / 1000);
+        setTimer(Math.max(0, RESEND_COOLDOWN_SEC - elapsedSec));
+      } else {
+        setTimer(0);
+      }
+    };
+    void syncCooldown();
+    return () => {
+      cancelled = true;
+    };
+  }, [email, supabase]);
 
   useEffect(() => {
     if (timer <= 0) return;
@@ -52,7 +86,14 @@ function VerifyPageContent() {
       const newCode = Math.floor(100000 + Math.random() * 900000).toString();
       const { error: otpError } = await supabase
         .from('otp_verifications')
-        .upsert({ email: email.toLowerCase(), code: newCode }, { onConflict: 'email' });
+        .upsert(
+          {
+            email: email.toLowerCase(),
+            code: newCode,
+            expires_at: new Date(Date.now() + 10 * 60_000).toISOString(),
+          },
+          { onConflict: 'email' },
+        );
 
       if (otpError) throw otpError;
 
@@ -72,7 +113,7 @@ function VerifyPageContent() {
       }
 
       setMessage('A new code has been sent. Check your inbox.');
-      setTimer(30);
+      setTimer(RESEND_COOLDOWN_SEC);
       inputRef.current?.focus();
     } catch (err: any) {
       setError(err.message || 'Unable to resend code. Please try again.');
@@ -101,6 +142,10 @@ function VerifyPageContent() {
 
       if (otpError || !otpRow) {
         throw new Error('The code is invalid or expired.');
+      }
+
+      if (otpRow.expires_at && new Date(otpRow.expires_at).getTime() < Date.now()) {
+        throw new Error('This code has expired. Request a new one.');
       }
 
       const { error: profileError } = await supabase
@@ -209,7 +254,7 @@ function VerifyPageContent() {
                 {resending
                   ? 'Sending...'
                   : timer > 0
-                  ? `SEND A NEW CODE IN ${timer}s`
+                  ? `SEND A NEW CODE IN ${formatResendCountdown(timer)}`
                   : 'SEND A NEW CODE'}
               </button>
             </div>

@@ -2,9 +2,11 @@
 
 import dynamic from 'next/dynamic';
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { Search, Zap, X, Layers, Shirt, Smartphone, Sparkles, Home, Activity, Wrench, Building2, Car, Gem, ArrowRight, Smartphone as PhoneIcon } from 'lucide-react';
+import { Search, Zap, X, Layers, Shirt, Smartphone, Sparkles, Home, Activity, Wrench, Building2, Car, Utensils, Calendar, Gem, ArrowRight, Smartphone as PhoneIcon } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
+import { guestSignInHref } from '@/lib/guestAppRoutes';
 import AppTrapModal from '../../components/ui/DownloadTrap';
 const StoryRowWebLazy = dynamic(() => import('@/components/home-index/StoryRowWeb'), {
   ssr: false,
@@ -17,14 +19,123 @@ const StoryRowWebLazy = dynamic(() => import('@/components/home-index/StoryRowWe
 });
 import SearchProtocolWeb from '@/components/home-index/SearchProtocolWeb';
 import CategoryPulseWeb from '@/components/home-index/CategoryPulseWeb';
+import HomeFeedModeToggleWeb from '@/components/home-index/HomeFeedModeToggleWeb';
 import HomeCommentsSheet from '@/components/home-index/HomeCommentsSheet';
 import HomeLikesSheet from '@/components/home-index/HomeLikesSheet';
 import ExploreReelCard from '@/app/explore/ExploreReelCard';
 import WebProductCard from '@/app/explore/WebProductCard';
 import { fetchHomeFeedData } from '@/lib/homeFeedData';
+import { homeFeedEmptyMessage, homeFeedEmptyTitle, type HomeFeedMode } from '@/lib/homeFeedMode';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { enqueueRankingEventWeb, flushRankingEventQueueNowWeb } from '@/lib/rankingEventsWeb';
 import { getRankingRpcPlan } from '@/lib/rankingRouting';
+import {
+  serviceSlugsForProductLeaf,
+  serviceSlugsMatch,
+  serviceCategoryFilterValues,
+} from '@/constants/ServiceCategories';
+import { productCategoryMatchesLeaf } from '@/constants/ProductCategories';
+import { overlayProductListingCategories } from '@/lib/overlayProductListingCategories';
+import { serviceDeliveryBadgeFromTypes } from '@/lib/verticalFulfillmentCopy';
+import { hydrateReelPlaybackFields } from '@/lib/hydrateReelPlayback';
+import { hydrateReelAudioAttribution } from '@/lib/reelAudioAttribution';
+import { isFeatureEnabled } from '@/lib/featureFlags';
+import { fetchSponsoredCardsForHome } from '@/lib/homeSponsoredFetch';
+import {
+  HOME_SPONSORED_MAX_PER_SESSION,
+  injectSponsoredIntoHomeFeed,
+} from '@/lib/homeSponsoredInject';
+import { fetchSponsoredReelsForExplore } from '@/lib/exploreSponsoredFetch';
+import {
+  EXPLORE_SPONSORED_MAX_PER_SESSION,
+  injectSponsoredIntoExploreFeed,
+} from '@/lib/exploreSponsoredInject';
+import { filterVisibleSponsoredCampaigns, isAdCampaignHidden } from '@/lib/adWhyThis';
+import { useWhyThisAdStore } from '@/store/useWhyThisAdStore';
+import { HomeHouseAdRow } from '@/components/ads/HouseAdCard';
+import {
+  applyFoodDiscoveryMetaToItems,
+  fetchFoodServiceDiscoveryMetaByIds,
+  filterFoodDiscoveryItems,
+  isFoodDiscoveryContext,
+  softBoostFoodAcceptingOrders,
+  type FoodDiscoveryFilterId,
+} from '@/lib/foodDiscovery';
+import {
+  applyBeautyDiscoveryMetaToItems,
+  fetchBeautyServiceDiscoveryMetaByIds,
+  filterBeautyDiscoveryItems,
+  isBeautyDiscoveryContext,
+  softBoostBeautyAcceptingOrders,
+  type BeautyDiscoveryFilterId,
+} from '@/lib/beautyDiscovery';
+import {
+  applyFashionDiscoveryMetaToItems,
+  fetchFashionServiceDiscoveryMetaByIds,
+  filterFashionDiscoveryItems,
+  isFashionDiscoveryContext,
+  softBoostFashionAcceptingOrders,
+  type FashionDiscoveryFilterId,
+} from '@/lib/fashionDiscovery';
+import {
+  applyRealEstateDiscoveryMetaToItems,
+  fetchRealEstateServiceDiscoveryMetaByIds,
+  filterRealEstateDiscoveryItems,
+  isRealEstateDiscoveryContext,
+  softBoostRealEstateAcceptingOrders,
+  type RealEstateDiscoveryFilterId,
+} from '@/lib/realEstateDiscovery';
+import {
+  applyWellnessDiscoveryMetaToItems,
+  fetchWellnessServiceDiscoveryMetaByIds,
+  filterWellnessDiscoveryItems,
+  isWellnessDiscoveryContext,
+  softBoostWellnessAcceptingOrders,
+  type WellnessDiscoveryFilterId,
+} from '@/lib/wellnessDiscovery';
+import {
+  applyAutomotiveDiscoveryMetaToItems,
+  fetchAutomotiveServiceDiscoveryMetaByIds,
+  filterAutomotiveDiscoveryItems,
+  isAutomotiveDiscoveryContext,
+  softBoostAutomotiveAcceptingOrders,
+  type AutomotiveDiscoveryFilterId,
+} from '@/lib/automotiveDiscovery';
+import {
+  applyHomeTradesDiscoveryMetaToItems,
+  fetchHomeTradesServiceDiscoveryMetaByIds,
+  filterHomeTradesDiscoveryItems,
+  isHomeTradesDiscoveryContext,
+  softBoostHomeTradesAcceptingOrders,
+  type HomeTradesDiscoveryFilterId,
+} from '@/lib/homeTradesDiscovery';
+import {
+  applyElectronicsDiscoveryMetaToItems,
+  fetchElectronicsServiceDiscoveryMetaByIds,
+  filterElectronicsDiscoveryItems,
+  isElectronicsDiscoveryContext,
+  softBoostElectronicsAcceptingOrders,
+  type ElectronicsDiscoveryFilterId,
+} from '@/lib/electronicsDiscovery';
+import {
+  applyEventsDiscoveryMetaToItems,
+  fetchEventsServiceDiscoveryMetaByIds,
+  filterEventsDiscoveryItems,
+  isEventsDiscoveryContext,
+  softBoostEventsAcceptingOrders,
+  type EventsDiscoveryFilterId,
+} from '@/lib/eventsDiscovery';
+import {
+  AutomotiveDiscoveryFiltersWeb,
+  BeautyDiscoveryFiltersWeb,
+  ElectronicsDiscoveryFiltersWeb,
+  EventsDiscoveryFiltersWeb,
+  FashionDiscoveryFiltersWeb,
+  FoodDiscoveryFiltersWeb,
+  HomeTradesDiscoveryFiltersWeb,
+  RealEstateDiscoveryFiltersWeb,
+  WellnessDiscoveryFiltersWeb,
+} from '@/components/home-index/VerticalDiscoveryFiltersWeb';
 
 const supabase = createBrowserClient();
 
@@ -34,43 +145,26 @@ const CATEGORIES = [
   { label: 'Electronics', slug: 'electronics', icon: Smartphone, prestige: false },
   { label: 'Beauty', slug: 'beauty', icon: Sparkles, prestige: true },
   { label: 'Home', slug: 'home', icon: Home, prestige: false },
+  { label: 'Food', slug: 'food', icon: Utensils, prestige: false },
   { label: 'Wellness', slug: 'wellness', icon: Activity, prestige: false },
+  { label: 'Events', slug: 'events', icon: Calendar, prestige: false },
   { label: 'Services', slug: 'services', icon: Wrench, prestige: false },
   { label: 'Real Estate', slug: 'real-estate', icon: Building2, prestige: false },
   { label: 'Automotive', slug: 'automotive', icon: Car, prestige: false },
+  { label: 'Other', slug: 'other', icon: Layers, prestige: false },
 ];
 
 const slugToLabel: Record<string, string> = {
   all: 'All', fashion: 'Fashion', electronics: 'Electronics', tech: 'Electronics',
-  beauty: 'Beauty', home: 'Home', wellness: 'Wellness', services: 'Services',
-  'real-estate': 'Real Estate', auto: 'Automotive', automotive: 'Automotive',
+  beauty: 'Beauty', home: 'Home', food: 'Food', wellness: 'Wellness', events: 'Events',
+  services: 'Services', 'real-estate': 'Real Estate', auto: 'Automotive', automotive: 'Automotive',
+  other: 'Other',
 };
-
-const BEAUTY_SERVICE_CATS = [
-  'nail_tech',
-  'barber',
-  'makeup_artist',
-  'makeup_artistry',
-  'pedicure_manicure',
-  'braids_styling',
-  'lashes',
-  'skincare',
-];
-const FASHION_SERVICE_CATS = ['tailoring', 'alterations', 'custom_outfits'];
-const EVENT_SERVICE_CATS = ['photographer', 'surprise_planners', 'event_decorator'];
 
 const normalizeCategorySlug = (raw: string) => {
   const normalized = String(raw || '').toLowerCase().trim();
   if (normalized === 'auto') return 'automotive';
   return normalized;
-};
-
-const matchesProductCategory = (productCategory: string, sellerCategory: string, wantedSlug: string) => {
-  const p = normalizeCategorySlug(productCategory);
-  const s = normalizeCategorySlug(sellerCategory);
-  const wanted = normalizeCategorySlug(wantedSlug);
-  if (wanted === 'all') return true;
-  return p === wanted || s === wanted;
 };
 
 const matchesServiceCategory = (serviceCategory: string, sellerCategory: string, wantedSlug: string) => {
@@ -79,12 +173,9 @@ const matchesServiceCategory = (serviceCategory: string, sellerCategory: string,
   const wanted = normalizeCategorySlug(wantedSlug);
 
   if (wanted === 'all' || wanted === 'services') return true;
-  if (wanted === 'beauty') return BEAUTY_SERVICE_CATS.includes(service) || seller === 'beauty';
-  if (wanted === 'fashion') return FASHION_SERVICE_CATS.includes(service) || seller === 'fashion';
-  if (wanted === 'home' || wanted === 'electronics') {
-    return EVENT_SERVICE_CATS.includes(service) || seller === wanted;
-  }
-  return service === wanted || seller === wanted;
+  const leafSlugs = serviceSlugsForProductLeaf(wanted);
+  if (leafSlugs.length > 0) return leafSlugs.includes(service) || seller === wanted;
+  return serviceSlugsMatch(service, wanted) || seller === wanted;
 };
 
 type DecodedCategory =
@@ -201,7 +292,35 @@ export default function ClientExploreWrapper({
   }, [activeCategory]);
   const [isFlashMode, setIsFlashMode] = useState(false);
   const [showCategoryFilter, setShowCategoryFilter] = useState(false);
+  const [homeFeedMode, setHomeFeedMode] = useState<HomeFeedMode>('forYou');
   const [products, setProducts] = useState<any[]>([]);
+  const [foodDiscoveryFilters, setFoodDiscoveryFilters] = useState<Set<FoodDiscoveryFilterId>>(
+    () => new Set(),
+  );
+  const [beautyDiscoveryFilters, setBeautyDiscoveryFilters] = useState<Set<BeautyDiscoveryFilterId>>(
+    () => new Set(),
+  );
+  const [fashionDiscoveryFilters, setFashionDiscoveryFilters] = useState<
+    Set<FashionDiscoveryFilterId>
+  >(() => new Set());
+  const [realEstateDiscoveryFilters, setRealEstateDiscoveryFilters] = useState<
+    Set<RealEstateDiscoveryFilterId>
+  >(() => new Set());
+  const [wellnessDiscoveryFilters, setWellnessDiscoveryFilters] = useState<
+    Set<WellnessDiscoveryFilterId>
+  >(() => new Set());
+  const [automotiveDiscoveryFilters, setAutomotiveDiscoveryFilters] = useState<
+    Set<AutomotiveDiscoveryFilterId>
+  >(() => new Set());
+  const [homeTradesDiscoveryFilters, setHomeTradesDiscoveryFilters] = useState<
+    Set<HomeTradesDiscoveryFilterId>
+  >(() => new Set());
+  const [electronicsDiscoveryFilters, setElectronicsDiscoveryFilters] = useState<
+    Set<ElectronicsDiscoveryFilterId>
+  >(() => new Set());
+  const [eventsDiscoveryFilters, setEventsDiscoveryFilters] = useState<
+    Set<EventsDiscoveryFilterId>
+  >(() => new Set());
   const [isRecovering, setIsRecovering] = useState(false);
   const productsRef = useRef<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -211,8 +330,13 @@ export default function ClientExploreWrapper({
   const [sheetItem, setSheetItem] = useState<any>(null);
   const shouldRenderCards = renderStyle === 'cards' || (renderStyle === 'auto' && surface === 'home');
   const [viewerId, setViewerId] = useState<string | null>(null);
+  const [viewerCountry, setViewerCountry] = useState('NG');
   const [viewerResolved, setViewerResolved] = useState(false);
   const [exploreRankV2Enabled, setExploreRankV2Enabled] = useState(false);
+  const adsHiddenEpoch = useWhyThisAdStore((s) => s.hiddenEpoch);
+  const adsSessionIdRef = useRef(
+    `web-ads-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+  );
   const refreshSeedRef = useRef(Math.random().toString(36).slice(2));
   const loggedImpressionsRef = useRef<Set<string>>(new Set());
   const pendingEngagementRef = useRef<Set<string>>(new Set());
@@ -250,7 +374,10 @@ export default function ClientExploreWrapper({
   }, []);
   const toggleCardLike = useCallback(
     async (target: any) => {
-      if (!viewerId) return;
+      if (!viewerId) {
+        router.push(`/auth/login?next=${encodeURIComponent(pathname || '/app')}`);
+        return;
+      }
       const itemId = String(target?.service_listing_id || target?.product_id || target?.id || '');
       if (!itemId) return;
       const isServiceItem = target?.type === 'service' || !!target?.service_listing_id;
@@ -323,11 +450,14 @@ export default function ClientExploreWrapper({
         pendingEngagementRef.current.delete(guardKey);
       }
     },
-    [viewerId],
+    [viewerId, router, pathname],
   );
   const toggleCardWishlist = useCallback(
     async (target: any) => {
-      if (!viewerId) return;
+      if (!viewerId) {
+        router.push(`/auth/login?next=${encodeURIComponent(pathname || '/app')}`);
+        return;
+      }
       const itemId = String(target?.service_listing_id || target?.product_id || target?.id || '');
       if (!itemId) return;
       const isServiceItem = target?.type === 'service' || !!target?.service_listing_id;
@@ -408,7 +538,7 @@ export default function ClientExploreWrapper({
         pendingEngagementRef.current.delete(guardKey);
       }
     },
-    [viewerId],
+    [viewerId, router, pathname],
   );
   const handleCategorySelect = (value: string) => {
     setActiveCategory(value);
@@ -422,6 +552,19 @@ export default function ClientExploreWrapper({
     else params.delete('category');
     router.replace(`${categoryBasePath}${params.toString() ? `?${params.toString()}` : ''}`, { scroll: false });
   };
+
+  const handleHomeFeedModeChange = useCallback(
+    (mode: HomeFeedMode) => {
+      if (mode === homeFeedMode) return;
+      if (mode === 'following' && !viewerId) {
+        router.push(`/auth/login?next=${encodeURIComponent(pathname || '/app')}`);
+        return;
+      }
+      setHomeFeedMode(mode);
+      loggedImpressionsRef.current.clear();
+    },
+    [homeFeedMode, viewerId, router, pathname],
+  );
 
   useEffect(() => {
     let active = true;
@@ -455,6 +598,31 @@ export default function ClientExploreWrapper({
   }, []);
 
   useEffect(() => {
+    if (!viewerId) {
+      setViewerCountry('NG');
+      return;
+    }
+    let active = true;
+    void (async () => {
+      try {
+        const { data } = await supabase
+          .from('profiles')
+          .select('location_country_code')
+          .eq('id', viewerId)
+          .maybeSingle();
+        if (!active) return;
+        const code = String(data?.location_country_code || '').trim().toUpperCase();
+        setViewerCountry(code || 'NG');
+      } catch {
+        if (active) setViewerCountry('NG');
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [viewerId, supabase]);
+
+  useEffect(() => {
     productsRef.current = products;
   }, [products]);
 
@@ -473,6 +641,7 @@ export default function ClientExploreWrapper({
           activeCategory?: string;
           isFlashMode?: boolean;
           showCategoryFilter?: boolean;
+          homeFeedMode?: HomeFeedMode;
         };
         if (typeof parsed.query === 'string') setQuery(parsed.query);
         if (typeof parsed.activeCategory === 'string' && parsed.activeCategory.trim()) {
@@ -480,6 +649,9 @@ export default function ClientExploreWrapper({
         }
         if (typeof parsed.isFlashMode === 'boolean') setIsFlashMode(parsed.isFlashMode);
         if (typeof parsed.showCategoryFilter === 'boolean') setShowCategoryFilter(parsed.showCategoryFilter);
+        if (parsed.homeFeedMode === 'following' || parsed.homeFeedMode === 'forYou') {
+          setHomeFeedMode(parsed.homeFeedMode);
+        }
         restored = true;
       }
     } catch {
@@ -500,12 +672,13 @@ export default function ClientExploreWrapper({
           activeCategory,
           isFlashMode,
           showCategoryFilter,
+          homeFeedMode,
         }),
       );
     } catch {
       // ignore storage write failures
     }
-  }, [embedded, surfaceStateKey, query, activeCategory, isFlashMode, showCategoryFilter]);
+  }, [embedded, surfaceStateKey, query, activeCategory, isFlashMode, showCategoryFilter, homeFeedMode]);
 
   useEffect(() => {
     refreshSeedRef.current = Math.random().toString(36).slice(2);
@@ -521,6 +694,15 @@ export default function ClientExploreWrapper({
   };
 
   const normalizeFeedItem = (item: any, fallbackType: 'product' | 'service' = 'product') => {
+    if (item?.type === 'house' || item?.is_house) {
+      return {
+        ...item,
+        type: 'house',
+        is_house: true,
+        is_sponsored: true,
+        campaign_id: item?.campaign_id ? String(item.campaign_id) : null,
+      };
+    }
     const creatorFromRaw =
       item?.creator && typeof item.creator === 'object'
         ? item.creator
@@ -614,7 +796,9 @@ export default function ClientExploreWrapper({
   const withStableUniqueKeys = (rows: any[]) => {
     const seen = new Map<string, number>();
     return rows.map((row) => {
-      const base = `${row.type || 'item'}:${row.id || row.slug || Math.random().toString(36).slice(2)}`;
+      const base =
+        row.ad_list_key ||
+        `${row.type || 'item'}:${row.id || row.slug || Math.random().toString(36).slice(2)}`;
       const count = seen.get(base) ?? 0;
       seen.set(base, count + 1);
       return {
@@ -690,7 +874,12 @@ export default function ClientExploreWrapper({
     };
     const resolveServiceId = (row: any) => String(row?.service_listing_id || row?.id || '');
     const productRows = rowsForEngagement.filter(
-      (row: any) => !(row?.is_spotlight || row?.spotlight_post_id || row?.source_kind) && (row?.type || 'product') !== 'service' && !row?.service_listing_id,
+      (row: any) =>
+        row?.type !== 'house' &&
+        !row?.is_house &&
+        !(row?.is_spotlight || row?.spotlight_post_id || row?.source_kind) &&
+        (row?.type || 'product') !== 'service' &&
+        !row?.service_listing_id,
     );
     const serviceRows = rowsForEngagement.filter((row: any) => row?.type === 'service' || !!row?.service_listing_id);
     const productIds = Array.from(new Set(productRows.map((p: any) => resolveProductId(p)).filter(Boolean)));
@@ -840,7 +1029,9 @@ export default function ClientExploreWrapper({
 
     let reelQuery = supabase
       .from('reels')
-      .select('id,caption,video_url,thumbnail_url,product_id,service_listing_id,seller_id,created_at,short_code')
+      .select(
+        'id,caption,video_url,video_url_720,playback_hls_url,processing_status,audio_label,audio_source_type,thumbnail_url,product_id,service_listing_id,seller_id,created_at,short_code,views_count',
+      )
       .order('created_at', { ascending: false })
       .limit(limit);
     if (followedSellerIds && followedSellerIds.length > 0) {
@@ -900,8 +1091,14 @@ export default function ClientExploreWrapper({
           currency_code: isService ? (service?.currency_code || 'NGN') : (product?.currency_code || 'NGN'),
           image_urls: isService ? resolveServiceMedia(service?.media) : (product?.image_urls || [r.thumbnail_url].filter(Boolean)),
           video_url: r.video_url || null,
+          video_url_720: r.video_url_720 || null,
+          playback_hls_url: r.playback_hls_url || null,
+          processing_status: r.processing_status || null,
+          audio_label: r.audio_label || null,
+          audio_source_type: r.audio_source_type || null,
           thumbnail_url: r.thumbnail_url || null,
           short_code: r.short_code || null,
+          views_count: Number(r.views_count || 0),
           is_flash_drop: product?.is_flash_drop || false,
           flash_price: product?.flash_price || null,
           flash_end_time: product?.flash_end_time || null,
@@ -1022,7 +1219,8 @@ export default function ClientExploreWrapper({
             userId,
             seed,
             limit: embedded && surface === 'home' ? 28 : 50,
-            locationCountry: 'NG',
+            locationCountry: viewerCountry,
+            mode: homeFeedMode,
           });
           rpcData = home.rows;
           rpcError = null;
@@ -1042,7 +1240,7 @@ export default function ClientExploreWrapper({
             p_search_query: cleanSearch,
             p_offset: 0,
             p_limit: 30,
-            p_location_country: 'NG',
+            p_location_country: viewerCountry,
           }));
           rpcData = discovery.data;
           rpcError = discovery.error;
@@ -1054,7 +1252,7 @@ export default function ClientExploreWrapper({
             p_search_query: cleanSearch,
             p_offset: 0,
             p_limit: 30,
-            p_location_country: 'NG',
+            p_location_country: viewerCountry,
           }));
           rpcData = forYou.data;
           rpcError = forYou.error;
@@ -1084,7 +1282,7 @@ export default function ClientExploreWrapper({
           setIsRecovering(false);
         }
 
-        if ((rpcError || !rpcData) && surface === 'home') {
+        if ((rpcError || !rpcData) && surface === 'home' && homeFeedMode === 'forYou') {
             const { data: tableData } = await supabase
                 .from('products')
                 .select(`*, seller:profiles ( id, display_name, slug, logo_url, is_verified, subscription_plan, loyalty_enabled, loyalty_percentage, location_city, category )`)
@@ -1121,8 +1319,9 @@ export default function ClientExploreWrapper({
           const hasProductsInBase = mappedBase.some((row: any) => (row?.type || 'product') !== 'service' && !row?.service_listing_id);
           const hasServicesInBase = mappedBase.some((row: any) => row?.type === 'service' || !!row?.service_listing_id);
           finalData = mappedBase;
+          const allowOrganicFallback = homeFeedMode === 'forYou';
 
-          if (!hasProductsInBase) {
+          if (allowOrganicFallback && !hasProductsInBase) {
             const { data: fallbackProducts } = await supabase
               .from('products')
               .select(`*, seller:profiles ( id, display_name, slug, logo_url, is_verified, subscription_plan, loyalty_enabled, loyalty_percentage, location_city, category )`)
@@ -1136,7 +1335,7 @@ export default function ClientExploreWrapper({
           }
 
           // Keep manual services only as a fallback when home RPC path doesn't include them.
-          if (!hasServicesInBase) {
+          if (allowOrganicFallback && !hasServicesInBase) {
           const { data: serviceRows } = await supabase
             .from('service_listings')
             .select(`
@@ -1279,12 +1478,15 @@ export default function ClientExploreWrapper({
           });
         }
 
-        if (surface === 'home') {
+          if (surface === 'home') {
           finalData = finalData.filter((p: any) => {
+            if (p.type === 'house' || p.is_house) return true;
             if (p.type === 'service' || p.service_listing_id) return true;
             if (p.stock_quantity == null) return true;
             return Number(p.stock_quantity) > 0;
           });
+
+          finalData = await overlayProductListingCategories(finalData);
 
           const decodedCategory = safeDecodeCategorySelectionKey(activeCategory);
           if (decodedCategory.kind !== 'all') {
@@ -1294,24 +1496,17 @@ export default function ClientExploreWrapper({
               finalData = finalData.filter((p: any) => p.type === 'service' || !!p.service_listing_id);
             } else if (decodedCategory.kind === 'product') {
               const wanted = decodedCategory.slug.toLowerCase();
-              const wantedServiceCats =
-                wanted === 'beauty'
-                  ? BEAUTY_SERVICE_CATS
-                  : wanted === 'fashion'
-                    ? FASHION_SERVICE_CATS
-                    : wanted === 'home' || wanted === 'electronics'
-                      ? EVENT_SERVICE_CATS
-                      : [];
+              const wantedServiceCats = serviceSlugsForProductLeaf(wanted);
               finalData = finalData.filter((p: any) => {
                 if (p.type === 'service' || p.service_listing_id) {
                   const serviceCat = String(p.category || p.category_name || '').toLowerCase();
                   return wantedServiceCats.includes(serviceCat);
                 }
-                const productCat = String(p.category || p.category_name || '').toLowerCase();
-                return productCat === wanted;
+                return productCategoryMatchesLeaf(p.category || p.category_name, wanted);
               });
             } else if (decodedCategory.kind === 'services') {
               const wanted = decodedCategory.slug.toLowerCase();
+              const wantedValues = serviceCategoryFilterValues(wanted);
               const productSellerIds = Array.from(
                 new Set(
                   finalData
@@ -1324,7 +1519,7 @@ export default function ClientExploreWrapper({
                 const { data: serviceSellerRows } = await supabase
                   .from('service_listings')
                   .select('seller_id')
-                  .eq('service_category', wanted)
+                  .in('service_category', wantedValues)
                   .in('seller_id', productSellerIds)
                   .eq('is_active', true);
                 sellerIdsWithService = new Set((serviceSellerRows || []).map((r: any) => String(r.seller_id)));
@@ -1332,11 +1527,105 @@ export default function ClientExploreWrapper({
               finalData = finalData.filter((p: any) => {
                 if (p.type === 'service' || p.service_listing_id) {
                   const serviceCat = String(p.category || p.category_name || '').toLowerCase();
-                  return serviceCat === wanted;
+                  return serviceSlugsMatch(serviceCat, wanted);
                 }
                 return !!p.seller?.id && sellerIdsWithService.has(String(p.seller.id));
               });
             }
+          }
+
+          const discDecoded: DecodedCategory = (() => {
+            const d = decodedCategory;
+            if (d.kind !== 'all') return d;
+            const slug = String(activeCategorySlug || '').toLowerCase();
+            if (
+              slug === 'food' ||
+              slug === 'beauty' ||
+              slug === 'fashion' ||
+              slug === 'real-estate' ||
+              slug === 'wellness' ||
+              slug === 'automotive' ||
+              slug === 'home' ||
+              slug === 'electronics' ||
+              slug === 'tech' ||
+              slug === 'technology' ||
+              slug === 'events' ||
+              slug === 'event'
+            ) {
+              return {
+                kind: 'product',
+                slug:
+                  slug === 'tech' || slug === 'technology'
+                    ? 'electronics'
+                    : slug === 'event'
+                      ? 'events'
+                      : slug,
+              };
+            }
+            return d;
+          })();
+          const serviceIdsForDiscovery = Array.from(
+            new Set(
+              finalData
+                .filter((p: any) => p.type === 'service' || p.service_listing_id)
+                .map((p: any) => String(p.service_listing_id || p.id || '').trim())
+                .filter(Boolean),
+            ),
+          );
+          if (isFoodDiscoveryContext(discDecoded)) {
+            const metaById = serviceIdsForDiscovery.length
+              ? await fetchFoodServiceDiscoveryMetaByIds(serviceIdsForDiscovery)
+              : new Map();
+            finalData = applyFoodDiscoveryMetaToItems(finalData, metaById);
+            finalData = softBoostFoodAcceptingOrders(finalData);
+          } else if (isBeautyDiscoveryContext(discDecoded)) {
+            const metaById = serviceIdsForDiscovery.length
+              ? await fetchBeautyServiceDiscoveryMetaByIds(serviceIdsForDiscovery)
+              : new Map();
+            finalData = applyBeautyDiscoveryMetaToItems(finalData, metaById);
+            finalData = softBoostBeautyAcceptingOrders(finalData);
+          } else if (isFashionDiscoveryContext(discDecoded)) {
+            const metaById = serviceIdsForDiscovery.length
+              ? await fetchFashionServiceDiscoveryMetaByIds(serviceIdsForDiscovery)
+              : new Map();
+            finalData = applyFashionDiscoveryMetaToItems(finalData, metaById);
+            finalData = softBoostFashionAcceptingOrders(finalData);
+          } else if (isRealEstateDiscoveryContext(discDecoded)) {
+            const metaById = serviceIdsForDiscovery.length
+              ? await fetchRealEstateServiceDiscoveryMetaByIds(serviceIdsForDiscovery)
+              : new Map();
+            finalData = applyRealEstateDiscoveryMetaToItems(finalData, metaById);
+            finalData = softBoostRealEstateAcceptingOrders(finalData);
+          } else if (isWellnessDiscoveryContext(discDecoded)) {
+            const metaById = serviceIdsForDiscovery.length
+              ? await fetchWellnessServiceDiscoveryMetaByIds(serviceIdsForDiscovery)
+              : new Map();
+            finalData = applyWellnessDiscoveryMetaToItems(finalData, metaById);
+            finalData = softBoostWellnessAcceptingOrders(finalData);
+          } else if (isAutomotiveDiscoveryContext(discDecoded)) {
+            const metaById = serviceIdsForDiscovery.length
+              ? await fetchAutomotiveServiceDiscoveryMetaByIds(serviceIdsForDiscovery)
+              : new Map();
+            finalData = applyAutomotiveDiscoveryMetaToItems(finalData, metaById);
+            finalData = softBoostAutomotiveAcceptingOrders(finalData);
+          } else if (isHomeTradesDiscoveryContext(discDecoded)) {
+            const metaById = serviceIdsForDiscovery.length
+              ? await fetchHomeTradesServiceDiscoveryMetaByIds(serviceIdsForDiscovery)
+              : new Map();
+            finalData = applyHomeTradesDiscoveryMetaToItems(finalData, metaById);
+            finalData = softBoostHomeTradesAcceptingOrders(finalData);
+          } else if (isElectronicsDiscoveryContext(discDecoded)) {
+            const metaById = serviceIdsForDiscovery.length
+              ? await fetchElectronicsServiceDiscoveryMetaByIds(serviceIdsForDiscovery)
+              : new Map();
+            finalData = applyElectronicsDiscoveryMetaToItems(finalData, metaById);
+            finalData = softBoostElectronicsAcceptingOrders(finalData);
+          } else if (isEventsDiscoveryContext(discDecoded)) {
+            const metaById = serviceIdsForDiscovery.length
+              ? await fetchEventsServiceDiscoveryMetaByIds(serviceIdsForDiscovery)
+              : new Map();
+            finalData = applyEventsDiscoveryMetaToItems(finalData, metaById);
+            finalData = softBoostEventsAcceptingOrders(finalData);
           }
 
           const cleanSearch = query.trim().toLowerCase();
@@ -1423,7 +1712,9 @@ export default function ClientExploreWrapper({
           const backupRows = await loadExploreBackupRows(30);
           if (backupRows.length > 0) {
             const reelLikeBackup = backupRows.filter((r: any) => isReelLikeRow(r));
-            const enrichedBackup = await enrichEngagement(reelLikeBackup.length ? reelLikeBackup : backupRows);
+            let enrichedBackup = await enrichEngagement(reelLikeBackup.length ? reelLikeBackup : backupRows);
+            enrichedBackup = await hydrateReelPlaybackFields(supabase, enrichedBackup);
+            enrichedBackup = await hydrateReelAudioAttribution(supabase, enrichedBackup);
             setProducts(enrichedBackup);
             setIsRecovering(false);
             return;
@@ -1450,8 +1741,67 @@ export default function ClientExploreWrapper({
             .map((x: any) => x.row);
         }
 
+        finalData = finalData.slice(0, 30);
+
+        const allowHomeAds =
+          surface === 'home' &&
+          homeFeedMode === 'forYou' &&
+          !isFlashMode &&
+          decodedCategory.kind === 'all' &&
+          !cleanSearch &&
+          !!userId;
+        const allowExploreAds =
+          surface === 'explore_discovery' &&
+          !cleanSearch &&
+          decodedCategory.kind === 'all' &&
+          !!userId;
+        if ((allowHomeAds || allowExploreAds) && finalData.length > 0) {
+          try {
+            const adsOn = await isFeatureEnabled('ads_enabled');
+            if (adsOn) {
+              if (allowHomeAds) {
+                const pool = await fetchSponsoredCardsForHome({
+                  userId: String(userId),
+                  countryCode: viewerCountry,
+                  limit: HOME_SPONSORED_MAX_PER_SESSION,
+                });
+                const visiblePool = filterVisibleSponsoredCampaigns(pool).map((row) =>
+                  normalizeFeedItem(row),
+                );
+                if (visiblePool.length) {
+                  finalData = injectSponsoredIntoHomeFeed(finalData, visiblePool, {
+                    sessionId: adsSessionIdRef.current,
+                    maxInserts: HOME_SPONSORED_MAX_PER_SESSION,
+                  });
+                }
+              } else {
+                const pool = await fetchSponsoredReelsForExplore({
+                  userId: String(userId),
+                  countryCode: viewerCountry,
+                  limit: EXPLORE_SPONSORED_MAX_PER_SESSION,
+                });
+                const visiblePool = filterVisibleSponsoredCampaigns(pool).map((row) =>
+                  normalizeFeedItem(row),
+                );
+                if (visiblePool.length) {
+                  finalData = injectSponsoredIntoExploreFeed(finalData, visiblePool, {
+                    sessionId: adsSessionIdRef.current,
+                    maxInserts: EXPLORE_SPONSORED_MAX_PER_SESSION,
+                  });
+                }
+              }
+            }
+          } catch {
+            // keep organic page
+          }
+        }
+
         finalData = await enrichEngagement(finalData);
         finalData = await hydrateSpotlightProfiles(finalData);
+        if (surface === 'explore_discovery' || surface === 'explore_for_you') {
+          finalData = await hydrateReelPlaybackFields(supabase, finalData);
+          finalData = await hydrateReelAudioAttribution(supabase, finalData);
+        }
         finalData = finalData.map((row: any) => {
           const isService = row?.type === 'service' || !!row?.service_listing_id;
           if (!isService) return row;
@@ -1468,25 +1818,20 @@ export default function ClientExploreWrapper({
               ? `${row.seller.location_city}, ${row.seller.location_state}`
               : row?.seller?.location_city || row?.seller?.location_state || null;
           const deliveryBadge =
+            serviceDeliveryBadgeFromTypes(
+              row?.delivery_type,
+              row?.location_type,
+              row?.service_category || row?.category,
+            ) ||
             row?.service_delivery_badge ||
-            (row?.delivery_type === 'online'
-              ? 'ONLINE'
-              : row?.delivery_type === 'in_person' && row?.location_type === 'at_my_place'
-                ? 'STUDIO ONLY'
-                : row?.delivery_type === 'in_person' && row?.location_type === 'i_travel'
-                  ? 'HOME SERVICE'
-                  : row?.delivery_type === 'in_person' && row?.location_type === 'both'
-                    ? 'HOME & STUDIO'
-                    : row?.delivery_type === 'both'
-                      ? 'HOME & STUDIO'
-                      : null);
+            null;
           return {
             ...row,
             service_distance_label: isOwn ? 'Your listing' : row?.service_distance_label || kmLabel || fallbackLocation || null,
             service_delivery_badge: deliveryBadge,
           };
         });
-        setProducts(withStableUniqueKeys(finalData.slice(0, 30)));
+        setProducts(withStableUniqueKeys(finalData));
       } catch (err) {
           console.error("Fetch error:", err);
       } finally {
@@ -1500,7 +1845,7 @@ export default function ClientExploreWrapper({
       void fetchProducts();
     }, debounceMs);
     return () => clearTimeout(timer);
-  }, [query, activeCategorySlug, isFlashMode, surface, viewerId, viewerResolved, exploreRankV2Enabled, embedded]);
+  }, [query, activeCategorySlug, isFlashMode, surface, viewerId, viewerCountry, viewerResolved, exploreRankV2Enabled, embedded, homeFeedMode, activeCategory]);
 
   useEffect(() => {
     if (surface !== 'home') return;
@@ -1559,32 +1904,262 @@ export default function ClientExploreWrapper({
   }, [viewerId]);
 
   const decodedCategory = safeDecodeCategorySelectionKey(activeCategory);
+  const discoveryDecoded = useMemo((): DecodedCategory => {
+    if (decodedCategory.kind !== 'all') return decodedCategory;
+    const slug = String(activeCategorySlug || '').toLowerCase();
+    if (
+      slug === 'food' ||
+      slug === 'beauty' ||
+      slug === 'fashion' ||
+      slug === 'real-estate' ||
+      slug === 'wellness' ||
+      slug === 'automotive' ||
+      slug === 'home' ||
+      slug === 'electronics' ||
+      slug === 'tech' ||
+      slug === 'technology' ||
+      slug === 'events' ||
+      slug === 'event'
+    ) {
+      return {
+        kind: 'product',
+        slug:
+          slug === 'tech' || slug === 'technology'
+            ? 'electronics'
+            : slug === 'event'
+              ? 'events'
+              : slug,
+      };
+    }
+    return decodedCategory;
+  }, [decodedCategory, activeCategorySlug]);
+  const isFoodContext = surface === 'home' && isFoodDiscoveryContext(discoveryDecoded);
+  const isBeautyContext = surface === 'home' && isBeautyDiscoveryContext(discoveryDecoded);
+  const isFashionContext = surface === 'home' && isFashionDiscoveryContext(discoveryDecoded);
+  const isRealEstateContext = surface === 'home' && isRealEstateDiscoveryContext(discoveryDecoded);
+  const isWellnessContext = surface === 'home' && isWellnessDiscoveryContext(discoveryDecoded);
+  const isAutomotiveContext = surface === 'home' && isAutomotiveDiscoveryContext(discoveryDecoded);
+  const isHomeTradesContext = surface === 'home' && isHomeTradesDiscoveryContext(discoveryDecoded);
+  const isElectronicsContext = surface === 'home' && isElectronicsDiscoveryContext(discoveryDecoded);
+  const isEventsContext = surface === 'home' && isEventsDiscoveryContext(discoveryDecoded);
+
+  useEffect(() => {
+    if (!isFoodContext && foodDiscoveryFilters.size) setFoodDiscoveryFilters(new Set());
+  }, [isFoodContext, foodDiscoveryFilters.size]);
+  useEffect(() => {
+    if (!isBeautyContext && beautyDiscoveryFilters.size) setBeautyDiscoveryFilters(new Set());
+  }, [isBeautyContext, beautyDiscoveryFilters.size]);
+  useEffect(() => {
+    if (!isFashionContext && fashionDiscoveryFilters.size) setFashionDiscoveryFilters(new Set());
+  }, [isFashionContext, fashionDiscoveryFilters.size]);
+  useEffect(() => {
+    if (!isRealEstateContext && realEstateDiscoveryFilters.size) {
+      setRealEstateDiscoveryFilters(new Set());
+    }
+  }, [isRealEstateContext, realEstateDiscoveryFilters.size]);
+  useEffect(() => {
+    if (!isWellnessContext && wellnessDiscoveryFilters.size) {
+      setWellnessDiscoveryFilters(new Set());
+    }
+  }, [isWellnessContext, wellnessDiscoveryFilters.size]);
+  useEffect(() => {
+    if (!isAutomotiveContext && automotiveDiscoveryFilters.size) {
+      setAutomotiveDiscoveryFilters(new Set());
+    }
+  }, [isAutomotiveContext, automotiveDiscoveryFilters.size]);
+  useEffect(() => {
+    if (!isHomeTradesContext && homeTradesDiscoveryFilters.size) {
+      setHomeTradesDiscoveryFilters(new Set());
+    }
+  }, [isHomeTradesContext, homeTradesDiscoveryFilters.size]);
+  useEffect(() => {
+    if (!isElectronicsContext && electronicsDiscoveryFilters.size) {
+      setElectronicsDiscoveryFilters(new Set());
+    }
+  }, [isElectronicsContext, electronicsDiscoveryFilters.size]);
+  useEffect(() => {
+    if (!isEventsContext && eventsDiscoveryFilters.size) {
+      setEventsDiscoveryFilters(new Set());
+    }
+  }, [isEventsContext, eventsDiscoveryFilters.size]);
+
+  const toggleFoodDiscoveryFilter = useCallback((id: FoodDiscoveryFilterId) => {
+    setFoodDiscoveryFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+  const toggleBeautyDiscoveryFilter = useCallback((id: BeautyDiscoveryFilterId) => {
+    setBeautyDiscoveryFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+  const toggleFashionDiscoveryFilter = useCallback((id: FashionDiscoveryFilterId) => {
+    setFashionDiscoveryFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+  const toggleRealEstateDiscoveryFilter = useCallback((id: RealEstateDiscoveryFilterId) => {
+    setRealEstateDiscoveryFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+  const toggleWellnessDiscoveryFilter = useCallback((id: WellnessDiscoveryFilterId) => {
+    setWellnessDiscoveryFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+  const toggleAutomotiveDiscoveryFilter = useCallback((id: AutomotiveDiscoveryFilterId) => {
+    setAutomotiveDiscoveryFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+  const toggleHomeTradesDiscoveryFilter = useCallback((id: HomeTradesDiscoveryFilterId) => {
+    setHomeTradesDiscoveryFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+  const toggleElectronicsDiscoveryFilter = useCallback((id: ElectronicsDiscoveryFilterId) => {
+    setElectronicsDiscoveryFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+  const toggleEventsDiscoveryFilter = useCallback((id: EventsDiscoveryFilterId) => {
+    setEventsDiscoveryFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
   const emptyStateTitle =
-    surface === 'explore_for_you'
-      ? 'No reels here'
-      : surface === 'spotlight'
+    surface === 'home'
+      ? (isEventsContext && eventsDiscoveryFilters.size > 0) ||
+        (isElectronicsContext && electronicsDiscoveryFilters.size > 0) ||
+        (isAutomotiveContext && automotiveDiscoveryFilters.size > 0) ||
+        (isHomeTradesContext && homeTradesDiscoveryFilters.size > 0) ||
+        (isWellnessContext && wellnessDiscoveryFilters.size > 0) ||
+        (isFashionContext && fashionDiscoveryFilters.size > 0) ||
+        (isBeautyContext && beautyDiscoveryFilters.size > 0) ||
+        (isRealEstateContext && realEstateDiscoveryFilters.size > 0) ||
+        (isFoodContext && foodDiscoveryFilters.size > 0)
+        ? 'No matches for these filters'
+        : homeFeedEmptyTitle(homeFeedMode, decodedCategory.kind)
+      : surface === 'explore_for_you'
         ? 'No reels here'
-        : surface === 'explore_discovery'
+        : surface === 'spotlight'
           ? 'No reels here'
-          : 'No reels here';
+          : surface === 'explore_discovery'
+            ? 'No reels here'
+            : 'No reels here';
   const emptyStateSubtext =
-    surface === 'explore_for_you'
-      ? query.trim()
-        ? 'No reels match your search from people you follow.'
-        : 'Follow stores to see their reels here.'
-      : surface === 'spotlight'
+    surface === 'home'
+      ? (isEventsContext && eventsDiscoveryFilters.size > 0) ||
+        (isElectronicsContext && electronicsDiscoveryFilters.size > 0) ||
+        (isAutomotiveContext && automotiveDiscoveryFilters.size > 0) ||
+        (isHomeTradesContext && homeTradesDiscoveryFilters.size > 0) ||
+        (isWellnessContext && wellnessDiscoveryFilters.size > 0) ||
+        (isFashionContext && fashionDiscoveryFilters.size > 0) ||
+        (isBeautyContext && beautyDiscoveryFilters.size > 0) ||
+        (isRealEstateContext && realEstateDiscoveryFilters.size > 0) ||
+        (isFoodContext && foodDiscoveryFilters.size > 0)
+        ? 'Try clearing filters or pick another chip — listings may still be in this category.'
+        : homeFeedEmptyMessage(homeFeedMode, decodedCategory.kind, isFlashMode)
+      : surface === 'explore_for_you'
         ? query.trim()
-          ? 'No spotlight posts match your search.'
-          : 'No spotlight posts yet. Buyers will appear here after successful buys or bookings.'
-      : surface === 'explore_discovery'
-        ? isRecovering
-          ? 'Pulling fresh items for you now...'
-          : decodedCategory.kind !== 'all'
-            ? 'No reels match your selected category yet. Try another category or check back later.'
-            : query.trim()
-              ? 'No reels match your search. Try different keywords or browse All.'
-              : 'No reels yet. Check back later or try another category.'
-      : 'Try adjusting your search or category.';
+          ? 'No reels match your search from people you follow.'
+          : 'Follow stores to see their reels here.'
+        : surface === 'spotlight'
+          ? query.trim()
+            ? 'No spotlight posts match your search.'
+            : 'No spotlight posts yet. Buyers will appear here after successful buys or bookings.'
+          : surface === 'explore_discovery'
+            ? isRecovering
+              ? 'Pulling fresh items for you now...'
+              : decodedCategory.kind !== 'all'
+                ? 'No reels match your selected category yet. Try another category or check back later.'
+                : query.trim()
+                  ? 'No reels match your search. Try different keywords or browse All.'
+                  : 'No reels yet. Check back later or try another category.'
+            : 'Try adjusting your search or category.';
+  const visibleProducts = useMemo(() => {
+    const base = products.filter(
+      (row: any) => !row?.is_sponsored || !isAdCampaignHidden(row.campaign_id),
+    );
+    if (isFoodContext && foodDiscoveryFilters.size > 0) {
+      return filterFoodDiscoveryItems(base, foodDiscoveryFilters);
+    }
+    if (isBeautyContext && beautyDiscoveryFilters.size > 0) {
+      return filterBeautyDiscoveryItems(base, beautyDiscoveryFilters);
+    }
+    if (isFashionContext && fashionDiscoveryFilters.size > 0) {
+      return filterFashionDiscoveryItems(base, fashionDiscoveryFilters);
+    }
+    if (isRealEstateContext && realEstateDiscoveryFilters.size > 0) {
+      return filterRealEstateDiscoveryItems(base, realEstateDiscoveryFilters);
+    }
+    if (isWellnessContext && wellnessDiscoveryFilters.size > 0) {
+      return filterWellnessDiscoveryItems(base, wellnessDiscoveryFilters);
+    }
+    if (isAutomotiveContext && automotiveDiscoveryFilters.size > 0) {
+      return filterAutomotiveDiscoveryItems(base, automotiveDiscoveryFilters);
+    }
+    if (isHomeTradesContext && homeTradesDiscoveryFilters.size > 0) {
+      return filterHomeTradesDiscoveryItems(base, homeTradesDiscoveryFilters);
+    }
+    if (isElectronicsContext && electronicsDiscoveryFilters.size > 0) {
+      return filterElectronicsDiscoveryItems(base, electronicsDiscoveryFilters);
+    }
+    if (isEventsContext && eventsDiscoveryFilters.size > 0) {
+      return filterEventsDiscoveryItems(base, eventsDiscoveryFilters);
+    }
+    return base;
+  }, [
+    products,
+    adsHiddenEpoch,
+    isFoodContext,
+    isBeautyContext,
+    isFashionContext,
+    isRealEstateContext,
+    isWellnessContext,
+    isAutomotiveContext,
+    isHomeTradesContext,
+    isElectronicsContext,
+    isEventsContext,
+    foodDiscoveryFilters,
+    beautyDiscoveryFilters,
+    fashionDiscoveryFilters,
+    realEstateDiscoveryFilters,
+    wellnessDiscoveryFilters,
+    automotiveDiscoveryFilters,
+    homeTradesDiscoveryFilters,
+    electronicsDiscoveryFilters,
+    eventsDiscoveryFilters,
+  ]);
 
   return (
     <div className={`min-h-dvh section-light ${embedded ? 'pt-2 pb-8' : 'pt-20 pb-[calc(6rem+env(safe-area-inset-bottom,0px))]'} relative overflow-hidden`}>
@@ -1668,6 +2243,18 @@ export default function ClientExploreWrapper({
       {embedded && (
         <div className="max-w-3xl mx-auto px-2 sm:px-4 pb-2">
           {surface === 'home' ? <StoryRowWebLazy seed={refreshSeedRef.current} /> : null}
+          {surface === 'home' ? (
+            <div className="mt-2 flex items-center justify-between gap-3">
+              <HomeFeedModeToggleWeb mode={homeFeedMode} onChange={handleHomeFeedModeChange} />
+              <Link
+                href="/app/search?from=home"
+                aria-label="Open search"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-(--border) bg-(--surface) text-(--foreground) hover:border-emerald-500/40"
+              >
+                <Search size={18} strokeWidth={2.4} />
+              </Link>
+            </div>
+          ) : null}
           <div className="mt-2 flex items-center gap-2">
             <div className="flex-1">
               <SearchProtocolWeb
@@ -1698,6 +2285,57 @@ export default function ClientExploreWrapper({
             <div className="mt-2 rounded-2xl border border-(--border) bg-(--surface) p-2">
               <CategoryPulseWeb active={activeCategory} onSelect={handleCategorySelect} />
             </div>
+          ) : null}
+          {isFoodContext ? (
+            <FoodDiscoveryFiltersWeb active={foodDiscoveryFilters} onToggle={toggleFoodDiscoveryFilter} />
+          ) : null}
+          {isBeautyContext ? (
+            <BeautyDiscoveryFiltersWeb
+              active={beautyDiscoveryFilters}
+              onToggle={toggleBeautyDiscoveryFilter}
+            />
+          ) : null}
+          {isFashionContext ? (
+            <FashionDiscoveryFiltersWeb
+              active={fashionDiscoveryFilters}
+              onToggle={toggleFashionDiscoveryFilter}
+            />
+          ) : null}
+          {isRealEstateContext ? (
+            <RealEstateDiscoveryFiltersWeb
+              active={realEstateDiscoveryFilters}
+              onToggle={toggleRealEstateDiscoveryFilter}
+            />
+          ) : null}
+          {isWellnessContext ? (
+            <WellnessDiscoveryFiltersWeb
+              active={wellnessDiscoveryFilters}
+              onToggle={toggleWellnessDiscoveryFilter}
+            />
+          ) : null}
+          {isAutomotiveContext ? (
+            <AutomotiveDiscoveryFiltersWeb
+              active={automotiveDiscoveryFilters}
+              onToggle={toggleAutomotiveDiscoveryFilter}
+            />
+          ) : null}
+          {isHomeTradesContext ? (
+            <HomeTradesDiscoveryFiltersWeb
+              active={homeTradesDiscoveryFilters}
+              onToggle={toggleHomeTradesDiscoveryFilter}
+            />
+          ) : null}
+          {isElectronicsContext ? (
+            <ElectronicsDiscoveryFiltersWeb
+              active={electronicsDiscoveryFilters}
+              onToggle={toggleElectronicsDiscoveryFilter}
+            />
+          ) : null}
+          {isEventsContext ? (
+            <EventsDiscoveryFiltersWeb
+              active={eventsDiscoveryFilters}
+              onToggle={toggleEventsDiscoveryFilter}
+            />
           ) : null}
         </div>
       )}
@@ -1760,11 +2398,12 @@ export default function ClientExploreWrapper({
                 ))}
               </div>
             )
-         ) : products.length > 0 ? (
+         ) : visibleProducts.length > 0 ? (
             <div className="md:px-4">
-               {products.map((item) => {
-                  const key = item.__key || `${item.type || 'item'}:${item.id}`;
+               {visibleProducts.map((item) => {
+                  const key = item.__key || item.ad_list_key || `${item.type || 'item'}:${item.id}`;
                   const reelSurface = embedded && !shouldRenderCards;
+                  const isHouse = item.type === 'house' || item.is_house;
                   return (
                     <div
                       key={key}
@@ -1772,10 +2411,13 @@ export default function ClientExploreWrapper({
                         reelSurface ? 'flex min-h-[calc(100dvh-170px)] snap-start items-stretch' : ''
                       }`.trim()}
                     >
-                      {shouldRenderCards ? (
+                      {isHouse ? (
+                        <HomeHouseAdRow item={item} countryCode={viewerCountry} />
+                      ) : shouldRenderCards ? (
                         <WebProductCard
                           item={item}
                           viewerId={viewerId}
+                          viewerCountry={viewerCountry}
                           onToggleLike={(it: any) => void toggleCardLike(it)}
                           onToggleWishlist={(it: any) => void toggleCardWishlist(it)}
                           onOpenComments={(it: any) => {
@@ -1792,6 +2434,7 @@ export default function ClientExploreWrapper({
                           item={item}
                           surface={surface === 'home' ? 'explore_discovery' : surface}
                           surfaceActive={surfaceActive}
+                          viewerCountry={viewerCountry}
                           onTrap={() => setTrapOpen(true)}
                           className={reelSurface ? 'h-full' : ''}
                         />
@@ -1810,9 +2453,9 @@ export default function ClientExploreWrapper({
                      <div className="w-12 h-12 rounded-2xl bg-(--pitch-black) flex items-center justify-center mb-3">
                         <PhoneIcon className="text-emerald-400" size={24} />
                      </div>
-                     <h3 className="text-lg font-black tracking-tight mb-1">Want to see more?</h3>
+                     <h3 className="text-lg font-black tracking-tight mb-1">Want StoreLink on your phone?</h3>
                      <p className="text-sm font-medium text-(--muted) mb-4">
-                        There are 1,000+ more items on the app.
+                        Keep browsing on the web, or get the app for stories, DMs, and seller tools.
                      </p>
                      <span className="flex items-center gap-2 text-xs font-black border border-(--border) bg-(--card) text-(--foreground) px-4 py-2 rounded-full">
                         GET THE APP <ArrowRight size={14} />
@@ -1831,8 +2474,71 @@ export default function ClientExploreWrapper({
                  {emptyStateTitle}
                </h3>
                <p className="text-xs text-(--muted)">
-                 {emptyStateSubtext}
+                 {surface === 'explore_for_you' && !viewerId
+                   ? 'Sign in to see reels from stores you follow.'
+                   : emptyStateSubtext}
                </p>
+               {surface === 'explore_for_you' && !viewerId ? (
+                 <Link
+                   href={guestSignInHref('/app/explore?mode=for_you')}
+                   className="mt-4 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+                 >
+                   Sign in to see people you follow
+                 </Link>
+               ) : surface === 'home' && isEventsContext && eventsDiscoveryFilters.size > 0 ? (
+                 <button
+                   type="button"
+                   onClick={() => setEventsDiscoveryFilters(new Set())}
+                   className="mt-4 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+                 >
+                   Clear events filters
+                 </button>
+               ) : surface === 'home' && isElectronicsContext && electronicsDiscoveryFilters.size > 0 ? (
+                 <button
+                   type="button"
+                   onClick={() => setElectronicsDiscoveryFilters(new Set())}
+                   className="mt-4 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+                 >
+                   Clear electronics filters
+                 </button>
+               ) : surface === 'home' && isAutomotiveContext && automotiveDiscoveryFilters.size > 0 ? (
+                 <button
+                   type="button"
+                   onClick={() => setAutomotiveDiscoveryFilters(new Set())}
+                   className="mt-4 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+                 >
+                   Clear automotive filters
+                 </button>
+               ) : surface === 'home' && isHomeTradesContext && homeTradesDiscoveryFilters.size > 0 ? (
+                 <button
+                   type="button"
+                   onClick={() => setHomeTradesDiscoveryFilters(new Set())}
+                   className="mt-4 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+                 >
+                   Clear home filters
+                 </button>
+               ) : surface === 'home' && homeFeedMode === 'following' ? (
+                 <Link
+                   href="/app/search"
+                   className="mt-4 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+                 >
+                   Find stores to follow
+                 </Link>
+               ) : surface === 'home' ? (
+                 <Link
+                   href="/app/explore"
+                   className="mt-4 inline-flex items-center rounded-full border border-(--border) bg-(--card) px-4 py-2 text-xs font-black text-(--foreground)"
+                 >
+                   Open Explore
+                 </Link>
+               ) : surface === 'explore_for_you' ? (
+                 <Link
+                   href="/app/search"
+                   className="mt-4 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+                 >
+                   Find people to follow
+                 </Link>
+               ) : null}
             </div>
          )}
       </div>
@@ -1841,7 +2547,9 @@ export default function ClientExploreWrapper({
         isOpen={trapOpen} 
         onClose={() => setTrapOpen(false)} 
         sellerName="StoreLink"
-        trigger="view"
+        trigger="explore"
+        continueHref="/app/explore"
+        intentPath="/explore"
       />
       <HomeCommentsSheet
         open={commentsOpen}

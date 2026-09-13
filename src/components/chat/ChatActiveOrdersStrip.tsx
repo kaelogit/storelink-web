@@ -3,10 +3,32 @@
 import Link from 'next/link';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CheckCircle2, Clock3, Coins, CreditCard, ShoppingBag, Truck, XCircle, Zap } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  Clock3,
+  Coins,
+  CreditCard,
+  PackageCheck,
+  ShieldCheck,
+  ShoppingBag,
+  Truck,
+  XCircle,
+  Zap,
+  Pencil,
+} from 'lucide-react';
 import { PaystackTerminalModal } from '@/components/payments/PaystackTerminalModal';
 import type { ChatProductOrderRow, ChatServiceOrderRow } from '@/lib/chatCommerce';
 import { coinsToCurrency, formatCurrency } from '@/lib/activity-feed';
+import { DISPUTE_COPY } from '@/constants/disputeCopy';
+
+function defaultConfirmScheduleIso() {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  d.setHours(10, 0, 0, 0);
+  if (d.getTime() <= Date.now()) d.setDate(d.getDate() + 1);
+  return d.toISOString();
+}
 
 function fmtMoney(n = 0, c = 'NGN') {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: c }).format(n);
@@ -34,7 +56,7 @@ function productStripSubtitle(statusRaw: unknown) {
   if (s === 'AWAITING_PAYMENT') return 'Payment required';
   if (s === 'PAID') return 'Paid • Preparing shipment';
   if (s === 'SHIPPED') return 'Item is on the way';
-  if (s === 'DISPUTE_OPEN') return 'Order frozen: dispute open';
+  if (s === 'DISPUTE_OPEN') return DISPUTE_COPY.chatStatusDispute;
   if (s === 'CANCELLED') return 'Order cancelled';
   if (s === 'COMPLETED') return 'Order completed';
   return s || 'Status';
@@ -54,7 +76,7 @@ function serviceStripSubtitle(statusRaw: unknown) {
   if (s === 'confirmed') return 'Confirmed • Awaiting payment';
   if (s === 'paid') return 'Paid • Provider can start';
   if (s === 'in_progress') return 'In progress';
-  if (s === 'disputed') return 'In dispute';
+  if (s === 'disputed') return DISPUTE_COPY.chatStatusDispute;
   if (s === 'refunded') return 'Refunded';
   return s || 'Booking';
 }
@@ -118,6 +140,62 @@ function buyerEarnedCoinsService(b: ChatServiceOrderRow, isSeller: boolean, paya
 function serviceCurrency(b: ChatServiceOrderRow) {
   return b.currency_code || b.service_listing?.currency_code || 'NGN';
 }
+
+function CoinAmountBadge({
+  coinAmount,
+  currency,
+  kind,
+}: {
+  coinAmount: number;
+  currency: string;
+  kind: 'spend' | 'earn';
+}) {
+  if (!(coinAmount > 0)) return null;
+  const spend = kind === 'spend';
+  return (
+    <span
+      className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[10px] font-black ${
+        spend ? 'bg-amber-500/20 text-amber-800' : 'bg-emerald-500/15 text-emerald-700'
+      }`}
+    >
+      <Coins size={10} className={spend ? 'text-amber-600' : 'text-emerald-600'} />
+      {spend ? '−' : '+'}
+      {formatCurrency(coinsToCurrency(coinAmount, currency), currency)}
+    </span>
+  );
+}
+
+function WaitingPill({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: 'wait' | 'gold' | 'secure' | 'frozen';
+}) {
+  const cls =
+    tone === 'gold'
+      ? 'bg-amber-500/15 text-amber-700'
+      : tone === 'secure'
+        ? 'bg-emerald-500/10 text-emerald-700'
+        : tone === 'frozen'
+          ? 'bg-rose-500/15 text-rose-700'
+          : 'bg-(--border) text-(--muted)';
+  const Icon =
+    tone === 'gold' ? Clock3 : tone === 'secure' ? ShieldCheck : tone === 'frozen' ? AlertTriangle : Clock3;
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-lg px-2.5 py-1.5 text-[10px] font-black tracking-wide ${cls}`}>
+      <Icon size={12} />
+      {label}
+    </span>
+  );
+}
+
+const primaryBtnClass =
+  'inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-black uppercase tracking-wide text-white disabled:opacity-60';
+const ghostDangerBtnClass =
+  'inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-[11px] font-bold text-rose-700';
+const ghostBtnClass =
+  'inline-flex items-center gap-1 rounded-lg border border-(--border) bg-(--surface) px-2.5 py-1.5 text-[11px] font-bold text-(--foreground)';
 
 export type ChatActiveOrdersStripProps = {
   chatId: string;
@@ -324,49 +402,74 @@ export function ChatActiveOrdersStrip({
     const status = displayStatus;
     if (isSeller && status === 'PENDING') {
       return (
-        <div className="mt-2 flex gap-2">
-          <button
-            type="button"
-            onClick={() =>
-              void runAction(`product-reject-${o.id}`, async () => {
-                const serverWas = String(o.status || '').toUpperCase();
-                setProductDisplayById((p) => ({ ...p, [o.id]: 'CANCELLED' }));
-                try {
-                  const { error } = await supabase.rpc('handle_order_action', { p_order_id: o.id, p_action: 'REJECT' });
-                  if (error) throw error;
-                  await postTimeline(`🚫 Seller cancelled order #${String(o.id).slice(0, 8).toUpperCase()}.`);
-                } catch (e) {
-                  setProductDisplayById((p) => ({ ...p, [o.id]: serverWas }));
-                  throw e;
-                }
-              })
-            }
-            className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-[11px] font-bold text-rose-700"
+        <div className="flex flex-col items-end gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() =>
+                void runAction(`product-reject-${o.id}`, async () => {
+                  const serverWas = String(o.status || '').toUpperCase();
+                  setProductDisplayById((p) => ({ ...p, [o.id]: 'CANCELLED' }));
+                  try {
+                    const { error } = await supabase.rpc('handle_order_action', { p_order_id: o.id, p_action: 'REJECT' });
+                    if (error) throw error;
+                    await postTimeline(`🚫 Seller cancelled order #${String(o.id).slice(0, 8).toUpperCase()}.`);
+                  } catch (e) {
+                    setProductDisplayById((p) => ({ ...p, [o.id]: serverWas }));
+                    throw e;
+                  }
+                })
+              }
+              className={ghostDangerBtnClass}
+            >
+              <XCircle size={12} />
+              Decline
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                void runAction(`product-accept-${o.id}`, async () => {
+                  const serverWas = String(o.status || '').toUpperCase();
+                  setProductDisplayById((p) => ({ ...p, [o.id]: 'AWAITING_PAYMENT' }));
+                  try {
+                    const { error } = await supabase.rpc('handle_order_action', { p_order_id: o.id, p_action: 'ACCEPT' });
+                    if (error) throw error;
+                    await postTimeline(`✅ Seller accepted order #${String(o.id).slice(0, 8).toUpperCase()}.`);
+                  } catch (e) {
+                    setProductDisplayById((p) => ({ ...p, [o.id]: serverWas }));
+                    throw e;
+                  }
+                })
+              }
+              className={primaryBtnClass}
+            >
+              <CheckCircle2 size={12} />
+              Accept
+            </button>
+          </div>
+          <Link
+            href={`/app/orders/revise-shipping?orderId=${encodeURIComponent(o.id)}`}
+            className={ghostBtnClass}
+            onClick={(e) => e.stopPropagation()}
           >
-            <XCircle size={12} />
-            Reject
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              void runAction(`product-accept-${o.id}`, async () => {
-                const serverWas = String(o.status || '').toUpperCase();
-                setProductDisplayById((p) => ({ ...p, [o.id]: 'AWAITING_PAYMENT' }));
-                try {
-                  const { error } = await supabase.rpc('handle_order_action', { p_order_id: o.id, p_action: 'ACCEPT' });
-                  if (error) throw error;
-                  await postTimeline(`✅ Seller accepted order #${String(o.id).slice(0, 8).toUpperCase()}.`);
-                } catch (e) {
-                  setProductDisplayById((p) => ({ ...p, [o.id]: serverWas }));
-                  throw e;
-                }
-              })
-            }
-            className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-bold text-white"
+            <Pencil size={12} />
+            Fee
+          </Link>
+        </div>
+      );
+    }
+    if (isSeller && status === 'AWAITING_PAYMENT') {
+      return (
+        <div className="flex flex-col items-end gap-1.5">
+          <WaitingPill label="AWAIT PAY" tone="gold" />
+          <Link
+            href={`/app/orders/revise-shipping?orderId=${encodeURIComponent(o.id)}`}
+            className={ghostBtnClass}
+            onClick={(e) => e.stopPropagation()}
           >
-            <CheckCircle2 size={12} />
-            Accept
-          </button>
+            <Pencil size={12} />
+            Fee
+          </Link>
         </div>
       );
     }
@@ -388,12 +491,18 @@ export function ChatActiveOrdersStrip({
               }
             })
           }
-          className="mt-2 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-bold text-white"
+          className={primaryBtnClass}
         >
           <Truck size={12} />
-          Ship now
+          Ship
         </button>
       );
+    }
+    if (isSeller && status === 'SHIPPED') {
+      return <WaitingPill label="SENT" tone="wait" />;
+    }
+    if (!isSeller && status === 'PENDING') {
+      return <WaitingPill label="WAITING" tone="wait" />;
     }
     if (!isSeller && status === 'SHIPPED') {
       return (
@@ -413,10 +522,10 @@ export function ChatActiveOrdersStrip({
               }
             })
           }
-          className="mt-2 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-bold text-white"
+          className={primaryBtnClass}
         >
-          <CheckCircle2 size={12} />
-          Mark received
+          <PackageCheck size={12} />
+          Received
         </button>
       );
     }
@@ -429,12 +538,18 @@ export function ChatActiveOrdersStrip({
             e.stopPropagation();
             setProductPayOrder(o);
           }}
-          className="mt-2 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-black uppercase tracking-wide text-white"
+          className={primaryBtnClass}
         >
           <CreditCard size={12} />
           Pay now
         </button>
       );
+    }
+    if (!isSeller && status === 'PAID') {
+      return <WaitingPill label="SECURED" tone="secure" />;
+    }
+    if (status === 'DISPUTE_OPEN') {
+      return <WaitingPill label="FROZEN" tone="frozen" />;
     }
     return null;
   };
@@ -443,60 +558,85 @@ export function ChatActiveOrdersStrip({
     const status = displayStatus;
     if (isSeller && status === 'requested') {
       return (
-        <div className="mt-2 flex gap-2">
-          <button
-            type="button"
-            onClick={() =>
-              void runAction(`service-cancel-${b.id}`, async () => {
-                const serverWas = String(b.status || '').toLowerCase();
-                setServiceDisplayById((p) => ({ ...p, [b.id]: 'cancelled' }));
-                try {
-                  const { error } = await supabase.rpc('update_service_order_status', {
-                    p_service_order_id: b.id,
-                    p_actor_id: userId,
-                    p_new_status: 'cancelled',
-                    p_scheduled_at: null,
-                  });
-                  if (error) throw error;
-                  const sid = String(b.id).slice(0, 8).toUpperCase();
-                  await postTimeline(`🚫 ${isSeller ? 'Seller' : 'Buyer'} cancelled booking #${sid}.`);
-                } catch (e) {
-                  setServiceDisplayById((p) => ({ ...p, [b.id]: serverWas }));
-                  throw e;
-                }
-              })
-            }
-            className="inline-flex items-center gap-1 rounded-lg border border-rose-200 bg-rose-50 px-2.5 py-1.5 text-[11px] font-bold text-rose-700"
+        <div className="flex flex-col items-end gap-1.5">
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() =>
+                void runAction(`service-cancel-${b.id}`, async () => {
+                  const serverWas = String(b.status || '').toLowerCase();
+                  setServiceDisplayById((p) => ({ ...p, [b.id]: 'cancelled' }));
+                  try {
+                    const { error } = await supabase.rpc('update_service_order_status', {
+                      p_service_order_id: b.id,
+                      p_actor_id: userId,
+                      p_new_status: 'cancelled',
+                      p_scheduled_at: null,
+                    });
+                    if (error) throw error;
+                    const sid = String(b.id).slice(0, 8).toUpperCase();
+                    await postTimeline(`🚫 ${isSeller ? 'Seller' : 'Buyer'} cancelled booking #${sid}.`);
+                  } catch (e) {
+                    setServiceDisplayById((p) => ({ ...p, [b.id]: serverWas }));
+                    throw e;
+                  }
+                })
+              }
+              className={ghostDangerBtnClass}
+            >
+              <XCircle size={12} />
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                void runAction(`service-confirm-${b.id}`, async () => {
+                  const serverWas = String(b.status || '').toLowerCase();
+                  setServiceDisplayById((p) => ({ ...p, [b.id]: 'confirmed' }));
+                  try {
+                    const { error } = await supabase.rpc('update_service_order_status', {
+                      p_service_order_id: b.id,
+                      p_actor_id: userId,
+                      p_new_status: 'confirmed',
+                      p_scheduled_at: defaultConfirmScheduleIso(),
+                    });
+                    if (error) throw error;
+                    await postTimeline(`✅ Seller confirmed booking #${String(b.id).slice(0, 8).toUpperCase()}.`);
+                  } catch (e) {
+                    setServiceDisplayById((p) => ({ ...p, [b.id]: serverWas }));
+                    throw e;
+                  }
+                })
+              }
+              className={primaryBtnClass}
+            >
+              <CheckCircle2 size={12} />
+              Confirm
+            </button>
+          </div>
+          <Link
+            href={`/app/bookings/revise-price?serviceOrderId=${encodeURIComponent(b.id)}`}
+            className={ghostBtnClass}
+            onClick={(e) => e.stopPropagation()}
           >
-            <XCircle size={12} />
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              void runAction(`service-confirm-${b.id}`, async () => {
-                const serverWas = String(b.status || '').toLowerCase();
-                setServiceDisplayById((p) => ({ ...p, [b.id]: 'confirmed' }));
-                try {
-                  const { error } = await supabase.rpc('update_service_order_status', {
-                    p_service_order_id: b.id,
-                    p_actor_id: userId,
-                    p_new_status: 'confirmed',
-                    p_scheduled_at: new Date().toISOString(),
-                  });
-                  if (error) throw error;
-                  await postTimeline(`✅ Seller confirmed booking #${String(b.id).slice(0, 8).toUpperCase()}.`);
-                } catch (e) {
-                  setServiceDisplayById((p) => ({ ...p, [b.id]: serverWas }));
-                  throw e;
-                }
-              })
-            }
-            className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-bold text-white"
+            <Pencil size={12} />
+            Price
+          </Link>
+        </div>
+      );
+    }
+    if (isSeller && status === 'confirmed') {
+      return (
+        <div className="flex flex-col items-end gap-1.5">
+          <WaitingPill label="AWAIT PAY" tone="gold" />
+          <Link
+            href={`/app/bookings/revise-price?serviceOrderId=${encodeURIComponent(b.id)}`}
+            className={ghostBtnClass}
+            onClick={(e) => e.stopPropagation()}
           >
-            <CheckCircle2 size={12} />
-            Confirm
-          </button>
+            <Pencil size={12} />
+            Price
+          </Link>
         </div>
       );
     }
@@ -523,12 +663,18 @@ export function ChatActiveOrdersStrip({
               }
             })
           }
-          className="mt-2 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-bold text-white"
+          className={primaryBtnClass}
         >
-          <CheckCircle2 size={12} />
-          Start work
+          <Zap size={12} />
+          Start
         </button>
       );
+    }
+    if (isSeller && status === 'in_progress') {
+      return <WaitingPill label="STARTED" tone="wait" />;
+    }
+    if (!isSeller && status === 'requested') {
+      return <WaitingPill label="WAITING" tone="wait" />;
     }
     if (!isSeller && status === 'in_progress') {
       return (
@@ -553,7 +699,7 @@ export function ChatActiveOrdersStrip({
               }
             })
           }
-          className="mt-2 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-bold text-white"
+          className={primaryBtnClass}
         >
           <CheckCircle2 size={12} />
           Complete
@@ -571,12 +717,18 @@ export function ChatActiveOrdersStrip({
             e.stopPropagation();
             void handleServicePayNow(b, status);
           }}
-          className="mt-2 inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-2.5 py-1.5 text-[11px] font-black uppercase tracking-wide text-white disabled:opacity-60"
+          className={primaryBtnClass}
         >
           <CreditCard size={12} />
-          {busy ? '…' : 'Pay'}
+          {busy ? '…' : 'Pay now'}
         </button>
       );
+    }
+    if (!isSeller && status === 'paid') {
+      return <WaitingPill label="SECURED" tone="secure" />;
+    }
+    if (status === 'disputed') {
+      return <WaitingPill label="FROZEN" tone="frozen" />;
     }
     return null;
   };
@@ -622,22 +774,18 @@ export function ChatActiveOrdersStrip({
                     FLASH
                   </span>
                 ) : null}
-                {coinsRedeemed > 0 ? (
-                  <span className="inline-flex items-center gap-0.5 rounded-md bg-amber-500/18 px-1.5 py-0.5 text-[10px] font-black text-amber-800">
-                    <Coins size={10} className="text-amber-600" />
-                    −{formatCurrency(coinsToCurrency(coinsRedeemed, cur), cur)}
-                  </span>
-                ) : null}
-                {earned > 0 ? (
-                  <span className="inline-flex items-center gap-0.5 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-black text-emerald-700">
-                    <Coins size={10} className="text-emerald-600" />+
-                    {formatCurrency(coinsToCurrency(earned, cur), cur)}
-                  </span>
-                ) : null}
+                <CoinAmountBadge coinAmount={coinsRedeemed} currency={cur} kind="spend" />
+                <CoinAmountBadge coinAmount={earned} currency={cur} kind="earn" />
               </div>
-              <p className="mt-2 truncate text-sm font-bold text-(--foreground)">{orderTitle(o)}</p>
-              <p className="mt-1 text-xs font-semibold text-(--muted)">{productStripSubtitle(pStatus)}</p>
-              <div onClick={(e) => e.preventDefault()}>{productActionButtons(o, pStatus)}</div>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-(--foreground)">{orderTitle(o)}</p>
+                  <p className="mt-0.5 text-xs font-semibold text-(--muted)">{productStripSubtitle(pStatus)}</p>
+                </div>
+                <div className="shrink-0" onClick={(e) => e.preventDefault()}>
+                  {productActionButtons(o, pStatus)}
+                </div>
+              </div>
             </Link>
           );
         })}
@@ -647,6 +795,8 @@ export function ChatActiveOrdersStrip({
           const cur = serviceCurrency(b);
           const linked = b.linked_payment_order;
           const coinRedeemed = Number(linked?.coin_redeemed) || 0;
+          const appliedPreview = serviceAppliedCoins(b, buyerCoinBalance, isSeller, sStatus);
+          const spendCoins = coinRedeemed > 0 ? coinRedeemed : sStatus === 'confirmed' ? appliedPreview : 0;
           const earned = buyerEarnedCoinsService(b, isSeller, payable);
           return (
             <Link
@@ -659,25 +809,22 @@ export function ChatActiveOrdersStrip({
                   <Clock3 size={12} strokeWidth={2.5} />#{String(b.id).slice(0, 8).toUpperCase()}
                 </span>
                 {Number(b.amount_minor || 0) > 0 ? (
-                  <span className="rounded-md bg-violet-500/12 px-1.5 py-0.5 text-[11px] font-black text-violet-700">
+                  <span className="rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[11px] font-black text-emerald-700">
                     {fmtMoney(payable, cur)}
                   </span>
                 ) : null}
-                {coinRedeemed > 0 ? (
-                  <span className="inline-flex items-center gap-0.5 rounded-md bg-amber-500/18 px-1.5 py-0.5 text-[10px] font-black text-amber-800">
-                    <Coins size={10} className="text-amber-600" />-{formatCurrency(coinsToCurrency(coinRedeemed, cur), cur)}
-                  </span>
-                ) : null}
-                {earned > 0 ? (
-                  <span className="inline-flex items-center gap-0.5 rounded-md bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-black text-emerald-700">
-                    <Coins size={10} className="text-emerald-600" />+
-                    {formatCurrency(coinsToCurrency(earned, cur), cur)}
-                  </span>
-                ) : null}
+                <CoinAmountBadge coinAmount={spendCoins} currency={cur} kind="spend" />
+                <CoinAmountBadge coinAmount={earned} currency={cur} kind="earn" />
               </div>
-              <p className="mt-2 truncate text-sm font-bold text-(--foreground)">{b.service_listing?.title || 'Service booking'}</p>
-              <p className="mt-1 text-xs font-semibold text-(--muted)">{serviceStripSubtitle(sStatus)}</p>
-              <div onClick={(e) => e.preventDefault()}>{serviceActionButtons(b, sStatus)}</div>
+              <div className="mt-2 flex items-center justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-bold text-(--foreground)">{b.service_listing?.title || 'Service booking'}</p>
+                  <p className="mt-0.5 text-xs font-semibold text-(--muted)">{serviceStripSubtitle(sStatus)}</p>
+                </div>
+                <div className="shrink-0" onClick={(e) => e.preventDefault()}>
+                  {serviceActionButtons(b, sStatus)}
+                </div>
+              </div>
             </Link>
           );
         })}

@@ -21,6 +21,11 @@ import {
 } from 'lucide-react';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { useWebCartStore } from '@/store/useWebCartStore';
+import { logAdClick } from '@/lib/adDeliveryLogging';
+import { useAdImpression } from '@/lib/useAdImpression';
+import { useWhyThisAdStore } from '@/store/useWhyThisAdStore';
+import { serviceDeliveryBadgeFromTypes } from '@/lib/verticalFulfillmentCopy';
+import { defaultFulfillmentMode } from '@/lib/verticalCheckout';
 
 // --- HELPER 1: CURRENCY FORMATTER ---
 const formatMoney = (amount: number, currency: string) => {
@@ -34,6 +39,7 @@ const formatMoney = (amount: number, currency: string) => {
 export default function WebProductCard({
   item,
   viewerId,
+  viewerCountry,
   onAddToCart,
   onToggleLike,
   onOpenComments,
@@ -47,6 +53,15 @@ export default function WebProductCard({
   const [expanded, setExpanded] = useState(false);
   const addProduct = useWebCartStore((s) => s.addProduct);
   const addService = useWebCartStore((s) => s.addService);
+  const isSponsored = !!item?.is_sponsored && !!item?.campaign_id;
+  const campaignId = isSponsored ? String(item.campaign_id) : '';
+  const adSessionId = typeof item?.ad_session_id === 'string' ? item.ad_session_id : null;
+  const impressionRef = useAdImpression({
+    enabled: isSponsored,
+    campaignId,
+    placement: 'home_card',
+    sessionId: adSessionId,
+  });
 
   const isService = item.type === 'service' || !!item.service_listing_id;
   const serviceToken = String(item.service_slug || item.slug || item.service_listing_id || item.id || '').trim();
@@ -122,23 +137,40 @@ export default function WebProductCard({
     return `${region.toUpperCase()} · ${d.toUpperCase()}`;
   })();
   const serviceDeliveryBadge =
+    serviceDeliveryBadgeFromTypes(
+      item.delivery_type,
+      item.location_type,
+      item.service_category || item.category,
+    ) ||
     item.service_delivery_badge ||
-    (item.delivery_type === 'online'
-      ? 'ONLINE'
-      : item.delivery_type === 'in_person' && item.location_type === 'at_my_place'
-        ? 'STUDIO ONLY'
-        : item.delivery_type === 'in_person' && item.location_type === 'i_travel'
-          ? 'HOME SERVICE'
-          : item.delivery_type === 'in_person' && item.location_type === 'both'
-            ? 'HOME & STUDIO'
-            : item.delivery_type === 'both'
-              ? 'HOME & STUDIO'
-              : null);
+    null;
+  const serviceMenuMeta = (
+    item.service_food_meta ||
+    item.food_menu_meta ||
+    item.beauty_menu_meta ||
+    item.fashion_menu_meta ||
+    item.real_estate_menu_meta ||
+    item.wellness_menu_meta ||
+    item.automotive_menu_meta ||
+    item.home_menu_meta ||
+    item.electronics_menu_meta ||
+    item.events_menu_meta ||
+    null
+  );
 
   // ---------------------------------------------------------
   // 2. 🔒 THE TRAP HANDLER
   // ---------------------------------------------------------
   const handleTrap = () => {
+    if (isSponsored) {
+      logAdClick({
+        campaignId,
+        placement: 'home_card',
+        targetType: isService ? 'service' : 'product',
+        targetId: String(item.service_listing_id || item.id || ''),
+        sessionId: adSessionId,
+      }).catch(() => {});
+    }
     if (onAddToCart) {
         onAddToCart(item); 
         return;
@@ -151,6 +183,12 @@ export default function WebProductCard({
         hero_price: Number(activePrice || 0),
         delivery_type: item.delivery_type || null,
         location_type: item.location_type || null,
+        service_category: item.service_category || item.category || null,
+        preferred_fulfillment: defaultFulfillmentMode({
+          deliveryType: item.delivery_type,
+          locationType: item.location_type,
+          serviceCategory: item.service_category || item.category,
+        }),
         service_distance_label: isOwnListing ? 'Your listing' : serviceDistancePart || null,
         service_delivery_badge: serviceDeliveryBadge || null,
         currency_code: item.currency_code || 'NGN',
@@ -174,6 +212,7 @@ export default function WebProductCard({
       image_url: images?.[0] || null,
       seller_slug: item.seller?.slug || null,
       seller_name: item.seller?.display_name || null,
+      requires_shipping: (item as { requires_shipping?: boolean | null }).requires_shipping !== false,
     });
   };
   const handleLike = () => {
@@ -212,8 +251,19 @@ export default function WebProductCard({
     handleTrap();
   };
 
+  const logSponsoredListingClick = () => {
+    if (!isSponsored) return;
+    logAdClick({
+      campaignId,
+      placement: 'home_card',
+      targetType: isService ? 'service' : 'product',
+      targetId: String(item.service_listing_id || item.id || ''),
+      sessionId: adSessionId,
+    }).catch(() => {});
+  };
+
   return (
-    <div className="bg-(--card) p-4 mb-4 rounded-none md:rounded-3xl border-b md:border border-(--border) md:shadow-sm">
+    <div ref={impressionRef} className="bg-(--card) p-4 mb-4 rounded-none md:rounded-3xl border-b md:border border-(--border) md:shadow-sm">
       
       {/* 🏛️ TOP SECTION: SELLER INFO */}
       <div className="flex mb-3">
@@ -244,11 +294,37 @@ export default function WebProductCard({
               <div className="flex items-center gap-1">
                  <span className="text-[11px] font-bold text-(--muted)">@{item.seller?.slug}</span>
                  {isDiamond && <Sparkles size={10} className="text-violet-400 fill-violet-400" />}
+                 {isSponsored ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        useWhyThisAdStore.getState().show({
+                          campaignId,
+                          placement: 'home_card',
+                          advertiserName: String(item.seller?.display_name || 'a StoreLink shop'),
+                          countryCode:
+                            item.seller_location_country_code ||
+                            item.seller?.location_country_code ||
+                            viewerCountry ||
+                            null,
+                          listingLabel: item.name || null,
+                        })
+                      }
+                      className="text-[11px] font-black text-amber-500"
+                      aria-label="Why this ad"
+                    >
+                      Sponsored
+                    </button>
+                 ) : null}
               </div>
            </div>
 
            <div className="flex justify-between items-start mt-1">
-              <Link href={detailHref} className="text-xs font-black text-(--foreground) tracking-tight uppercase flex-1 mr-4 line-clamp-1 hover:underline">
+              <Link
+                href={detailHref}
+                onClick={logSponsoredListingClick}
+                className="text-xs font-black text-(--foreground) tracking-tight uppercase flex-1 mr-4 line-clamp-1 hover:underline"
+              >
                  {item.name}
               </Link>
 
@@ -301,6 +377,11 @@ export default function WebProductCard({
                 </div>
               )}
            </div>
+           {isService && serviceMenuMeta ? (
+             <p className="mt-1.5 text-[11px] font-medium text-(--muted) line-clamp-1">
+               {String(serviceMenuMeta)}
+             </p>
+           ) : null}
         </div>
       </div>
 
@@ -356,7 +437,7 @@ export default function WebProductCard({
            <div className={`relative aspect-4/5 w-full bg-(--surface) rounded-[24px] overflow-hidden border-[1.5px] border-(--border) mb-3 group ${isDiamond ? 'border-violet-200 dark:border-violet-800' : ''}`}>
               
               {isVideoCard ? (
-                <Link href={detailHref} className="block h-full w-full relative">
+                <Link href={detailHref} onClick={logSponsoredListingClick} className="block h-full w-full relative">
                   <video
                     src={videoUrl || undefined}
                     className={`h-full w-full object-cover ${isSoldOut ? 'opacity-70 grayscale' : ''}`}
@@ -381,7 +462,7 @@ export default function WebProductCard({
                   }}
                 >
                   {images.length > 0 ? images.map((img: string, idx: number) => (
-                      <Link key={idx} href={detailHref} className="w-full h-full shrink-0 snap-center relative block">
+                      <Link key={idx} href={detailHref} onClick={logSponsoredListingClick} className="w-full h-full shrink-0 snap-center relative block">
                          <Image 
                            src={img} 
                            alt={item.name} 
@@ -448,7 +529,7 @@ export default function WebProductCard({
 
            <div className="pr-2">
               <p className={`text-[13px] leading-relaxed font-medium text-(--foreground) ${!expanded ? 'line-clamp-2' : ''}`}>
-                 {description || (isService ? 'Service preview — open in the app to see full details and book.' : 'No description provided.')}
+                 {description || (isService ? 'Open this service to see details, menu, and booking.' : 'No description provided.')}
               </p>
               {isLongDescription && (
                  <button 

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { LayoutDashboard } from 'lucide-react';
 
-type StoreLinkLogoVariant = 'nav' | 'auth' | 'display';
+type StoreLinkLogoVariant = 'nav' | 'auth' | 'display' | 'overlay';
 
 export interface StoreLinkLogoProps {
   href?: string;
@@ -22,19 +22,24 @@ export default function StoreLinkLogo({
   showNgBadge = false,
   variant = 'nav',
 }: StoreLinkLogoProps) {
-  const resolvedIconSize = iconSize ?? (variant === 'auth' ? 28 : 24);
+  const resolvedIconSize =
+    iconSize ?? (variant === 'auth' ? 28 : variant === 'overlay' ? 20 : 24);
 
   const iconClass =
     variant === 'display'
       ? 'text-emerald-500 shrink-0'
-      : 'text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition duration-300 shrink-0';
+      : variant === 'overlay'
+        ? 'text-emerald-400 shrink-0 group-hover:scale-110 transition duration-300'
+        : 'text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition duration-300 shrink-0';
 
   const textClass =
     variant === 'display'
       ? 'font-display text-[15vw] sm:text-[12vw] leading-[0.8] font-black tracking-tighter text-inherit'
-      : variant === 'auth'
-        ? 'font-extrabold text-2xl tracking-tight text-(--foreground)'
-        : 'font-extrabold text-xl tracking-tight text-(--foreground) lg:text-2xl';
+      : variant === 'overlay'
+        ? 'font-extrabold text-lg tracking-tight text-white'
+        : variant === 'auth'
+          ? 'font-extrabold text-2xl tracking-tight text-(--foreground)'
+          : 'font-extrabold text-xl tracking-tight text-(--foreground) lg:text-2xl';
 
   const wrapperClass = [
     'group inline-flex items-center',

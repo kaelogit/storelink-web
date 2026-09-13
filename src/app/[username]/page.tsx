@@ -44,7 +44,7 @@ async function getProfileData(username: string) {
   const { data: services } = await supabase
     .from('service_listings')
     .select(
-      'id, slug, title, hero_price_min, currency_code, delivery_type, location_type, service_address, service_areas, media',
+      'id, slug, title, hero_price_min, currency_code, delivery_type, location_type, service_address, service_areas, media, menu',
     )
     .eq('seller_id', profile.id)
     .eq('is_active', true)
@@ -62,17 +62,31 @@ async function getProfileData(username: string) {
 }
 
 // --- 3. PAGE COMPONENT ---
-export default async function ProfilePage({ params }: { params: Promise<{ username: string }> }) {
+export default async function ProfilePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ username: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const resolvedParams = await params;
+  const qs = await searchParams;
   const data = await getProfileData(resolvedParams.username);
 
   if (!data) return notFound();
+
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(qs || {})) {
+    const v = Array.isArray(value) ? value[0] : value;
+    if (v) query.set(key, v);
+  }
+  const suffix = query.toString() ? `?${query.toString()}` : '';
 
   // Redirect to canonical URL when path differs (e.g. /kaelo vs stored /Kaelo)
   const requested = (resolvedParams.username || '').replace(/^@/, '').trim();
   const canonical = (data.profile.slug || '').trim();
   if (canonical && requested !== canonical) {
-    redirect(`/${canonical}`);
+    redirect(`/${canonical}${suffix}`);
   }
 
   const supabaseAuthed = await createServerClientWithCookies();
@@ -80,10 +94,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ userna
   const viewerId = auth?.user?.id ? String(auth.user.id) : '';
   const profileId = data.profile?.id != null ? String(data.profile.id) : '';
   if (viewerId && profileId && viewerId === profileId) {
-    redirect('/app/profile');
+    redirect(`/app/profile${suffix}`);
   }
   if (viewerId && canonical) {
-    redirect(`/app/profile/${encodeURIComponent(canonical)}`);
+    redirect(`/app/profile/${encodeURIComponent(canonical)}${suffix}`);
   }
 
   return (

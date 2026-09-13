@@ -12,10 +12,9 @@ import Footer from '../../components/home/Footer';
 import Image from 'next/image';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
-
-const APP_STORE_URL = process.env.NEXT_PUBLIC_APP_STORE_URL ?? '';
-const PLAY_STORE_URL = process.env.NEXT_PUBLIC_PLAY_STORE_URL ?? '';
-const HAS_APP_LINKS = Boolean(APP_STORE_URL || PLAY_STORE_URL);
+import { continueOnWebHref } from '@/lib/shareContinue';
+import { useStoreListingUrls } from '@/lib/useStoreUrls';
+import type { StoreListingUrls } from '@/lib/storeUrls';
 
 const AppleLogo = () => (
   <svg viewBox="0 0 384 512" fill="currentColor" className="w-6 h-6 mb-1">
@@ -40,9 +39,16 @@ const REASONS = [
   { icon: Lock, title: 'Dispute protection', desc: 'Issue with an order? Raise a dispute. We review and refund from the vault when valid.' },
 ];
 
-export default function DownloadContent() {
+export default function DownloadContent({
+  initialStoreUrls,
+}: {
+  initialStoreUrls?: StoreListingUrls;
+}) {
   const searchParams = useSearchParams();
   const intentPath = searchParams.get('intent') ?? null;
+  const continueHref = continueOnWebHref(intentPath);
+  const { ios: APP_STORE_URL, android: PLAY_STORE_URL } = useStoreListingUrls(initialStoreUrls);
+  const HAS_APP_LINKS = Boolean(APP_STORE_URL || PLAY_STORE_URL);
   const [os, setOS] = useState<'ios' | 'android' | 'desktop'>('desktop');
 
   useEffect(() => {
@@ -101,6 +107,13 @@ export default function DownloadContent() {
                   After you install and open the app, we&apos;ll take you straight back to this product, service, or profile.
                 </p>
               )}
+              {intentPath ? (
+                <p className="mb-6 max-w-md">
+                  <Button href={continueHref} variant="primary" size="md" className="font-bold">
+                    Continue on web
+                  </Button>
+                </p>
+              ) : null}
 
               <Card className="p-2 rounded-4xl w-full max-w-md inline-block border-2 border-(--border) shadow-xl shadow-(--charcoal)/5">
                 {os === 'desktop' && (

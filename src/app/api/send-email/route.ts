@@ -39,7 +39,7 @@ function getVerifySignupHtml(code: string) {
     <h1 style="${headingStyle}">Verify your email</h1>
     <p style="${textStyle}">Use this code in the StoreLink app to confirm your account:</p>
     <p style="${codeStyle}">${code}</p>
-    <p style="${textStyle}">This code expires in 1 hour. If you didn't sign up, you can ignore this email.</p>
+    <p style="${textStyle}">This code expires in 10 minutes. If you didn't sign up, you can ignore this email.</p>
   `);
 }
 
@@ -48,7 +48,7 @@ function getPasswordResetHtml(code: string) {
     <h1 style="${headingStyle}">Reset your password</h1>
     <p style="${textStyle}">Use this code in the StoreLink app to set a new password:</p>
     <p style="${codeStyle}">${code}</p>
-    <p style="${textStyle}">This code expires in 1 hour. If you didn't request a reset, you can ignore this email.</p>
+    <p style="${textStyle}">This code expires in 10 minutes. If you didn't request a reset, you can ignore this email.</p>
   `);
 }
 

@@ -41,10 +41,13 @@ const RESERVED_SLUGS = new Set([
 
 export default async function AppProfileBySlugPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ username: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const resolved = await params;
+  const qs = await searchParams;
   const slug = normalizeUsername(resolved.username);
   if (!slug || RESERVED_SLUGS.has(slug)) return notFound();
 
@@ -68,7 +71,7 @@ export default async function AppProfileBySlugPage({
   const { data: services } = await supabase
     .from('service_listings')
     .select(
-      'id, slug, title, hero_price_min, currency_code, delivery_type, location_type, service_address, service_areas, media',
+      'id, slug, title, hero_price_min, currency_code, delivery_type, location_type, service_address, service_areas, media, menu',
     )
     .eq('seller_id', profile.id)
     .eq('is_active', true)
@@ -82,9 +85,16 @@ export default async function AppProfileBySlugPage({
     .order('created_at', { ascending: false })
     .limit(30);
 
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(qs || {})) {
+    const v = Array.isArray(value) ? value[0] : value;
+    if (v) query.set(key, v);
+  }
+  const suffix = query.toString() ? `?${query.toString()}` : '';
+
   const canonical = String(profile.slug || '').trim();
   if (canonical && canonical !== slug) {
-    redirect(`/app/profile/${encodeURIComponent(canonical)}`);
+    redirect(`/app/profile/${encodeURIComponent(canonical)}${suffix}`);
   }
 
   const supabaseAuthed = await createServerClientWithCookies();
@@ -92,7 +102,7 @@ export default async function AppProfileBySlugPage({
   const viewerId = auth?.user?.id ? String(auth.user.id) : '';
   const profileId = profile?.id != null ? String(profile.id) : '';
   if (viewerId && profileId && viewerId === profileId) {
-    redirect('/app/profile');
+    redirect(`/app/profile${suffix}`);
   }
 
   return (

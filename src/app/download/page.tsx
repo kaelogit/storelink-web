@@ -1,4 +1,5 @@
 import { Suspense } from 'react';
+import { fetchStoreListingUrls } from '@/lib/storeUrls';
 import DownloadContent from './DownloadContent';
 
 function DownloadFallback() {
@@ -13,10 +14,11 @@ function DownloadFallback() {
   );
 }
 
-export default function DownloadPage() {
+export default async function DownloadPage() {
+  const storeUrls = await fetchStoreListingUrls();
   return (
     <Suspense fallback={<DownloadFallback />}>
-      <DownloadContent />
+      <DownloadContent initialStoreUrls={storeUrls} />
     </Suspense>
   );
 }

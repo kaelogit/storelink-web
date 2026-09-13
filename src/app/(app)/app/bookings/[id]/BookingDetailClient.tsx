@@ -15,6 +15,7 @@ import {
   Lock,
   MessageCircle,
   MessageSquare,
+  Pencil,
   ShieldAlert,
   Sparkles,
   Timer,
@@ -27,6 +28,22 @@ import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { serviceBookingEligibleForRating } from '@/lib/ratingEligibility';
 import { PaystackTerminalModal } from '@/components/payments/PaystackTerminalModal';
 import { coinsToCurrency, formatCurrency } from '@/lib/activity-feed';
+import { DISPUTE_COPY } from '@/constants/disputeCopy';
+import { ClawbackExplanationCard } from '@/components/seller/ClawbackExplanationCard';
+import type { ClawbackDebtPreview } from '@/lib/clawbackExplanation';
+import { serviceDeliveryBadgeFromTypes } from '@/lib/verticalFulfillmentCopy';
+import {
+  nextPaymentLegFromBooking,
+  payCtaLabelForLeg,
+  paymentStateChipLabel,
+  nextChargeMajorFromBooking,
+  balanceDueBannerCopy,
+  depositBalancePreviewLines,
+  depositConfigFromListing,
+  DEPOSIT_HOLDS_CHARGES_FLAG,
+  type PaymentLeg,
+} from '@/lib/depositPaymentHolds';
+import { buildServicePolicySnippet } from '@/constants/serviceBookingPolicy';
 
 type ProfileLite = { display_name?: string | null; slug?: string | null; logo_url?: string | null };
 type ServiceListingJoin = {
@@ -39,6 +56,12 @@ type ServiceListingJoin = {
   media?: unknown;
   service_areas?: string[] | null;
   service_address?: string | null;
+  cancellation_policy?: string | null;
+  deposit_policy?: string | null;
+  deposit_enabled?: boolean | null;
+  deposit_mode?: string | null;
+  deposit_percent?: number | null;
+  deposit_minor?: number | null;
 } | null;
 
 type LinkedOrderRow = {
@@ -52,6 +75,7 @@ type LinkedOrderRow = {
 type BookingRow = {
   id: string;
   status?: string | null;
+  dispute_state?: string | null;
   created_at?: string | null;
   scheduled_at?: string | null;
   amount_minor?: number | null;
@@ -63,6 +87,10 @@ type BookingRow = {
   service_listing_id?: string | null;
   is_custom_quote?: boolean | null;
   custom_description?: string | null;
+  deposit_enabled_snapshot?: boolean | null;
+  deposit_required_minor?: number | null;
+  balance_required_minor?: number | null;
+  payment_state?: string | null;
   service_listing?: ServiceListingJoin;
   buyer?: ProfileLite | null;
   seller?: (ProfileLite & { loyalty_enabled?: boolean | null; loyalty_percentage?: number | null }) | null;
@@ -104,13 +132,12 @@ function firstServiceMediaUrl(media: unknown): string {
 }
 
 function deliveryBadge(listing: ServiceListingJoin | null | undefined): string | null {
-  const s = listing;
-  if (!s) return null;
-  if (s.delivery_type === 'online') return 'Online';
-  if (s.delivery_type === 'in_person' && s.location_type === 'i_travel') return 'I travel';
-  if (s.delivery_type === 'in_person' && s.location_type === 'at_my_place') return 'Studio only';
-  if (s.delivery_type === 'both' || s.location_type === 'both') return 'Studio & home';
-  return null;
+  if (!listing) return null;
+  return serviceDeliveryBadgeFromTypes(
+    listing.delivery_type,
+    listing.location_type,
+    listing.service_category,
+  );
 }
 
 function statusChip(status?: string | null) {
@@ -128,8 +155,10 @@ function statusChip(status?: string | null) {
       return { label: 'Completed', bg: 'bg-emerald-500/10', text: 'text-emerald-600' };
     case 'cancelled':
       return { label: 'Cancelled', bg: 'bg-red-500/10', text: 'text-red-500' };
+    case 'cancelled_by_seller':
+      return { label: 'Cancelled by provider', bg: 'bg-red-500/10', text: 'text-red-500' };
     case 'disputed':
-      return { label: 'In dispute', bg: 'bg-red-500/10', text: 'text-red-500' };
+      return { label: 'Under review', bg: 'bg-red-500/10', text: 'text-red-500' };
     case 'refunded':
       return { label: 'Refunded', bg: 'bg-red-500/10', text: 'text-red-500' };
     default:
@@ -161,7 +190,7 @@ const TIMELINE_STEPS: { key: string; label: string; description: string }[] = [
   {
     key: 'completed',
     label: 'Completed',
-    description: 'Buyer confirmed completion and payout was released.',
+    description: 'Work was marked complete. Payout is released unless support later reverses it.',
   },
 ];
 
@@ -175,7 +204,7 @@ function timelineReached(current: string, stepKey: string): boolean {
   };
   const cur = String(current || '').toLowerCase();
   if (stepKey === 'start') return true;
-  if (cur === 'cancelled') {
+  if (cur === 'cancelled' || cur === 'cancelled_by_seller') {
     const targetIdx = flowIndex[stepKey];
     return typeof targetIdx === 'number' && targetIdx <= 1;
   }
@@ -222,9 +251,11 @@ function BookingTimeline({ status }: { status: string }) {
             );
           })}
         </div>
-        {current === 'cancelled' ? (
+        {current === 'cancelled' || current === 'cancelled_by_seller' ? (
           <p className="mt-2 rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-xs font-semibold text-(--foreground)">
-            This booking was cancelled before completion.
+            {current === 'cancelled_by_seller'
+              ? 'This booking was cancelled by the provider.'
+              : 'This booking was cancelled before completion.'}
           </p>
         ) : null}
       </div>
@@ -254,11 +285,39 @@ export default function BookingDetailClient() {
   const [paystackOpen, setPaystackOpen] = useState(false);
   const [paymentOrderId, setPaymentOrderId] = useState<string | null>(null);
   const [paystackChargeMajor, setPaystackChargeMajor] = useState<number | null>(null);
+  const [activePaymentLeg, setActivePaymentLeg] = useState<PaymentLeg | null>(null);
   const [settlingPayment, setSettlingPayment] = useState(false);
   const [rebookBusy, setRebookBusy] = useState(false);
   const [rateSellerOpen, setRateSellerOpen] = useState(false);
   const [rateSellerPending, setRateSellerPending] = useState<RateSellerPending | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const [clawbackDebt, setClawbackDebt] = useState<ClawbackDebtPreview | null>(null);
+  const [chatOpening, setChatOpening] = useState(false);
+  const [depositChargesEnabled, setDepositChargesEnabled] = useState(false);
   const rateDeepLinkConsumedRef = useRef(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadFlag = async () => {
+      try {
+        const { data } = await supabase.rpc('resolve_feature_flag', {
+          p_key: DEPOSIT_HOLDS_CHARGES_FLAG,
+          p_user_id: profileId,
+          p_default: false,
+          p_subject_key: null,
+        });
+        if (!cancelled) {
+          setDepositChargesEnabled(Boolean((data as { enabled?: boolean } | null)?.enabled));
+        }
+      } catch {
+        if (!cancelled) setDepositChargesEnabled(false);
+      }
+    };
+    void loadFlag();
+    return () => {
+      cancelled = true;
+    };
+  }, [profileId, supabase]);
 
   useEffect(() => {
     rateDeepLinkConsumedRef.current = false;
@@ -299,6 +358,7 @@ export default function BookingDetailClient() {
   const load = useCallback(async () => {
     if (!bookingId) return;
     setLoading(true);
+    setLoadError(false);
     try {
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth.user?.id ?? null;
@@ -319,7 +379,13 @@ export default function BookingDetailClient() {
             currency_code,
             media,
             service_areas,
-            service_address
+            service_address,
+            cancellation_policy,
+            deposit_policy,
+            deposit_enabled,
+            deposit_mode,
+            deposit_percent,
+            deposit_minor
           ),
           buyer:buyer_id (display_name, slug, logo_url),
           seller:seller_id (display_name, slug, logo_url, loyalty_enabled, loyalty_percentage)
@@ -337,8 +403,18 @@ export default function BookingDetailClient() {
           : Promise.resolve({ data: null as { email?: string | null; coin_balance?: number | null } | null }),
       ]);
 
-      if (error) throw error;
-      setBooking((data as BookingRow) || null);
+      if (error) {
+        if (error.code === 'PGRST116') {
+          setBooking(null);
+          setLinkedOrder(null);
+          setClawbackDebt(null);
+          setLoadError(false);
+          return;
+        }
+        throw error;
+      }
+      const row = (data as BookingRow) || null;
+      setBooking(row);
 
       const nested = (linkedRes.data as { orders?: LinkedOrderRow | LinkedOrderRow[] | null } | null)?.orders;
       const ord = Array.isArray(nested) ? nested[0] : nested;
@@ -347,10 +423,24 @@ export default function BookingDetailClient() {
       const pr = profileRes.data as { email?: string | null; coin_balance?: number | null } | null;
       setBuyerEmail(String(pr?.email || auth.user?.email || '').trim());
       setBuyerCoinBalance(Math.floor(Number(pr?.coin_balance || 0)));
+
+      if (uid && row?.seller_id === uid) {
+        const { data: debt } = await supabase
+          .from('seller_clawback_debts')
+          .select('id, service_order_id, amount_minor, currency_code, reason, status, created_at, paid_at')
+          .eq('service_order_id', bookingId)
+          .eq('seller_id', uid)
+          .maybeSingle();
+        setClawbackDebt((debt as ClawbackDebtPreview | null) ?? null);
+      } else {
+        setClawbackDebt(null);
+      }
     } catch (e) {
       if (process.env.NODE_ENV === 'development') console.error('Booking load failed', e);
       setBooking(null);
       setLinkedOrder(null);
+      setClawbackDebt(null);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -363,6 +453,17 @@ export default function BookingDetailClient() {
   const checkLinkedOrderStatus = useCallback(async () => {
     if (!booking?.id || !isBuyerEffective(booking, profileId) || String(booking.status || '').toLowerCase() !== 'confirmed') {
       setLinkedOrderStatus('unknown');
+      return;
+    }
+    if (booking.payment_state === 'deposit_paid') {
+      setLinkedOrderStatus('awaiting_payment');
+      return;
+    }
+    if (booking.payment_state === 'paid_in_full') {
+      setLinkedOrderStatus('paid_or_beyond');
+      setBooking((prev) =>
+        prev && String(prev.status || '').toLowerCase() === 'confirmed' ? { ...prev, status: 'paid' } : prev,
+      );
       return;
     }
     try {
@@ -389,6 +490,10 @@ export default function BookingDetailClient() {
         return;
       }
       if (st === 'PAID' || st === 'SHIPPED' || st === 'COMPLETED' || st === 'DISPUTE_OPEN') {
+        if (booking.deposit_enabled_snapshot && booking.payment_state !== 'paid_in_full') {
+          setLinkedOrderStatus('awaiting_payment');
+          return;
+        }
         setLinkedOrderStatus('paid_or_beyond');
         setBooking((prev) =>
           prev && String(prev.status || '').toLowerCase() === 'confirmed' ? { ...prev, status: 'paid' } : prev,
@@ -408,6 +513,19 @@ export default function BookingDetailClient() {
   const isBuyer = !!booking && !!profileId && booking.buyer_id === profileId;
   const isSeller = !!booking && !!profileId && booking.seller_id === profileId;
   const status = String(booking?.status || '').toLowerCase();
+  const disputeState = String(booking?.dispute_state || '').toLowerCase();
+  const isDisputeOpen = status === 'disputed' || disputeState === 'under_review';
+  const canReportIssue =
+    (isBuyer || isSeller) &&
+    (
+      ['paid', 'in_progress'].includes(status) ||
+      (status === 'confirmed' &&
+        ['deposit_paid', 'paid_in_full', 'partially_refunded'].includes(
+          String(booking?.payment_state || '').toLowerCase(),
+        ))
+    ) &&
+    !['completed', 'cancelled', 'cancelled_by_seller', 'refunded', 'disputed'].includes(status) &&
+    !['under_review', 'resolved'].includes(disputeState);
   const meta = statusChip(status);
   const counterpart = isBuyer ? booking?.seller : booking?.buyer;
   const logo = normalizeWebMediaUrl(counterpart?.logo_url || '');
@@ -418,8 +536,25 @@ export default function BookingDetailClient() {
     typeof booking?.amount_minor === 'number' && !Number.isNaN(booking.amount_minor)
       ? Number(booking.amount_minor)
       : Number(listing?.hero_price_min || 0);
+  const listingDepositConfig = useMemo(
+    () => depositConfigFromListing(listing ?? null),
+    [listing],
+  );
+  const depositLegOpts = useMemo(
+    () => ({
+      chargesEnabled: depositChargesEnabled,
+      listingDeposit: listingDepositConfig,
+    }),
+    [depositChargesEnabled, listingDepositConfig],
+  );
   const subtotalMajor = (Number(booking?.amount_minor) || 0) / 100;
-  const maxCoinDiscount = Math.floor(subtotalMajor * 0.05);
+  const nextChargeMajor = (() => {
+    const hinted = nextChargeMajorFromBooking(booking, depositLegOpts);
+    if (hinted > 0) return hinted;
+    return subtotalMajor;
+  })();
+  const maxCoinDiscount = Math.floor(nextChargeMajor * 0.05);
+  const depositPreview = depositBalancePreviewLines(booking, depositLegOpts);
   const linkedCoinRedeemed = Number(linkedOrder?.coin_redeemed) || 0;
   const hasLinkedPayOrder = linkedOrder != null;
   const linkedOrderTotalAmount = Number(linkedOrder?.total_amount) || 0;
@@ -443,15 +578,33 @@ export default function BookingDetailClient() {
 
   const primaryCTA = useMemo(() => {
     if (!booking || (!isBuyer && !isSeller)) return 'none';
+    const bookingStatus = String(booking.status || '').toLowerCase();
+    const bookingDisputeState = String(booking.dispute_state || '').toLowerCase();
+    if (
+      ['disputed', 'refunded', 'cancelled', 'cancelled_by_seller'].includes(bookingStatus) ||
+      bookingDisputeState === 'under_review'
+    ) {
+      return 'none';
+    }
     if (booking.status === 'requested' && isSeller) return 'seller_confirm';
     if (booking.status === 'confirmed') {
-      if (isBuyer) return linkedOrderStatus === 'paid_or_beyond' ? 'none' : 'buyer_pay_now';
+      if (isBuyer) {
+        if (booking.payment_state === 'paid_in_full') return 'none';
+        if (booking.payment_state === 'deposit_paid') return 'buyer_pay_now';
+        return linkedOrderStatus === 'paid_or_beyond' ? 'none' : 'buyer_pay_now';
+      }
       if (isSeller) return 'none';
     }
     if (booking.status === 'paid' && isSeller) return 'seller_start';
     if (booking.status === 'in_progress' && isBuyer) return 'buyer_complete';
     return 'none';
   }, [booking, isBuyer, isSeller, linkedOrderStatus]);
+
+  const payLegHint = useMemo(
+    () => nextPaymentLegFromBooking(booking, depositLegOpts),
+    [booking, depositLegOpts],
+  );
+  const paymentChip = useMemo(() => paymentStateChipLabel(booking?.payment_state), [booking?.payment_state]);
 
   const canReschedule = (isBuyer || isSeller) && ['requested', 'confirmed', 'paid'].includes(status);
   const canCancelBeforePayment = (() => {
@@ -460,6 +613,41 @@ export default function BookingDetailClient() {
     if (isSeller) return status === 'requested';
     return false;
   })();
+  const canSellerRevisePrice = Boolean(
+    isSeller &&
+      (status === 'requested' || status === 'confirmed') &&
+      booking?.payment_state !== 'deposit_paid' &&
+      booking?.payment_state !== 'paid_in_full',
+  );
+  const showStickyFooter = canCancelBeforePayment || primaryCTA !== 'none' || canSellerRevisePrice;
+
+  const openBookingChat = async () => {
+    if (!booking || !profileId) return;
+    if (booking.conversation_id) {
+      router.push(`/app/chat/${booking.conversation_id}`);
+      return;
+    }
+    const partnerId = isBuyer ? booking.seller_id : booking.buyer_id;
+    if (!partnerId) return;
+    setChatOpening(true);
+    try {
+      const { data: chatId, error } = await supabase.rpc('create_smart_chat', {
+        p_initiator_id: profileId,
+        p_recipient_id: partnerId,
+        p_is_checkout: false,
+      });
+      if (error) throw error;
+      const id = String(chatId || '');
+      if (!id) throw new Error('Could not open chat.');
+      setBooking((prev) => (prev ? { ...prev, conversation_id: id } : prev));
+      router.push(`/app/chat/${id}`);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Could not open chat.';
+      window.alert(msg);
+    } finally {
+      setChatOpening(false);
+    }
+  };
 
   const openSchedule = (mode: 'confirm' | 'reschedule') => {
     setScheduleMode(mode);
@@ -543,10 +731,16 @@ export default function BookingDetailClient() {
 
   const waitForPaymentSettlement = async () => {
     const terminal = new Set(['paid', 'in_progress', 'completed', 'disputed', 'refunded', 'cancelled']);
+    const settledPayment = new Set(['deposit_paid', 'paid_in_full']);
     for (let i = 0; i < 8; i += 1) {
-      const { data } = await supabase.from('service_orders').select('status').eq('id', bookingId).maybeSingle();
+      const { data } = await supabase
+        .from('service_orders')
+        .select('status, payment_state')
+        .eq('id', bookingId)
+        .maybeSingle();
       const st = String((data as { status?: string } | null)?.status ?? '').toLowerCase();
-      if (terminal.has(st)) break;
+      const ps = String((data as { payment_state?: string } | null)?.payment_state ?? '').toLowerCase();
+      if (terminal.has(st) || settledPayment.has(ps)) break;
       await new Promise((r) => setTimeout(r, 900));
     }
     await load();
@@ -554,19 +748,36 @@ export default function BookingDetailClient() {
 
   const handlePayNow = async () => {
     if (!booking || !profileId) return;
+    const legHint = nextPaymentLegFromBooking(booking);
+    const moment =
+      legHint === 'deposit' ? 'pay_deposit' : legHint === 'balance' ? 'pay_balance' : 'pay';
+    const snippet = buildServicePolicySnippet(moment, {
+      cancellation_policy: listing?.cancellation_policy,
+      deposit_policy: listing?.deposit_policy,
+    });
     const ok = window.confirm(
-      'Confirm date, time, and scope with the provider in chat before you pay. After payment, cancellation is not available—disputes go through StoreLink support. Continue to pay?',
+      [snippet.title, snippet.intro, ...snippet.bullets.map((b) => `• ${b}`), 'Continue to pay?'].join(
+        '\n\n',
+      ),
     );
     if (!ok) return;
     setPayCreating(true);
     try {
-      const { data, error } = await supabase.rpc('create_order_for_service_booking', {
-        p_service_order_id: booking.id,
-        p_buyer_id: profileId,
-        p_coin_redeemed: appliedCoinForPayment,
-      });
+      const { data, error } = await supabase.rpc(
+        legHint === 'balance' ? 'create_order_for_service_booking_balance' : 'create_order_for_service_booking',
+        {
+          p_service_order_id: booking.id,
+          p_buyer_id: profileId,
+          p_coin_redeemed: appliedCoinForPayment,
+        },
+      );
       if (error) throw error;
-      const payload = data as { already_paid?: boolean; order_id?: string | null; total?: number } | null;
+      const payload = data as {
+        already_paid?: boolean;
+        order_id?: string | null;
+        total?: number;
+        payment_leg?: PaymentLeg;
+      } | null;
       if (payload?.already_paid) {
         setSettlingPayment(true);
         await waitForPaymentSettlement();
@@ -574,9 +785,10 @@ export default function BookingDetailClient() {
         window.alert('Payment was already received. Status updated.');
         return;
       }
+      setActivePaymentLeg(payload?.payment_leg || legHint);
       setPaymentOrderId(payload?.order_id ?? null);
       setPaystackChargeMajor(
-        typeof payload?.total === 'number' ? payload.total : Math.max(0, subtotalMajor - appliedCoinForPayment),
+        typeof payload?.total === 'number' ? payload.total : Math.max(0, nextChargeMajor - appliedCoinForPayment),
       );
       setPaystackOpen(true);
     } catch (e: unknown) {
@@ -589,6 +801,7 @@ export default function BookingDetailClient() {
 
   const handlePaymentSuccess = async (reference: string) => {
     const oid = paymentOrderId;
+    const paidLeg = activePaymentLeg || nextPaymentLegFromBooking(booking);
     setPaystackOpen(false);
     setSettlingPayment(true);
     try {
@@ -597,12 +810,16 @@ export default function BookingDetailClient() {
         if (error) throw error;
       }
       await waitForPaymentSettlement();
+      if (paidLeg === 'deposit') {
+        window.alert('Deposit secured. Pay the balance before work can start.');
+      }
     } catch {
       await load();
     } finally {
       setSettlingPayment(false);
       setPaymentOrderId(null);
       setPaystackChargeMajor(null);
+      setActivePaymentLeg(null);
     }
   };
 
@@ -630,7 +847,25 @@ export default function BookingDetailClient() {
   };
 
   if (loading) return <div className="py-10 text-center text-sm text-(--muted)">Loading booking...</div>;
-  if (!booking) return <div className="py-10 text-center text-sm text-(--muted)">Booking not found.</div>;
+  if (!booking) {
+    return (
+      <div className="py-10 text-center">
+        <p className="text-sm font-black text-(--foreground)">{loadError ? 'Booking unavailable' : 'Booking not found.'}</p>
+        {loadError ? (
+          <>
+            <p className="mt-2 text-sm text-(--muted)">Check your connection and try again.</p>
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="mt-4 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+            >
+              Try again
+            </button>
+          </>
+        ) : null}
+      </div>
+    );
+  }
 
   const badge = deliveryBadge(listing);
   const when =
@@ -654,7 +889,7 @@ export default function BookingDetailClient() {
   const payEmail = buyerEmail.trim() || (profileId ? `buyer-${profileId}@storelink.ng` : 'buyer@storelink.ng');
 
   return (
-    <div className="pb-32">
+    <div className={showStickyFooter ? 'pb-32' : 'pb-10'}>
       <header className="sticky top-0 z-20 border-b border-(--border) bg-(--background)/95 px-4 py-3 backdrop-blur-sm">
         <div className="flex items-center justify-between">
           <button
@@ -674,13 +909,16 @@ export default function BookingDetailClient() {
               </p>
             ) : null}
           </div>
-          {booking.conversation_id ? (
-            <Link
-              href={`/app/chat/${booking.conversation_id}`}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-(--surface) text-emerald-600"
+          {booking.conversation_id || booking.seller_id || booking.buyer_id ? (
+            <button
+              type="button"
+              disabled={chatOpening}
+              onClick={() => void openBookingChat()}
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-(--surface) text-emerald-600 disabled:opacity-50"
+              aria-label="Message"
             >
-              <MessageSquare size={20} strokeWidth={2.5} />
-            </Link>
+              {chatOpening ? <Loader2 size={20} className="animate-spin" /> : <MessageSquare size={20} strokeWidth={2.5} />}
+            </button>
           ) : (
             <div className="h-11 w-11 shrink-0" />
           )}
@@ -735,6 +973,20 @@ export default function BookingDetailClient() {
           </div>
         </div>
 
+        {paymentChip ? (
+          <div className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/15 px-2.5 py-1.5 text-[11px] font-black text-emerald-700">
+            <Lock size={12} className="shrink-0" />
+            {paymentChip}
+          </div>
+        ) : null}
+
+        {booking?.payment_state === 'deposit_paid' && status === 'confirmed' && isBuyer ? (
+          <div className="flex gap-2 rounded-[16px] border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-800">
+            <Lock size={18} className="shrink-0" />
+            <p>{balanceDueBannerCopy('buyer')}</p>
+          </div>
+        ) : null}
+
         {linkedCoinRedeemed > 0 ? (
           <div className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/15 px-2.5 py-1.5 text-[11px] font-black text-amber-700">
             <Coins size={12} className="shrink-0" />
@@ -742,7 +994,19 @@ export default function BookingDetailClient() {
           </div>
         ) : null}
 
-        <BookingTimeline status={status} />
+        {isDisputeOpen ? (
+          <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4">
+            <p className="text-sm font-black text-amber-700">{DISPUTE_COPY.progressBannerBooking}</p>
+            <p className="mt-1 text-xs font-semibold leading-relaxed text-amber-700/90">
+              {DISPUTE_COPY.progressBannerDetail}
+            </p>
+            <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-amber-700">
+              {DISPUTE_COPY.statusChip}
+            </p>
+          </div>
+        ) : (
+          <BookingTimeline status={status} />
+        )}
 
         {(isBuyer || isSeller) && (status === 'requested' || status === 'confirmed' || status === 'paid') ? (
           <section className="space-y-2">
@@ -755,6 +1019,22 @@ export default function BookingDetailClient() {
                 <span className="text-(--muted)">Service total</span>
                 <span className="font-black text-(--foreground)">{moneyMajor(subtotalMajor, currency)}</span>
               </div>
+              {depositPreview?.show ? (
+                <>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-(--muted)">
+                      Deposit{depositPreview.depositPaid ? ' (paid)' : ' (due now)'}
+                    </span>
+                    <span className="font-black text-(--foreground)">{moneyMajor(depositPreview.depositMajor, currency)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-(--muted)">
+                      Balance{booking?.payment_state === 'deposit_paid' ? ' (due now)' : ' (before start)'}
+                    </span>
+                    <span className="font-black text-(--foreground)">{moneyMajor(depositPreview.balanceMajor, currency)}</span>
+                  </div>
+                </>
+              ) : null}
               {(status === 'requested' || status === 'confirmed') && (
                 <>
                   <div className="flex items-start justify-between gap-2 border-t border-(--border) pt-2">
@@ -800,11 +1080,17 @@ export default function BookingDetailClient() {
               ) : null}
               <div className="border-t border-(--border) pt-2" />
               <div className="flex items-center justify-between text-sm">
-                <span className="font-black text-(--foreground)">To pay (card)</span>
+                <span className="font-black text-(--foreground)">
+                  {payLegHint === 'deposit'
+                    ? 'Deposit to pay'
+                    : payLegHint === 'balance'
+                      ? 'Balance to pay'
+                      : 'To pay (card)'}
+                </span>
                 <span className="text-lg font-black text-(--foreground)">
                   {formatCurrency(
                     status === 'confirmed' || status === 'requested'
-                      ? Math.max(0, linkedOrderTotalAmount || Math.max(0, subtotalMajor - appliedCoinForPayment))
+                      ? Math.max(0, linkedOrderTotalAmount || Math.max(0, nextChargeMajor - appliedCoinForPayment))
                       : Math.max(0, Number(linkedOrder?.total_amount) || 0),
                     currency,
                   )}
@@ -840,15 +1126,15 @@ export default function BookingDetailClient() {
                 Profile
               </Link>
             ) : null}
-            {booking.conversation_id ? (
-              <Link
-                href={`/app/chat/${booking.conversation_id}`}
-                className="inline-flex shrink-0 items-center gap-1 rounded-full border border-(--border) bg-(--card) px-3 py-1.5 text-[10px] font-black uppercase text-(--foreground)"
-              >
-                <MessageCircle size={12} />
-                Chat
-              </Link>
-            ) : null}
+            <button
+              type="button"
+              disabled={chatOpening}
+              onClick={() => void openBookingChat()}
+              className="inline-flex shrink-0 items-center gap-1 rounded-full border border-(--border) bg-(--card) px-3 py-1.5 text-[10px] font-black uppercase text-(--foreground) disabled:opacity-50"
+            >
+              <MessageCircle size={12} />
+              {chatOpening ? '…' : 'Chat'}
+            </button>
           </div>
         </section>
 
@@ -892,13 +1178,19 @@ export default function BookingDetailClient() {
           </div>
         </section>
 
-        {isSeller && (status === 'disputed' || status === 'refunded') ? (
-          <div className="flex gap-2 rounded-[16px] border border-red-500/30 bg-red-500/10 p-3 text-sm text-(--foreground)">
-            <ShieldAlert size={18} className="shrink-0 text-red-500" />
-            <p>
-              This booking is {status === 'disputed' ? 'in dispute' : 'refunded after a dispute'}. Payouts may be paused or reversed while a claim is reviewed.
-            </p>
-          </div>
+        {isSeller && (clawbackDebt || status === 'disputed' || status === 'refunded') ? (
+          clawbackDebt ? (
+            <ClawbackExplanationCard debt={clawbackDebt} variant="compact" showRepayAction={clawbackDebt.status === 'open'} />
+          ) : (
+            <div className="flex gap-2 rounded-[16px] border border-red-500/30 bg-red-500/10 p-3 text-sm text-(--foreground)">
+              <ShieldAlert size={18} className="shrink-0 text-red-500" />
+              <p>
+                This booking is {status === 'disputed' ? 'currently in dispute' : 'already refunded after a dispute'}. Our
+                team may pause or reverse payouts linked to this booking when a claim is validated under the service
+                policies you accepted.
+              </p>
+            </div>
+          )
         ) : null}
 
         {booking.is_custom_quote ? (
@@ -923,6 +1215,31 @@ export default function BookingDetailClient() {
               {listing?.service_address ? <p className="font-semibold">{listing.service_address}</p> : null}
               {listing?.service_areas && listing.service_areas.length > 0 ? (
                 <p className={`text-(--muted) ${listing?.service_address ? 'mt-2' : ''}`}>Areas: {listing.service_areas.join(', ')}</p>
+              ) : null}
+            </div>
+          </section>
+        ) : null}
+
+        {(String(listing?.cancellation_policy || '').trim() ||
+          String(listing?.deposit_policy || '').trim()) ? (
+          <section className="space-y-2">
+            <p className="text-[11px] font-bold uppercase tracking-wide text-(--muted)">Seller policies</p>
+            <div className="rounded-[20px] border border-(--border) bg-(--surface) p-4 text-sm text-(--foreground) space-y-3">
+              {String(listing?.cancellation_policy || '').trim() ? (
+                <div>
+                  <p className="text-xs font-black">Cancellation</p>
+                  <p className="mt-1 text-(--muted) whitespace-pre-wrap">
+                    {String(listing?.cancellation_policy).trim()}
+                  </p>
+                </div>
+              ) : null}
+              {String(listing?.deposit_policy || '').trim() ? (
+                <div>
+                  <p className="text-xs font-black">Deposit / payment</p>
+                  <p className="mt-1 text-(--muted) whitespace-pre-wrap">
+                    {String(listing?.deposit_policy).trim()}
+                  </p>
+                </div>
               ) : null}
             </div>
           </section>
@@ -958,6 +1275,27 @@ export default function BookingDetailClient() {
           </section>
         ) : null}
 
+        {isSeller && status === 'confirmed' ? (
+          <div className="flex gap-2 rounded-[16px] border border-(--border) bg-(--surface) p-3 text-sm text-(--muted)">
+            <Lock size={18} className="shrink-0" />
+            <p>
+              {booking?.payment_state === 'deposit_paid'
+                ? balanceDueBannerCopy('seller')
+                : 'Waiting for the buyer to pay. Escrow starts after they complete checkout.'}
+            </p>
+          </div>
+        ) : null}
+
+        {isSeller && status === 'in_progress' ? (
+          <div className="flex gap-2 rounded-[16px] border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-(--foreground)">
+            <Clock size={18} className="shrink-0 text-amber-600" />
+            <p>
+              Waiting for the buyer to confirm the work is done. The remaining escrow releases when they tap{' '}
+              <span className="font-black">Confirm work completed</span>. You can message them from chat if they need a nudge.
+            </p>
+          </div>
+        ) : null}
+
         {isBuyer && status === 'confirmed' && linkedOrderStatus === 'paid_or_beyond' ? (
           <div className="flex gap-2 rounded-[16px] border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm font-semibold text-emerald-700">
             <CheckCircle2 size={18} className="shrink-0" />
@@ -965,7 +1303,7 @@ export default function BookingDetailClient() {
           </div>
         ) : null}
 
-        {isBuyer && !['completed', 'cancelled', 'refunded', 'disputed'].includes(status) ? (
+        {canReportIssue ? (
           <Link
             href={`/app/bookings/dispute?serviceOrderId=${encodeURIComponent(booking.id)}`}
             className="block w-full rounded-[16px] border border-(--border) bg-(--surface) py-3 text-center text-sm font-black text-(--foreground)"
@@ -975,8 +1313,17 @@ export default function BookingDetailClient() {
         ) : null}
       </div>
 
+      {showStickyFooter ? (
       <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-(--border) bg-(--background)/95 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur-sm">
         <div className="mx-auto flex max-w-lg flex-col gap-2">
+          {canSellerRevisePrice ? (
+            <Link
+              href={`/app/bookings/revise-price?serviceOrderId=${encodeURIComponent(booking!.id)}`}
+              className="flex w-full items-center justify-center gap-2 rounded-[16px] border border-(--border) bg-(--surface) py-3 text-sm font-black text-(--foreground)"
+            >
+              <Pencil size={16} /> Update price
+            </Link>
+          ) : null}
           {canCancelBeforePayment ? (
             <button
               type="button"
@@ -1013,12 +1360,15 @@ export default function BookingDetailClient() {
               type="button"
               disabled={busy}
               onClick={() => {
-                if (!window.confirm('Mark job as started? This queues your first payout (~30%).')) return;
+                const ok = window.confirm(
+                  'Before you mark job as started\n\nThis tells StoreLink that work has truly begun. Up to 30% of the booking value queues for payout when you mark started. The remaining 70% stays in escrow until the buyer marks the job completed. The buyer does not confirm start. If a dispute is opened after payout has begun, StoreLink may claw back funds according to policy.',
+                );
+                if (!ok) return;
                 void runStatusChange('in_progress');
               }}
               className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-emerald-600 py-3 text-sm font-black text-white disabled:opacity-50"
             >
-              <Clock size={18} /> Start service
+              <Clock size={18} /> Confirm job started
             </button>
           ) : null}
 
@@ -1027,12 +1377,15 @@ export default function BookingDetailClient() {
               type="button"
               disabled={busy}
               onClick={() => {
-                if (!window.confirm('Mark as completed? This releases remaining funds to the seller.')) return;
+                const ok = window.confirm(
+                  'Mark job as completed?\n\nThis will release the remaining funds to the seller. Only do this when work is truly done.',
+                );
+                if (!ok) return;
                 void runStatusChange('completed');
               }}
               className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-emerald-600 py-3 text-sm font-black text-white disabled:opacity-50"
             >
-              <CheckCircle2 size={18} /> Confirm completion
+              <CheckCircle2 size={18} /> Confirm work completed
             </button>
           ) : null}
 
@@ -1043,11 +1396,12 @@ export default function BookingDetailClient() {
               onClick={() => void handlePayNow()}
               className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-emerald-600 py-3 text-sm font-black text-white disabled:opacity-50"
             >
-              <CreditCard size={18} /> {payCreating ? '…' : 'Pay now'}
+              <CreditCard size={18} /> {payCreating ? '…' : payCtaLabelForLeg(activePaymentLeg || payLegHint)}
             </button>
           ) : null}
         </div>
       </div>
+      ) : null}
 
       {scheduleOpen ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
@@ -1078,15 +1432,25 @@ export default function BookingDetailClient() {
           setPaystackOpen(false);
           setPaymentOrderId(null);
           setPaystackChargeMajor(null);
+          setActivePaymentLeg(null);
         }}
         onSuccess={(ref) => void handlePaymentSuccess(ref)}
         email={payEmail}
-        amount={paystackChargeMajor ?? Math.max(0, subtotalMajor - appliedCoinForPayment)}
+        amount={paystackChargeMajor ?? Math.max(0, nextChargeMajor - appliedCoinForPayment)}
         currency={currency}
         metadata={
-          paymentOrderId
-            ? { order_id: paymentOrderId, is_escrow: true, service_order_id: booking.id }
-            : { is_escrow: true, service_order_id: booking.id }
+          paymentOrderId && booking
+            ? {
+                order_id: paymentOrderId,
+                is_escrow: true,
+                service_order_id: booking.id,
+                payment_leg: activePaymentLeg || payLegHint,
+              }
+            : {
+                is_escrow: true,
+                service_order_id: booking?.id,
+                payment_leg: activePaymentLeg || payLegHint,
+              }
         }
       />
 

@@ -14,7 +14,14 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase';
+import { uploadFileToR2 } from '@/lib/mediaUpload';
 import Button from '@/components/ui/Button';
+import {
+  businessVerificationHref,
+  isBusinessVerified,
+  isNigeriaSeller,
+  type ProfileLike,
+} from '@/lib/profileBadges';
 
 export type VerificationIdType = 'NIN' | 'DRIVER_LICENSE' | 'PASSPORT';
 
@@ -58,6 +65,7 @@ export default function SellerVerificationClient() {
   const router = useRouter();
   const supabase = useMemo(() => createBrowserClient(), []);
   const [profileId, setProfileId] = useState<string | null>(null);
+  const [profileExtras, setProfileExtras] = useState<ProfileLike | null>(null);
   const [verificationStatus, setVerificationStatus] = useState<string>('none');
   const [lastRejectionReason, setLastRejectionReason] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -79,12 +87,19 @@ export default function SellerVerificationClient() {
     const uid = auth.user?.id;
     if (!uid) {
       setProfileId(null);
+      setProfileExtras(null);
       setLoading(false);
       return;
     }
     setProfileId(uid);
-    const { data: row } = await supabase.from('profiles').select('verification_status').eq('id', uid).maybeSingle();
-    const status = String((row as any)?.verification_status || 'none').toLowerCase();
+    const { data: row } = await supabase
+      .from('profiles')
+      .select('verification_status, kyc_status, business_verification_status, location_country_code')
+      .eq('id', uid)
+      .maybeSingle();
+    const extras = (row as ProfileLike) || null;
+    setProfileExtras(extras);
+    const status = String(extras?.verification_status || 'none').toLowerCase();
     setVerificationStatus(status || 'none');
     if (status === 'rejected') {
       const { data: mv } = await supabase.from('merchant_verifications').select('rejection_reason').eq('user_id', uid).maybeSingle();
@@ -179,12 +194,7 @@ export default function SellerVerificationClient() {
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
     const safeExt = ext === 'png' ? 'png' : 'jpg';
     const path = `${profileId}/${folder}_${Date.now()}.${safeExt}`;
-    const contentType = file.type || `image/${safeExt === 'png' ? 'png' : 'jpeg'}`;
-    const { error } = await supabase.storage.from('kyc-documents').upload(path, file, { contentType, upsert: false });
-    if (error) throw new Error(error.message);
-    const { data } = supabase.storage.from('kyc-documents').getPublicUrl(path);
-    if (!data?.publicUrl) throw new Error('Could not get public URL for upload');
-    return data.publicUrl;
+    return uploadFileToR2(file, `kyc-documents/${path}`);
   };
 
   const handleSubmit = async () => {
@@ -259,6 +269,11 @@ export default function SellerVerificationClient() {
         <p className="max-w-sm text-sm text-(--muted)">
           Your identity has been confirmed. You have full access to merchant features.
         </p>
+        {isNigeriaSeller(profileExtras) && !isBusinessVerified(profileExtras) ? (
+          <Button href={businessVerificationHref(profileExtras)} variant="primary" className="mt-2 rounded-full px-6">
+            Continue to business verification
+          </Button>
+        ) : null}
         <Button href="/app/seller/dashboard" variant="secondary" className="mt-2 rounded-full px-6">
           Return to dashboard
         </Button>

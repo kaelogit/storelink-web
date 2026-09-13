@@ -6,7 +6,7 @@ import Link from 'next/link';
 import Button from '@/components/ui/Button';
 
 // Expanded triggers to cover all actions
-export type TrapTrigger = 'buy' | 'view' | 'chat' | 'like' | 'comment' | 'save' | 'explore';
+export type TrapTrigger = 'buy' | 'book' | 'view' | 'chat' | 'like' | 'comment' | 'save' | 'explore';
 
 interface AppTrapModalProps {
   isOpen: boolean;
@@ -15,41 +15,59 @@ interface AppTrapModalProps {
   trigger: TrapTrigger;
   /** Path to reopen in app after install (e.g. /p/slug, /@slug, /r/id). Appended to /download?intent= */
   intentPath?: string;
+  /** Web `/app` surface for the same listing or feed (logged-in or guest-readable). */
+  continueHref?: string;
 }
 
-export default function AppTrapModal({ isOpen, onClose, sellerName, trigger, intentPath }: AppTrapModalProps) {
+export default function AppTrapModal({ isOpen, onClose, sellerName, trigger, intentPath, continueHref }: AppTrapModalProps) {
   const downloadHref = intentPath ? `/download?intent=${encodeURIComponent(intentPath)}` : '/download';
   
   // Dynamic messaging based on what the user tried to do
   const content = {
     buy: {
       title: `Buy from ${sellerName}?`,
-      desc: "Secure payments and escrow protection are only available on the StoreLink app to keep your money safe."
+      desc: continueHref
+        ? 'Pay with escrow on the web, or download the app for the full StoreLink checkout experience.'
+        : 'Create a free account to pay with escrow — on the web or in the StoreLink app.',
+    },
+    book: {
+      title: `Book with ${sellerName}?`,
+      desc: continueHref
+        ? 'Continue on the web to pick a time and pay with escrow. Your menu and visit mode carry over. The app is optional.'
+        : 'Service booking and escrow run on the web and in the StoreLink app. Download to keep this booking on your phone.',
     },
     view: {
       title: `View ${sellerName}'s Shop?`,
-      desc: "To browse the full collection and see new arrivals, open this profile in the StoreLink app."
+      desc: continueHref
+        ? 'Open the shop on the web, or get the app for stories, DMs, and quicker posting.'
+        : 'Browse the full collection on the web after you sign in, or open it in the StoreLink app.',
     },
     chat: {
       title: `Message ${sellerName}?`,
-      desc: "Instant messaging and voice notes are encrypted and hosted inside the StoreLink app."
+      desc: continueHref
+        ? 'Continue on the web to chat, or download the app for voice notes and faster replies.'
+        : 'Sign in to message this seller on the web, or open the conversation in the StoreLink app.',
     },
     like: {
-      title: "Show some love?",
-      desc: "You need an account to like products. Join the community on the app to support your favorite sellers."
+      title: 'Show some love?',
+      desc: 'Sign in to like this. You can do that on the web or in the StoreLink app.',
     },
     comment: {
-      title: "Join the conversation?",
-      desc: "Want to ask a question or see reviews? Real-time comments are only available on the app."
+      title: 'Join the conversation?',
+      desc: continueHref
+        ? 'Continue on the web to read and post comments, or use the app if you prefer.'
+        : 'Sign in to comment on the web, or open this in the StoreLink app.',
     },
     save: {
-      title: "Save for later?",
-      desc: "Never lose this item. Add it to your wishlist on the app and get notified when the price drops."
+      title: 'Save for later?',
+      desc: 'Sign in to add this to your wishlist on the web or in the StoreLink app.',
     },
     explore: {
-      title: "See 1,000+ more items?",
-      desc: "The web view only shows a preview. Download the app to explore the full global feed and daily flash drops."
-    }
+      title: 'See more on StoreLink?',
+      desc: continueHref
+        ? 'Keep browsing on the web, or download the app for the full feed, stories, and seller tools.'
+        : 'The full Home, Explore, and Discover feeds are on the web app. Download if you want them on your phone too.',
+    },
   };
 
   const activeContent = content[trigger] || content.view;
@@ -98,6 +116,11 @@ export default function AppTrapModal({ isOpen, onClose, sellerName, trigger, int
                 </p>
 
                 <div className="space-y-3">
+                   {continueHref ? (
+                     <Button href={continueHref} variant="primary" size="lg" className="w-full">
+                       Continue on web
+                     </Button>
+                   ) : null}
                    <Button href={downloadHref} variant="secondary" size="lg" className="w-full">
                      <Apple size={20} className="mb-0.5" />
                      Download on App Store

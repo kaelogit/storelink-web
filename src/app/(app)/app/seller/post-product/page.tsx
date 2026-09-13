@@ -1,11 +1,33 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, Camera, Sparkles, Trash2, Upload, Wand2 } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
+import { uploadFileToR2 } from '@/lib/mediaUpload';
 import { PostPublishResultSheet } from '@/components/seller/PostPublishResultSheet';
 import { PostPublishingOverlay } from '@/components/seller/PostPublishingOverlay';
+import {
+  PRODUCT_CATEGORIES,
+  canonicalizeProductCategorySlug,
+  isPickerProductCategorySlug,
+} from '@/constants/ProductCategories';
+import {
+  LISTING_LOCK_BANNER_BODY,
+  LISTING_LOCK_BANNER_TITLE,
+  LISTING_PRICE_CHANGE_CAP_PCT,
+  isListingContentLocked,
+  mapListingLockError,
+  priceChangeWithinCap,
+} from '@/lib/listingContentLock';
+import {
+  LISTING_TAG_CAP_TITLE,
+  assertCanTagListing,
+  listingTagCapBody,
+  mapListingTagCapError,
+} from '@/lib/listingTagCap';
+import { LISTING_MAX_IMAGES } from '@/constants/listingMedia';
 
 type DescriptionStyle = 'luxury_lagos' | 'friendly_relatable' | 'sharp_minimal' | 'bold_standout';
 
@@ -45,14 +67,23 @@ async function optimizeImageForUpload(file: File): Promise<File> {
   return new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' });
 }
 
-export default function AppSellerPostProductPage() {
+function PostProductForm() {
   const supabase = useMemo(() => createBrowserClient(), []);
+  const searchParams = useSearchParams();
+  const editId = (searchParams.get('id') || '').trim() || null;
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('1');
+  const [requiresShipping, setRequiresShipping] = useState(true);
   const [description, setDescription] = useState('');
+  const [category, setCategory] = useState('');
+  const [shopCategory, setShopCategory] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
+  const [existingImages, setExistingImages] = useState<string[]>([]);
+  const [contentLockedAt, setContentLockedAt] = useState<string | null>(null);
+  const [originalPrice, setOriginalPrice] = useState<number | null>(null);
+  const [loadEdit, setLoadEdit] = useState(!!editId);
   const [postToStory, setPostToStory] = useState(false);
   const [isDiamond, setIsDiamond] = useState(false);
   const [descriptionStyle, setDescriptionStyle] = useState<DescriptionStyle>('friendly_relatable');
@@ -66,6 +97,7 @@ export default function AppSellerPostProductPage() {
   const [publishStage, setPublishStage] = useState<'uploading' | 'finalizing' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [resultSheetOpen, setResultSheetOpen] = useState(false);
+  const contentLocked = isListingContentLocked({ content_locked_at: contentLockedAt });
 
   useEffect(() => {
     let active = true;
@@ -73,17 +105,91 @@ export default function AppSellerPostProductPage() {
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id;
       if (!active || !userId) return;
-      const { data: profile } = await supabase.from('profiles').select('subscription_plan').eq('id', userId).maybeSingle();
+      const { data: profile } = await supabase.from('profiles').select('subscription_plan, category').eq('id', userId).maybeSingle();
       if (!active) return;
       setIsDiamond(String(profile?.subscription_plan || '').toLowerCase() === 'diamond');
+      const fromShop = canonicalizeProductCategorySlug(profile?.category);
+      if (isPickerProductCategorySlug(fromShop)) {
+        setShopCategory(fromShop);
+        if (!editId) setCategory(fromShop);
+      }
     })();
     return () => {
       active = false;
     };
-  }, [supabase]);
+  }, [supabase, editId]);
+
+  useEffect(() => {
+    if (!editId) {
+      setExistingImages([]);
+      setContentLockedAt(null);
+      setOriginalPrice(null);
+      setLoadEdit(false);
+      return;
+    }
+    let active = true;
+    (async () => {
+      setLoadEdit(true);
+      try {
+        const { data: auth } = await supabase.auth.getUser();
+        const userId = auth.user?.id;
+        if (!userId) {
+          if (active) {
+            setError('Please login again.');
+            setLoadEdit(false);
+          }
+          return;
+        }
+        const { data, error: loadErr } = await supabase
+          .from('products')
+          .select('id, name, price, stock_quantity, description, image_urls, content_locked_at, linked_post_count, category, requires_shipping')
+          .eq('id', editId)
+          .eq('seller_id', userId)
+          .single();
+        if (!active) return;
+        if (loadErr || !data) {
+          setError('Could not load this product for editing.');
+          setLoadEdit(false);
+          return;
+        }
+        const row = data as {
+          name?: string;
+          price?: number;
+          stock_quantity?: number;
+          description?: string;
+          image_urls?: string[] | null;
+          content_locked_at?: string | null;
+          category?: string | null;
+          requires_shipping?: boolean | null;
+        };
+        setName(String(row.name || ''));
+        setPrice(row.price != null ? String(row.price) : '');
+        setOriginalPrice(Number(row.price) || null);
+        setStock(String(row.stock_quantity ?? 1));
+        setRequiresShipping(row.requires_shipping !== false);
+        setDescription(String(row.description || ''));
+        setCategory(canonicalizeProductCategorySlug(row.category));
+        setExistingImages(Array.isArray(row.image_urls) ? row.image_urls.filter(Boolean) : []);
+        setContentLockedAt(row.content_locked_at ?? null);
+        setFiles([]);
+        setPreviewUrls([]);
+        setLoadEdit(false);
+      } catch {
+        if (active) {
+          setError('Failed to load product.');
+          setLoadEdit(false);
+        }
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [editId, supabase]);
 
   const onPickImages = async (ev: React.ChangeEvent<HTMLInputElement>) => {
-    const picked = Array.from(ev.target.files || []).slice(0, Math.max(0, 4 - files.length));
+    if (contentLocked) return;
+    const room = LISTING_MAX_IMAGES - existingImages.length - files.length;
+    const picked = Array.from(ev.target.files || []).slice(0, Math.max(0, room));
     if (!picked.length) return;
     setIsOptimizing(true);
     try {
@@ -91,16 +197,22 @@ export default function AppSellerPostProductPage() {
       for (const file of picked) {
         optimized.push(await optimizeImageForUpload(file));
       }
-      setFiles((prev) => [...prev, ...optimized].slice(0, 4));
-      setPreviewUrls((prev) => [...prev, ...optimized.map((f) => URL.createObjectURL(f))].slice(0, 4));
+      setFiles((prev) => [...prev, ...optimized]);
+      setPreviewUrls((prev) => [...prev, ...optimized.map((f) => URL.createObjectURL(f))]);
     } finally {
       setIsOptimizing(false);
     }
   };
 
   const removeImage = (idx: number) => {
+    if (contentLocked) return;
     setFiles((prev) => prev.filter((_, i) => i !== idx));
     setPreviewUrls((prev) => prev.filter((_, i) => i !== idx));
+  };
+
+  const removeExistingImage = (idx: number) => {
+    if (contentLocked) return;
+    setExistingImages((prev) => prev.filter((_, i) => i !== idx));
   };
 
   const openDiamondSheet = (feature: string) => {
@@ -176,21 +288,32 @@ export default function AppSellerPostProductPage() {
   const uploadFile = async (userId: string, file: File, index: number) => {
     const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
     const path = `${userId}/prod_${Date.now()}_${index}.${ext}`;
-    const { error } = await supabase.storage.from('product-images').upload(path, file, {
-      contentType: file.type || `image/${ext === 'png' ? 'png' : 'jpeg'}`,
-      upsert: false,
-    });
-    if (error) throw error;
-    const { data } = supabase.storage.from('product-images').getPublicUrl(path);
-    return data.publicUrl;
+    return uploadFileToR2(file, `product-images/${path}`);
   };
 
   const handleSubmit = async () => {
     setError(null);
     setResultSheetOpen(false);
-    if (!name.trim() || !price || files.length === 0 || description.trim().length < 100) {
-      setError('Provide title, price, at least one image, and description with at least 100 characters.');
-      return;
+    const nextPrice = Number(price);
+    const imageTotal = existingImages.length + files.length;
+    if (editId && contentLocked) {
+      if (!Number.isFinite(nextPrice) || nextPrice <= 0) {
+        setError('Enter a valid price.');
+        return;
+      }
+      if (originalPrice != null && !priceChangeWithinCap(originalPrice, nextPrice)) {
+        setError(`Price can only change up to ${LISTING_PRICE_CHANGE_CAP_PCT}% while this listing is locked.`);
+        return;
+      }
+    } else {
+      if (!name.trim() || !price || imageTotal === 0 || description.trim().length < 100) {
+        setError('Provide title, price, at least one image, and description with at least 100 characters.');
+        return;
+      }
+      if (!isPickerProductCategorySlug(category)) {
+        setError('Choose a product category for this listing.');
+        return;
+      }
     }
 
     setLoading(true);
@@ -217,61 +340,140 @@ export default function AppSellerPostProductPage() {
         throw new Error('Your seller type only allows service listings.');
       }
 
+      if (editId && contentLocked) {
+        setPublishStage('finalizing');
+        setPublishProgress(80);
+        const { error: updateError } = await supabase
+          .from('products')
+          .update({
+            price: nextPrice,
+            stock_quantity: Number(stock || 1),
+            requires_shipping: requiresShipping,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editId)
+          .eq('seller_id', userId);
+        if (updateError) throw new Error(mapListingLockError(updateError.message));
+        setOriginalPrice(nextPrice);
+        setPublishProgress(100);
+        setResultSheetOpen(true);
+        return;
+      }
+
+      if (editId && postToStory) {
+        const capResult = await assertCanTagListing(supabase, {
+          listingType: 'product',
+          listingId: editId,
+          slotsNeeded: 1,
+        });
+        if (!capResult.ok) {
+          setError(`${LISTING_TAG_CAP_TITLE}. ${listingTagCapBody(capResult.capacity.max_per_listing, capResult.capacity.active_count)}`);
+          return;
+        }
+      }
+
       setPublishProgress(14);
-      const uploaded = [];
+      const uploaded: string[] = [];
       for (let i = 0; i < files.length; i += 1) {
         uploaded.push(await uploadFile(userId, files[i], i));
         setPublishProgress(14 + Math.round(((i + 1) / Math.max(1, files.length)) * 55));
       }
+      const imageUrls = [...existingImages, ...uploaded];
 
       setPublishStage('finalizing');
       setPublishProgress(78);
-      const { data: created, error: createError } = await supabase
-        .from('products')
-        .insert({
-          seller_id: userId,
-          name: name.trim(),
-          price: Number(price),
-          stock_quantity: Number(stock || 1),
-          description: description.trim(),
-          image_urls: uploaded,
-          image_ratio: 1.25,
-          currency_code: profile?.currency_code || 'NGN',
-          location_country: profile?.location_country || 'Nigeria',
-          is_active: true,
-        })
-        .select()
-        .single();
-      if (createError) throw createError;
+      if (editId) {
+        const { error: updateError } = await supabase
+          .from('products')
+          .update({
+            name: name.trim(),
+            price: nextPrice,
+            stock_quantity: Number(stock || 1),
+            description: description.trim(),
+            image_urls: imageUrls,
+            image_ratio: 1.25,
+            category: canonicalizeProductCategorySlug(category),
+            currency_code: profile?.currency_code || 'NGN',
+            location_country: profile?.location_country || 'Nigeria',
+            requires_shipping: requiresShipping,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', editId)
+          .eq('seller_id', userId);
+        if (updateError) throw new Error(mapListingLockError(updateError.message));
+        setExistingImages(imageUrls);
+        setFiles([]);
+        setPreviewUrls([]);
+        if (postToStory) {
+          setPublishProgress(88);
+          const { error: storyError } = await supabase.from('stories').insert({
+            seller_id: userId,
+            media_url: imageUrls[0],
+            type: 'image',
+            linked_product_id: editId,
+            expires_at: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
+          });
+          if (storyError) throw new Error(mapListingTagCapError(storyError.message));
+        }
+      } else {
+        const { data: created, error: createError } = await supabase
+          .from('products')
+          .insert({
+            seller_id: userId,
+            name: name.trim(),
+            price: nextPrice,
+            stock_quantity: Number(stock || 1),
+            description: description.trim(),
+            image_urls: imageUrls,
+            image_ratio: 1.25,
+            category: canonicalizeProductCategorySlug(category),
+            currency_code: profile?.currency_code || 'NGN',
+            location_country: profile?.location_country || 'Nigeria',
+            requires_shipping: requiresShipping,
+            is_active: true,
+          })
+          .select()
+          .single();
+        if (createError) throw createError;
 
-      if (postToStory && created?.id) {
-        setPublishProgress(88);
-        await supabase.from('stories').insert({
-          seller_id: userId,
-          media_url: uploaded[0],
-          type: 'image',
-          linked_product_id: created.id,
-          expires_at: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
-        });
+        if (postToStory && created?.id) {
+          setPublishProgress(88);
+          const { error: storyError } = await supabase.from('stories').insert({
+            seller_id: userId,
+            media_url: imageUrls[0],
+            type: 'image',
+            linked_product_id: created.id,
+            expires_at: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
+          });
+          if (storyError) throw new Error(mapListingTagCapError(storyError.message));
+        }
+
+        setName('');
+        setPrice('');
+        setStock('1');
+        setDescription('');
+        setCategory(shopCategory);
+        setExistingImages([]);
+        setFiles([]);
+        setPreviewUrls([]);
+        setPostToStory(false);
       }
 
       setPublishProgress(100);
-      setName('');
-      setPrice('');
-      setStock('1');
-      setDescription('');
-      setFiles([]);
-      setPreviewUrls([]);
-      setPostToStory(false);
       setResultSheetOpen(true);
     } catch (e: any) {
-      setError(e?.message || 'Failed to post product.');
+      setError(mapListingLockError(e?.message || (editId ? 'Failed to update product.' : 'Failed to post product.')));
     } finally {
       setLoading(false);
       setPublishStage(null);
       setPublishProgress(0);
     }
   };
+
+  const imageTotal = existingImages.length + files.length;
+  if (loadEdit) {
+    return <div className="py-24 text-center text-sm text-(--muted)">Loading product…</div>;
+  }
 
   return (
     <>
@@ -280,10 +482,10 @@ export default function AppSellerPostProductPage() {
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-black uppercase tracking-widest text-emerald-600">Product Studio</p>
-            <h1 className="mt-1 text-2xl sm:text-3xl font-black text-(--foreground)">Post Product</h1>
+            <h1 className="mt-1 text-2xl sm:text-3xl font-black text-(--foreground)">{editId ? 'Edit product' : 'Post Product'}</h1>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/app/post" className="inline-flex h-10 items-center rounded-xl border border-(--border) px-3 text-xs font-black text-(--foreground)">
+            <Link href={editId ? '/app/seller/inventory' : '/app/post'} className="inline-flex h-10 items-center rounded-xl border border-(--border) px-3 text-xs font-black text-(--foreground)">
               <ArrowLeft size={14} className="mr-1" /> Back
             </Link>
             <button
@@ -293,24 +495,44 @@ export default function AppSellerPostProductPage() {
               className="inline-flex h-10 items-center gap-2 px-4 rounded-xl bg-emerald-600 text-white text-sm font-black disabled:opacity-50"
             >
               {!loading ? <Upload size={14} /> : null}
-              {loading ? 'Posting...' : 'Post'}
+              {loading ? (editId ? 'Saving…' : 'Posting...') : editId ? 'Save' : 'Post'}
             </button>
           </div>
         </div>
 
+        {contentLocked ? (
+          <div className="mt-4 rounded-2xl border border-amber-400/40 bg-amber-500/10 px-4 py-3">
+            <p className="text-xs font-black uppercase tracking-widest text-amber-700">{LISTING_LOCK_BANNER_TITLE}</p>
+            <p className="mt-1 text-sm text-amber-800 dark:text-amber-200">{LISTING_LOCK_BANNER_BODY}</p>
+          </div>
+        ) : null}
+
         <div className="mt-5 flex gap-3 overflow-x-auto">
+          {existingImages.map((url, idx) => (
+            <div key={`ex-${idx}-${url.slice(0, 24)}`} className="relative w-40 h-52 rounded-3xl border border-(--border) overflow-hidden shrink-0">
+              <img src={url} alt="product" className="w-full h-full object-cover" />
+              <div className="absolute top-2 left-2 text-[8px] font-bold uppercase text-white/90 drop-shadow">Saved</div>
+              {!contentLocked ? (
+                <button type="button" onClick={() => removeExistingImage(idx)} className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/70 text-white inline-flex items-center justify-center">
+                  <Trash2 size={12} />
+                </button>
+              ) : null}
+            </div>
+          ))}
           {previewUrls.map((url, idx) => (
             <div key={url} className="relative w-40 h-52 rounded-3xl border border-(--border) overflow-hidden shrink-0">
               <img src={url} alt="product" className="w-full h-full object-cover" />
-              <button type="button" onClick={() => processAIBackground(idx)} disabled={isAIProcessing || loading} className="absolute top-2 left-2 h-7 rounded-lg bg-black/70 px-2 text-[10px] font-black text-white inline-flex items-center gap-1 disabled:opacity-50">
+              <button type="button" onClick={() => processAIBackground(idx)} disabled={isAIProcessing || loading || contentLocked} className="absolute top-2 left-2 h-7 rounded-lg bg-black/70 px-2 text-[10px] font-black text-white inline-flex items-center gap-1 disabled:opacity-50">
                 <Wand2 size={11} /> AI CLEAN
               </button>
-              <button type="button" onClick={() => removeImage(idx)} className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/70 text-white inline-flex items-center justify-center">
-                <Trash2 size={12} />
-              </button>
+              {!contentLocked ? (
+                <button type="button" onClick={() => removeImage(idx)} className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/70 text-white inline-flex items-center justify-center">
+                  <Trash2 size={12} />
+                </button>
+              ) : null}
             </div>
           ))}
-          {previewUrls.length < 4 ? (
+          {!contentLocked && imageTotal < LISTING_MAX_IMAGES ? (
             <label className="w-40 h-52 rounded-3xl border border-dashed border-(--border) bg-(--surface) shrink-0 flex flex-col items-center justify-center gap-2 cursor-pointer">
               <Camera size={20} className="text-(--foreground)" />
               <span className="text-xs font-bold text-(--muted)">Add Photo</span>
@@ -322,7 +544,32 @@ export default function AppSellerPostProductPage() {
         <div className="mt-6 space-y-4">
           <div>
             <label className="text-xs font-black tracking-widest text-(--muted)">PRODUCT NAME</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className="mt-2 w-full h-12 rounded-xl border border-(--border) bg-(--surface) px-4 text-sm font-semibold text-(--foreground)" placeholder="Title of your item" />
+            <input value={name} onChange={(e) => setName(e.target.value)} disabled={contentLocked} className="mt-2 w-full h-12 rounded-xl border border-(--border) bg-(--surface) px-4 text-sm font-semibold text-(--foreground) disabled:opacity-60" placeholder="Title of your item" />
+          </div>
+          <div>
+            <label className="text-xs font-black tracking-widest text-(--muted)">PRODUCT CATEGORY *</label>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {PRODUCT_CATEGORIES.map((cat) => {
+                const selected = category === cat.slug;
+                return (
+                  <button
+                    key={cat.slug}
+                    type="button"
+                    onClick={() => {
+                      if (!contentLocked) setCategory(cat.slug);
+                    }}
+                    disabled={contentLocked}
+                    className={`h-9 rounded-xl border px-3 text-[11px] font-black ${
+                      selected
+                        ? 'border-emerald-600 bg-emerald-50 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'
+                        : 'border-(--border) bg-(--surface) text-(--muted)'
+                    }`}
+                  >
+                    {cat.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -334,6 +581,30 @@ export default function AppSellerPostProductPage() {
               <input value={stock} onChange={(e) => setStock(e.target.value.replace(/[^\d]/g, ''))} className="mt-2 w-full h-12 rounded-xl border border-(--border) bg-(--surface) px-4 text-sm font-semibold text-(--foreground)" placeholder="1" />
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setRequiresShipping((v) => !v)}
+            className="flex w-full items-center justify-between rounded-xl border border-(--border) bg-(--surface) px-4 py-3 text-left"
+          >
+            <div>
+              <p className="text-[10px] font-black tracking-widest text-(--muted)">SHIPPING</p>
+              <p className="mt-0.5 text-sm font-semibold text-(--foreground)">
+                {requiresShipping ? 'Physical product — needs delivery' : 'Digital — no shipping'}
+              </p>
+            </div>
+            <span
+              className={`inline-flex h-6 w-11 items-center rounded-full p-0.5 ${
+                requiresShipping ? 'bg-emerald-600' : 'bg-(--border)'
+              }`}
+            >
+              <span
+                className={`h-5 w-5 rounded-full bg-white transition-transform ${
+                  requiresShipping ? 'translate-x-5' : 'translate-x-0'
+                }`}
+              />
+            </span>
+          </button>
 
           <div>
             {isDiamond ? (
@@ -353,10 +624,10 @@ export default function AppSellerPostProductPage() {
             <div className="flex items-center justify-between">
               <label className="text-xs font-black tracking-widest text-(--muted)">DESCRIPTION</label>
               <div className="inline-flex items-center gap-2">
-                <button type="button" onClick={() => runAIDescription(false)} disabled={isGeneratingDesc || loading} className="h-7 rounded-lg bg-violet-100 dark:bg-violet-900/30 px-2 text-[10px] font-black text-violet-600 disabled:opacity-50">
+                <button type="button" onClick={() => runAIDescription(false)} disabled={isGeneratingDesc || loading || contentLocked} className="h-7 rounded-lg bg-violet-100 dark:bg-violet-900/30 px-2 text-[10px] font-black text-violet-600 disabled:opacity-50">
                   {isGeneratingDesc ? 'AI...' : 'AI WRITE'}
                 </button>
-                <button type="button" onClick={() => runAIDescription(true)} disabled={isGeneratingDesc || loading || !description.trim()} className="h-7 rounded-lg bg-violet-100 dark:bg-violet-900/30 px-2 text-[10px] font-black text-violet-600 disabled:opacity-50">
+                <button type="button" onClick={() => runAIDescription(true)} disabled={isGeneratingDesc || loading || !description.trim() || contentLocked} className="h-7 rounded-lg bg-violet-100 dark:bg-violet-900/30 px-2 text-[10px] font-black text-violet-600 disabled:opacity-50">
                   REWRITE
                 </button>
                 <span className="text-[11px] text-(--muted)">{description.length}/500</span>
@@ -365,18 +636,21 @@ export default function AppSellerPostProductPage() {
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value.slice(0, 500))}
-              className="mt-2 w-full h-32 rounded-xl border border-(--border) bg-(--surface) px-4 py-3 text-sm font-medium text-(--foreground) resize-none"
+              disabled={contentLocked}
+              className="mt-2 w-full h-32 rounded-xl border border-(--border) bg-(--surface) px-4 py-3 text-sm font-medium text-(--foreground) resize-none disabled:opacity-60"
               placeholder="Tell your customers about material, fit, usage..."
             />
             <p className="mt-1 text-xs text-(--muted)">Minimum 100 characters required.</p>
           </div>
 
+          {contentLocked ? null : (
           <label className="flex items-center justify-between rounded-2xl border border-(--border) bg-(--surface) px-4 py-3">
             <span className="inline-flex items-center gap-2 text-sm font-bold text-(--foreground)">
               <Sparkles size={14} className="text-violet-500" /> Auto-post to story
             </span>
             <input type="checkbox" checked={postToStory} onChange={(e) => setPostToStory(e.target.checked)} className="h-4 w-4 accent-violet-600" />
           </label>
+          )}
           {isOptimizing ? <p className="text-xs font-semibold text-(--muted)">Optimizing selected images...</p> : null}
           {isDiamond ? <p className="text-xs font-semibold text-violet-600">Diamond product studio active</p> : <p className="text-xs font-semibold text-(--muted)">Standard listing active</p>}
 
@@ -421,13 +695,29 @@ export default function AppSellerPostProductPage() {
     <PostPublishResultSheet
       open={resultSheetOpen}
       onClose={() => setResultSheetOpen(false)}
-      title="Product is live"
-      description="Your product is on your store. If you enabled auto-post to story, a 12-hour story was created too."
+      title={editId ? 'Product saved' : 'Product is live'}
+      description={
+        editId
+          ? contentLocked
+            ? 'Stock and price were updated. Title, photos, and description stay locked.'
+            : 'Your product listing was updated.'
+          : 'Your product is on your store. If you enabled auto-post to story, a 12-hour story was created too.'
+      }
       tone="emerald"
       primaryAction={{ label: 'My profile', href: '/app/profile' }}
-      secondaryAction={{ label: 'Post hub', href: '/app/post' }}
+      secondaryAction={
+        editId ? { label: 'Inventory', href: '/app/seller/inventory' } : { label: 'Post hub', href: '/app/post' }
+      }
     />
     </>
+  );
+}
+
+export default function AppSellerPostProductPage() {
+  return (
+    <Suspense fallback={<div className="py-24 text-center text-sm text-(--muted)">Loading product studio…</div>}>
+      <PostProductForm />
+    </Suspense>
   );
 }
 

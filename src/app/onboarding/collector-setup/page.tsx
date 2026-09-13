@@ -4,7 +4,9 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase';
 import { getGeographyForCountry } from '@/lib/geographyResolver';
-import { SUPPORTED_COUNTRIES } from '@/constants/SupportedCountries';
+import { getPhonePrefixForCountry } from '@/constants/SupportedCountries';
+import { isAtLeastMinAge, parseIsoDateOnly } from '@/lib/dateOfBirth';
+import { needsNgPhoneVerify, phoneVerifyHref, toPhoneE164 } from '@/lib/phoneOtp';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
@@ -43,9 +45,7 @@ export default function CollectorSetupPage() {
   const stateOptions = geography ? Object.keys(geography.data) : [];
   const cityOptions = geography && selectedState ? geography.data[selectedState] ?? [] : [];
 
-  const phonePrefix = profile?.location_country_code ? 
-    (SUPPORTED_COUNTRIES.find(c => c.code === profile.location_country_code)?.phonePrefix ?? '+234') : 
-    '+234';
+  const phonePrefix = getPhonePrefixForCountry(profile?.location_country_code);
 
   const detectLocation = async () => {
     if (!navigator.geolocation) {
@@ -79,6 +79,7 @@ export default function CollectorSetupPage() {
     username: '',
     phone: '',
     gender: '' as 'male' | 'female' | 'other' | '',
+    dateOfBirth: '',
   });
 
   // Debounced username check
@@ -147,6 +148,15 @@ export default function CollectorSetupPage() {
       setError('Please select your gender');
       return;
     }
+    if (!formData.dateOfBirth) {
+      setError('Date of birth is required');
+      return;
+    }
+    const dobDate = parseIsoDateOnly(formData.dateOfBirth);
+    if (!dobDate || !isAtLeastMinAge(dobDate)) {
+      setError('You must be at least 13 years old to use StoreLink.');
+      return;
+    }
 
     setLoading(true);
     setError(null);
@@ -159,23 +169,39 @@ export default function CollectorSetupPage() {
         return;
       }
 
+      const phoneE164 = toPhoneE164(phonePrefix, formData.phone.trim());
+      const fullName = `${formData.firstName.trim()} ${formData.lastName.trim()}`.trim();
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
           first_name: formData.firstName.trim(),
           last_name: formData.lastName.trim(),
+          full_name: fullName,
+          display_name: fullName,
           slug: formData.username.toLowerCase().trim(),
-          phone_number: phonePrefix + formData.phone.trim(),
+          phone_number: phoneE164,
           gender: formData.gender,
+          date_of_birth: formData.dateOfBirth,
           discovery_latitude: locationCoords?.latitude || null,
           discovery_longitude: locationCoords?.longitude || null,
           discovery_city: city || null,
           discovery_state: selectedState || null,
+          is_seller: false,
           onboarding_step: 'follow-stores',
         })
         .eq('id', session.session.user.id);
 
       if (updateError) throw updateError;
+
+      if (needsNgPhoneVerify({
+        countryCode: profile?.location_country_code,
+        phoneVerified: profile?.phone_verified,
+        savedPhone: profile?.phone_number,
+        phoneE164,
+      })) {
+        router.push(phoneVerifyHref({ phone: phoneE164, from: 'collector' }));
+        return;
+      }
 
       router.push('/onboarding/follow-stores');
     } catch (err: any) {
@@ -298,6 +324,18 @@ export default function CollectorSetupPage() {
               required
             />
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-black">Date of birth</label>
+          <input
+            type="date"
+            value={formData.dateOfBirth}
+            onChange={(e) => setFormData((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
+            className="w-full rounded-lg border border-(--border) px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
+            required
+          />
+          <p className="text-xs text-(--muted)">You must be at least 13. Never shown on your public profile.</p>
         </div>
 
         {/* Location */}

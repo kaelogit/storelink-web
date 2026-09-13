@@ -16,6 +16,7 @@ import {
   MessageSquare,
   Package,
   PackageCheck,
+  Pencil,
   RefreshCcw,
   Truck,
   User,
@@ -25,10 +26,16 @@ import {
 } from 'lucide-react';
 import { PaystackTerminalModal } from '@/components/payments/PaystackTerminalModal';
 import { RateSellerModal, type RateSellerPending } from '@/components/ratings/RateSellerModal';
+import RefundStatusTimelineWeb from '@/components/transactions/RefundStatusTimelineWeb';
 import { createBrowserClient } from '@/lib/supabase';
+import { productShippingModeLabel } from '@/lib/foodDeliveryZones';
 import { productOrderEligibleForRating } from '@/lib/ratingEligibility';
+import { canRequestRefund } from '@/lib/refundEligibility';
+import { resolveRefundTimeline } from '@/lib/refundTimeline';
+import { DISPUTE_COPY } from '@/constants/disputeCopy';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { coinsToCurrency, formatCurrency } from '@/lib/activity-feed';
+import { toast } from 'sonner';
 
 type Order = any;
 
@@ -86,6 +93,7 @@ export default function OrderDetailClient() {
   const [rateSellerOpen, setRateSellerOpen] = useState(false);
   const [rateSellerPending, setRateSellerPending] = useState<RateSellerPending | null>(null);
   const rateDeepLinkConsumedRef = useRef(false);
+  const payDeepLinkConsumedRef = useRef(false);
 
   const loadOrder = useCallback(async () => {
     if (!orderId) return;
@@ -231,9 +239,11 @@ export default function OrderDetailClient() {
           await new Promise((r) => setTimeout(r, 900));
         }
         await loadOrder();
+        toast.success('Payment secured. Funds are held in escrow until you confirm receipt.');
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : 'Could not confirm payment.';
         setError(msg);
+        toast.error(msg);
       } finally {
         setSettlingPayment(false);
       }
@@ -248,17 +258,55 @@ export default function OrderDetailClient() {
       if (latestStatus === 'PAID' || latestStatus === 'SHIPPED' || latestStatus === 'COMPLETED') {
         setError(null);
         void loadOrder();
+        toast.success('This order is already paid.');
+      } else {
+        toast.error('Payment opens after the seller accepts your order.');
       }
       return;
     }
     setPaystackOpen(true);
   }, [loadOrder, orderId, supabase]);
 
+  useEffect(() => {
+    payDeepLinkConsumedRef.current = false;
+  }, [orderId]);
+
+  useEffect(() => {
+    if (loading || !order || !profileId || payDeepLinkConsumedRef.current) return;
+    const pay = searchParams.get('pay');
+    if (pay !== '1' && pay !== 'true') return;
+    if (order.user_id !== profileId) return;
+    if (String(order.status || '').toUpperCase() !== 'AWAITING_PAYMENT') return;
+    payDeepLinkConsumedRef.current = true;
+    setPaystackOpen(true);
+  }, [loading, order, profileId, searchParams]);
+
   if (loading) return <div className="py-10 text-center text-sm text-(--muted)">Loading order…</div>;
   if (!order) return <div className="py-10 text-center text-sm text-(--muted)">Order not found.</div>;
 
   const isMerchant = profileId != null && profileId === order.seller_id;
   const status = String(order.status || 'PENDING').toUpperCase();
+  const shippingFeeMajor = Math.max(0, Number(order.shipping_fee) || 0);
+  const isPickupMode =
+    String((order.shipping_zone as { mode?: string } | null)?.mode || '').toLowerCase() === 'pickup';
+  const canAmendShipping =
+    isMerchant && (status === 'PENDING' || status === 'AWAITING_PAYMENT') && !isPickupMode;
+  const shippingModeLabel = productShippingModeLabel(order.shipping_zone);
+  const shippingZoneName =
+    !shippingModeLabel && order.shipping_zone && typeof order.shipping_zone === 'object'
+      ? String(order.shipping_zone.name || '').trim() || null
+      : null;
+  const fulfillmentLine = shippingModeLabel
+    ? shippingFeeMajor > 0
+      ? `${shippingModeLabel} · ${money(shippingFeeMajor, order.currency_code)}`
+      : shippingModeLabel.startsWith('Pickup')
+        ? shippingModeLabel
+        : `${shippingModeLabel} · Free`
+    : shippingFeeMajor > 0 || shippingZoneName
+      ? `Delivery${shippingZoneName ? ` · ${shippingZoneName}` : ''}${
+          shippingFeeMajor > 0 ? ` · ${money(shippingFeeMajor, order.currency_code)}` : ' · Free'
+        }`
+      : null;
   const meta = statusMeta(status, order.payout_status);
   const targetProfile = isMerchant ? order.buyer : order.merchant;
   const targetProfileHref =
@@ -279,8 +327,25 @@ export default function OrderDetailClient() {
       : 0;
   const canSellerDispute = isMerchant && status === 'SHIPPED' && daysSinceShipped >= 7;
   const canBuyerCancel = !isMerchant && ['PENDING', 'AWAITING_PAYMENT'].includes(status);
-  const canBuyerRequestRefund = !isMerchant && status === 'PAID';
+  const canBuyerRequestRefund =
+    !isMerchant &&
+    canRequestRefund({
+      currentUserId: profileId,
+      orderUserId: order.user_id,
+      status,
+      refundStatus: order.refund_status,
+    });
   const canBuyerReceipt = !isMerchant && status === 'SHIPPED';
+  const refundTimeline = resolveRefundTimeline({
+    orderStatus: status,
+    refundStatus: order.refund_status,
+    payoutStatus: order.payout_status,
+    payoutErrorLog: order.payout_error_log,
+    paymentReference: order.payment_reference,
+    coinsRefundedAt: order.coins_refunded_at,
+    coinRedeemed: order.coin_redeemed,
+  });
+  const isDisputeOpen = status === 'DISPUTE_OPEN';
   const canSellerAcceptDecline = isMerchant && status === 'PENDING';
   const canSellerShip = isMerchant && status === 'PAID';
 
@@ -327,6 +392,22 @@ export default function OrderDetailClient() {
 
       <div className="px-4">
         <OrderStepper status={status} />
+      </div>
+
+      <div className="space-y-4 px-4 pt-4">
+        {refundTimeline.visible ? <RefundStatusTimelineWeb timeline={refundTimeline} /> : null}
+
+        {isDisputeOpen ? (
+          <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 p-4">
+            <p className="text-sm font-black text-amber-700">{DISPUTE_COPY.progressBannerOrder}</p>
+            <p className="mt-1 text-xs font-semibold leading-relaxed text-amber-700/90">
+              {DISPUTE_COPY.progressBannerDetail}
+            </p>
+            <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-1 text-[10px] font-black uppercase tracking-widest text-amber-700">
+              {DISPUTE_COPY.statusChip}
+            </p>
+          </div>
+        ) : null}
       </div>
 
       <div className="space-y-4 px-4">
@@ -390,7 +471,7 @@ export default function OrderDetailClient() {
             }`}
           >
             {hasServiceLinkedItem ? <Wand2 size={10} /> : <Package size={10} />}
-            {hasServiceLinkedItem ? 'Service-linked' : 'Product order'}
+            {hasServiceLinkedItem ? 'Booking payment' : 'Product order'}
           </span>
           {isFlashDrop ? (
             <span className="inline-flex items-center gap-1 rounded-[8px] bg-red-500/10 px-2 py-1 text-[10px] font-black tracking-[0.04em] text-red-500">
@@ -425,9 +506,22 @@ export default function OrderDetailClient() {
         <div className="rounded-[20px] border border-(--border) bg-(--surface) p-4">
           <div className="mb-2 flex items-center gap-2">
             <MapPin size={14} className="text-(--foreground)" />
-            <p className="text-[13px] font-black text-(--foreground)">Shipping destination</p>
+            <p className="text-[13px] font-black text-(--foreground)">
+              {shippingModeLabel?.startsWith('Pickup') ? 'Pickup' : 'Shipping destination'}
+            </p>
           </div>
           <p className="text-[13px] text-(--muted)">{order.shipping_address || 'No address provided'}</p>
+          {fulfillmentLine ? (
+            <p className="mt-2 text-[12px] text-(--muted)">{fulfillmentLine}</p>
+          ) : null}
+          {canAmendShipping ? (
+            <Link
+              href={`/app/orders/revise-shipping?orderId=${encodeURIComponent(order.id)}`}
+              className="mt-3 inline-flex items-center gap-1.5 text-[12px] font-black text-emerald-600"
+            >
+              <Pencil size={14} /> Update delivery fee
+            </Link>
+          ) : null}
         </div>
 
         <div className="rounded-[20px] border border-(--border) bg-(--surface) p-4">
@@ -436,9 +530,21 @@ export default function OrderDetailClient() {
               <div className="flex items-center justify-between text-[13px]">
                 <span className="text-(--muted)">Subtotal</span>
                 <span className="font-bold text-(--foreground)">
-                  {money(Number(order.total_amount || 0) + coinDiscountMajor, order.currency_code)}
+                  {money(
+                    Math.max(
+                      0,
+                      Number(order.total_amount || 0) + coinDiscountMajor - shippingFeeMajor,
+                    ),
+                    order.currency_code,
+                  )}
                 </span>
               </div>
+              {shippingFeeMajor > 0 ? (
+                <div className="mt-2 flex items-center justify-between text-[13px]">
+                  <span className="text-(--muted)">Delivery</span>
+                  <span className="font-bold text-(--foreground)">{money(shippingFeeMajor, order.currency_code)}</span>
+                </div>
+              ) : null}
               {usedCoins ? (
                 <div className="mt-2 flex items-center justify-between text-[13px]">
                   <span className="text-amber-600">Coin discount ({coinRedeemedCount} coins)</span>
@@ -506,7 +612,7 @@ export default function OrderDetailClient() {
                   Request refund
                 </Link>
               ) : null}
-              {canBuyerReceipt ? (
+              {canBuyerReceipt && !isDisputeOpen ? (
                 <>
                   <button
                     type="button"

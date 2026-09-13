@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ShoppingBag, Store, ShieldCheck, Truck, HelpCircle, ArrowRight, Minus, Plus } from 'lucide-react';
 import Footer from '../../components/home/Footer';
@@ -20,6 +20,13 @@ const CATEGORIES = [
 // 📝 EXPANDED FAQs
 const FAQS = [
   // SELLING
+  {
+    category: 'selling',
+    id: 'boosting-and-ads',
+    question: 'What is Boost / StoreLink Ads?',
+    answer:
+      'Boost lets sellers pay to promote their own reel, product, or service in Explore, Discover, and Home. Placements are marked Sponsored. Packages can charge per view (reach) or per shop tap (CPC). Unused budget can be credited as Store Coins if you cancel. Diamond membership is not the same as paid Boost. Campaigns may be reviewed before they go live.',
+  },
   {
     category: 'selling',
     question: "How do I get on the 'Viral Feed'?",
@@ -94,6 +101,18 @@ export default function HelpCenterPage() {
     return matchesCategory && matchesSearch;
   });
 
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const hash = window.location.hash.replace(/^#/, '');
+    if (hash !== 'boosting-and-ads') return;
+    setSelectedCategory('selling');
+    setSearchQuery('Boost');
+    setOpenIndex(0);
+    requestAnimationFrame(() => {
+      document.getElementById('boosting-and-ads')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, []);
+
   return (
     <main className="min-h-dvh font-sans bg-(--background) text-(--foreground) selection:bg-emerald-100">
       <Section variant="light" padding="default" className="pt-24 md:pt-32 pb-10 border-b border-(--border)">
@@ -157,12 +176,14 @@ export default function HelpCenterPage() {
                {filteredFaqs.length > 0 ? (
                    filteredFaqs.map((faq, index) => {
                       const isOpen = openIndex === index;
+                      const anchorId = 'id' in faq && typeof faq.id === 'string' ? faq.id : undefined;
                       return (
                         <motion.div 
-                            key={index} 
+                            key={anchorId || index}
+                            id={anchorId}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
-                            className={`group rounded-2xl overflow-hidden transition-all duration-(--duration-250) ease-(--ease-out-expo) border ${
+                            className={`group scroll-mt-36 rounded-2xl overflow-hidden transition-all duration-(--duration-250) ease-(--ease-out-expo) border ${
                                 isOpen
                                 ? 'bg-(--charcoal) shadow-xl border-(--border) scale-[1.02]'
                                 : 'bg-(--card) border-(--border) hover:border-emerald-200'

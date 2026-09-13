@@ -89,5 +89,5 @@ export default async function AppSpotlightPage({ params }: { params: Promise<{ i
     },
   };
 
-  return <WebFeedDetailShell item={normalized} surface="spotlight" backHref="/app/profile" />;
+  return <WebFeedDetailShell item={normalized} surface="spotlight" backHref="/app/explore?mode=spotlight" />;
 }

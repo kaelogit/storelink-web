@@ -3,12 +3,13 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type MouseEvent } from 'react';
 import {
   Coins,
   Gem,
   Heart,
   ShoppingBag,
+  Trash2,
   Volume2,
   VolumeX,
   Wrench,
@@ -60,6 +61,33 @@ function formatStoryAge(value?: string | null) {
   return `${day}d`;
 }
 
+function formatStoryExpiryLeft(expiresAt?: string | null) {
+  if (!expiresAt) return '';
+  const ms = new Date(expiresAt).getTime() - Date.now();
+  if (!Number.isFinite(ms)) return '';
+  if (ms <= 0) return 'expired';
+  const min = Math.max(1, Math.round(ms / 60000));
+  if (min < 60) return `${min}m left`;
+  const hr = Math.floor(min / 60);
+  const rem = min % 60;
+  if (hr >= 12) return '12h left';
+  if (rem === 0) return `${hr}h left`;
+  return `${hr}h ${rem}m left`;
+}
+
+function storyFontStyle(fontId?: string | null): CSSProperties {
+  switch (String(fontId || 'system')) {
+    case 'serif':
+      return { fontFamily: 'Georgia, serif', letterSpacing: '0.02em' };
+    case 'mono':
+      return { fontFamily: 'ui-monospace, monospace', letterSpacing: '0.06em' };
+    case 'rounded':
+      return { fontWeight: 800, letterSpacing: '0.04em' };
+    default:
+      return { fontWeight: 600 };
+  }
+}
+
 function resolveServiceThumb(svc: any): string | null {
   if (!svc) return null;
   if (typeof svc.image_url === 'string' && svc.image_url.trim()) return svc.image_url.trim();
@@ -103,6 +131,7 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
   const [likesCount, setLikesCount] = useState(0);
   const [viewsCount, setViewsCount] = useState(0);
   const [isContentReady, setIsContentReady] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const hasSetInitialIndex = useRef(false);
   const prevStoryIdRef = useRef<string | null>(null);
   const isLikePending = useRef(false);
@@ -155,7 +184,12 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
       try {
         const rows = await fetchStoryQueue(supabase, storyId, uid);
         if (!mounted) return;
-        setAllStories(rows);
+        const live = (rows || []).filter((row: any) => {
+          if (!row?.expires_at) return true;
+          const ts = new Date(row.expires_at).getTime();
+          return !Number.isFinite(ts) || ts > Date.now();
+        });
+        setAllStories(live);
       } catch {
         if (!mounted) return;
         setLoadError('Story not found or unavailable.');
@@ -289,6 +323,29 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
     else goNext();
   };
 
+  const handleDelete = async () => {
+    if (!isOwner || !current?.id || deleting) return;
+    const okay = window.confirm('Delete this story? It will disappear from the Home row immediately.');
+    if (!okay) return;
+    setDeleting(true);
+    try {
+      const { error } = await supabase.from('stories').delete().eq('id', String(current.id));
+      if (error) throw error;
+      window.dispatchEvent(new Event('storelink:stories-refresh'));
+      const remaining = allStories.filter((row: any) => String(row.id) !== String(current.id));
+      if (!remaining.length) {
+        exitViewer();
+        return;
+      }
+      setAllStories(remaining);
+      setActiveIndex((i) => Math.min(i, remaining.length - 1));
+    } catch {
+      window.alert('Could not delete this story. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const handleToggleLike = async () => {
     if (!userId || !current) return;
     const productId = product?.id;
@@ -380,6 +437,7 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
   }
 
   const storyAgeLabel = formatStoryAge(current.created_at);
+  const storyExpiryLabel = formatStoryExpiryLeft(current.expires_at);
   const isDiamond = String(seller?.subscription_plan || '').toLowerCase() === 'diamond';
   const sellerAvatarSrc = normalizeWebMediaUrl(seller?.logo_url);
   const productThumbSrc = product ? normalizeWebMediaUrl(product.image_urls?.[0]) : '';
@@ -403,8 +461,8 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
       <div className="relative flex-1 overflow-hidden">
         {current.type === 'text' ? (
           <div
-            className="flex h-full w-full items-center justify-center px-8 text-center text-lg font-semibold leading-snug"
-            style={{ backgroundColor: bgHex, color: textHex }}
+            className="flex h-full w-full items-center justify-center px-8 text-center text-lg leading-snug"
+            style={{ backgroundColor: bgHex, color: textHex, ...storyFontStyle(current.story_font) }}
           >
             {current.story_text || '—'}
           </div>
@@ -412,7 +470,7 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
           <video
             key={current.id}
             ref={videoRef}
-            src={current.media_url}
+            src={normalizeWebMediaUrl(current.media_url) || current.media_url}
             className="h-full w-full object-contain"
             playsInline
             muted={isMuted}
@@ -423,7 +481,7 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
         ) : current.media_url ? (
           <div className="relative flex h-full w-full items-center justify-center bg-black">
             <Image
-              src={current.media_url}
+              src={normalizeWebMediaUrl(current.media_url) || current.media_url}
               alt=""
               fill
               className="object-contain"
@@ -494,7 +552,8 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
                 {(seller?.display_name || 'Store').toUpperCase()}
               </p>
               <p className="truncate text-[10px] font-semibold text-white/80">
-                {storyAgeLabel ? `${storyAgeLabel} · ` : ''}@{seller?.slug || 'user'}
+                {storyAgeLabel ? `${storyAgeLabel} · ` : ''}
+                {storyExpiryLabel ? `${storyExpiryLabel} · ` : ''}@{seller?.slug || 'user'}
                 {isDiamond ? <Gem className="ml-1 inline size-2.5 fill-violet-500 text-violet-500" /> : null}
               </p>
               {viewsCount > 0 ? (
@@ -507,6 +566,17 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
           </Link>
 
           <div className="flex shrink-0 items-center gap-1">
+            {isOwner ? (
+              <button
+                type="button"
+                className="rounded-xl bg-black/30 p-2 backdrop-blur-md pointer-events-auto disabled:opacity-50"
+                onClick={() => void handleDelete()}
+                disabled={deleting}
+                aria-label="Delete story"
+              >
+                <Trash2 size={18} />
+              </button>
+            ) : null}
             {current.type === 'video' ? (
               <button
                 type="button"

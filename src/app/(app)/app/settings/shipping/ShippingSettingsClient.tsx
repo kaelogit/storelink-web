@@ -175,7 +175,7 @@ export default function ShippingSettingsClient() {
   };
 
   return (
-    <SettingsFrame title="Shipping addresses" subtitle="Manage delivery addresses used during checkout.">
+    <SettingsFrame title="Shipping addresses" subtitle="Manage delivery addresses used during checkout." parentHref="/app/settings">
       <div className="space-y-4">
         {error ? <p className="rounded-xl border border-rose-300/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">{error}</p> : null}
 

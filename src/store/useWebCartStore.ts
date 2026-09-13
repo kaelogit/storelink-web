@@ -17,6 +17,8 @@ export interface WebProductCartItem {
   image_url?: string | null;
   seller_slug?: string | null;
   seller_name?: string | null;
+  /** false = digital / no ship — checkout skips Delivery */
+  requires_shipping?: boolean;
   quantity: number;
 }
 
@@ -27,6 +29,9 @@ export interface WebServiceCartItem {
   hero_price: number;
   delivery_type?: string | null;
   location_type?: string | null;
+  service_category?: string | null;
+  preferred_fulfillment?: 'home' | 'studio' | null;
+  preferred_scheduled_at?: string | null;
   service_distance_label?: string | null;
   service_delivery_badge?: string | null;
   selected_menu_name?: string | null;
@@ -40,10 +45,14 @@ export interface WebServiceCartItem {
 interface WebCartState {
   products: WebProductCartItem[];
   services: WebServiceCartItem[];
+  deliveryZoneBySellerId: Record<string, string>;
+  productFulfillmentBySellerId: Record<string, 'pickup' | 'delivery'>;
   addProduct: (item: Omit<WebProductCartItem, 'quantity'>) => void;
   removeProduct: (productId: string) => void;
   updateProductQuantity: (productId: string, quantity: number) => void;
   clearProducts: () => void;
+  setDeliveryZoneForSeller: (sellerId: string, zoneId: string | null) => void;
+  setProductFulfillmentForSeller: (sellerId: string, mode: 'pickup' | 'delivery' | null) => void;
   addService: (item: WebServiceCartItem) => void;
   updateServiceSelection: (serviceListingId: string, menuName: string | null, menuPriceMinor: number | null) => void;
   removeService: (serviceListingId: string) => void;
@@ -58,6 +67,8 @@ export const useWebCartStore = create<WebCartState>()(
     (set, get) => ({
       products: [],
       services: [],
+      deliveryZoneBySellerId: {},
+      productFulfillmentBySellerId: {},
 
       addProduct: (item) => {
         const targetId = String(item.product_id || '').trim();
@@ -83,7 +94,30 @@ export const useWebCartStore = create<WebCartState>()(
             p.product_id === productId ? { ...p, quantity: Math.max(1, Math.min(99, Math.floor(Number(quantity) || 1))) } : p,
           ),
         })),
-      clearProducts: () => set({ products: [] }),
+      clearProducts: () =>
+        set({ products: [], deliveryZoneBySellerId: {}, productFulfillmentBySellerId: {} }),
+
+      setDeliveryZoneForSeller: (sellerId, zoneId) => {
+        const id = String(sellerId || '').trim();
+        if (!id) return;
+        set((state) => {
+          const next = { ...state.deliveryZoneBySellerId };
+          if (!zoneId) delete next[id];
+          else next[id] = String(zoneId).trim();
+          return { deliveryZoneBySellerId: next };
+        });
+      },
+
+      setProductFulfillmentForSeller: (sellerId, mode) => {
+        const id = String(sellerId || '').trim();
+        if (!id) return;
+        set((state) => {
+          const next = { ...state.productFulfillmentBySellerId };
+          if (!mode) delete next[id];
+          else next[id] = mode;
+          return { productFulfillmentBySellerId: next };
+        });
+      },
 
       addService: (item) => {
         const targetId = String(item.service_listing_id || '').trim();

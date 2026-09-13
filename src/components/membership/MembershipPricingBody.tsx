@@ -158,8 +158,14 @@ export default function MembershipPricingBody({
                       : 'Per billing term above'
                   }
                   features={[...SELLER_DIAMOND.features]}
-                  cta={appContext && !onRequestDiamondPay ? 'Pay in the mobile app' : 'Get the app'}
-                  href={appContext && !onRequestDiamondPay ? undefined : '/download'}
+                  cta={
+                    appContext
+                      ? onRequestDiamondPay
+                        ? 'Upgrade with Paystack'
+                        : "You're on Diamond"
+                      : 'Get the app'
+                  }
+                  href={appContext ? undefined : '/download'}
                   diamond
                   savings={diamond.discount > 0 ? `Save ${(diamond.discount * 100).toFixed(0)}%` : null}
                   payButton={
@@ -195,8 +201,14 @@ export default function MembershipPricingBody({
                       : 'Per billing term above'
                   }
                   features={[...BUYER_DIAMOND.features]}
-                  cta={appContext && !onRequestDiamondPay ? 'Pay in the mobile app' : 'Get the app'}
-                  href={appContext && !onRequestDiamondPay ? undefined : '/download'}
+                  cta={
+                    appContext
+                      ? onRequestDiamondPay
+                        ? 'Upgrade with Paystack'
+                        : "You're on Diamond"
+                      : 'Get the app'
+                  }
+                  href={appContext ? undefined : '/download'}
                   diamond
                   savings={diamond.discount > 0 ? `Save ${(diamond.discount * 100).toFixed(0)}%` : null}
                   payButton={

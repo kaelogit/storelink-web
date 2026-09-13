@@ -4,11 +4,13 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { PaystackTerminalModal } from '@/components/payments/PaystackTerminalModal';
 import { createBrowserClient } from '@/lib/supabase';
 import { calculateDiamondPrice } from '@/lib/membershipCopy';
 import { getSellerPlanState, showDiamondBadge } from '@/lib/sellerStatus';
 import MembershipPricingBody from '@/components/membership/MembershipPricingBody';
+import { TRANSACTION_COPY } from '@/constants/transactionCopy';
 
 type Profile = {
   id?: string;
@@ -111,10 +113,10 @@ export default function AppMembershipClient() {
         });
         if (error) throw error;
         await load();
-        window.alert('Upgrade successful! You are now on Diamond.');
+        toast.success('Upgrade successful — you are now on Diamond.');
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : 'Payment may have succeeded but upgrade failed. Contact support.';
-        window.alert(msg);
+        toast.error(msg);
       } finally {
         setUpgradeBusy(false);
         setPendingDiamondMonths(null);
@@ -156,6 +158,11 @@ export default function AppMembershipClient() {
             </>
           )}
         </p>
+        {!loading && canOfferDiamondCheckout ? (
+          <p className="mt-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+            {TRANSACTION_COPY.webDigitalPayNote}
+          </p>
+        ) : null}
       </div>
 
       {upgradeBusy ? (

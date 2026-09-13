@@ -15,8 +15,15 @@ export async function generateMetadata({ params }: { params: Promise<RouteParams
   return buildServiceShareMetadata(String(id || '').trim());
 }
 
-export default async function ServicePage({ params }: { params: Promise<RouteParams> }) {
+export default async function ServicePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<RouteParams>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const resolved = await params;
+  const qs = await searchParams;
   const requestedSeller = normalizeUsernameToken(resolved.username);
   const serviceKey = normalizeServiceToken(String(resolved.id || '').trim());
   if (!serviceKey) return notFound();
@@ -32,7 +39,15 @@ export default async function ServicePage({ params }: { params: Promise<RoutePar
   const canonicalServiceToken = encodeURIComponent(canonicalServiceTokenRaw);
   const { data: auth } = await supabase.auth.getUser();
   const isSignedIn = Boolean(auth?.user?.id);
-  const canonicalPath = `${isSignedIn ? '/app' : ''}/s/${canonicalSellerSlug}/${canonicalServiceToken}`;
+  const query = new URLSearchParams();
+  for (const [key, value] of Object.entries(qs || {})) {
+    const v = Array.isArray(value) ? value[0] : value;
+    if (v) query.set(key, v);
+  }
+  const suffix = query.toString() ? `?${query.toString()}` : '';
+  const canonicalPath = isSignedIn
+    ? `/app/s/${canonicalServiceToken}${suffix}`
+    : `/s/${canonicalSellerSlug}/${canonicalServiceToken}${suffix}`;
 
   if (canonicalSellerSlug !== requestedSeller || serviceKey.toLowerCase() !== canonicalServiceTokenRaw.toLowerCase() || isSignedIn) {
     redirect(canonicalPath);

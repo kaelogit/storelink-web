@@ -39,18 +39,12 @@ export default async function AppServiceCatchAllPage({
   if (!serviceKey) return notFound();
 
   const supabase = await createServerClient();
-  const { data: auth } = await supabase.auth.getUser();
-  const isSignedIn = Boolean(auth?.user?.id);
   const resolvedService = await resolveServiceByToken(supabase, serviceKey, { activeOnly: false });
   if (!resolvedService) return notFound();
 
   const canonicalServiceTokenRaw = resolvedService.canonicalServiceTokenRaw;
   const canonicalServiceToken = encodeURIComponent(canonicalServiceTokenRaw);
   const canonicalSellerSlug = String(resolvedService.canonicalSellerSlug || '').trim().toLowerCase();
-
-  if (!isSignedIn) {
-    redirect(`/s/${encodeURIComponent(canonicalSellerSlug)}/${canonicalServiceToken}`);
-  }
 
   const incomingTokenMatches = serviceKey.toLowerCase() === canonicalServiceTokenRaw.toLowerCase();
   const incomingSellerMatches = requestedSeller ? requestedSeller === canonicalSellerSlug : true;

@@ -1,5 +1,4 @@
 import { createServerClient } from '@/lib/supabase';
-import { createServerClient as createServerClientWithCookies } from '@/lib/supabase-server';
 import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { buildProductShareMetadata, normalizeProductSlug } from '@/lib/metadata/shareMetadata';
@@ -15,12 +14,6 @@ export default async function AppProductPage({ params }: { params: Promise<{ slu
   const slug = normalizeProductSlug(resolved.slug);
   if (!slug) return notFound();
 
-  const authClient = await createServerClientWithCookies();
-  const { data: auth } = await authClient.auth.getUser();
-  if (!auth?.user?.id) {
-    redirect(`/p/${encodeURIComponent(slug)}`);
-  }
-
   const supabase = createServerClient();
   const { data: product, error: productError } = await supabase
     .from('products')
@@ -32,7 +25,9 @@ export default async function AppProductPage({ params }: { params: Promise<{ slu
 
   const { data: seller } = await supabase
     .from('profiles')
-    .select('id, display_name, slug, logo_url, is_verified, subscription_plan, location_city, location_state')
+    .select(
+      'id, display_name, slug, logo_url, is_verified, subscription_plan, location_city, location_state, location_country, category',
+    )
     .eq('id', product.seller_id)
     .single();
 
@@ -43,4 +38,3 @@ export default async function AppProductPage({ params }: { params: Promise<{ slu
 
   return <ClientProductWrapper product={product} seller={seller || {}} />;
 }
-

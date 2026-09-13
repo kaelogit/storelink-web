@@ -45,3 +45,9 @@ export function toSmallestUnit(amount: number, currencyCode: string = 'NGN'): nu
   const decimals = ['XOF', 'RWF'].includes(code) ? 0 : 2;
   return Math.round(Number(amount || 0) * 10 ** decimals);
 }
+
+export function fromSmallestUnit(amountMinor: number, currencyCode: string = 'NGN'): number {
+  const code = currencyCode.toUpperCase();
+  const decimals = ['XOF', 'RWF'].includes(code) ? 0 : 2;
+  return Number(amountMinor || 0) / 10 ** decimals;
+}

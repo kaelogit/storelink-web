@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import { withDrawerParam } from '@/components/profile-web/profileHubPaths';
+import { canonicalizeServiceCategorySlug } from '@/constants/ServiceCategories';
+import { serviceDeliveryBadgeFromTypes } from '@/lib/verticalFulfillmentCopy';
 
 type MenuRow = { name: string; price: string; locked?: boolean };
 const emptyMenuRow: MenuRow = { name: '', price: '', locked: false };
@@ -168,7 +170,9 @@ export default function ServiceListingsClient() {
         description: editing.description || null,
         hero_price_min: heroPriceMin,
         currency_code: currency,
-        service_category: editing.service_category || 'nail_tech',
+        service_category:
+          canonicalizeServiceCategorySlug(editing.service_category) ||
+          editing.service_category,
         delivery_type: editing.delivery_type || 'in_person',
         location_type: editing.location_type || null,
         service_areas: (editing as { service_areas?: string[] | null }).service_areas || null,
@@ -302,13 +306,11 @@ export default function ServiceListingsClient() {
                       </span>
                       <span className="inline-flex items-center gap-1 rounded-full bg-(--background) px-2 py-0.5 text-[10px] font-semibold text-(--muted)">
                         <MapPin size={12} className="shrink-0" />
-                        {item.delivery_type === 'online'
-                          ? 'Online'
-                          : item.location_type === 'i_travel'
-                            ? 'I travel'
-                            : item.location_type === 'both'
-                              ? 'Studio & Home'
-                              : 'In person'}
+                        {serviceDeliveryBadgeFromTypes(
+                          item.delivery_type,
+                          item.location_type,
+                          item.service_category,
+                        ) || 'In person'}
                       </span>
                     </div>
                     <div className="flex shrink-0 items-baseline gap-1">

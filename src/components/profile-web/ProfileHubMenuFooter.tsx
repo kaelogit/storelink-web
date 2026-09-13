@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { ChevronRight, LogOut, Moon, Smartphone, Sun } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { usePreferredDownloadHref } from '@/lib/useStoreUrls';
 
 type ProfileHubMenuFooterProps = {
   onLogout: () => void | Promise<void>;
@@ -22,10 +23,9 @@ export default function ProfileHubMenuFooter({
   profileSlug,
 }: ProfileHubMenuFooterProps) {
   const { theme, setTheme } = useTheme();
-  const downloadHref =
-    profileSlug && String(profileSlug).trim()
-      ? `/download?intent=${encodeURIComponent(`/@${String(profileSlug).trim()}`)}`
-      : '/download';
+  const intentPath = profileSlug && String(profileSlug).trim() ? `/@${String(profileSlug).trim()}` : null;
+  const downloadHref = usePreferredDownloadHref(intentPath);
+  const downloadIsExternal = /^https:\/\//i.test(downloadHref);
 
   return (
     <div className="mt-2 border-t border-(--border) pt-3">
@@ -51,6 +51,7 @@ export default function ProfileHubMenuFooter({
         <Link
           href={downloadHref}
           className="mt-3 flex items-center gap-3 rounded-2xl border border-emerald-500/35 bg-emerald-500/10 px-3 py-3 text-left transition-colors hover:bg-emerald-500/15"
+          {...(downloadIsExternal ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
         >
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white">
             <Smartphone size={20} strokeWidth={2.2} />

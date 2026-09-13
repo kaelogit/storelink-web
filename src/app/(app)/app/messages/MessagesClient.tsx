@@ -7,10 +7,12 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   AlertCircle,
   ArrowLeft,
+  Ban,
   BellOff,
   Check,
   CheckCheck,
   Clock3,
+  Flag,
   Image as ImageIcon,
   Mic,
   MoreHorizontal,
@@ -19,13 +21,18 @@ import {
   Pin,
   Play,
   Search,
-  Send,
   Sparkles,
   Trash2,
+  Users,
+  User,
   Video,
   X,
 } from 'lucide-react';
 import { ChatActiveOrdersStrip } from '@/components/chat/ChatActiveOrdersStrip';
+import { ChatCommercePickerSheet, type ChatProductPick, type ChatServicePick } from '@/components/chat/ChatCommercePickerSheet';
+import { ChatMessageComposer } from '@/components/chat/ChatMessageComposer';
+import { CommerceCardMessage } from '@/components/chat/CommerceCardMessage';
+import { MessageRequestBanner } from '@/components/chat/MessageRequestBanner';
 import {
   buildActiveCommerceChatIds,
   fetchActiveCommerceForChat,
@@ -34,6 +41,29 @@ import {
 } from '@/lib/chatCommerce';
 import { createBrowserClient } from '@/lib/supabase';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
+import { sendChatImageMessage } from '@/lib/chatImageSend';
+import {
+  buildProductCardMessageText,
+  buildProductCommerceCardMetadata,
+  buildServiceCardMessageText,
+  buildServiceCommerceCardMetadata,
+  getCommerceCardInboxPreview,
+  isCommerceCardMessage,
+} from '@/lib/commerceCardMessage';
+import { getServiceListingHeroImage } from '@/lib/serviceListingMedia';
+import {
+  blockChatPartner,
+  getMessageRequestInboxPreview,
+  isMessageRequestFolder,
+  submitMessageRequestReport,
+} from '@/lib/messageRequests';
+import {
+  fetchMyGroupsInbox,
+  fetchMyPendingGroupInvites,
+  respondGroupInvite,
+  type GroupInboxRow,
+  type GroupInviteRow,
+} from '@/lib/groupChatApi';
 
 type Partner = {
   id?: string | null;
@@ -79,6 +109,7 @@ type ChatMessage = {
   reply_to_snippet?: string | null;
   reply_to_id?: string | null;
   reactions?: Record<string, string[]> | null;
+  metadata?: unknown;
 };
 
 function shortTime(iso?: string | null) {
@@ -104,9 +135,20 @@ function isRecentlyActive(lastSeenAt?: string | null) {
   return Date.now() - t <= 3 * 60 * 1000;
 }
 
-function renderPreviewText(message: string | null | undefined, type: string | null | undefined) {
-  const text = String(message || '').trim();
+function renderPreviewText(
+  message: string | null | undefined,
+  type: string | null | undefined,
+  folder?: 'primary' | 'requests' | null,
+  metadata?: unknown,
+) {
   const kind = String(type || 'TEXT').toUpperCase();
+  if (isMessageRequestFolder(folder)) {
+    return getMessageRequestInboxPreview(kind);
+  }
+  if (kind === 'PRODUCT_CARD' || kind === 'SERVICE_CARD') {
+    return getCommerceCardInboxPreview({ type, metadata, text: message });
+  }
+  const text = String(message || '').trim();
   if (kind === 'IMAGE') return text || 'Photo';
   if (kind === 'VIDEO') return text || 'Video';
   if (kind === 'VOICE') return text || 'Voice message';
@@ -114,7 +156,18 @@ function renderPreviewText(message: string | null | undefined, type: string | nu
   return text || 'No messages yet';
 }
 
+function effectiveThreadFolder(
+  thread: InboxThread | null,
+  following: Set<string>,
+): 'primary' | 'requests' {
+  if (!thread) return 'primary';
+  const partnerId = String(thread.partner?.id || '');
+  if (thread.folder === 'requests' && partnerId && following.has(partnerId)) return 'primary';
+  return thread.folder === 'requests' ? 'requests' : 'primary';
+}
+
 function renderBubbleBody(m: ChatMessage) {
+  if (isCommerceCardMessage(m)) return String(m.text || '').trim() || 'Shared listing';
   const kind = String(m.type || 'TEXT').toUpperCase();
   if (kind === 'IMAGE') return m.text?.trim() ? `📷 ${m.text}` : '📷 Photo';
   if (kind === 'VIDEO') return m.text?.trim() ? `🎥 ${m.text}` : '🎥 Video';
@@ -139,6 +192,7 @@ export default function MessagesClient() {
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [loadingThreads, setLoadingThreads] = useState(true);
+  const [inboxLoadError, setInboxLoadError] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [messagesLoadError, setMessagesLoadError] = useState<string | null>(null);
   const [threads, setThreads] = useState<InboxThread[]>([]);
@@ -152,7 +206,16 @@ export default function MessagesClient() {
   const [paneIsSeller, setPaneIsSeller] = useState(false);
   const [buyerEmailForPay, setBuyerEmailForPay] = useState('');
   const [buyerCoinBalance, setBuyerCoinBalance] = useState(0);
-  const [activeTab, setActiveTab] = useState<'all' | 'primary' | 'requests'>('primary');
+  const [activeTab, setActiveTab] = useState<'all' | 'primary' | 'requests' | 'groups'>(() => {
+    if (typeof window === 'undefined') return 'primary';
+    try {
+      const saved = window.sessionStorage.getItem('storelink:messages-tab');
+      if (saved === 'all' || saved === 'primary' || saved === 'requests' || saved === 'groups') return saved;
+    } catch {
+      // ignore
+    }
+    return 'primary';
+  });
   const [presenceOpen, setPresenceOpen] = useState(false);
   const [threadMenuOpenFor, setThreadMenuOpenFor] = useState<string | null>(null);
   const [showOnlineStatus, setShowOnlineStatus] = useState(true);
@@ -163,6 +226,11 @@ export default function MessagesClient() {
   const [inChatSearch, setInChatSearch] = useState(false);
   const [chatSearchQuery, setChatSearchQuery] = useState('');
   const [mediaTrayOpen, setMediaTrayOpen] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [commercePickerOpen, setCommercePickerOpen] = useState(false);
+  const [groupThreads, setGroupThreads] = useState<GroupInboxRow[]>([]);
+  const [pendingGroupInvites, setPendingGroupInvites] = useState<GroupInviteRow[]>([]);
+  const [inviteBusyId, setInviteBusyId] = useState<string | null>(null);
   const touchSwipeStartX = useRef<number | null>(null);
   const touchSwipeTriggered = useRef(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -173,10 +241,24 @@ export default function MessagesClient() {
   const mutedSet = useMemo(() => new Set(mutedChatIds), [mutedChatIds]);
   const followingSet = useMemo(() => new Set(followingIds), [followingIds]);
 
+  useEffect(() => {
+    try {
+      window.sessionStorage.setItem('storelink:messages-tab', activeTab);
+    } catch {
+      // ignore
+    }
+  }, [activeTab]);
+
   const selectedThread = useMemo(
     () => threads.find((t) => t.chat_id === selectedChatId) || null,
     [threads, selectedChatId],
   );
+  const selectedThreadFolder = useMemo(
+    () => effectiveThreadFolder(selectedThread, followingSet),
+    [selectedThread, followingSet],
+  );
+  const selectedIsRequest = selectedThreadFolder === 'requests';
+  const showCommerceAttach = paneIsSeller && !selectedIsRequest;
 
   const filteredMessages = useMemo(() => {
     const q = chatSearchQuery.trim().toLowerCase();
@@ -232,6 +314,7 @@ export default function MessagesClient() {
 
   const loadThreads = useCallback(async () => {
     setLoadingThreads(true);
+    setInboxLoadError(false);
     try {
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth.user?.id ?? null;
@@ -239,17 +322,21 @@ export default function MessagesClient() {
       setCurrentUserId(uid);
       if (!uid) {
         setThreads([]);
+        setGroupThreads([]);
+        setPendingGroupInvites([]);
         setBuyerEmailForPay('');
         setBuyerCoinBalance(0);
         return;
       }
 
-      const [{ data: me }, { data: hidden }, { data: muted }, { data: follows }, { data, error }] = await Promise.all([
+      const [{ data: me }, { data: hidden }, { data: muted }, { data: follows }, { data, error }, groups, invites] = await Promise.all([
         supabase.from('profiles').select('share_online_status, email, coin_balance').eq('id', uid).maybeSingle(),
         supabase.rpc('get_my_hidden_chat_ids'),
         supabase.from('chat_mutes').select('chat_id').eq('user_id', uid),
         supabase.from('follows').select('following_id').eq('follower_id', uid),
         supabase.rpc('get_my_inbox_with_receipts'),
+        fetchMyGroupsInbox(supabase).catch(() => [] as GroupInboxRow[]),
+        fetchMyPendingGroupInvites(supabase).catch(() => [] as GroupInviteRow[]),
       ]);
       if (error) throw error;
 
@@ -267,6 +354,8 @@ export default function MessagesClient() {
         return tb - ta;
       });
       setThreads(rows);
+      setGroupThreads(groups);
+      setPendingGroupInvites(invites);
 
       const chatIds = rows.map((r) => r.chat_id).filter(Boolean);
       if (chatIds.length > 0) {
@@ -275,7 +364,7 @@ export default function MessagesClient() {
         setActiveOrderChatIds(new Set());
       }
     } catch {
-      setThreads([]);
+      setInboxLoadError(true);
     } finally {
       setLoadingThreads(false);
     }
@@ -292,7 +381,7 @@ export default function MessagesClient() {
     try {
       const { data, error } = await supabase
         .from('messages')
-        .select('id, sender_id, text, created_at, type, delivered_at, is_read, image_url, video_url, audio_url, document_url, document_name, reply_to_snippet, reply_to_id, reactions')
+        .select('id, sender_id, text, created_at, type, delivered_at, is_read, image_url, video_url, audio_url, document_url, document_name, reply_to_snippet, reply_to_id, reactions, metadata')
         .eq('conversation_id', selectedChatId)
         .order('created_at', { ascending: true })
         .limit(300);
@@ -450,6 +539,39 @@ export default function MessagesClient() {
     });
   }, [activeTab, followingSet, hiddenSet, search, threads]);
 
+  const filteredGroupThreads = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    let rows = groupThreads;
+    if (q) {
+      rows = rows.filter((g) => {
+        const title = String(g.title || '').toLowerCase();
+        const host = String(g.host_display_name || g.host_slug || '').toLowerCase();
+        const last = String(g.last_message || '').toLowerCase();
+        return title.includes(q) || host.includes(q) || last.includes(q);
+      });
+    }
+    return rows;
+  }, [groupThreads, search]);
+
+  const respondInvite = async (invite: GroupInviteRow, accept: boolean) => {
+    setInviteBusyId(invite.invite_id);
+    try {
+      const result = await respondGroupInvite(supabase, invite.invite_id, accept);
+      setPendingGroupInvites((old) => old.filter((i) => i.invite_id !== invite.invite_id));
+      if (accept && result.group_id) {
+        toast.success('You joined this community.');
+        router.push(`/app/group/${result.group_id}`);
+      } else {
+        toast.success('Invite declined.');
+      }
+      void loadThreads();
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Could not respond to invite.');
+    } finally {
+      setInviteBusyId(null);
+    }
+  };
+
   const tabCounts = useMemo(() => {
     const visible = threads
       .map((t) => {
@@ -464,8 +586,9 @@ export default function MessagesClient() {
       all: visible.length,
       primary: visible.filter((t) => (t.folder || 'primary') === 'primary').length,
       requests: visible.filter((t) => (t.folder || 'primary') === 'requests').length,
+      groups: groupThreads.length,
     };
-  }, [followingSet, hiddenSet, threads]);
+  }, [followingSet, groupThreads.length, hiddenSet, threads]);
 
   useEffect(() => {
     const close = () => {
@@ -527,7 +650,172 @@ export default function MessagesClient() {
     if (error) {
       setDraft(text);
       setMessages((old) => old.filter((m) => m.id !== optimistic.id));
+      toast.error(error.message || 'Could not send message.');
     }
+  };
+
+  const sendImage = async (file: File) => {
+    if (!selectedChatId || !currentUserId || uploadingImage) return;
+    setUploadingImage(true);
+    const tempId = `temp-img-${Date.now()}`;
+    const optimistic: ChatMessage = {
+      id: tempId,
+      sender_id: currentUserId,
+      text: 'Sent a photo',
+      created_at: new Date().toISOString(),
+      type: 'IMAGE',
+      is_optimistic: true,
+      delivery_state: 'pending',
+    };
+    setMessages((old) => [...old, optimistic]);
+    try {
+      const inserted = await sendChatImageMessage(supabase, {
+        chatId: selectedChatId,
+        userId: currentUserId,
+        file,
+      });
+      setMessages((old) =>
+        old.map((m) =>
+          m.id === tempId
+            ? { ...m, id: inserted.id, image_url: inserted.image_url, text: inserted.text, created_at: inserted.created_at, is_optimistic: false, delivery_state: 'sent' }
+            : m,
+        ),
+      );
+      setThreads((old) =>
+        old.map((t) =>
+          t.chat_id === selectedChatId
+            ? { ...t, last_message: inserted.text, last_message_type: 'IMAGE', last_sender_id: currentUserId, updated_at: inserted.created_at }
+            : t,
+        ),
+      );
+      void loadThreads();
+    } catch (e: unknown) {
+      setMessages((old) => old.filter((m) => m.id !== tempId));
+      toast.error(e instanceof Error ? e.message : 'Could not send photo.');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const sendCommerceCard = async (input: {
+    type: 'product_card' | 'service_card';
+    text: string;
+    metadata: Record<string, unknown>;
+  }) => {
+    if (!selectedChatId || !currentUserId || !showCommerceAttach) return;
+    const tempId = `temp-card-${Date.now()}`;
+    const optimistic: ChatMessage = {
+      id: tempId,
+      sender_id: currentUserId,
+      text: input.text,
+      type: input.type.toUpperCase(),
+      metadata: input.metadata,
+      created_at: new Date().toISOString(),
+      is_optimistic: true,
+      delivery_state: 'pending',
+    };
+    setMessages((old) => [...old, optimistic]);
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: selectedChatId,
+          sender_id: currentUserId,
+          text: input.text,
+          type: input.type,
+          metadata: input.metadata,
+        })
+        .select('id, text, type, metadata, created_at')
+        .single();
+      if (error) throw error;
+      setMessages((old) =>
+        old.map((m) =>
+          m.id === tempId ? { ...m, ...(data as ChatMessage), is_optimistic: false, delivery_state: 'sent' } : m,
+        ),
+      );
+      setThreads((old) =>
+        old.map((t) =>
+          t.chat_id === selectedChatId
+            ? {
+                ...t,
+                last_message: input.text,
+                last_message_type: input.type.toUpperCase(),
+                last_sender_id: currentUserId,
+                updated_at: (data as { created_at?: string }).created_at || optimistic.created_at,
+              }
+            : t,
+        ),
+      );
+      void loadThreads();
+    } catch (e: unknown) {
+      setMessages((old) => old.filter((m) => m.id !== tempId));
+      toast.error(e instanceof Error ? e.message : 'Could not share listing.');
+    }
+  };
+
+  const handleSelectProductCard = (product: ChatProductPick) => {
+    const metadata = buildProductCommerceCardMetadata({
+      productId: product.id,
+      productSlug: product.slug,
+      productName: product.name,
+      price: product.price,
+      currencyCode: product.currency_code || 'NGN',
+      imageUrl: product.image_urls?.[0] ?? null,
+    });
+    void sendCommerceCard({
+      type: 'product_card',
+      text: buildProductCardMessageText(metadata),
+      metadata,
+    });
+  };
+
+  const handleSelectServiceCard = (service: ChatServicePick) => {
+    const metadata = buildServiceCommerceCardMetadata({
+      serviceListingId: service.id,
+      serviceSlug: service.slug,
+      serviceTitle: service.title,
+      serviceCategory: service.service_category ?? null,
+      heroPriceMin: service.hero_price_min ?? null,
+      currencyCode: service.currency_code || 'NGN',
+      imageUrl: getServiceListingHeroImage(service.media),
+    });
+    void sendCommerceCard({
+      type: 'service_card',
+      text: buildServiceCardMessageText(metadata),
+      metadata,
+    });
+  };
+
+  const reportRequest = async (thread: InboxThread) => {
+    if (!currentUserId) return;
+    const partnerId = String(thread.partner?.id || '');
+    if (!partnerId) return;
+    setThreadMenuOpenFor(null);
+    const result = await submitMessageRequestReport(supabase, {
+      reporterId: currentUserId,
+      subjectUserId: partnerId,
+      chatId: thread.chat_id,
+      reason: 'spam',
+    });
+    if (result.ok) toast.success('Report submitted. Our team will review this request.');
+    else toast.error(result.error);
+  };
+
+  const blockRequest = async (thread: InboxThread) => {
+    if (!currentUserId) return;
+    const partnerId = String(thread.partner?.id || '');
+    if (!partnerId) return;
+    if (!window.confirm('Block this user? They won\'t be able to message you.')) return;
+    const result = await blockChatPartner(supabase, { blockerId: currentUserId, blockedId: partnerId });
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+    await supabase.rpc('delete_chat', { p_chat_id: thread.chat_id });
+    setThreads((old) => old.filter((t) => t.chat_id !== thread.chat_id));
+    setHiddenChatIds((old) => [...old, thread.chat_id]);
+    if (selectedChatId === thread.chat_id) updateQueryChat(null);
+    toast.success('User blocked.');
   };
 
   const togglePin = async (thread: InboxThread) => {
@@ -570,7 +858,7 @@ export default function MessagesClient() {
     setPresenceOpen(false);
   };
 
-  const showMobileChatPane = !!selectedChatId;
+  const showMobileChatPane = !!selectedChatId && activeTab !== 'groups';
 
   return (
     <div className="mx-auto h-[calc(100dvh-7rem)] max-w-7xl overflow-hidden rounded-3xl border border-(--border) bg-(--card)">
@@ -580,7 +868,7 @@ export default function MessagesClient() {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <h1 className="text-lg font-black text-(--foreground)">Messages</h1>
-                <p className="mt-0.5 text-xs text-(--muted)">Primary, requests and pinned chats</p>
+                <p className="mt-0.5 text-xs text-(--muted)">Primary, requests, groups and pinned chats</p>
               </div>
               <div className="relative">
                 <button type="button" onClick={() => setPresenceOpen((v) => !v)} className="inline-flex items-center gap-2 rounded-full border border-(--border) bg-(--surface) px-3 py-1.5 text-xs font-semibold text-(--foreground)">
@@ -605,13 +893,23 @@ export default function MessagesClient() {
               <Search size={16} className="text-(--muted)" />
               <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search chats" className="w-full bg-transparent text-sm text-(--foreground) outline-none placeholder:text-(--muted)" />
             </div>
-            <div className="mt-3 grid grid-cols-3 gap-1 rounded-xl border border-(--border) bg-(--surface) p-1">
-              {(['all', 'primary', 'requests'] as const).map((tab) => {
+            <div className="mt-3 grid grid-cols-4 gap-1 rounded-xl border border-(--border) bg-(--surface) p-1">
+              {(['all', 'primary', 'requests', 'groups'] as const).map((tab) => {
                 const active = activeTab === tab;
-                const label = tab === 'all' ? `All (${tabCounts.all})` : tab === 'primary' ? `Primary (${tabCounts.primary})` : `Requests (${tabCounts.requests})`;
+                const count =
+                  tab === 'all'
+                    ? tabCounts.all
+                    : tab === 'primary'
+                      ? tabCounts.primary
+                      : tab === 'requests'
+                        ? tabCounts.requests
+                        : tabCounts.groups;
+                const label =
+                  tab === 'all' ? 'All' : tab === 'primary' ? 'Primary' : tab === 'requests' ? 'Requests' : 'Groups';
                 return (
-                  <button key={tab} type="button" onClick={() => setActiveTab(tab)} className={`rounded-lg px-2 py-1.5 text-[11px] font-bold ${active ? 'bg-emerald-600 text-white' : 'text-(--muted)'}`}>
+                  <button key={tab} type="button" onClick={() => setActiveTab(tab)} className={`rounded-lg px-1 py-1.5 text-[10px] font-bold sm:text-[11px] ${active ? 'bg-emerald-600 text-white' : 'text-(--muted)'}`}>
                     {label}
+                    {count > 0 ? <span className="ml-0.5 opacity-80">({count})</span> : null}
                   </button>
                 );
               })}
@@ -619,12 +917,106 @@ export default function MessagesClient() {
           </div>
 
           <div className="min-h-0 flex-1 overflow-y-auto">
-            {loadingThreads ? (
+            {inboxLoadError ? (
+              <div className="p-4 text-center">
+                <p className="text-sm font-black text-(--foreground)">Couldn’t load messages</p>
+                <p className="mt-1 text-sm text-(--muted)">Check your connection and try again.</p>
+                <button
+                  type="button"
+                  onClick={() => void loadThreads()}
+                  className="mt-3 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : activeTab === 'groups' ? (
+              loadingThreads ? (
+                <p className="p-4 text-sm text-(--muted)">Loading groups...</p>
+              ) : (
+                <>
+                  {pendingGroupInvites.length > 0 ? (
+                    <div className="space-y-2 border-b border-(--border) p-3">
+                      <p className="text-[11px] font-black uppercase tracking-wide text-(--muted)">Pending invites</p>
+                      {pendingGroupInvites.map((invite) => (
+                        <div key={invite.invite_id} className="rounded-xl border border-(--border) bg-(--surface) p-3">
+                          <p className="text-sm font-bold text-(--foreground)">{invite.group_title}</p>
+                          <p className="mt-0.5 text-xs text-(--muted)">
+                            Hosted by {invite.host_display_name || `@${invite.host_slug}` || 'a seller'}
+                          </p>
+                          <div className="mt-2 flex gap-2">
+                            <button
+                              type="button"
+                              disabled={inviteBusyId === invite.invite_id}
+                              onClick={() => void respondInvite(invite, true)}
+                              className="flex-1 rounded-lg bg-emerald-600 py-1.5 text-xs font-bold text-white disabled:opacity-50"
+                            >
+                              Accept
+                            </button>
+                            <button
+                              type="button"
+                              disabled={inviteBusyId === invite.invite_id}
+                              onClick={() => void respondInvite(invite, false)}
+                              className="flex-1 rounded-lg border border-(--border) py-1.5 text-xs font-bold text-(--foreground) disabled:opacity-50"
+                            >
+                              Decline
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                  {filteredGroupThreads.length === 0 ? (
+                    <p className="p-4 text-sm text-(--muted)">
+                      {pendingGroupInvites.length > 0
+                        ? 'Accept an invite to join a community.'
+                        : 'No joined groups yet. Groups appear here after you accept an invite.'}
+                    </p>
+                  ) : (
+                    filteredGroupThreads.map((group) => {
+                      const avatar = normalizeWebMediaUrl(group.avatar_url || group.host_logo_url || '');
+                      const unread = Number(group.unread_count || 0);
+                      return (
+                        <Link
+                          key={group.group_id}
+                          href={`/app/group/${group.group_id}`}
+                          className="flex w-full items-center gap-3 border-b border-(--border) px-4 py-3 text-left hover:bg-(--surface)"
+                        >
+                          <div className="relative h-11 w-11 overflow-hidden rounded-xl border border-(--border) bg-(--surface)">
+                            {avatar ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={avatar} alt="" className="h-full w-full object-cover" />
+                            ) : (
+                              <div className="flex h-full items-center justify-center">
+                                <Users size={16} className="text-emerald-600" />
+                              </div>
+                            )}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="truncate text-sm font-bold text-(--foreground)">{group.title}</p>
+                              <span className="text-[11px] text-(--muted)">{inboxTime(group.last_message_at || group.updated_at)}</span>
+                            </div>
+                            <p className="mt-0.5 truncate text-xs text-(--muted)">
+                              {group.last_message || `${group.member_count} members`}
+                            </p>
+                          </div>
+                          {unread > 0 ? (
+                            <span className="inline-flex min-h-5 min-w-5 items-center justify-center rounded-full bg-emerald-600 px-1.5 text-[10px] font-black text-white">
+                              {unread > 99 ? '99+' : unread}
+                            </span>
+                          ) : null}
+                        </Link>
+                      );
+                    })
+                  )}
+                </>
+              )
+            ) : loadingThreads ? (
               <p className="p-4 text-sm text-(--muted)">Loading messages...</p>
             ) : filteredThreads.length === 0 ? (
               <p className="p-4 text-sm text-(--muted)">
                 {activeTab === 'requests'
-                  ? 'No message requests.'
+                  ? 'Requests from people you don’t follow appear here. Message previews stay hidden until you accept.'
                   : activeTab === 'primary'
                     ? 'No primary messages yet.'
                     : 'No conversations yet.'}
@@ -636,22 +1028,31 @@ export default function MessagesClient() {
                 const avatar = normalizeWebMediaUrl(thread.partner?.logo_url || '');
                 const isMuted = mutedSet.has(thread.chat_id);
                 const hasActiveOrder = activeOrderChatIds.has(thread.chat_id);
+                const threadFolder = effectiveThreadFolder(thread, followingSet);
+                const isRequestRow = threadFolder === 'requests';
                 const previewType = String(thread.last_message_type || 'TEXT').toUpperCase();
-                const previewText = renderPreviewText(thread.last_message, previewType);
+                const previewText = renderPreviewText(thread.last_message, previewType, threadFolder);
                 const isPartnerOnline = showOnlineStatus && thread.partner?.share_online_status !== false && isRecentlyActive(thread.partner?.last_seen_at);
                 return (
                   <div key={thread.chat_id} className={`relative border-b border-(--border) ${active ? 'bg-emerald-500/8' : 'hover:bg-(--surface)'}`}>
                     <button type="button" onClick={() => updateQueryChat(thread.chat_id)} className="flex w-full items-center gap-3 px-4 py-3 text-left">
                       <div className="relative h-11 w-11 overflow-hidden rounded-xl border border-(--border) bg-(--surface)">
-                        {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : null}
+                        {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center"><User size={18} className="text-(--muted)" /></div>}
                         {isPartnerOnline ? <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full border border-white bg-emerald-500" /> : null}
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-2">
-                          <p className="truncate text-sm font-bold text-(--foreground)">{thread.partner?.display_name || thread.partner?.slug || 'User'}</p>
+                          <div className="flex min-w-0 items-center gap-1.5">
+                            <p className="truncate text-sm font-bold text-(--foreground)">{thread.partner?.display_name || thread.partner?.slug || 'User'}</p>
+                            {isRequestRow ? (
+                              <span className="shrink-0 rounded-md bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-black uppercase text-amber-700">
+                                Request
+                              </span>
+                            ) : null}
+                          </div>
                           <span className="text-[11px] text-(--muted)">{inboxTime(thread.updated_at)}</span>
                         </div>
-                        <div className="mt-0.5 flex items-center gap-1 text-xs text-(--muted)">
+                        <div className={`mt-0.5 flex items-center gap-1 text-xs text-(--muted) ${isRequestRow ? 'select-none blur-[3px]' : ''}`}>
                           {thread.is_pinned ? <Pin size={12} className="text-emerald-600" /> : null}
                           {isMuted ? <BellOff size={12} /> : null}
                           {previewType === 'IMAGE' ? <ImageIcon size={12} /> : null}
@@ -680,7 +1081,7 @@ export default function MessagesClient() {
                       </div>
                     </button>
                     {threadMenuOpenFor === thread.chat_id ? (
-                      <div className="absolute right-3 top-11 z-20 w-44 rounded-xl border border-(--border) bg-(--card) p-1 shadow-xl">
+                      <div className="absolute right-3 top-11 z-20 w-52 rounded-xl border border-(--border) bg-(--card) p-1 shadow-xl">
                         <button type="button" onClick={() => void togglePin(thread)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm hover:bg-(--surface)">
                           <Pin size={14} />
                           {thread.is_pinned ? 'Unpin chat' : 'Pin chat'}
@@ -689,6 +1090,18 @@ export default function MessagesClient() {
                           <BellOff size={14} />
                           {isMuted ? 'Unmute chat' : 'Mute chat'}
                         </button>
+                        {isRequestRow ? (
+                          <>
+                            <button type="button" onClick={() => void reportRequest(thread)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm hover:bg-(--surface)">
+                              <Flag size={14} className="text-amber-500" />
+                              Report spam
+                            </button>
+                            <button type="button" onClick={() => void blockRequest(thread)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-rose-500 hover:bg-(--surface)">
+                              <Ban size={14} />
+                              Block user
+                            </button>
+                          </>
+                        ) : null}
                         <button type="button" onClick={() => void deleteForMe(thread)} className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left text-sm text-rose-500 hover:bg-(--surface)">
                           <Trash2 size={14} />
                           Delete for me
@@ -703,7 +1116,15 @@ export default function MessagesClient() {
         </aside>
 
         <section className={`${!showMobileChatPane ? 'hidden lg:flex' : 'flex'} min-h-0 flex-col`}>
-          {selectedChatId ? (
+          {activeTab === 'groups' ? (
+            <div className="hidden h-full items-center justify-center lg:flex">
+              <div className="text-center">
+                <Users size={28} className="mx-auto text-(--muted)" />
+                <p className="mt-3 text-lg font-black text-(--foreground)">Communities</p>
+                <p className="mt-1 text-sm text-(--muted)">Open a group from the list, or accept an invite.</p>
+              </div>
+            </div>
+          ) : selectedChatId ? (
             <>
               <header className="border-b border-(--border) px-3 py-2">
                 <div className="flex items-center gap-2">
@@ -722,7 +1143,7 @@ export default function MessagesClient() {
                       const qs = searchParams.toString();
                       const returnTo = `${pathname}${qs ? `?${qs}` : ''}`;
                       router.push(
-                        `/app/chat/${encodeURIComponent(selectedChatId)}/menu?returnTo=${encodeURIComponent(returnTo)}&isRequest=${selectedThread.folder === 'requests' ? '1' : '0'}`,
+                        `/app/chat/${encodeURIComponent(selectedChatId)}/menu?returnTo=${encodeURIComponent(returnTo)}&isRequest=${selectedIsRequest ? '1' : '0'}`,
                       );
                     }}
                     className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl py-1 text-left hover:bg-(--surface) disabled:opacity-60"
@@ -736,7 +1157,11 @@ export default function MessagesClient() {
                       {selectedThread && normalizeWebMediaUrl(selectedThread.partner?.logo_url || '') ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={normalizeWebMediaUrl(selectedThread.partner?.logo_url || '')} alt="" className="h-full w-full object-cover" />
-                      ) : null}
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <User size={18} className="text-(--muted)" />
+                        </div>
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1">
@@ -758,21 +1183,20 @@ export default function MessagesClient() {
                       </div>
                     </div>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const phone = selectedThread?.partner?.phone_number?.trim();
-                      if (!phone) {
-                        window.alert('No contact\n\nThis user has not listed a phone number.');
-                        return;
-                      }
-                      window.location.href = `tel:${encodeURIComponent(phone)}`;
-                    }}
-                    className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(--surface) text-(--foreground)"
-                    aria-label="Call"
-                  >
-                    <Phone size={20} strokeWidth={2} />
-                  </button>
+                  {!selectedIsRequest && selectedThread?.partner?.phone_number?.trim() ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const phone = selectedThread?.partner?.phone_number?.trim();
+                        if (!phone) return;
+                        window.location.href = `tel:${encodeURIComponent(phone)}`;
+                      }}
+                      className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(--surface) text-(--foreground)"
+                      aria-label="Call"
+                    >
+                      <Phone size={20} strokeWidth={2} />
+                    </button>
+                  ) : null}
                 </div>
                 {inChatSearch ? (
                   <div className="mt-2 flex items-center gap-2 rounded-xl border border-(--border) bg-(--surface) px-3 py-2">
@@ -815,6 +1239,15 @@ export default function MessagesClient() {
                     void loadThreads();
                   }}
                   onError={(m) => toast.error(m)}
+                />
+              ) : null}
+
+              {selectedIsRequest && selectedThread ? (
+                <MessageRequestBanner
+                  partnerName={selectedThread.partner?.display_name || selectedThread.partner?.slug}
+                  onReport={() => void reportRequest(selectedThread)}
+                  onBlock={() => void blockRequest(selectedThread)}
+                  onDelete={() => void deleteForMe(selectedThread)}
                 />
               ) : null}
 
@@ -925,6 +1358,10 @@ export default function MessagesClient() {
                             {m.reply_to_snippet ? (
                               <p className="mb-1 border-l-2 border-emerald-500/60 pl-2 text-xs text-(--muted)">{m.reply_to_snippet}</p>
                             ) : null}
+                            {isCommerceCardMessage(m) ? (
+                              <CommerceCardMessage message={m} isSellerView={paneIsSeller} />
+                            ) : (
+                              <>
                             {m.image_url ? (
                               <Link href={m.image_url} target="_blank" className="mb-1 block">
                                 <img src={normalizeWebMediaUrl(m.image_url)} alt="Shared image" className="max-h-72 w-full max-w-64 rounded-xl border border-(--border) object-cover" />
@@ -953,6 +1390,8 @@ export default function MessagesClient() {
                               </Link>
                             ) : null}
                             <p className="whitespace-pre-wrap text-[15px] leading-6 text-(--foreground)">{body}</p>
+                              </>
+                            )}
                             <div className={`mt-0.5 inline-flex items-center gap-1 text-[10px] text-(--muted) ${mine ? 'justify-end' : 'justify-start'}`}>
                               <span>{shortTime(m.created_at)}</span>
                               {receiptIcon}
@@ -977,20 +1416,28 @@ export default function MessagesClient() {
                 )}
               </div>
 
-              <div className="border-t border-(--border) bg-(--card) p-3">
-                {replyTo ? (
-                  <div className="mb-2 flex items-center justify-between rounded-lg border border-(--border) bg-(--surface) px-2 py-1.5">
-                    <p className="truncate text-xs text-(--muted)">Replying to: {replyTo.snippet}</p>
-                    <button type="button" onClick={() => setReplyTo(null)} className="text-xs font-semibold text-(--muted)">Cancel</button>
-                  </div>
-                ) : null}
-                <form onSubmit={(e) => { e.preventDefault(); void sendMessage(); }} className="flex items-center gap-2">
-                  <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Type a message" className="h-11 w-full rounded-xl border border-(--border) bg-(--surface) px-3 text-sm text-(--foreground) outline-none placeholder:text-(--muted)" />
-                  <button type="submit" disabled={!draft.trim()} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white disabled:opacity-50">
-                    <Send size={16} />
-                  </button>
-                </form>
-              </div>
+              <ChatMessageComposer
+                draft={draft}
+                onDraftChange={setDraft}
+                onSendText={() => void sendMessage()}
+                onPickImage={(file) => void sendImage(file)}
+                uploadingImage={uploadingImage}
+                replyTo={replyTo}
+                onClearReply={() => setReplyTo(null)}
+                showCommerceAttach={showCommerceAttach}
+                onOpenCommercePicker={() => setCommercePickerOpen(true)}
+              />
+
+              {commercePickerOpen && currentUserId ? (
+                <ChatCommercePickerSheet
+                  open={commercePickerOpen}
+                  sellerId={currentUserId}
+                  supabase={supabase}
+                  onClose={() => setCommercePickerOpen(false)}
+                  onSelectProduct={handleSelectProductCard}
+                  onSelectService={handleSelectServiceCard}
+                />
+              ) : null}
 
               {mediaTrayOpen ? (
                 <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/45 p-4" role="dialog" aria-modal="true">

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ArrowUpRight,
+  Bell,
   Bookmark,
   CalendarClock,
   CheckCircle,
@@ -217,6 +218,10 @@ function rowVisual(item: GroupedActivity, profileId: string | undefined, currenc
     item.type === 'COIN' ||
     item.type === 'ORDER' ||
     item.type === 'SUPPORT' ||
+    item.type === 'SYSTEM' ||
+    item.type === 'VERIFICATION' ||
+    item.type === 'PAYOUT' ||
+    item.type === 'DISPUTE' ||
     !sender?.logo_url;
 
   const coinLine =
@@ -352,7 +357,7 @@ export default function ActivityPage() {
         .from('notifications')
         .select('id, created_at, title, message, type, data')
         .eq('user_id', uid)
-        .in('type', ['support', 'dispute', 'verification', 'payout', 'system', 'spotlight_tag'])
+        .in('type', ['support', 'dispute', 'verification', 'payout', 'system', 'spotlight_tag', 'content_moderation'])
         .order('created_at', { ascending: false })
         .limit(40),
     ]);
@@ -546,7 +551,15 @@ export default function ActivityPage() {
       return;
     }
     if (item.type === 'SUPPORT') {
-      router.push(item.ticket_id ? `/app/help-support` : '/app/help-support');
+      router.push(
+        item.ticket_id
+          ? `/app/activity/support-detail?ticketId=${encodeURIComponent(item.ticket_id)}`
+          : '/app/activity/support-history',
+      );
+      return;
+    }
+    if (item.type === 'SYSTEM') {
+      router.push(`/app/activity/system-notice?id=${encodeURIComponent(item.id)}`);
       return;
     }
     if (item.type === 'DISPUTE') {
@@ -592,15 +605,13 @@ export default function ActivityPage() {
           <ChevronRight className="h-6 w-6 rotate-180" strokeWidth={2.5} />
         </Link>
         <h1 className="min-w-0 flex-1 text-center text-[12px] font-black uppercase tracking-[0.18em] text-(--foreground)">Activity</h1>
-        <button
-          type="button"
-          onClick={() => void onRefresh()}
-          disabled={refreshing || loading}
-          className="h-11 w-11 rounded-full bg-(--surface) text-xs font-black text-(--foreground) disabled:opacity-50"
-          aria-label="Refresh activity"
+        <Link
+          href="/app/activity/system-notifications"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-(--surface) text-(--foreground) transition hover:opacity-90"
+          aria-label="System notifications"
         >
-          {refreshing ? '…' : '↻'}
-        </button>
+          <Bell className="h-5 w-5" strokeWidth={2.4} />
+        </Link>
       </header>
       <div className="rounded-3xl border border-(--border) bg-(--card) overflow-hidden">
         <div className="px-5 py-4 border-b border-(--border) flex items-center justify-between gap-3">
@@ -617,6 +628,22 @@ export default function ActivityPage() {
             {refreshing ? 'Refreshing…' : 'Refresh'}
           </button>
         </div>
+
+        <Link
+          href="/app/activity/system-notifications"
+          className="flex items-center justify-between gap-3 px-5 py-4 border-b border-(--border) bg-(--surface)/60 hover:bg-(--surface)"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-11 h-11 rounded-xl bg-(--card) flex items-center justify-center shrink-0 border border-(--border)">
+              <Bell className="w-5 h-5 text-(--foreground)" strokeWidth={2.4} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-black text-(--foreground)">System notifications</p>
+              <p className="text-xs font-semibold text-(--muted)">Account, payouts, safety, and support</p>
+            </div>
+          </div>
+          <ChevronRight className="w-5 h-5 text-(--muted) shrink-0" />
+        </Link>
 
         <Link
           href="/app/activity/profile-views"

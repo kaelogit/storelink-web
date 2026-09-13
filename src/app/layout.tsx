@@ -4,6 +4,8 @@ import { GoogleAnalytics } from '@next/third-parties/google';
 import Navbar from "../components/home/Navbar";
 import { ThemeProvider } from "../components/providers/ThemeProvider";
 import { ReactQueryProvider } from "../components/providers/ReactQueryProvider";
+import ShareSheetHost from "../components/share/ShareSheetHost";
+import WhyThisAdHost from "../components/ads/WhyThisAdHost";
 import "./globals.css";
 
 // 1. Load the High-End Fonts
@@ -40,7 +42,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL('https://storelink.ng'), 
   title: {
-    default: "StoreLink | Ready for Discovery",
+    default: "StoreLink | Social. Commerce. Trust.",
     template: "%s | StoreLink", 
   },
   description: "StoreLink is a trust-powered commerce platform in Africa. Reputation and escrow-protected payments make online buying and selling safer.",
@@ -144,6 +146,8 @@ export default function RootLayout({
             </main>
 
             <GoogleAnalytics gaId="G-LC8PN9CT62" />
+            <ShareSheetHost />
+            <WhyThisAdHost />
           </ReactQueryProvider>
         </ThemeProvider>
       </body>

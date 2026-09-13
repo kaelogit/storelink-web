@@ -7,27 +7,11 @@ import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { Tag } from 'lucide-react';
 
+import { PRODUCT_CATEGORIES } from '@/constants/ProductCategories';
+
 const INTEREST_CATEGORIES = [
-  { label: 'Fashion', slug: 'fashion' },
-  { label: 'Electronics', slug: 'electronics' },
-  { label: 'Home', slug: 'home' },
-  { label: 'Food & Beverage', slug: 'food' },
-  { label: 'Health & Beauty', slug: 'beauty' },
-  { label: 'Sports & Fitness', slug: 'sports' },
-  { label: 'Books & Media', slug: 'books' },
-  { label: 'Art & Crafts', slug: 'art' },
-  { label: 'Automotive', slug: 'automotive' },
-  { label: 'Travel & Tourism', slug: 'travel' },
-  { label: 'Technology', slug: 'technology' },
-  { label: 'Music & Entertainment', slug: 'music' },
-  { label: 'Pets & Animals', slug: 'pets' },
-  { label: 'Education', slug: 'education' },
-  { label: 'Business & Finance', slug: 'business' },
-  { label: 'Gaming', slug: 'gaming' },
-  { label: 'Photography', slug: 'photography' },
-  { label: 'Cooking & Baking', slug: 'cooking' },
-  { label: 'Fitness & Wellness', slug: 'wellness' },
-  { label: 'Parenting', slug: 'parenting' },
+  ...PRODUCT_CATEGORIES,
+  { label: 'Services', slug: 'services' },
 ];
 
 export default function PickCategoriesPage() {

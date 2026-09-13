@@ -4,12 +4,20 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase';
 import { uploadFileToR2 } from '@/lib/mediaUpload';
-import { SUPPORTED_COUNTRIES } from '@/constants/SupportedCountries';
+import {
+  serviceCategoriesByGroup,
+  canonicalizeServiceCategorySlug,
+  webStoreCategoryForServiceSlug,
+} from '@/constants/ServiceCategories';
+import { PRODUCT_CATEGORIES, canonicalizeProductCategorySlug } from '@/constants/ProductCategories';
+import { getPhonePrefixForCountry } from '@/constants/SupportedCountries';
+import { isAtLeastMinAge, parseIsoDateOnly } from '@/lib/dateOfBirth';
+import { needsNgPhoneVerify, phoneVerifyHref, toPhoneE164 } from '@/lib/phoneOtp';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Textarea from '@/components/ui/Textarea';
-import { Upload, Store, Phone, Globe, AlertCircle } from 'lucide-react';
+import { Upload, Store, Phone } from 'lucide-react';
 
 interface StoreSetupData {
   storeName: string;
@@ -25,37 +33,10 @@ interface StoreSetupData {
   serviceDeliveryType: 'in_person' | 'online' | 'both';
   serviceLocationType: 'at_my_place' | 'i_travel' | 'both';
   serviceAreas: string;
+  dateOfBirth: string;
 }
 
-const STORE_CATEGORIES = [
-  'Fashion & Clothing',
-  'Electronics',
-  'Home & Garden',
-  'Food & Beverage',
-  'Health & Beauty',
-  'Sports & Fitness',
-  'Books & Media',
-  'Automotive',
-  'Services',
-  'Other',
-];
 
-const SERVICE_CATEGORIES = [
-  { label: 'Nail Tech', slug: 'nail_tech', productCategory: 'Health & Beauty' },
-  { label: 'Barber', slug: 'barber', productCategory: 'Health & Beauty' },
-  { label: 'Makeup Artist', slug: 'makeup_artist', productCategory: 'Health & Beauty' },
-  { label: 'Makeup Artistry', slug: 'makeup_artistry', productCategory: 'Health & Beauty' },
-  { label: 'Pedicure/Manicure', slug: 'pedicure_manicure', productCategory: 'Health & Beauty' },
-  { label: 'Braids Styling', slug: 'braids_styling', productCategory: 'Health & Beauty' },
-  { label: 'Lashes', slug: 'lashes', productCategory: 'Health & Beauty' },
-  { label: 'Skincare', slug: 'skincare', productCategory: 'Health & Beauty' },
-  { label: 'Photographer', slug: 'photographer', productCategory: 'Electronics' },
-  { label: 'Surprise Planners', slug: 'surprise_planners', productCategory: 'Services' },
-  { label: 'Event Decorator', slug: 'event_decorator', productCategory: 'Home & Garden' },
-  { label: 'Tailoring', slug: 'tailoring', productCategory: 'Fashion & Clothing' },
-  { label: 'Alterations', slug: 'alterations', productCategory: 'Fashion & Clothing' },
-  { label: 'Custom Outfits', slug: 'custom_outfits', productCategory: 'Fashion & Clothing' },
-];
 
 export default function SetupPage() {
   const router = useRouter();
@@ -79,6 +60,7 @@ export default function SetupPage() {
     serviceDeliveryType: 'in_person',
     serviceLocationType: 'at_my_place',
     serviceAreas: '',
+    dateOfBirth: '',
   });
 
   const [profile, setProfile] = useState<any>(null);
@@ -95,14 +77,15 @@ export default function SetupPage() {
           .eq('id', session.session.user.id)
           .single();
         setProfile(profileData);
+        if (profileData?.date_of_birth) {
+          setFormData((prev) => ({ ...prev, dateOfBirth: String(profileData.date_of_birth).slice(0, 10) }));
+        }
       }
     };
     fetchProfile();
   }, []);
 
-  const phonePrefix = profile?.location_country_code ? 
-    (SUPPORTED_COUNTRIES.find(c => c.code === profile.location_country_code)?.phonePrefix ?? '+234') : 
-    '+234';
+  const phonePrefix = getPhonePrefixForCountry(profile?.location_country_code);
 
   const handleLogoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -192,12 +175,25 @@ export default function SetupPage() {
       setError('Please enter a valid phone number');
       return;
     }
+    if (!formData.dateOfBirth) {
+      setError('Date of birth is required');
+      return;
+    }
+    const dobDate = parseIsoDateOnly(formData.dateOfBirth);
+    if (!dobDate || !isAtLeastMinAge(dobDate)) {
+      setError('You must be at least 13 years old to use StoreLink.');
+      return;
+    }
     if (!formData.contactEmail.trim()) {
       setError('Contact email is required');
       return;
     }
     if (!formData.isService && !formData.isProduct) {
       setError('Please select at least one: Services or Products');
+      return;
+    }
+    if (formData.isProduct && !formData.storeCategory) {
+      setError('Please select a product category');
       return;
     }
     if (formData.isService && !formData.serviceCategory) {
@@ -228,18 +224,23 @@ export default function SetupPage() {
       if (formData.logo) {
         const fileExt = formData.logo.name.split('.').pop() ?? 'png';
         const fileName = `${session.session.user.id}_${Date.now()}.${fileExt}`;
-        logoUrl = await uploadFileToR2(formData.logo, `store-logos/${fileName}`);
+        logoUrl = await uploadFileToR2(
+          formData.logo,
+          `merchant-assets/${session.session.user.id}/logo_${Date.now()}.${fileExt}`,
+        );
       }
 
       const storeSlug = generateSlug(formData.storeName);
+      const sellerType = formData.isProduct && formData.isService ? 'both' : formData.isService ? 'service' : 'product';
+      const phoneE164 = toPhoneE164(phonePrefix, formData.contactPhone.trim());
 
-      // Determine final category (use service category mapping if service)
+      // Product/both sellers keep the shop category they picked. Service-only maps from the service category.
       let finalCategory = formData.storeCategory;
-      if (formData.isService && formData.serviceCategory) {
-        const serviceCat = SERVICE_CATEGORIES.find(cat => cat.slug === formData.serviceCategory);
-        if (serviceCat) {
-          finalCategory = serviceCat.productCategory;
-        }
+      if (sellerType === 'product' || sellerType === 'both') {
+        finalCategory = canonicalizeProductCategorySlug(formData.storeCategory) || formData.storeCategory;
+      } else if (sellerType === 'service' && formData.serviceCategory) {
+        const mapped = webStoreCategoryForServiceSlug(formData.serviceCategory);
+        if (mapped) finalCategory = mapped;
       }
 
       // Parse service areas
@@ -256,7 +257,7 @@ export default function SetupPage() {
           slug: storeSlug,
           description: formData.storeDescription.trim(),
           category: finalCategory,
-          contact_phone: phonePrefix + formData.contactPhone.trim(),
+          contact_phone: phoneE164,
           contact_email: formData.contactEmail.trim(),
           website: formData.website.trim() || null,
           address: null,
@@ -265,7 +266,7 @@ export default function SetupPage() {
           logo_url: logoUrl,
           is_service: formData.isService,
           is_product: formData.isProduct,
-          service_category: formData.isService ? formData.serviceCategory : null,
+          service_category: formData.isService ? canonicalizeServiceCategorySlug(formData.serviceCategory) : null,
           service_delivery_type: formData.isService ? formData.serviceDeliveryType : null,
           service_location_type: formData.isService && (formData.serviceDeliveryType === 'in_person' || formData.serviceDeliveryType === 'both') ? formData.serviceLocationType : null,
           service_areas: formData.isService && serviceAreas.length ? serviceAreas : null,
@@ -278,10 +279,50 @@ export default function SetupPage() {
         .from('profiles')
         .update({
           onboarding_step: 'store-address',
+          seller_type: sellerType,
+          category: finalCategory,
+          service_category: formData.isService ? canonicalizeServiceCategorySlug(formData.serviceCategory) : null,
+          service_delivery_type: formData.isService ? formData.serviceDeliveryType : null,
+          service_location_type:
+            formData.isService && (formData.serviceDeliveryType === 'in_person' || formData.serviceDeliveryType === 'both')
+              ? formData.serviceLocationType
+              : null,
+          service_areas: formData.isService && serviceAreas.length ? serviceAreas : null,
+          display_name: formData.storeName.trim(),
+          slug: storeSlug,
+          bio: formData.storeDescription.trim(),
+          phone_number: phoneE164,
+          date_of_birth: formData.dateOfBirth,
+          is_seller: true,
+          ...(logoUrl ? { logo_url: logoUrl } : {}),
         })
         .eq('id', session.session.user.id);
 
       if (profileError) throw profileError;
+
+      if (formData.isService && formData.serviceCategory) {
+        const { data: latest } = await supabase
+          .from('profiles')
+          .select('service_category')
+          .eq('id', session.session.user.id)
+          .maybeSingle();
+        if (!latest?.service_category) {
+          await supabase
+            .from('profiles')
+            .update({ service_category: canonicalizeServiceCategorySlug(formData.serviceCategory) })
+            .eq('id', session.session.user.id);
+        }
+      }
+
+      if (needsNgPhoneVerify({
+        countryCode: profile?.location_country_code,
+        phoneVerified: profile?.phone_verified,
+        savedPhone: profile?.phone_number,
+        phoneE164,
+      })) {
+        router.push(phoneVerifyHref({ phone: phoneE164, from: 'onboarding' }));
+        return;
+      }
 
       router.push('/onboarding/store-address');
     } catch (err: any) {
@@ -369,8 +410,11 @@ export default function SetupPage() {
             )}
           </div>
 
+          {!(formData.isService && !formData.isProduct) ? (
           <div className="space-y-2">
-            <label className="text-sm font-black">Store Category</label>
+            <label className="text-sm font-black">
+              {formData.isProduct && formData.isService ? 'Product category' : 'Store category'}
+            </label>
             <select
               value={formData.storeCategory}
               onChange={(e) => setFormData(prev => ({ ...prev, storeCategory: e.target.value }))}
@@ -378,11 +422,12 @@ export default function SetupPage() {
               required
             >
               <option value="">Select a category</option>
-              {STORE_CATEGORIES.map((category) => (
-                <option key={category} value={category}>{category}</option>
+              {PRODUCT_CATEGORIES.map((category) => (
+                <option key={category.slug} value={category.slug}>{category.label}</option>
               ))}
             </select>
           </div>
+          ) : null}
         </div>
 
         <Textarea
@@ -433,8 +478,12 @@ export default function SetupPage() {
                 required
               >
                 <option value="">Select a service category</option>
-                {SERVICE_CATEGORIES.map((category) => (
-                  <option key={category.slug} value={category.slug}>{category.label}</option>
+                {serviceCategoriesByGroup().map(({ group, label, items }) => (
+                  <optgroup key={group} label={label}>
+                    {items.map((category) => (
+                      <option key={category.slug} value={category.slug}>{category.label}</option>
+                    ))}
+                  </optgroup>
                 ))}
               </select>
             </div>
@@ -562,6 +611,18 @@ export default function SetupPage() {
             placeholder="contact@yourstore.com"
             required
           />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-black">Date of birth</label>
+          <input
+            type="date"
+            value={formData.dateOfBirth}
+            onChange={(e) => setFormData((prev) => ({ ...prev, dateOfBirth: e.target.value }))}
+            className="w-full rounded-lg border border-(--border) px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500"
+            required
+          />
+          <p className="text-xs text-(--muted)">You must be at least 13. This is never shown on your public profile.</p>
         </div>
 
         <Input

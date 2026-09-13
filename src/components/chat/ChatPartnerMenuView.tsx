@@ -22,6 +22,7 @@ import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { findLatestRatablePurchase } from '@/lib/ratingEligibility';
 import { createBrowserClient } from '@/lib/supabase';
 import { RateSellerModal, type RateSellerPending } from '@/components/ratings/RateSellerModal';
+import { toast } from 'sonner';
 
 function withQueryParam(returnTo: string, key: string, value: string) {
   const qIdx = returnTo.indexOf('?');
@@ -172,13 +173,13 @@ export function ChatPartnerMenuView({
 
   const handleCall = useCallback(() => {
     if (isRequest) {
-      window.alert('Calls unavailable\n\nAccept this message request first before calling.');
+      toast.error('Accept this message request first before calling.');
       return;
     }
     if (phone) {
       window.location.href = `tel:${encodeURIComponent(phone)}`;
     } else {
-      window.alert('No contact\n\nThis user has not listed a phone number.');
+      toast.error('This user has not listed a phone number.');
     }
   }, [isRequest, phone]);
 
@@ -192,17 +193,17 @@ export function ChatPartnerMenuView({
         setIsMuted(false);
         onMutedChange?.(false);
         setFeedback({ text: 'Notifications enabled', tone: 'ok' });
-        window.alert('Unmuted\n\nYou will receive notifications for this chat.');
+        toast.success('You will receive notifications for this chat.');
       } else {
         const { error } = await supabase.from('chat_mutes').insert({ user_id: currentUserId, chat_id: chatId });
         if (error) throw error;
         setIsMuted(true);
         onMutedChange?.(true);
         setFeedback({ text: 'Chat muted', tone: 'ok' });
-        window.alert('Muted\n\nNotifications for this chat are now muted.');
+        toast.success('Notifications for this chat are now muted.');
       }
     } catch {
-      window.alert('Error\n\nCould not update mute settings.');
+      toast.error('Could not update mute settings.');
       setFeedback({ text: 'Could not update mute', tone: 'err' });
     } finally {
       setBusy(null);
@@ -217,7 +218,7 @@ export function ChatPartnerMenuView({
       if (error) throw error;
       const rows = (data as { created_at?: string; sender_id?: string; text?: string | null; gif_url?: string | null; image_url?: string | null; video_url?: string | null; audio_url?: string | null; document_url?: string | null; document_name?: string | null }[]) || [];
       if (!rows.length) {
-        window.alert('Nothing to export\n\nThis chat has no messages yet.');
+        toast.error('This chat has no messages yet.');
         return;
       }
       const headerTitle = `Chat with @${slug}`;
@@ -244,7 +245,7 @@ export function ChatPartnerMenuView({
       URL.revokeObjectURL(url);
       setFeedback({ text: 'Chat exported', tone: 'ok' });
     } catch {
-      window.alert('Export failed\n\nCould not export this chat. Please try again.');
+      toast.error('Could not export this chat. Please try again.');
       setFeedback({ text: 'Export failed', tone: 'err' });
     } finally {
       setBusy(null);
@@ -253,13 +254,11 @@ export function ChatPartnerMenuView({
 
   const tryRateSeller = useCallback(async () => {
     if (!partnerIsSeller) {
-      window.alert(
-        'Not a seller\n\nStar ratings are for sellers you completed a purchase with. This profile is a buyer account.',
-      );
+      toast.error('Star ratings are for sellers you completed a purchase with.');
       return;
     }
     if (!currentUserId || !profile?.id) {
-      window.alert('Unavailable\n\nCould not open rating right now.');
+      toast.error('Could not open rating right now.');
       return;
     }
     const uid = currentUserId;
@@ -272,9 +271,7 @@ export function ChatPartnerMenuView({
         chatId,
       });
       if (!purchase) {
-        window.alert(
-          'No paid purchase yet\n\nRatings unlock after you complete checkout (card or coins) for an order or booking with this seller.',
-        );
+        toast.error('Ratings unlock after you complete a paid order or booking with this seller.');
         return;
       }
       setRateSellerPending({
@@ -284,7 +281,7 @@ export function ChatPartnerMenuView({
       });
       setRateSellerOpen(true);
     } catch {
-      window.alert('Unavailable\n\nCould not open rating right now.');
+      toast.error('Could not open rating right now.');
     }
   }, [chatId, currentUserId, partnerIsSeller, profile?.display_name, profile?.id, supabase]);
 
@@ -296,7 +293,7 @@ export function ChatPartnerMenuView({
       .eq('chat_id', chatId)
       .in('status', ['PAID', 'SHIPPED', 'DISPUTE_OPEN']);
     if (activeOrders && activeOrders.length > 0) {
-      window.alert('Cannot delete\n\nYou have active orders in this chat. Please complete or cancel them first.');
+      toast.error('You have active orders in this chat. Complete or cancel them first.');
       return;
     }
     const ok = window.confirm(
@@ -310,7 +307,7 @@ export function ChatPartnerMenuView({
       router.replace('/app/messages');
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Could not delete this conversation.';
-      window.alert(`Delete failed\n\n${msg}`);
+      toast.error(msg);
     } finally {
       setBusy(null);
     }
@@ -326,7 +323,7 @@ export function ChatPartnerMenuView({
       if (error) throw error;
       router.replace('/app');
     } catch {
-      window.alert('Block failed\n\nCould not block this user right now.');
+      toast.error('Could not block this user right now.');
     } finally {
       setBusy(null);
     }
@@ -362,14 +359,16 @@ export function ChatPartnerMenuView({
             <p className="mt-0.5 text-sm font-medium text-(--muted)">@{slug}</p>
           </Link>
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={handleCall}
-              className="inline-flex items-center gap-2 rounded-full border border-(--border) bg-(--surface) px-4 py-2 text-sm font-semibold text-(--foreground)"
-            >
-              <Phone size={16} strokeWidth={2} />
-              Call
-            </button>
+            {!isRequest ? (
+              <button
+                type="button"
+                onClick={handleCall}
+                className="inline-flex items-center gap-2 rounded-full border border-(--border) bg-(--surface) px-4 py-2 text-sm font-semibold text-(--foreground)"
+              >
+                <Phone size={16} strokeWidth={2} />
+                Call
+              </button>
+            ) : null}
             <Link
               href={profileHref}
               className="inline-flex items-center gap-2 rounded-full border border-emerald-600/40 bg-emerald-600/10 px-4 py-2 text-sm font-semibold text-emerald-700"
@@ -464,7 +463,7 @@ export function ChatPartnerMenuView({
           />
           <MenuRow
             icon={Receipt}
-            label="Chat orders"
+            label="Orders & bookings"
             sub="Buys & bookings with this person"
             onClick={() => {
               router.push(chatOrdersHref);

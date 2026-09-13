@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Clapperboard, Loader2, Package, Store, Upload, CalendarCheck } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
+import { uploadFileToR2 } from '@/lib/mediaUpload';
 import { PostPublishResultSheet } from '@/components/seller/PostPublishResultSheet';
 import { PostPublishingOverlay } from '@/components/seller/PostPublishingOverlay';
 import { captureVideoFrameJpegBlob } from '@/lib/videoPosterWeb';
@@ -109,11 +110,9 @@ export default function AppSpotlightPostPage() {
     const path = `spotlight/${userId}/spotlight_${Date.now()}.${ext}`;
     setUploadStage('uploading');
     setUploadProgress(20);
-    const { error } = await supabase.storage.from('reels').upload(path, file, { contentType: file.type || 'video/mp4', upsert: false });
-    if (error) throw error;
+    const publicUrl = await uploadFileToR2(file, `reels/${path}`);
     setUploadProgress(82);
-    const { data } = supabase.storage.from('reels').getPublicUrl(path);
-    return data.publicUrl;
+    return publicUrl;
   };
 
   const handleSubmit = async () => {
@@ -138,12 +137,10 @@ export default function AppSpotlightPostPage() {
         const frameBlob = await captureVideoFrameJpegBlob(videoFile);
         if (frameBlob) {
           const thumbPath = `spotlight/${userId}/spotlight_${Date.now()}_thumb.jpg`;
-          const { error: thumbErr } = await supabase.storage.from('reels').upload(thumbPath, frameBlob, {
-            contentType: 'image/jpeg',
-            upsert: false,
-          });
-          if (!thumbErr) {
-            thumbnailUrl = supabase.storage.from('reels').getPublicUrl(thumbPath).data.publicUrl;
+          try {
+            thumbnailUrl = await uploadFileToR2(frameBlob, `reels/${thumbPath}`, 'image/jpeg');
+          } catch {
+            thumbnailUrl = null;
           }
         }
       } catch {
@@ -306,7 +303,7 @@ export default function AppSpotlightPostPage() {
       title="Spotlight published"
       description="Your spotlight is live. It can appear in spotlight feeds for other shoppers to discover."
       tone="violet"
-      primaryAction={{ label: 'Explore', href: '/app' }}
+      primaryAction={{ label: 'Watch in Spotlight', href: '/app/explore?mode=spotlight' }}
       secondaryAction={{ label: 'Post hub', href: '/app/post' }}
     />
     </>

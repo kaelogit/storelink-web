@@ -135,7 +135,7 @@ export default function ChatOrdersPage() {
           <ArrowLeft size={18} />
         </Link>
         <div>
-          <h1 className="text-lg font-black text-(--foreground)">Chat orders</h1>
+          <h1 className="text-lg font-black text-(--foreground)">Orders & bookings</h1>
           <p className="text-xs text-(--muted)">Buys & bookings in this conversation</p>
         </div>
       </div>

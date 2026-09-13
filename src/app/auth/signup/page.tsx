@@ -71,7 +71,14 @@ function SignupPageContent() {
       const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
       const { error: otpError } = await supabase
         .from('otp_verifications')
-        .upsert({ email: cleanEmail, code: otpCode }, { onConflict: 'email' });
+        .upsert(
+          {
+            email: cleanEmail,
+            code: otpCode,
+            expires_at: new Date(Date.now() + 10 * 60_000).toISOString(),
+          },
+          { onConflict: 'email' },
+        );
 
       if (otpError) throw otpError;
 

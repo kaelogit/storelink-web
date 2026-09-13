@@ -57,6 +57,7 @@ type BookingOrder = {
     subscription_plan?: string | null;
   } | null;
   service_listing?: { title?: string | null } | null;
+  is_custom_quote?: boolean | null;
 };
 
 type OrderEntry =
@@ -116,8 +117,10 @@ function bookingStatusMeta(status?: string | null) {
       return { label: 'Completed', bg: 'bg-emerald-500/10', text: 'text-emerald-600' };
     case 'cancelled':
       return { label: 'Cancelled', bg: 'bg-red-500/10', text: 'text-red-500' };
+    case 'cancelled_by_seller':
+      return { label: 'Cancelled by provider', bg: 'bg-red-500/10', text: 'text-red-500' };
     case 'disputed':
-      return { label: 'In dispute', bg: 'bg-red-500/10', text: 'text-red-500' };
+      return { label: 'Under review', bg: 'bg-red-500/10', text: 'text-red-500' };
     case 'refunded':
       return { label: 'Refunded', bg: 'bg-red-500/10', text: 'text-red-500' };
     default:
@@ -135,6 +138,7 @@ export default function OrdersClient() {
   const [entries, setEntries] = useState<OrderEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [busyConfirmOrderId, setBusyConfirmOrderId] = useState<string | null>(null);
 
   const loadOrders = useCallback(async () => {
@@ -194,8 +198,10 @@ export default function OrdersClient() {
         (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
       );
       setEntries(merged);
+      setLoadError(false);
     } catch (e) {
       if (process.env.NODE_ENV === 'development') console.error('Failed to load buyer orders:', e);
+      setLoadError(true);
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -291,6 +297,21 @@ export default function OrdersClient() {
               </div>
             </div>
           ))
+        ) : loadError ? (
+          <div className="mt-20 flex flex-col items-center gap-3 text-center">
+            <p className="text-sm font-black text-(--foreground)">Couldn’t load purchases</p>
+            <p className="max-w-xs text-sm text-(--muted)">Check your connection and try again.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setLoading(true);
+                void loadOrders();
+              }}
+              className="inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+            >
+              Retry
+            </button>
+          </div>
         ) : entries.length === 0 ? (
           <div className="mt-20 flex flex-col items-center gap-3 text-center">
             <div className="flex h-16 w-16 items-center justify-center rounded-full bg-(--surface)">
@@ -335,10 +356,17 @@ export default function OrdersClient() {
                         </p>
                       </div>
                     </div>
-                    <span className={`inline-flex items-center rounded-[8px] px-2 py-1 text-[10px] font-black tracking-[0.04em] ${meta.bg} ${meta.text}`}>
-                      <Wand2 size={10} className="mr-1" />
-                      {meta.label}
-                    </span>
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      <span className={`inline-flex items-center rounded-[8px] px-2 py-1 text-[10px] font-black tracking-[0.04em] ${meta.bg} ${meta.text}`}>
+                        <Wand2 size={10} className="mr-1" />
+                        {meta.label}
+                      </span>
+                      {b.is_custom_quote ? (
+                        <span className="inline-flex items-center rounded-[8px] bg-violet-500/10 px-2 py-1 text-[10px] font-black tracking-[0.04em] text-violet-600">
+                          Custom quote
+                        </span>
+                      ) : null}
+                    </div>
                   </div>
 
                   <div className="mt-4 flex items-center justify-between">
@@ -420,7 +448,7 @@ export default function OrdersClient() {
                           }`}
                         >
                           {hasServiceLinkedItem ? <Wand2 size={10} /> : <Package size={10} />}
-                          {hasServiceLinkedItem ? 'Service-linked' : 'Product order'}
+                          {hasServiceLinkedItem ? 'Booking payment' : 'Product order'}
                         </span>
                       </div>
                     </div>

@@ -86,7 +86,7 @@ export default function BlockedUsersSettingsClient() {
   );
 
   return (
-    <SettingsFrame title="Blocked users" subtitle="People you block cannot message you or browse your store.">
+    <SettingsFrame title="Blocked users" subtitle="People you block cannot message you or browse your store." parentHref="/app/settings/privacy">
       <div className="space-y-4">
         {error ? <p className="rounded-xl border border-rose-300/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">{error}</p> : null}
         <div className="flex items-center gap-2 rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm text-(--muted)">

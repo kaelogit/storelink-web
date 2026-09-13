@@ -10,6 +10,7 @@ import { useWebCartStore } from '@/store/useWebCartStore';
 import { withDrawerParam } from '@/components/profile-web/profileHubPaths';
 import { coinsToCurrency, formatCurrency } from '@/lib/activity-feed';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
+import { defaultFulfillmentMode, productCheckoutCtaWeb, serviceCheckoutCtaWeb } from '@/lib/verticalCheckout';
 
 type SellerMini = {
   id?: string | null;
@@ -36,6 +37,8 @@ type ProductWish = {
   flash_end_time?: string | null;
   price?: number | null;
   currency_code?: string | null;
+  category?: string | null;
+  requires_shipping?: boolean | null;
 };
 
 type ServiceWish = {
@@ -50,6 +53,7 @@ type ServiceWish = {
   seller?: SellerMini | null;
   delivery_type?: string | null;
   location_type?: string | null;
+  service_category?: string | null;
 };
 
 export default function WishlistClient() {
@@ -84,7 +88,7 @@ export default function WishlistClient() {
           created_at,
           product_id,
           products:product_id (
-            id, slug, seller_id, name, image_urls, stock_quantity, is_flash_drop, flash_price, flash_end_time, price, currency_code,
+            id, slug, seller_id, name, image_urls, stock_quantity, is_flash_drop, flash_price, flash_end_time, price, currency_code, category, requires_shipping,
             seller:profiles!seller_id (id, slug, display_name, logo_url, subscription_plan, loyalty_enabled, loyalty_percentage)
           )
         `
@@ -100,7 +104,7 @@ export default function WishlistClient() {
           created_at,
           service_listing_id,
           service_listing:service_listing_id (
-            id, slug, title, media, hero_price_min, currency_code, delivery_type, location_type,
+            id, slug, title, media, hero_price_min, currency_code, delivery_type, location_type, service_category,
             seller:profiles!seller_id (id, slug, display_name, logo_url, subscription_plan)
           )
         `
@@ -384,12 +388,13 @@ export default function WishlistClient() {
                             image_url: image || null,
                             seller_slug: item.seller?.slug || null,
                             seller_name: item.seller?.display_name || null,
+                            requires_shipping: item.requires_shipping !== false,
                           })
                         }
                         className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-[12px] bg-(--foreground) px-3 py-2 text-[11px] font-black uppercase tracking-wide text-(--background)"
                       >
                         <ShoppingBag size={14} />
-                        Add to bag
+                        {productCheckoutCtaWeb(item.category)}
                       </button>
                     </div>
                   </article>
@@ -440,6 +445,12 @@ export default function WishlistClient() {
                           hero_price: fromPrice,
                           delivery_type: item.delivery_type || null,
                           location_type: item.location_type || null,
+                          service_category: item.service_category || null,
+                          preferred_fulfillment: defaultFulfillmentMode({
+                            deliveryType: item.delivery_type,
+                            locationType: item.location_type,
+                            serviceCategory: item.service_category,
+                          }),
                           service_distance_label: null,
                           service_delivery_badge: null,
                           currency_code: item.currency_code || currencyCode,
@@ -451,7 +462,7 @@ export default function WishlistClient() {
                       className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-[12px] bg-(--foreground) px-3 py-2 text-[11px] font-black uppercase tracking-wide text-(--background)"
                     >
                       <ShoppingBag size={14} />
-                      Add to bag
+                      {serviceCheckoutCtaWeb(item.service_category)}
                     </button>
                   </div>
                 </article>

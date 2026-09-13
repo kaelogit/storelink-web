@@ -214,11 +214,16 @@ export default function SellerClientsClient() {
             const name = item.buyer_display_name || item.buyer_slug || fallbackNoun;
             const last = new Date(item.last_activity_at);
             const lastLabel = last.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-            const profileHref = item.buyer_slug && item.buyer_slug.trim() ? `/app/profile/${encodeURIComponent(item.buyer_slug.trim())}` : `/u/${item.buyer_id}`;
+            const profileHref =
+              item.buyer_slug && item.buyer_slug.trim()
+                ? `/app/profile/${encodeURIComponent(item.buyer_slug.trim())}`
+                : null;
             const avatar = normalizeWebMediaUrl(item.buyer_logo_url || '');
 
-            return (
-              <Link key={item.buyer_id} href={fromDrawer ? withDrawerParam(profileHref) : profileHref} className="flex items-center gap-3 rounded-[20px] border border-(--border) bg-(--surface) p-4">
+            const rowClass =
+              'flex items-center gap-3 rounded-[20px] border border-(--border) bg-(--surface) p-4';
+            const body = (
+              <>
                 <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-[12px] bg-(--background)">
                   {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <Users size={18} className="text-(--foreground)" />}
                 </div>
@@ -232,8 +237,18 @@ export default function SellerClientsClient() {
                     {item.service_bookings_count !== 1 ? 's' : ''} • Last activity {lastLabel}
                   </p>
                 </div>
-                <ChevronRight size={16} className="text-(--muted)" />
+                {profileHref ? <ChevronRight size={16} className="text-(--muted)" /> : null}
+              </>
+            );
+
+            return profileHref ? (
+              <Link key={item.buyer_id} href={fromDrawer ? withDrawerParam(profileHref) : profileHref} className={rowClass}>
+                {body}
               </Link>
+            ) : (
+              <div key={item.buyer_id} className={rowClass}>
+                {body}
+              </div>
             );
           })
         )}

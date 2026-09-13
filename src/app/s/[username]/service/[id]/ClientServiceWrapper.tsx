@@ -18,6 +18,7 @@ import {
   Bookmark,
   ExternalLink,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import Button from '@/components/ui/Button';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { useWebCartStore } from '@/store/useWebCartStore';
@@ -25,8 +26,41 @@ import { createBrowserClient } from '@/lib/supabase';
 import HomeCommentsSheet from '@/components/home-index/HomeCommentsSheet';
 import HomeLikesSheet from '@/components/home-index/HomeLikesSheet';
 import { ensureAuthAction } from '@/lib/guestActionPrompt';
-import { buildServiceShareUrl } from '@/lib/sharingContract';
+import {
+  buildServiceBookingIntentPath,
+  buildServiceBookingWebPath,
+  buildServiceShareUrl,
+  inferServiceFulfillmentMode,
+  type ServiceBookingPrefill,
+} from '@/lib/sharingContract';
+import AppTrapModal from '@/components/ui/DownloadTrap';
 import { STOREFRONT_GUTTER_X } from '@/lib/mobileLayout';
+import {
+  formatServiceCategoryLabel,
+  productLeafForServiceCategory,
+  serviceCategorySupportsAvailability,
+  serviceCategorySupportsMenuDuration,
+} from '@/constants/ServiceCategories';
+import { normalizeServiceMenu } from '@/lib/normalizeServiceMenu';
+import { formatMenuMetaLine } from '@/lib/foodMenuMeta';
+import {
+  filterSlotsByDayCapacity,
+  maxLeadTimeHoursFromMenu,
+  parseAvailabilitySettings,
+  suggestAvailabilitySlots,
+} from '@/lib/foodAvailability';
+import { fetchListingBookingCountsByDay } from '@/lib/foodCapacity';
+import { WebCartCheckoutWhenStep } from '@/components/cart/WebCartCheckoutWhenStep';
+import {
+  fulfillmentModeLabel,
+  getVerticalFulfillmentCopy,
+  isCateringServiceCategory,
+  serviceDeliveryBadgeFromTypes,
+  travelFeeLabels,
+} from '@/lib/verticalFulfillmentCopy';
+import { defaultFulfillmentMode, serviceCheckoutCtaWeb } from '@/lib/verticalCheckout';
+import { previewDepositFromListing } from '@/lib/depositPaymentHolds';
+import { openShareSheet } from '@/lib/openShareSheet';
 
 const formatMoney = (amountMinor: number, currency: string) => {
   const main = (Number(amountMinor) || 0) / 100;
@@ -52,6 +86,11 @@ export default function ClientServiceWrapper({ service, seller }: any) {
   const [moreServices, setMoreServices] = useState<any[]>([]);
   const [selectedMenuNameState, setSelectedMenuNameState] = useState<string>('');
   const [selectedMenuPriceMinorState, setSelectedMenuPriceMinorState] = useState<number | null>(null);
+  const [selectedScheduledAt, setSelectedScheduledAt] = useState('');
+  const [localFulfillment, setLocalFulfillment] = useState<'home' | 'studio' | null>(null);
+  const [bookingCountsByDay, setBookingCountsByDay] = useState<Record<string, number>>({});
+  const [bookTrapOpen, setBookTrapOpen] = useState(false);
+  const [bookingIntentPath, setBookingIntentPath] = useState<string | null>(null);
   const [engagement, setEngagement] = useState({
     likesCount: Number(service.likes_count || 0),
     commentsCount: Number(service.comments_count || 0),
@@ -72,52 +111,100 @@ export default function ClientServiceWrapper({ service, seller }: any) {
     : '/';
   const querySelectedMenuName = searchParams.get('menuName') || '';
   const querySelectedMenuPriceMinor = Number(searchParams.get('menuPriceMinor') || 0);
-  const selectedFulfillment = (searchParams.get('fulfillment') || '').toLowerCase();
+  const queryFulfillment = (searchParams.get('fulfillment') || '').toLowerCase();
+  const selectedFulfillment =
+    localFulfillment ||
+    (queryFulfillment === 'home' || queryFulfillment === 'studio' ? queryFulfillment : '');
   const isMenuSelectionLocked = Boolean(
-    querySelectedMenuName || (Number.isFinite(querySelectedMenuPriceMinor) && querySelectedMenuPriceMinor > 0) || selectedFulfillment,
+    querySelectedMenuName || (Number.isFinite(querySelectedMenuPriceMinor) && querySelectedMenuPriceMinor > 0) || queryFulfillment,
   );
 
-  const normalizedServiceMenu = useMemo(() => {
-    const parse = (value: any): any[] => {
-      if (Array.isArray(value)) return value;
-      if (typeof value === 'string') {
-        const trimmed = value.trim();
-        if (!trimmed) return [];
-        try {
-          const parsed = JSON.parse(trimmed);
-          return Array.isArray(parsed)
-            ? parsed
-            : Array.isArray((parsed as any)?.items)
-              ? (parsed as any).items
-              : Array.isArray((parsed as any)?.listings)
-                ? (parsed as any).listings
-                : [];
-        } catch {
-          return [];
-        }
-      }
-      if (value && typeof value === 'object') {
-        if (Array.isArray((value as any).items)) return (value as any).items;
-        if (Array.isArray((value as any).listings)) return (value as any).listings;
-      }
-      return [];
+  const normalizedServiceMenu = useMemo(
+    () => normalizeServiceMenu((service as any)?.menu),
+    [service],
+  );
+
+  const availabilitySettings = useMemo(
+    () => parseAvailabilitySettings((service as any)?.availability_settings),
+    [service],
+  );
+  const supportsAvailability = serviceCategorySupportsAvailability(service?.service_category);
+  const verticalCopy = useMemo(
+    () => getVerticalFulfillmentCopy(service?.service_category),
+    [service?.service_category],
+  );
+  const canChooseFulfillment = useMemo(() => {
+    if (queryFulfillment === 'home' || queryFulfillment === 'studio') return false;
+    if (String(service?.delivery_type || '') === 'online') return false;
+    return (
+      String(service?.location_type || '') === 'both' ||
+      String(service?.delivery_type || '') === 'both'
+    );
+  }, [service, queryFulfillment]);
+
+  const selectedMenuForLead = useMemo(() => {
+    const name =
+      (isMenuSelectionLocked && querySelectedMenuName
+        ? querySelectedMenuName
+        : selectedMenuNameState) || '';
+    if (!name) return normalizedServiceMenu;
+    const matched = normalizedServiceMenu.filter((m) => m.name === name);
+    return matched.length ? matched : normalizedServiceMenu;
+  }, [
+    isMenuSelectionLocked,
+    querySelectedMenuName,
+    selectedMenuNameState,
+    normalizedServiceMenu,
+  ]);
+
+  const bookableSlots = useMemo(() => {
+    if (!supportsAvailability) return [];
+    const lead = maxLeadTimeHoursFromMenu(selectedMenuForLead);
+    const raw = suggestAvailabilitySlots({
+      settings: availabilitySettings,
+      leadTimeHours: lead,
+      count: 8,
+    });
+    return filterSlotsByDayCapacity(
+      raw,
+      bookingCountsByDay,
+      availabilitySettings?.max_jobs_per_day,
+    ).slice(0, 6);
+  }, [
+    supportsAvailability,
+    availabilitySettings,
+    selectedMenuForLead,
+    bookingCountsByDay,
+  ]);
+
+  const cateringLeadHours = useMemo(
+    () => maxLeadTimeHoursFromMenu(selectedMenuForLead),
+    [selectedMenuForLead],
+  );
+
+  useEffect(() => {
+    let active = true;
+    if (!service?.id || !supportsAvailability) {
+      setBookingCountsByDay({});
+      return;
+    }
+    void fetchListingBookingCountsByDay({ listingId: String(service.id) }).then((counts) => {
+      if (active) setBookingCountsByDay(counts || {});
+    });
+    return () => {
+      active = false;
     };
-    return parse((service as any)?.menu)
-      .map((row: any) => ({
-        name: String(row?.name ?? row?.title ?? '').trim(),
-        price_minor:
-          typeof row?.price_minor === 'number'
-            ? row.price_minor
-            : typeof row?.price === 'number'
-              ? row.price
-              : Number.isFinite(Number(row?.price_minor))
-                ? Number(row.price_minor)
-                : Number.isFinite(Number(row?.price))
-                  ? Number(row.price)
-                  : undefined,
-      }))
-      .filter((row) => row.name.length > 0);
-  }, [service]);
+  }, [service?.id, supportsAvailability]);
+
+  useEffect(() => {
+    if (localFulfillment || queryFulfillment === 'home' || queryFulfillment === 'studio') return;
+    const mode = defaultFulfillmentMode({
+      deliveryType: service?.delivery_type,
+      locationType: service?.location_type,
+      serviceCategory: service?.service_category,
+    });
+    if (mode) setLocalFulfillment(mode);
+  }, [service, localFulfillment, queryFulfillment]);
 
   const preselectedListingText = useMemo(() => {
     if (!querySelectedMenuName) return null;
@@ -148,6 +235,101 @@ export default function ClientServiceWrapper({ service, seller }: any) {
       viewerId,
       nextPath: pathname || '/',
       action,
+    });
+  };
+
+  const buildBookingPrefill = (): ServiceBookingPrefill => {
+    const lockedMenuName =
+      isMenuSelectionLocked && querySelectedMenuName
+        ? String(querySelectedMenuName)
+        : selectedMenuNameState || null;
+    const lockedMenuPriceMinor =
+      isMenuSelectionLocked && Number.isFinite(querySelectedMenuPriceMinor) && querySelectedMenuPriceMinor > 0
+        ? querySelectedMenuPriceMinor
+        : selectedMenuPriceMinorState;
+    const fulfillment =
+      selectedFulfillment === 'home' || selectedFulfillment === 'studio'
+        ? selectedFulfillment
+        : inferServiceFulfillmentMode(service);
+    return {
+      menuName: lockedMenuName,
+      menuPriceMinor: lockedMenuPriceMinor,
+      fulfillment,
+      mode: 'request',
+    };
+  };
+
+  const resolvePreferredFulfillment = (): 'home' | 'studio' | null => {
+    if (selectedFulfillment === 'home' || selectedFulfillment === 'studio') return selectedFulfillment;
+    return (
+      defaultFulfillmentMode({
+        deliveryType: service.delivery_type,
+        locationType: service.location_type,
+        serviceCategory: service.service_category,
+      }) || null
+    );
+  };
+
+  const handleBookNow = () => {
+    if (!promptAuth('Booking this service')) return;
+    if (isOwnerViewing) {
+      toast.error('You cannot book your own service.');
+      return;
+    }
+    const prefill = buildBookingPrefill();
+    if (normalizedServiceMenu.length > 0 && !prefill.menuName) {
+      toast.error('Choose a menu option before booking.');
+      return;
+    }
+    addService({
+      service_listing_id: String(service.id || ''),
+      seller_id: String(service.seller_id || ''),
+      title: String(service.title || 'Service'),
+      hero_price: Number(service.hero_price_min || 0) / 100,
+      delivery_type: service.delivery_type || null,
+      location_type: service.location_type || null,
+      service_category: service.service_category || null,
+      preferred_fulfillment: resolvePreferredFulfillment(),
+      preferred_scheduled_at: selectedScheduledAt || null,
+      selected_menu_name: prefill.menuName || null,
+      selected_menu_price_minor: prefill.menuPriceMinor ?? null,
+      currency_code: service.currency_code || 'NGN',
+      image_url: images?.[0] || null,
+      seller_slug: seller.slug || null,
+      seller_name: seller.display_name || null,
+    });
+    const token = servicePathToken;
+    if (isAppMode || viewerId) {
+      router.push(buildServiceBookingWebPath(token, prefill));
+      return;
+    }
+    setBookingIntentPath(buildServiceBookingIntentPath(token, prefill));
+    setBookTrapOpen(true);
+  };
+
+  const handleShare = () => {
+    const token = String(servicePathToken || service.id || '').trim();
+    const sellerForShare = String(service.seller_slug || sellerSlug || '').trim();
+    openShareSheet({
+      surface: 'service',
+      shareType: 'service',
+      url: buildServiceShareUrl(token, sellerForShare || null),
+      title: String(service.title || 'Service'),
+      imageUrl: images?.[0] || undefined,
+      viewerId,
+      ownerId: seller?.id || service.seller_id || null,
+      sellerSlug: sellerForShare || seller?.slug || null,
+      menuActions: sellerForShare
+        ? [
+            {
+              id: 'visit_shop',
+              label: `Visit @${sellerForShare}`,
+              onPress: () => {
+                router.push(`/${encodeURIComponent(sellerForShare)}`);
+              },
+            },
+          ]
+        : undefined,
     });
   };
 
@@ -275,25 +457,43 @@ export default function ClientServiceWrapper({ service, seller }: any) {
     }
   };
 
-  const fromLabel = formatMoney(service.hero_price_min, service.currency_code || 'NGN');
+  const fromLabel = formatMoney(
+    typeof selectedMenuPriceMinorState === 'number' && selectedMenuPriceMinorState > 0
+      ? selectedMenuPriceMinorState
+      : isMenuSelectionLocked && Number.isFinite(querySelectedMenuPriceMinor) && querySelectedMenuPriceMinor > 0
+        ? querySelectedMenuPriceMinor
+        : service.hero_price_min,
+    service.currency_code || 'NGN',
+  );
+  const depositSampleMinor =
+    typeof selectedMenuPriceMinorState === 'number' && selectedMenuPriceMinorState > 0
+      ? selectedMenuPriceMinorState
+      : isMenuSelectionLocked && Number.isFinite(querySelectedMenuPriceMinor) && querySelectedMenuPriceMinor > 0
+        ? querySelectedMenuPriceMinor
+        : typeof normalizedServiceMenu[0]?.price_minor === 'number'
+          ? normalizedServiceMenu[0].price_minor
+          : Number(service.hero_price_min || 0);
+  const depositHoldPreview = previewDepositFromListing(
+    service as any,
+    depositSampleMinor,
+    service.currency_code || 'NGN',
+  );
   const likesCount = engagement.likesCount;
   const commentsCount = engagement.commentsCount;
   const wishlistCount = engagement.wishlistCount;
   const locationParts = [seller.location_city, seller.location_state].filter(Boolean);
   const locationLabel = locationParts.join(', ');
+  const categoryLabel = formatServiceCategoryLabel(service.service_category);
+  const travelAreas = Array.isArray(service.service_areas)
+    ? service.service_areas.map((a: unknown) => String(a || '').trim()).filter(Boolean)
+    : [];
 
-  let deliveryBadge: string | null = null;
-  if (service.delivery_type === 'online') {
-    deliveryBadge = 'ONLINE';
-  } else if (service.delivery_type === 'in_person' && service.location_type === 'i_travel') {
-    deliveryBadge = 'I TRAVEL';
-  } else if (service.delivery_type === 'in_person' && service.location_type === 'both') {
-    deliveryBadge = 'STUDIO & HOME';
-  } else if (service.delivery_type === 'in_person' && service.location_type === 'at_my_place') {
-    deliveryBadge = 'STUDIO ONLY';
-  } else if (service.delivery_type === 'both') {
-    deliveryBadge = 'STUDIO & HOME';
-  }
+  const deliveryBadge = serviceDeliveryBadgeFromTypes(
+    service.delivery_type,
+    service.location_type,
+    service.service_category,
+  );
+  const isCatering = isCateringServiceCategory(service.service_category);
 
   return (
     <div className="min-h-dvh bg-(--background)">
@@ -330,16 +530,8 @@ export default function ClientServiceWrapper({ service, seller }: any) {
               <Bookmark size={18} strokeWidth={2.2} fill={engagement.isSaved ? 'currentColor' : 'none'} />
             </button>
             <button
-              onClick={() => {
-                const token = String(servicePathToken || service.id || '').trim();
-                const sellerForShare = String(service.seller_slug || sellerSlug || '').trim();
-                const shareUrl = buildServiceShareUrl(token, sellerForShare || null);
-                if (navigator.share) {
-                  void navigator.share({ title: service.title, text: `Check out ${service.title} on StoreLink`, url: shareUrl });
-                } else {
-                  void navigator.clipboard.writeText(shareUrl);
-                }
-              }}
+              type="button"
+              onClick={() => void handleShare()}
               className="w-11 h-11 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors"
             >
               <Share2 size={20} strokeWidth={2} />
@@ -395,7 +587,7 @@ export default function ClientServiceWrapper({ service, seller }: any) {
         <div className={`pt-8 ${STOREFRONT_GUTTER_X}`}>
           <div className="mb-6">
             <p className="text-xs font-black text-emerald-600 tracking-[0.2em] uppercase mb-1">
-              {service.service_category}
+              {categoryLabel || 'Service'}
             </p>
             <h1 className="text-xl font-black text-(--foreground) leading-snug mb-2">
               {service.title}
@@ -405,9 +597,9 @@ export default function ClientServiceWrapper({ service, seller }: any) {
             </p>
             <p className="text-2xl font-black text-emerald-600 tracking-tight">{fromLabel}</p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              {service.service_category && (
-                <span className="px-2 py-1 rounded-full bg-(--surface) border border-(--border) text-[9px] font-black tracking-widest text-(--muted) uppercase">
-                  {String(service.service_category).replace(/_/g, ' ').toUpperCase()}
+              {categoryLabel && (
+                <span className="px-2 py-1 rounded-full bg-(--surface) border border-(--border) text-[9px] font-black tracking-widest text-(--foreground) uppercase">
+                  {categoryLabel}
                 </span>
               )}
               {deliveryBadge && (
@@ -416,6 +608,58 @@ export default function ClientServiceWrapper({ service, seller }: any) {
                 </span>
               )}
             </div>
+            {Number(service.travel_fee_minor) > 0 ? (
+              <p className="mt-2 text-xs font-semibold text-(--muted)">
+                Travel fee:{' '}
+                {formatMoney(Number(service.travel_fee_minor), service.currency_code || 'NGN')} ·{' '}
+                {travelFeeLabels(service.service_category).buyerDetailSuffix}
+              </p>
+            ) : null}
+            {supportsAvailability && (bookableSlots.length > 0 || availabilitySettings) ? (
+              <div className="mt-4">
+                <WebCartCheckoutWhenStep
+                  slots={bookableSlots}
+                  selectedIso={selectedScheduledAt}
+                  leadTimeHours={cateringLeadHours}
+                  capacityHint={
+                    availabilitySettings?.max_jobs_per_day
+                      ? `Up to ${availabilitySettings.max_jobs_per_day} booking${
+                          availabilitySettings.max_jobs_per_day === 1 ? '' : 's'
+                        } per day`
+                      : null
+                  }
+                  onSelect={setSelectedScheduledAt}
+                />
+              </div>
+            ) : null}
+            {canChooseFulfillment ? (
+              <div className="mt-4">
+                <p className="mb-2 text-[10px] font-black uppercase tracking-[0.15em] text-(--muted)">
+                  How do you want it?
+                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['studio', 'home'] as const).map((mode) => {
+                    const active = selectedFulfillment === mode;
+                    const label =
+                      mode === 'home' ? verticalCopy.toggleHome : verticalCopy.toggleStudio;
+                    return (
+                      <button
+                        key={mode}
+                        type="button"
+                        onClick={() => setLocalFulfillment(mode)}
+                        className={`rounded-xl border px-3 py-3 text-xs font-bold transition-colors ${
+                          active
+                            ? 'border-(--foreground) bg-(--foreground) text-(--background)'
+                            : 'border-(--border) bg-(--surface) text-(--foreground)'
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
             <div className="mt-4 flex items-center gap-4 border-y border-(--border) px-1 py-3 text-[11px] font-black text-(--muted) uppercase tracking-widest">
               <button type="button" onClick={() => setLikesOpen(true)} className="inline-flex items-center gap-1 transition-colors duration-200">
                 <Heart size={12} className={engagement.isLiked ? 'text-emerald-500' : ''} fill={engagement.isLiked ? 'currentColor' : 'none'} />
@@ -483,7 +727,8 @@ export default function ClientServiceWrapper({ service, seller }: any) {
               ) : null}
               {selectedFulfillment ? (
                 <p className="mt-1 text-[11px] font-black uppercase tracking-widest text-amber-700">
-                  Mode: {selectedFulfillment === 'studio' ? 'Studio visit' : selectedFulfillment === 'home' ? 'Home visit' : selectedFulfillment}
+                  Mode:{' '}
+                  {fulfillmentModeLabel(selectedFulfillment, service.service_category)}
                 </p>
               ) : null}
             </div>
@@ -498,18 +743,81 @@ export default function ClientServiceWrapper({ service, seller }: any) {
             </p>
           </div>
 
+          {(String(service.cancellation_policy || '').trim() ||
+            String(service.deposit_policy || '').trim() ||
+            depositHoldPreview) ? (
+            <div className="mb-8">
+              <h3 className="mb-3 text-xs font-black uppercase tracking-[0.16em] text-(--muted)">
+                SELLER POLICIES
+              </h3>
+              {depositHoldPreview ? (
+                <div className="mb-3">
+                  <p className="text-xs font-black text-(--foreground)">Deposit to hold booking</p>
+                  <p className="mt-1 text-sm text-(--muted) leading-relaxed">
+                    {depositHoldPreview.summary}
+                  </p>
+                  <p className="mt-1 text-[11px] text-(--muted)">
+                    Preview based on selected package. After the provider confirms, Paystack opens for
+                    the deposit first — balance is due before work starts.
+                  </p>
+                </div>
+              ) : null}
+              {String(service.cancellation_policy || '').trim() ? (
+                <div className="mb-3">
+                  <p className="text-xs font-black text-(--foreground)">Cancellation</p>
+                  <p className="mt-1 text-sm text-(--muted) leading-relaxed whitespace-pre-wrap">
+                    {String(service.cancellation_policy).trim()}
+                  </p>
+                </div>
+              ) : null}
+              {String(service.deposit_policy || '').trim() ? (
+                <div>
+                  <p className="text-xs font-black text-(--foreground)">Deposit / payment</p>
+                  <p className="mt-1 text-sm text-(--muted) leading-relaxed whitespace-pre-wrap">
+                    {String(service.deposit_policy).trim()}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+
           {normalizedServiceMenu.length > 0 ? (
             <div className="mb-6 rounded-2xl border border-(--border) bg-(--surface) p-3">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-(--muted)">MENU & PRICING</p>
-              {isMenuSelectionLocked ? (
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-(--muted)">
+                {isCatering ? 'MENU' : 'MENU & PRICING'}
+              </p>
+              {isCatering ? (
+                <p className="mt-1 text-[10px] font-medium text-(--muted)">
+                  Select packages · servings and lead time shown when set
+                </p>
+              ) : isMenuSelectionLocked ? (
                 <p className="mt-1 text-[10px] font-medium text-(--muted)">
                   All options for this service are shown below. Your cart may lock to one listing.
+                </p>
+              ) : serviceCategorySupportsMenuDuration(service.service_category) ? (
+                <p className="mt-1 text-[10px] font-medium text-(--muted)">
+                  {productLeafForServiceCategory(service.service_category) === 'fashion'
+                    ? 'Select options · turnaround shown when set'
+                    : productLeafForServiceCategory(service.service_category) === 'real-estate'
+                      ? 'Select options · viewing length shown when set'
+                      : productLeafForServiceCategory(service.service_category) === 'wellness'
+                        ? 'Select options · session length shown when set'
+                        : productLeafForServiceCategory(service.service_category) === 'automotive'
+                          ? 'Select options · service length shown when set'
+                          : productLeafForServiceCategory(service.service_category) === 'home'
+                            ? 'Select options · job length shown when set'
+                            : productLeafForServiceCategory(service.service_category) === 'electronics'
+                              ? 'Select options · repair length shown when set'
+                              : productLeafForServiceCategory(service.service_category) === 'events'
+                                ? 'Select options · coverage length shown when set'
+                                : 'Select options · duration shown when set'}
                 </p>
               ) : null}
               <div className="mt-2 grid gap-2">
                 {normalizedServiceMenu.map((row, idx) => {
                   const lockedName = String(querySelectedMenuName || selectedMenuNameState || '').trim();
                   const active = isMenuSelectionLocked ? row.name === lockedName : selectedMenuNameState === row.name;
+                  const meta = formatMenuMetaLine(row);
                   return (
                     <button
                       key={`${row.name}-${idx}`}
@@ -530,6 +838,9 @@ export default function ClientServiceWrapper({ service, seller }: any) {
                       {typeof row.price_minor === 'number' ? (
                         <span className="ml-1 text-emerald-600">- {formatMoney(row.price_minor, service.currency_code || 'NGN')}</span>
                       ) : null}
+                      {meta ? (
+                        <span className="mt-0.5 block text-[10px] font-medium text-(--muted)">{meta}</span>
+                      ) : null}
                     </button>
                   );
                 })}
@@ -537,16 +848,35 @@ export default function ClientServiceWrapper({ service, seller }: any) {
             </div>
           ) : null}
 
-          {(service.service_address || (Array.isArray(service.service_areas) && service.service_areas.length > 0)) ? (
-            <div className="mb-6">
-              <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-(--muted)">LOCATION</p>
-              <p className="inline-flex items-start gap-1.5 text-sm text-(--muted)">
-                <MapPin size={14} className="mt-0.5" />
-                <span>
-                  {service.service_address ||
-                    (Array.isArray(service.service_areas) ? service.service_areas.join(', ') : 'In-person service')}
-                </span>
-              </p>
+          {(service.service_address || travelAreas.length > 0 || locationLabel) ? (
+            <div className="mb-6 space-y-3">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-(--muted)">LOCATION & COVERAGE</p>
+              {service.service_address ? (
+                <p className="inline-flex items-start gap-1.5 text-sm text-(--muted)">
+                  <MapPin size={14} className="mt-0.5 shrink-0" />
+                  <span>{service.service_address}</span>
+                </p>
+              ) : locationLabel ? (
+                <p className="inline-flex items-start gap-1.5 text-sm text-(--muted)">
+                  <MapPin size={14} className="mt-0.5 shrink-0" />
+                  <span>{locationLabel}</span>
+                </p>
+              ) : null}
+              {travelAreas.length > 0 ? (
+                <div>
+                  <p className="mb-1 text-[10px] font-black uppercase tracking-[0.14em] text-(--muted)">Travel areas</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {travelAreas.map((area: string) => (
+                      <span
+                        key={area}
+                        className="rounded-full border border-(--border) bg-(--surface) px-2.5 py-1 text-[10px] font-bold text-(--foreground)"
+                      >
+                        {area}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           ) : null}
 
@@ -612,7 +942,18 @@ export default function ClientServiceWrapper({ service, seller }: any) {
         <div className={`absolute bottom-0 left-0 right-0 z-30 flex gap-3 border-t border-(--border) bg-(--card) pt-3 ${STOREFRONT_GUTTER_X} pb-[max(0.75rem,env(safe-area-inset-bottom,0px))]`}>
           <Button
             onClick={() => {
-              if (!promptAuth('Adding services to cart')) return;
+              if (isOwnerViewing) {
+                toast.error('You cannot book your own service.');
+                return;
+              }
+              const menuName =
+                isMenuSelectionLocked && querySelectedMenuName
+                  ? String(querySelectedMenuName)
+                  : selectedMenuNameState || null;
+              if (normalizedServiceMenu.length > 0 && !menuName) {
+                toast.error('Choose a menu option before adding to cart.');
+                return;
+              }
               addService({
                 service_listing_id: String(service.id || ''),
                 seller_id: String(service.seller_id || ''),
@@ -620,10 +961,10 @@ export default function ClientServiceWrapper({ service, seller }: any) {
                 hero_price: Number(service.hero_price_min || 0) / 100,
                 delivery_type: service.delivery_type || null,
                 location_type: service.location_type || null,
-                selected_menu_name:
-                  isMenuSelectionLocked && querySelectedMenuName
-                    ? String(querySelectedMenuName)
-                    : selectedMenuNameState || null,
+                service_category: service.service_category || null,
+                preferred_fulfillment: resolvePreferredFulfillment(),
+                preferred_scheduled_at: selectedScheduledAt || null,
+                selected_menu_name: menuName,
                 selected_menu_price_minor:
                   isMenuSelectionLocked && Number.isFinite(querySelectedMenuPriceMinor)
                     ? querySelectedMenuPriceMinor
@@ -633,25 +974,27 @@ export default function ClientServiceWrapper({ service, seller }: any) {
                 seller_slug: seller.slug || null,
                 seller_name: seller.display_name || null,
               });
+              toast.success('Added to cart');
             }}
             variant="secondary"
             size="lg"
             className="flex-1 justify-center gap-2 rounded-full py-3.5"
           >
             <CalendarCheck2 size={20} strokeWidth={2.5} />
-            <span className="font-bold text-sm tracking-wide">ADD TO CART</span>
+            <span className="font-bold text-sm tracking-wide">
+              {serviceCheckoutCtaWeb(service.service_category)}
+            </span>
           </Button>
           <Button
-            onClick={() => {
-              if (!promptAuth('Proceeding to checkout')) return;
-              window.location.href = '/app/cart';
-            }}
+            onClick={handleBookNow}
             variant="primary"
             size="lg"
             className="flex-1 justify-center gap-2 rounded-full py-3.5"
           >
             <ExternalLink size={18} strokeWidth={2.5} />
-            <span className="font-bold text-sm tracking-wide">BOOK NOW</span>
+            <span className="font-bold text-sm tracking-wide">
+              {isCatering ? 'REQUEST MENU' : serviceCheckoutCtaWeb(service.service_category)}
+            </span>
           </Button>
         </div>
       </div>
@@ -685,6 +1028,14 @@ export default function ClientServiceWrapper({ service, seller }: any) {
             .eq('service_listing_id', service.id);
           setEngagement((prev) => ({ ...prev, commentsCount: Number(count || 0) }));
         }}
+      />
+      <AppTrapModal
+        isOpen={bookTrapOpen}
+        onClose={() => setBookTrapOpen(false)}
+        sellerName={seller.display_name || seller.slug || 'this seller'}
+        trigger="book"
+        intentPath={bookingIntentPath || undefined}
+        continueHref={servicePathToken ? `/app/s/${encodeURIComponent(servicePathToken)}` : '/app'}
       />
     </div>
   );

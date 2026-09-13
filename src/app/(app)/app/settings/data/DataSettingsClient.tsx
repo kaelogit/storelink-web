@@ -56,7 +56,7 @@ export default function DataSettingsClient() {
   )}`;
 
   return (
-    <SettingsFrame title="Data & storage" subtitle="Storage tools, legal docs, and data export requests.">
+    <SettingsFrame title="Data & storage" subtitle="Storage tools, legal docs, and data export requests." parentHref="/app/settings">
       <div className="space-y-5">
         {info ? <p className="rounded-xl border border-(--border) bg-(--surface) px-3 py-2 text-sm text-(--muted)">{info}</p> : null}
 

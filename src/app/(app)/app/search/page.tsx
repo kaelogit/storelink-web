@@ -1,7 +1,5 @@
 'use client';
 
-'use client';
-
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase';
@@ -11,6 +9,12 @@ import { Search, X, MapPin, Gem, Store, Navigation } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { hasActivePaidPlan } from '@/lib/sellerStatus';
+import { PRODUCT_CATEGORIES, productCategoryLabelToSlug } from '@/constants/ProductCategories';
+import { serviceSlugsForProductLeaf, serviceSlugsMatch } from '@/constants/ServiceCategories';
+import UnifiedSearchResults from '@/components/search/UnifiedSearchResults';
+import { addRecentSearch, getRecentSearches, removeRecentSearch } from '@/lib/searchRecent';
+import { guestSignInHref } from '@/lib/guestAppRoutes';
+import { toast } from 'sonner';
 
 type SearchMode = 'stores' | 'services';
 
@@ -60,6 +64,7 @@ export default function AppSearchPage() {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [mode, setMode] = useState<SearchMode>('stores');
   const [rankingSeed, setRankingSeed] = useState(() => Math.random().toString());
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   // Location modal state
   const [showLocationModal, setShowLocationModal] = useState(false);
@@ -86,40 +91,11 @@ export default function AppSearchPage() {
       }
     };
     loadProfile();
+    setRecentSearches(getRecentSearches());
   }, []);
 
-  // Category options based on mode
-  const categories = useMemo(() => {
-    if (mode === 'services') {
-      return [
-        'All',
-        'Nail Tech',
-        'Barber',
-        'Makeup Artist',
-        'Makeup Artistry',
-        'Pedicure/Manicure',
-        'Braids Styling',
-        'Lashes',
-        'Skincare',
-        'Photographer',
-        'Surprise Planners',
-        'Event Decorator',
-        'Tailoring',
-        'Alterations',
-        'Custom Outfits',
-      ];
-    }
-    return [
-      'All',
-      'Fashion',
-      'Beauty',
-      'Electronics',
-      'Home',
-      'Wellness',
-      'Real Estate',
-      'Automotive',
-    ];
-  }, [mode]);
+  // Product-leaf chips for both stores and nearby services (Food / Events / Other included).
+  const categories = useMemo(() => ['All', ...PRODUCT_CATEGORIES.map((c) => c.label)], []);
 
   // Ensure selected category is valid when switching modes
   useEffect(() => {
@@ -128,21 +104,7 @@ export default function AppSearchPage() {
     }
   }, [categories, selectedCategory]);
 
-  // Category slug mapping
-  const categoryLabelToSlug = useCallback((label: string) => {
-    const mappings: Record<string, string> = {
-      'Real Estate': 'real-estate',
-      'Nail Tech': 'nail_tech',
-      'Braids Styling': 'braids_styling',
-      'Makeup Artist': 'makeup_artist',
-      'Makeup Artistry': 'makeup_artistry',
-      'Pedicure/Manicure': 'pedicure_manicure',
-      'Surprise Planners': 'surprise_planners',
-      'Event Decorator': 'event_decorator',
-      'Custom Outfits': 'custom_outfits',
-    };
-    return mappings[label] || label.toLowerCase();
-  }, []);
+  const categoryLabelToSlug = useCallback((label: string) => productCategoryLabelToSlug(label), []);
 
   // Discovery location helpers
   const geography = useMemo(() => getGeographyForCountry(profile?.location_country_code), [profile?.location_country_code]);
@@ -175,7 +137,11 @@ export default function AppSearchPage() {
 
   // Location handlers
   const handleUseMyLocation = useCallback(async () => {
-    if (!profile?.id) return;
+    if (!profile?.id) {
+      toast.error('Sign in to set your discovery location.');
+      router.push(guestSignInHref('/app/search'));
+      return;
+    }
     setLocating(true);
 
     try {
@@ -235,10 +201,14 @@ export default function AppSearchPage() {
     } finally {
       setLocating(false);
     }
-  }, [profile, supabase]);
+  }, [profile, router, supabase]);
 
   const handleChooseCityState = useCallback(async (state: string, city: string) => {
-    if (!profile?.id) return;
+    if (!profile?.id) {
+      toast.error('Sign in to set your discovery location.');
+      router.push(guestSignInHref('/app/search'));
+      return;
+    }
 
     try {
       const { error } = await supabase.from('profiles').update({
@@ -267,7 +237,7 @@ export default function AppSearchPage() {
     } catch (err: any) {
       alert(`Failed to save location: ${err?.message || 'Unknown error'}`);
     }
-  }, [profile, supabase]);
+  }, [profile, router, supabase]);
 
   // Search queries
   const PAGE_LIMIT = 40;
@@ -289,7 +259,7 @@ export default function AppSearchPage() {
       profile?.location_country,
       rankingSeed,
     ],
-    enabled: mode === 'stores',
+    enabled: mode === 'stores' && activeQuery.trim().length < 2,
     staleTime: 1000 * 60 * 5,
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
@@ -416,7 +386,7 @@ export default function AppSearchPage() {
       profile?.location_country,
       rankingSeed,
     ],
-    enabled: mode === 'services',
+    enabled: mode === 'services' && activeQuery.trim().length < 2,
     staleTime: 1000 * 60 * 5,
     initialPageParam: 0,
     getNextPageParam: (lastPage, allPages) => {
@@ -487,18 +457,11 @@ export default function AppSearchPage() {
       if (selectedCategory !== 'All') {
         const cat = categoryLabelToSlug(selectedCategory).toLowerCase();
 
-        const beautyServiceCats = [
-          'nail_tech', 'barber', 'makeup_artist', 'makeup_artistry',
-          'pedicure_manicure', 'braids_styling', 'lashes', 'skincare'
-        ];
-        const fashionServiceCats = ['tailoring', 'alterations', 'custom_outfits'];
-
         rows = rows.filter((row) => {
           const serviceCat = String(row.service_category || '').toLowerCase();
-
-          if (cat === 'beauty') return beautyServiceCats.includes(serviceCat);
-          if (cat === 'fashion') return fashionServiceCats.includes(serviceCat);
-          return serviceCat === cat;
+          const leafSlugs = serviceSlugsForProductLeaf(cat);
+          if (leafSlugs.length > 0) return leafSlugs.includes(serviceCat);
+          return serviceSlugsMatch(serviceCat, cat);
         });
       }
 
@@ -527,8 +490,10 @@ export default function AppSearchPage() {
 
   // Search handlers
   const handleSubmit = useCallback(() => {
-    setActiveQuery(searchText);
+    const next = searchText.trim();
+    setActiveQuery(next);
     setRankingSeed(Math.random().toString());
+    if (next.length >= 2) setRecentSearches(addRecentSearch(next));
   }, [searchText]);
 
   const handleClear = useCallback(() => {
@@ -545,6 +510,8 @@ export default function AppSearchPage() {
     }
   }, [mode, refetchStores, refetchServices]);
 
+  const isUnifiedSearch = activeQuery.trim().length >= 2;
+
   // Discovery prompt
   const shouldShowDiscoveryPrompt =
     mode === 'services' &&
@@ -554,10 +521,10 @@ export default function AppSearchPage() {
   return (
     <div className="flex flex-col min-h-dvh bg-(--background)">
       {/* Header */}
-      <div className="sticky top-[80px] z-20 border-b border-(--border) bg-(--background)/90 backdrop-blur-xl px-4 py-4">
+      <div className="sticky top-0 z-20 border-b border-(--border) bg-(--background)/90 backdrop-blur-xl px-4 py-4 lg:top-20">
         <div className="flex flex-col gap-1">
-          <h1 className="text-lg font-black tracking-tight text-(--foreground)">Discover</h1>
-          <p className="text-sm text-(--muted)">Find stores and brands</p>
+          <h1 className="text-lg font-black tracking-tight text-(--foreground)">Search</h1>
+          <p className="text-sm text-(--muted)">Find stores, services, and people</p>
         </div>
       </div>
 
@@ -567,7 +534,7 @@ export default function AppSearchPage() {
           <Search size={20} className="text-(--muted)" />
           <input
             type="text"
-            placeholder="Search stores..."
+            placeholder="red dress for wedding…"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
@@ -581,7 +548,39 @@ export default function AppSearchPage() {
         </div>
       </div>
 
+      {!isUnifiedSearch && recentSearches.length > 0 && !searchText ? (
+        <div className="px-4 py-3 border-b border-(--border)">
+          <p className="mb-2 text-[11px] font-black uppercase tracking-wide text-(--muted)">Recent</p>
+          <div className="flex flex-wrap gap-2">
+            {recentSearches.map((q) => (
+              <span key={q} className="inline-flex items-center gap-1 rounded-full border border-(--border) bg-(--surface) pl-3 pr-1 py-1 text-xs font-semibold text-(--foreground)">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchText(q);
+                    setActiveQuery(q);
+                    setRecentSearches(addRecentSearch(q));
+                  }}
+                >
+                  {q}
+                </button>
+                <button
+                  type="button"
+                  aria-label={`Remove ${q}`}
+                  onClick={() => setRecentSearches(removeRecentSearch(q))}
+                  className="flex h-5 w-5 items-center justify-center rounded-full text-(--muted) hover:text-(--foreground)"
+                >
+                  <X size={10} />
+                </button>
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {/* Mode Toggle */}
+      {!isUnifiedSearch ? (
+      <>
       <div className="flex gap-2 px-4 py-3 border-b border-(--border)">
         {[
           { key: 'stores' as SearchMode, label: 'Stores' },
@@ -654,7 +653,6 @@ export default function AppSearchPage() {
                 key={category}
                 onClick={() => {
                   setSelectedCategory(category);
-                  setActiveQuery(searchText);
                   setRankingSeed(Math.random().toString());
                 }}
                 className={`px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap transition-colors ${
@@ -700,7 +698,7 @@ export default function AppSearchPage() {
                   item={item}
                   mode={mode}
                   currentUserId={profile?.id}
-                  onPress={(id) => router.push(`/u/${id}`)}
+                  onPress={(id, href) => router.push(href)}
                 />
               ))}
             </div>
@@ -733,6 +731,21 @@ export default function AppSearchPage() {
           </>
         )}
       </div>
+      </>
+      ) : (
+        <div className="flex-1 px-4 py-4">
+          <UnifiedSearchResults
+            query={activeQuery.trim()}
+            userId={profile?.id}
+            locationCountry={profile?.location_country ?? 'Nigeria'}
+            onExampleClick={(q) => {
+              setSearchText(q);
+              setActiveQuery(q);
+              setRecentSearches(addRecentSearch(q));
+            }}
+          />
+        </div>
+      )}
 
       {/* Location Modal */}
       {showLocationModal && (
@@ -879,7 +892,7 @@ function MerchantCard({
   item: Merchant | ServiceListing;
   mode: SearchMode;
   currentUserId?: string;
-  onPress: (id: string) => void;
+  onPress: (id: string, href: string) => void;
 }) {
   if (mode === 'stores') {
     const merchant = item as Merchant;
@@ -888,7 +901,12 @@ function MerchantCard({
 
     return (
       <Card
-        onClick={() => onPress(merchant.id)}
+        onClick={() => {
+          const href = merchant.slug
+            ? `/app/profile/${encodeURIComponent(merchant.slug)}`
+            : `/app/search`;
+          onPress(merchant.id, href);
+        }}
         className={`p-4 cursor-pointer transition-all hover:scale-[1.02] ${
           isDiamond ? 'border-violet-500/50' : ''
         }`}
@@ -950,7 +968,11 @@ function MerchantCard({
 
     return (
       <Card
-        onClick={() => onPress(sellerId)}
+        onClick={() => {
+          const token = String(service.id || '').trim();
+          const href = token ? `/app/s/${encodeURIComponent(token)}` : `/app/search`;
+          onPress(sellerId, href);
+        }}
         className={`p-4 cursor-pointer transition-all hover:scale-[1.02] ${
           isDiamond ? 'border-violet-500/50' : ''
         }`}

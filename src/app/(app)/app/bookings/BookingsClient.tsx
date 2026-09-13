@@ -52,8 +52,10 @@ function statusMeta(status?: string | null) {
       return { label: 'Completed', bg: 'bg-emerald-500/10', text: 'text-emerald-600' };
     case 'cancelled':
       return { label: 'Cancelled', bg: 'bg-red-500/10', text: 'text-red-500' };
+    case 'cancelled_by_seller':
+      return { label: 'Cancelled by provider', bg: 'bg-red-500/10', text: 'text-red-500' };
     case 'disputed':
-      return { label: 'In dispute', bg: 'bg-red-500/10', text: 'text-red-500' };
+      return { label: 'Under review', bg: 'bg-red-500/10', text: 'text-red-500' };
     case 'refunded':
       return { label: 'Refunded', bg: 'bg-red-500/10', text: 'text-red-500' };
     default:
@@ -70,11 +72,13 @@ export default function BookingsClient() {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const loadBookings = useCallback(
     async (who: Perspective) => {
       if (!userId) return;
       const column = who === 'buyer' ? 'buyer_id' : 'seller_id';
+      setLoadError(false);
       try {
         const { data, error } = await supabase
           .from('service_orders')
@@ -92,6 +96,7 @@ export default function BookingsClient() {
         setBookings((data as Booking[]) || []);
       } catch (e) {
         if (process.env.NODE_ENV === 'development') console.error('Bookings fetch failed:', e);
+        setLoadError(true);
       } finally {
         setLoading(false);
         setRefreshing(false);
@@ -175,6 +180,21 @@ export default function BookingsClient() {
               </div>
             </div>
           ))
+        ) : loadError ? (
+          <div className="mt-20 text-center">
+            <p className="text-sm font-black text-(--foreground)">Couldn’t load bookings</p>
+            <p className="mt-2 text-sm text-(--muted)">Check your connection and try again.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setLoading(true);
+                void loadBookings(perspective);
+              }}
+              className="mt-4 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+            >
+              Retry
+            </button>
+          </div>
         ) : bookings.length === 0 ? (
           <div className="mt-20 text-center">
             <p className="text-sm font-black text-(--foreground)">
@@ -185,6 +205,11 @@ export default function BookingsClient() {
                 ? 'When you request a service, your bookings will show up here.'
                 : 'When buyers request your services, bookings will appear here.'}
             </p>
+            {perspective === 'seller' ? (
+              <Link href="/app/orders" className="mt-4 inline-flex text-sm font-bold text-emerald-600">
+                To see services you booked as a customer, open My purchases.
+              </Link>
+            ) : null}
           </div>
         ) : (
           bookings.map((item) => {
@@ -212,9 +237,16 @@ export default function BookingsClient() {
                       <p className="truncate text-[11px] font-semibold text-(--muted)">{formatWhen(item.scheduled_at, item.created_at)}</p>
                     </div>
                   </div>
-                  <span className={`inline-flex items-center rounded-[6px] px-2 py-1 text-[10px] font-black tracking-[0.05em] ${meta.bg} ${meta.text}`}>
-                    {meta.label}
-                  </span>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <span className={`inline-flex items-center rounded-[6px] px-2 py-1 text-[10px] font-black tracking-[0.05em] ${meta.bg} ${meta.text}`}>
+                      {meta.label}
+                    </span>
+                    {item.is_custom_quote ? (
+                      <span className="inline-flex items-center rounded-[6px] bg-violet-500/10 px-2 py-1 text-[10px] font-black tracking-[0.05em] text-violet-600">
+                        Custom quote
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
                 <div className="mt-3">
                   <p className="truncate text-[13px] font-black text-(--foreground)">{title}</p>

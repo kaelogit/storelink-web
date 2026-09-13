@@ -16,6 +16,7 @@ type Ticket = {
   user_id?: string | null;
   updated_at?: string | null;
   created_at?: string | null;
+  attachment_urls?: string[] | null;
 };
 
 type Message = {
@@ -43,7 +44,7 @@ export default function SupportDetailPage() {
       if (!ticketId) throw new Error('Ticket not found.');
       const { data: tData, error: tErr } = await supabase
         .from('support_tickets')
-        .select('id,user_id,category,subject,message,status,priority,created_at,updated_at')
+        .select('id,user_id,category,subject,message,status,priority,created_at,updated_at,attachment_urls')
         .eq('id', ticketId)
         .maybeSingle();
       if (tErr) throw tErr;
@@ -112,6 +113,22 @@ export default function SupportDetailPage() {
       const uid = authData.user?.id;
       if (!uid) throw new Error('Sign in required.');
 
+      try {
+        const { data } = await supabase.rpc('check_and_log_action', {
+          p_user_id: uid,
+          p_action: 'support_reply_submit',
+          p_limit: 20,
+          p_window_seconds: 3600,
+          p_target_key: ticketId,
+          p_metadata: { ticket_id: ticketId },
+        });
+        if ((data as { allowed?: boolean } | null)?.allowed === false) {
+          throw new Error('Too many replies. Try again later.');
+        }
+      } catch (rateErr: any) {
+        if (String(rateErr?.message || '').includes('Too many')) throw rateErr;
+      }
+
       const body = reply.trim();
       const { error: msgErr } = await supabase.from('support_messages').insert({
         ticket_id: ticketId,
@@ -141,6 +158,25 @@ export default function SupportDetailPage() {
   const isResolved = status === 'resolved' || status === 'closed';
   const priority = String(ticket?.priority || 'normal').toLowerCase();
   const priorityClass = priority === 'high' ? 'bg-rose-500/15 text-rose-300' : priority === 'low' ? 'bg-sky-500/15 text-sky-300' : 'bg-violet-500/15 text-violet-300';
+  const attachments = (ticket?.attachment_urls || []).filter(Boolean);
+  const messageTimeline = useMemo(() => {
+    const rows = [...messages].sort(
+      (a, b) => new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime(),
+    );
+    const hasUserMessageRow = rows.some((m) => !m.is_admin_reply);
+    if (!hasUserMessageRow && ticket?.message?.trim()) {
+      return [
+        {
+          id: `legacy-${ticket.id}`,
+          message: ticket.message,
+          is_admin_reply: false,
+          created_at: ticket.created_at,
+        },
+        ...rows,
+      ];
+    }
+    return rows;
+  }, [messages, ticket]);
 
   return (
     <div className="mx-auto max-w-2xl pb-8">
@@ -166,15 +202,30 @@ export default function SupportDetailPage() {
               </div>
             </div>
             <h2 className="mt-1 text-lg font-black text-(--foreground)">{ticket.subject || 'Support ticket'}</h2>
-            <p className="mt-2 text-sm text-(--muted)">{ticket.message}</p>
+            {attachments.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {attachments.map((url) => (
+                  <a
+                    key={url}
+                    href={url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block h-20 w-20 overflow-hidden rounded-xl border border-(--border)"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={url} alt="" className="h-full w-full object-cover" />
+                  </a>
+                ))}
+              </div>
+            ) : null}
           </section>
           <section className="mt-3 rounded-2xl border border-(--border) bg-(--surface) p-4">
             <p className="mb-2 text-[11px] font-black uppercase tracking-wide text-(--muted)">Conversation</p>
-            {messages.length === 0 ? (
+            {messageTimeline.length === 0 ? (
               <p className="text-sm text-(--muted)">No message thread yet. Your initial ticket has been logged.</p>
             ) : (
               <div className="space-y-2">
-                {messages.map((m) => (
+                {messageTimeline.map((m) => (
                   <div key={m.id} className={`rounded-xl border px-3 py-2 ${m.is_admin_reply ? 'border-emerald-500/30 bg-emerald-500/10' : 'border-(--border) bg-(--card)'}`}>
                     <p className="text-xs font-bold uppercase tracking-wide text-(--muted)">{m.is_admin_reply ? 'Support' : 'You'}</p>
                     <p className="mt-1 text-sm text-(--foreground)">{m.message}</p>

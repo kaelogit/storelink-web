@@ -17,10 +17,13 @@ import {
   Trash2,
   X,
   Zap,
+  Megaphone,
 } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { withDrawerParam } from '@/components/profile-web/profileHubPaths';
+import { boostCreateHref } from '@/lib/boostRoutes';
+import { isFeatureEnabled } from '@/lib/featureFlags';
 
 type ProductRow = {
   id: string;
@@ -120,6 +123,11 @@ export default function InventoryClient() {
   const [endFlashItem, setEndFlashItem] = useState<ProductRow | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; type: 'product' | 'service' } | null>(null);
   const [alertMsg, setAlertMsg] = useState<{ title: string; subtitle: string } | null>(null);
+  const [adsEnabled, setAdsEnabled] = useState(false);
+
+  useEffect(() => {
+    void isFeatureEnabled('ads_enabled', false).then(setAdsEnabled);
+  }, []);
 
   useEffect(() => {
     let a = true;
@@ -455,6 +463,16 @@ export default function InventoryClient() {
                   item={item}
                   editHref={wrap(`/app/seller/post-service?id=${encodeURIComponent(item.id)}`)}
                   manageHref={wrap('/app/seller/service-listings')}
+                  boostHref={
+                    adsEnabled
+                      ? wrap(
+                          boostCreateHref({
+                            creative_type: 'service',
+                            service_listing_id: item.id,
+                          }),
+                        )
+                      : null
+                  }
                   onDelete={() => setDeleteTarget({ id: item.id, type: 'service' })}
                 />
               </li>
@@ -578,6 +596,27 @@ export default function InventoryClient() {
                       </div>
                     ) : null}
                     <div className="mt-2.5 flex items-center justify-between gap-2 pr-0.5">
+                      <Link
+                        href={wrap(`/app/seller/post-product?id=${encodeURIComponent(item.id)}`)}
+                        className="inline-flex h-8 items-center justify-center gap-1 rounded-lg border border-(--border) px-2.5 text-[9px] font-black tracking-wider text-(--foreground) hover:bg-(--surface)"
+                      >
+                        <Pencil size={12} strokeWidth={2.4} />
+                        EDIT
+                      </Link>
+                      {adsEnabled ? (
+                        <Link
+                          href={wrap(
+                            boostCreateHref({
+                              creative_type: 'product',
+                              product_id: item.id,
+                            }),
+                          )}
+                          className="inline-flex h-8 flex-1 max-w-[100px] items-center justify-center gap-1 rounded-lg border border-emerald-600/50 text-[9px] font-black tracking-wider text-emerald-700 dark:text-emerald-300"
+                        >
+                          <Megaphone size={12} />
+                          BOOST
+                        </Link>
+                      ) : null}
                       <button
                         type="button"
                         onClick={() => (isFlash ? setEndFlashItem(item) : openFlash(item))}
@@ -767,11 +806,13 @@ function ServiceCard({
   item,
   editHref,
   manageHref,
+  boostHref,
   onDelete,
 }: {
   item: ServiceRow;
   editHref: string;
   manageHref: string;
+  boostHref?: string | null;
   onDelete: () => void;
 }) {
   const u = getServiceImageUrl(item);
@@ -798,6 +839,15 @@ function ServiceCard({
         </p>
         <p className="mt-1.5 text-[10px] font-extrabold text-(--muted)">{fromPrice}</p>
         <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+          {boostHref ? (
+            <Link
+              href={boostHref}
+              className="inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-emerald-600/50 px-2.5 text-[9px] font-black tracking-wider text-emerald-700 dark:text-emerald-300 hover:bg-(--surface)"
+            >
+              <Megaphone size={12} strokeWidth={2.4} />
+              BOOST
+            </Link>
+          ) : null}
           <Link
             href={editHref}
             className="inline-flex h-8 items-center gap-1.5 rounded-[10px] border border-(--border) px-2.5 text-[9px] font-black tracking-wider text-(--foreground) hover:bg-(--surface)"

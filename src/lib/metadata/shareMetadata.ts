@@ -67,7 +67,7 @@ export async function getReelByParam(param: string) {
   const supabase = createAnonServerClient();
   const select = `
     *,
-    seller:profiles!reels_seller_id_fkey (display_name, slug, logo_url, is_verified, location_country_code),
+    seller:profiles!reels_seller_id_fkey (id, display_name, slug, logo_url, is_verified, location_country_code, subscription_plan, loyalty_enabled, loyalty_percentage),
     product:products!product_id(id, slug, name, price, currency_code, image_urls, is_flash_drop, flash_price, flash_end_time, stock_quantity),
     service:service_listings!service_listing_id(id, slug, title, hero_price_min, currency_code, media)
   `;

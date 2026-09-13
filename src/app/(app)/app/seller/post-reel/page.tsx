@@ -4,9 +4,16 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Film, Loader2, Sparkles, Upload } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
+import { uploadFileToR2 } from '@/lib/mediaUpload';
 import { PostPublishResultSheet } from '@/components/seller/PostPublishResultSheet';
 import { PostPublishingOverlay } from '@/components/seller/PostPublishingOverlay';
 import { captureVideoFrameJpegBlob } from '@/lib/videoPosterWeb';
+import {
+  LISTING_TAG_CAP_TITLE,
+  assertCanTagListing,
+  listingTagCapBody,
+  mapListingTagCapError,
+} from '@/lib/listingTagCap';
 
 export default function AppSellerPostReelPage() {
   const supabase = useMemo(() => createBrowserClient(), []);
@@ -162,11 +169,9 @@ export default function AppSellerPostReelPage() {
     const path = `${userId}/reel_${Date.now()}.${ext}`;
     setUploadStage('uploading');
     setUploadProgress(25);
-    const { error } = await supabase.storage.from('reels').upload(path, file, { contentType: file.type || 'video/mp4', upsert: false });
-    if (error) throw error;
+    const publicUrl = await uploadFileToR2(file, `reels/${path}`);
     setUploadProgress(85);
-    const { data } = supabase.storage.from('reels').getPublicUrl(path);
-    return data.publicUrl;
+    return publicUrl;
   };
 
   const ensureLinkedEntityStillActive = async (userId: string): Promise<boolean> => {
@@ -276,6 +281,35 @@ export default function AppSellerPostReelPage() {
         setUploadProgress(0);
         return;
       }
+      const productIdEarly = showLinkTypeTabs
+        ? linkType === 'product'
+          ? selectedProductId || null
+          : null
+        : canLinkProduct
+          ? selectedProductId || null
+          : null;
+      const serviceIdEarly = showLinkTypeTabs
+        ? linkType === 'service'
+          ? selectedServiceId || null
+          : null
+        : canLinkService
+          ? selectedServiceId || null
+          : null;
+      const earlyTagId = productIdEarly || serviceIdEarly;
+      if (earlyTagId) {
+        const capResult = await assertCanTagListing(supabase, {
+          listingType: productIdEarly ? 'product' : 'service',
+          listingId: earlyTagId,
+          slotsNeeded: mirrorToStory && productIdEarly ? 2 : 1,
+        });
+        if (!capResult.ok) {
+          setError(`${LISTING_TAG_CAP_TITLE}. ${listingTagCapBody(capResult.capacity.max_per_listing, capResult.capacity.active_count)}`);
+          setSubmitting(false);
+          setUploadStage(null);
+          setUploadProgress(0);
+          return;
+        }
+      }
       const { data: profile } = await supabase
         .from('profiles')
         .select('is_seller,seller_type,location_state,location_city')
@@ -292,12 +326,10 @@ export default function AppSellerPostReelPage() {
         const frameBlob = await captureVideoFrameJpegBlob(videoFile);
         if (frameBlob) {
           const thumbPath = `${userId}/reel_${Date.now()}_thumb.jpg`;
-          const { error: thumbErr } = await supabase.storage.from('reels').upload(thumbPath, frameBlob, {
-            contentType: 'image/jpeg',
-            upsert: false,
-          });
-          if (!thumbErr) {
-            thumbnailUrl = supabase.storage.from('reels').getPublicUrl(thumbPath).data.publicUrl;
+          try {
+            thumbnailUrl = await uploadFileToR2(frameBlob, `reels/${thumbPath}`, 'image/jpeg');
+          } catch {
+            thumbnailUrl = null;
           }
         }
       } catch {
@@ -319,6 +351,8 @@ export default function AppSellerPostReelPage() {
         }
       }
 
+      const productId = productIdEarly;
+      const serviceId = serviceIdEarly;
       const payload: any = {
         seller_id: userId,
         video_url: videoUrl,
@@ -327,20 +361,21 @@ export default function AppSellerPostReelPage() {
         duration: null,
         location_state: profile?.location_state || null,
         location_city: profile?.location_city || null,
-        product_id: selectedProductId || null,
-        service_listing_id: selectedServiceId || null,
+        product_id: productId,
+        service_listing_id: serviceId,
       };
       const { error: insertError } = await supabase.from('reels').insert(payload);
-      if (insertError) throw insertError;
-      if (mirrorToStory && selectedProductId) {
-        await supabase.from('stories').insert({
+      if (insertError) throw new Error(mapListingTagCapError(insertError.message, undefined, undefined, 'Could not save reel.'));
+      if (mirrorToStory && productId) {
+        const { error: storyError } = await supabase.from('stories').insert({
           seller_id: userId,
           media_url: videoUrl,
           type: 'video',
-          linked_product_id: selectedProductId,
+          linked_product_id: productId,
           thumbnail_url: thumbnailUrl,
           expires_at: new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString(),
         });
+        if (storyError) throw new Error(mapListingTagCapError(storyError.message));
       }
       setUploadProgress(100);
       setCaption('');
@@ -351,7 +386,7 @@ export default function AppSellerPostReelPage() {
       setMirrorToStory(false);
       setResultSheetOpen(true);
     } catch (e: any) {
-      setError(e?.message || 'Failed to post reel.');
+      setError(mapListingTagCapError(e?.message, undefined, undefined, 'Failed to post reel.'));
     } finally {
       setSubmitting(false);
       setUploadStage(null);

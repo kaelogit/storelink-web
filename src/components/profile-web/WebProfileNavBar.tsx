@@ -7,6 +7,7 @@ type WebProfileNavBarProps = {
   slug: string;
   isDiamond?: boolean;
   showOfflineBadge?: boolean;
+  onDiamondPress?: () => void;
   /** Left “suggestions” affordance — mobile `/profile/suggestions`. */
   suggestionsHref?: string;
   /** When false, no right control (e.g. app shell / desktop). */
@@ -25,6 +26,7 @@ export default function WebProfileNavBar({
   suggestionsHref = '/app/search',
   showRightMenu = true,
   onMenuPress,
+  onDiamondPress,
 }: WebProfileNavBarProps) {
   return (
     <div className="sticky top-0 z-20 flex items-center justify-between border-b border-(--border) bg-(--background)/95 px-2 py-3 backdrop-blur-md lg:hidden">
@@ -38,7 +40,15 @@ export default function WebProfileNavBar({
 
       <div className="flex min-w-0 max-w-[60%] items-center justify-center gap-1.5">
         <span className="font-app-profile-slug max-w-full truncate text-(--foreground)">@{slug || 'user'}</span>
-        {isDiamond ? <Gem size={13} className="shrink-0 text-violet-500" fill="currentColor" /> : null}
+        {isDiamond ? (
+          onDiamondPress ? (
+            <button type="button" onClick={onDiamondPress} className="shrink-0" aria-label="About Diamond badge">
+              <Gem size={13} className="text-violet-500" fill="currentColor" />
+            </button>
+          ) : (
+            <Gem size={13} className="shrink-0 text-violet-500" fill="currentColor" />
+          )
+        ) : null}
         {showOfflineBadge ? (
           <span className="shrink-0 rounded-lg border border-(--border) bg-(--surface) px-2 py-0.5 text-[9px] font-black tracking-widest text-(--muted)">
             OFFLINE

@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { getRankingRpcPlan } from './rankingRouting';
+import type { HomeFeedMode } from './homeFeedMode';
 
 type HomeFeedFetchArgs = {
   supabase: SupabaseClient;
@@ -7,6 +8,7 @@ type HomeFeedFetchArgs = {
   seed: string;
   limit?: number;
   locationCountry?: string;
+  mode?: HomeFeedMode;
 };
 
 async function resolveHomeV2Flag(supabase: SupabaseClient): Promise<boolean> {
@@ -25,7 +27,26 @@ export async function fetchHomeFeedData({
   seed,
   limit = 30,
   locationCountry = 'NG',
+  mode = 'forYou',
 }: HomeFeedFetchArgs): Promise<{ rows: any[]; rpcUsed: string; usedFallback: boolean; hadError: boolean }> {
+  if (mode === 'following') {
+    if (!userId) {
+      return { rows: [], rpcUsed: 'get_home_following_feed', usedFallback: false, hadError: false };
+    }
+    const followingCountry = locationCountry === 'NG' ? 'Nigeria' : locationCountry;
+    const { data, error } = await supabase.rpc('get_home_following_feed' as any, {
+      p_user_id: userId,
+      p_limit: limit,
+      p_cursor_created_at: null,
+      p_cursor_id: null,
+      p_location_country: followingCountry,
+    });
+    if (error) {
+      return { rows: [], rpcUsed: 'get_home_following_feed', usedFallback: false, hadError: true };
+    }
+    return { rows: data || [], rpcUsed: 'get_home_following_feed', usedFallback: false, hadError: false };
+  }
+
   const enableV2 = await resolveHomeV2Flag(supabase);
   const plan = getRankingRpcPlan('home', enableV2);
   const args = {
@@ -53,4 +74,3 @@ export async function fetchHomeFeedData({
   if (error) return { rows: [], rpcUsed, usedFallback, hadError: true };
   return { rows: data || [], rpcUsed, usedFallback, hadError: false };
 }
-

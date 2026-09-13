@@ -14,14 +14,26 @@ import {
   Settings,
   ShoppingBag,
   Store,
+  Truck,
   UserPlus,
+  Users,
   Wand2,
   Zap,
+  Megaphone,
 } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import { countSellerManageOrdersExcludingServicePlaceholders } from '@/lib/sellerProductOrderBadgeCount';
 import { getSellerPlanState } from '@/lib/sellerStatus';
 import { withDrawerParam } from '@/components/profile-web/profileHubPaths';
+import {
+  EMPTY_CREATOR_ANALYTICS,
+  formatCompactCount,
+  formatDeltaLabel,
+  formatWatchPct,
+  isCreatorWeekQuiet,
+  parseSellerCreatorAnalytics,
+  type SellerCreatorAnalytics,
+} from '@/lib/creatorAnalytics';
 
 type ProfileRow = Record<string, unknown> & {
   id?: string;
@@ -52,6 +64,7 @@ export default function SalesDashboardClient() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [profile, setProfile] = useState<ProfileRow | null>(null);
+  const [creatorAnalytics, setCreatorAnalytics] = useState<SellerCreatorAnalytics>(EMPTY_CREATOR_ANALYTICS);
   const [stats, setStats] = useState({
     revenue: 0,
     productRevenue: 0,
@@ -96,6 +109,7 @@ export default function SalesDashboardClient() {
         active,
         activeServiceBookings,
         viewsRes,
+        creatorRes,
       ] = await Promise.all([
         supabase.from('products').select('*', { count: 'exact', head: true }).eq('seller_id', uid),
         supabase.from('service_listings').select('*', { count: 'exact', head: true }).eq('seller_id', uid),
@@ -117,6 +131,7 @@ export default function SalesDashboardClient() {
           .eq('profile_id', uid)
           .gte('view_date', startDate)
           .lte('view_date', today),
+        supabase.rpc('get_seller_creator_analytics', { p_seller_id: uid, p_days: 7 }),
       ]);
 
       type SalesRow = { total_amount?: number };
@@ -135,6 +150,9 @@ export default function SalesDashboardClient() {
       const uniqueViewers = viewData?.length
         ? new Set(viewData.map((r) => r.viewer_id).filter(Boolean)).size
         : 0;
+      if (!(creatorRes as { error?: unknown }).error) {
+        setCreatorAnalytics(parseSellerCreatorAnalytics((creatorRes as { data?: unknown }).data));
+      }
 
       const productCount = (products as { count?: number }).count || 0;
       const serviceCount = (services as { count?: number }).count || 0;
@@ -342,6 +360,50 @@ export default function SalesDashboardClient() {
         )}
 
         <Link
+          href={wrap('/app/seller/analytics')}
+          className="block rounded-[20px] border border-(--border) bg-(--surface) p-5 shadow-sm transition hover:bg-(--surface)/80"
+        >
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <p className="text-[15px] font-bold tracking-tight text-(--foreground)">Analytics</p>
+              <p className="mt-0.5 text-[12px] font-semibold text-(--muted)">Last 7 days</p>
+            </div>
+            <span className="flex items-center gap-0.5 text-[13px] font-bold text-emerald-600">
+              Open <ChevronRight size={16} />
+            </span>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <p className="text-[10px] font-semibold tracking-wide text-(--muted)">Views</p>
+              <p className="mt-1 text-xl font-black">{formatCompactCount(creatorAnalytics.views || creatorAnalytics.views_7d)}</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold tracking-wide text-(--muted)">New followers</p>
+              <p className="mt-1 text-xl font-black">
+                {formatCompactCount(creatorAnalytics.followers_gained || creatorAnalytics.followers_gained_7d)}
+              </p>
+              {(creatorAnalytics.follower_delta || creatorAnalytics.follower_delta_7d) !== 0 ? (
+                <p
+                  className={`text-[10px] font-bold ${
+                    (creatorAnalytics.follower_delta || creatorAnalytics.follower_delta_7d) > 0
+                      ? 'text-emerald-600'
+                      : 'text-red-500'
+                  }`}
+                >
+                  {formatDeltaLabel(creatorAnalytics.follower_delta || creatorAnalytics.follower_delta_7d)}
+                </p>
+              ) : null}
+            </div>
+            <div>
+              <p className="text-[10px] font-semibold tracking-wide text-(--muted)">Avg watch</p>
+              <p className="mt-1 text-xl font-black">
+                {isCreatorWeekQuiet(creatorAnalytics) ? '—' : formatWatchPct(creatorAnalytics.avg_reel_watch_pct)}
+              </p>
+            </div>
+          </div>
+        </Link>
+
+        <Link
           href={wrap('/app/activity/profile-views')}
           className="flex items-center gap-4 rounded-[20px] border border-(--border) bg-(--surface) p-5 shadow-sm transition hover:bg-(--surface)/80"
         >
@@ -408,6 +470,14 @@ export default function SalesDashboardClient() {
                 }
               />
             )}
+            {sellsProducts && (
+              <NavTile
+                href={wrap('/app/seller/delivery-zones')}
+                icon={<Truck size={20} className="text-emerald-600" strokeWidth={2.5} />}
+                label="Pickup & delivery"
+                sub="Pickup note, zones & outside-area rules"
+              />
+            )}
             {offersServices && (
               <NavTile
                 href={wrap('/app/bookings?perspective=seller')}
@@ -417,6 +487,12 @@ export default function SalesDashboardClient() {
                 badge={stats.activeServiceBookings}
               />
             )}
+            <NavTile
+              href={wrap('/app/seller/analytics')}
+              icon={<BarChart3 size={20} className="text-emerald-600" strokeWidth={2.5} />}
+              label="Creator analytics"
+              sub="Views, watch time & audience"
+            />
             {(sellsProducts || offersServices) && (
               <NavTile
                 href={wrap('/app/seller/clients')}
@@ -432,10 +508,22 @@ export default function SalesDashboardClient() {
               />
             )}
             <NavTile
+              href={wrap('/app/seller/communities')}
+              icon={<Users size={20} className="text-emerald-600" strokeWidth={2.5} />}
+              label="Communities"
+              sub="VIP groups, drop alerts & invites"
+            />
+            <NavTile
               href={wrap('/app/seller/loyalty')}
               icon={<Zap size={20} className="text-amber-500" strokeWidth={2.5} />}
               label="Store Rewards"
               sub={loyaltySubtitle}
+            />
+            <NavTile
+              href={wrap('/app/seller/promotions')}
+              icon={<Megaphone size={20} className="text-emerald-600" strokeWidth={2.5} />}
+              label="Promotions"
+              sub="Boost products & services"
             />
             <NavTile
               href={wrap('/app/settings/account')}

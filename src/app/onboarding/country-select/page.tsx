@@ -7,6 +7,7 @@ import { createBrowserClient } from '@/lib/supabase';
 import Button from '@/components/ui/Button';
 import Card from '@/components/ui/Card';
 import { SUPPORTED_COUNTRIES, type SupportedCountry } from '@/constants/SupportedCountries';
+import { COUNTRY_ISOLATION_NOTE } from '@/constants/countryLaunch';
 
 export default function CountrySelectPage() {
   const router = useRouter();
@@ -98,7 +99,9 @@ export default function CountrySelectPage() {
           WHERE ARE{' '}
           <span className="italic text-emerald-600">YOU BASED?</span>
         </h1>
-        <p className="text-base sm:text-lg text-(--muted)">This customizes your store and currency.</p>
+        <p className="text-base sm:text-lg text-(--muted)">
+          This sets your currency and local marketplace. {COUNTRY_ISOLATION_NOTE}
+        </p>
       </div>
 
       <div className="space-y-4">
@@ -128,7 +131,7 @@ export default function CountrySelectPage() {
                   <p className="text-lg font-black">{country.name}</p>
                   <p className="text-sm text-(--muted)">
                     {country.currency}
-                    {isDisabled ? ' • Coming soon' : ''}
+                    {isDisabled ? ' • Coming soon' : ' • Local marketplace only'}
                   </p>
                 </div>
                 {isActive && !isDisabled ? (

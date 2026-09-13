@@ -4,17 +4,24 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Bookmark, Coins, Eye, Heart, MessageCircle, Pause, Play, Share2, ShoppingBag, Sparkles, Volume2, VolumeX, Wrench, Zap } from 'lucide-react';
+import { Bookmark, Coins, Eye, Heart, MessageCircle, Music, Pause, Play, Share2, ShoppingBag, Sparkles, Volume2, VolumeX, Wrench, Zap } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import HomeCommentsSheet from '@/components/home-index/HomeCommentsSheet';
 import HomeLikesSheet from '@/components/home-index/HomeLikesSheet';
 import HomeViewsSheet from '@/components/home-index/HomeViewsSheet';
 import { enqueueRankingEventWeb } from '@/lib/rankingEventsWeb';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
+import { resolveReelPlaybackSource } from '@/lib/resolveReelPlaybackSource';
+import { resolveReelAudioLabel } from '@/lib/reelAudioAttribution';
 import { useWebCartStore } from '@/store/useWebCartStore';
 import { firstNonEmptyId } from '@/lib/firstNonEmptyId';
 import { ensureAuthAction } from '@/lib/guestActionPrompt';
 import { buildReelShareUrl, buildSpotlightShareUrl } from '@/lib/sharingContract';
+import { openShareSheet } from '@/lib/openShareSheet';
+import AdaptiveVideo from '@/components/media/AdaptiveVideo';
+import { logAdClick, logAdImpression } from '@/lib/adDeliveryLogging';
+import { useWhyThisAdStore } from '@/store/useWhyThisAdStore';
+import { defaultFulfillmentMode } from '@/lib/verticalCheckout';
 
 function sellerIdFromReelItem(item: any): string {
   const flat = item?.seller_id;
@@ -52,6 +59,7 @@ export default function ExploreReelCard({
   surface,
   surfaceActive = true,
   forcePlayback = false,
+  viewerCountry,
   onTrap,
   className = '',
 }: {
@@ -59,6 +67,7 @@ export default function ExploreReelCard({
   surface: 'explore_discovery' | 'explore_for_you' | 'spotlight';
   surfaceActive?: boolean;
   forcePlayback?: boolean;
+  viewerCountry?: string | null;
   /** Optional: e.g. explore feed opens download sheet when listing URL cannot be derived. */
   onTrap?: (item: any) => void;
   className?: string;
@@ -195,6 +204,16 @@ export default function ExploreReelCard({
   }, []);
 
   const isService = current?.type === 'service' || !!current?.service_listing_id;
+  const logSponsoredClick = () => {
+    if (!current?.is_sponsored || !current?.campaign_id) return;
+    logAdClick({
+      campaignId: String(current.campaign_id),
+      placement: 'explore_reel',
+      targetType: isService ? 'service' : 'product',
+      targetId: String(current.service_listing_id || current.product_id || current.id),
+      sessionId: current.ad_session_id ?? null,
+    }).catch(() => {});
+  };
   const isSpotlight = surface === 'spotlight' || Boolean(current?.is_spotlight || current?.spotlight_post_id || current?.source_kind);
   const isSpotlightServiceOrder = isSpotlight && String(current?.source_kind || '').toLowerCase() === 'service_order';
   const hasCreatorIdentity = Boolean(current?.creator?.id || current?.creator?.slug || current?.creator?.display_name);
@@ -208,7 +227,13 @@ export default function ExploreReelCard({
           ''),
   );
   const isDiamond = String(posterProfile?.subscription_plan || '').toLowerCase() === 'diamond';
-  const sellerSlug = posterProfile?.slug || 'storelink';
+  const sellerSlug = String(posterProfile?.slug || current?.seller?.slug || '').trim();
+  const inAppShell = (pathname || '').startsWith('/app/');
+  const sellerProfileHref = sellerSlug
+    ? inAppShell
+      ? `/app/profile/${encodeURIComponent(sellerSlug)}`
+      : `/${encodeURIComponent(sellerSlug)}`
+    : null;
   const sellerDisplayName = String(posterProfile?.display_name || 'Store').toUpperCase();
   const sellerLogo =
     normalizeWebMediaUrl(posterProfile?.logo_url) ||
@@ -241,7 +266,8 @@ export default function ExploreReelCard({
             current?.image_urls?.[0],
         ) || ''
       : thumbSrc;
-  const videoSrc = normalizeWebMediaUrl(current?.video_url || current?.video_url_720 || current?.media_url) || '';
+  const videoSrc =
+    normalizeWebMediaUrl(resolveReelPlaybackSource(current).url) || '';
   const likesCount = isSpotlight
     ? Math.max(Number(current?.likes_count || 0), spotlightLiveCounts?.likes ?? 0)
     : spotlightLiveCounts
@@ -267,6 +293,26 @@ export default function ExploreReelCard({
   const shouldPlay =
     surfaceActive &&
     (forcePlayback || inViewport || (isSpotlight && isPoster) || viewerIsSpotlightCreator);
+  const isSponsored = !!current?.is_sponsored && !!current?.campaign_id;
+  const adImpressionLoggedRef = useRef(false);
+  useEffect(() => {
+    adImpressionLoggedRef.current = false;
+  }, [current?.campaign_id]);
+  useEffect(() => {
+    if (!isSponsored || !shouldPlay || adImpressionLoggedRef.current) return;
+    const startedAt = Date.now();
+    const timer = setTimeout(() => {
+      if (adImpressionLoggedRef.current) return;
+      adImpressionLoggedRef.current = true;
+      void logAdImpression({
+        campaignId: String(current.campaign_id),
+        placement: 'explore_reel',
+        sessionId: current.ad_session_id ?? null,
+        visibleMs: Math.max(1000, Date.now() - startedAt),
+      }).catch(() => {});
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [isSponsored, shouldPlay, current?.campaign_id, current?.ad_session_id]);
   useLayoutEffect(() => {
     wantPlaybackRef.current = shouldPlay;
   }, [shouldPlay]);
@@ -295,6 +341,14 @@ export default function ExploreReelCard({
     ? `TAGGED: @${taggedSellerProfile?.slug || 'store'}`
     : String(current?.name || current?.title || 'Item').toUpperCase();
   const showFlash = Boolean(!isService && current?.is_flash_drop && current?.flash_end_time && new Date(current.flash_end_time) > new Date());
+  const audioLabel = isSpotlight
+    ? null
+    : resolveReelAudioLabel({
+        ...current,
+        is_spotlight: false,
+        seller_display_name: posterProfile?.display_name,
+        seller_slug: posterProfile?.slug,
+      });
   const sheetItem = useMemo(() => {
     const row = current;
     const rowIsSpotlight =
@@ -691,18 +745,37 @@ export default function ExploreReelCard({
     }
   };
 
-  const handleShare = async () => {
+  const handleShare = () => {
     const spotlightShareId = String(
       current?.spotlight_post_id || current?.id || current?.post_id || current?.spotlight_id || '',
     ).trim();
     const reelShareCode = String(current?.short_code || current?.id || '').trim();
-    const href = isSpotlight ? buildSpotlightShareUrl(spotlightShareId) : buildReelShareUrl(reelShareCode);
-    try {
-      if (navigator.share) await navigator.share({ title: current?.name || 'StoreLink item', url: href });
-      else if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(href);
-    } catch {
-      // noop
-    }
+    const url = isSpotlight ? buildSpotlightShareUrl(spotlightShareId) : buildReelShareUrl(reelShareCode);
+    const title = String(current?.name || current?.title || (isSpotlight ? 'Spotlight' : 'Reel'));
+    const sellerSlug = String(posterProfile?.slug || current?.seller?.slug || '').trim();
+    openShareSheet({
+      surface: isSpotlight ? 'spotlight' : 'reel',
+      shareType: isSpotlight ? 'spotlight' : 'reel',
+      url,
+      title,
+      imageUrl: normalizeWebMediaUrl(current?.thumbnail_url || current?.media?.[0]) || undefined,
+      viewerId,
+      ownerId: creatorIdResolved || sellerIdFromReelItem(current) || null,
+      sellerSlug: sellerSlug || null,
+      menuActions: sellerSlug
+        ? [
+            {
+              id: 'visit_shop',
+              label: `Visit @${sellerSlug}`,
+              onPress: () => {
+                window.location.href = pathname?.startsWith('/app/')
+                  ? `/app/profile/${encodeURIComponent(sellerSlug)}`
+                  : `/${encodeURIComponent(sellerSlug)}`;
+              },
+            },
+          ]
+        : undefined,
+    });
   };
 
   const togglePlayback = () => {
@@ -916,6 +989,10 @@ export default function ExploreReelCard({
         ? `/app/p/${encodeURIComponent(productPathToken)}`
         : `/p/${encodeURIComponent(productPathToken)}`;
     }
+    const shopSlug = String(current?.seller?.slug || sellerSlug || '').trim();
+    if (shopSlug) {
+      return inAppShell ? `/app/profile/${encodeURIComponent(shopSlug)}` : `/${encodeURIComponent(shopSlug)}`;
+    }
     return null;
   }, [
     isSpotlight,
@@ -943,7 +1020,7 @@ export default function ExploreReelCard({
       <article ref={cardRef as any} className={`relative mx-auto mb-4 w-full max-w-md overflow-hidden rounded-3xl border border-(--border) bg-black ${className}`}>
         <div className="relative aspect-9/16 w-full h-full min-h-[560px]">
           {videoSrc ? (
-            <video
+            <AdaptiveVideo
               key={videoSrc}
               ref={videoRef}
               src={videoSrc}
@@ -1011,7 +1088,8 @@ export default function ExploreReelCard({
 
           <div className="absolute inset-x-3 bottom-3.5">
             <div className="pr-[68px]">
-              <Link href={`/app/profile/${encodeURIComponent(sellerSlug)}`} className="mb-1 inline-flex max-w-full items-center gap-2.5">
+              {sellerProfileHref ? (
+              <Link href={sellerProfileHref} className="mb-1 inline-flex max-w-full items-center gap-2.5">
                 <div className={`relative h-10 w-10 overflow-hidden rounded-[16px] border-[1.5px] ${isDiamond ? 'border-violet-500' : 'border-white'}`}>
                   <Image src={sellerLogo} alt="" fill className="object-cover" unoptimized />
                 </div>
@@ -1023,6 +1101,16 @@ export default function ExploreReelCard({
                   </p>
                 </div>
               </Link>
+              ) : (
+              <div className="mb-1 inline-flex max-w-full items-center gap-2.5">
+                <div className={`relative h-10 w-10 overflow-hidden rounded-[16px] border-[1.5px] ${isDiamond ? 'border-violet-500' : 'border-white'}`}>
+                  <Image src={sellerLogo} alt="" fill className="object-cover" unoptimized />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-[13px] font-black leading-[1.05] tracking-[0.015em] text-white">{sellerDisplayName}</p>
+                </div>
+              </div>
+              )}
 
               <p className={`${captionExpanded ? '' : 'line-clamp-2'} text-[13px] font-semibold leading-[1.28] tracking-[0.005em] text-white`}>
                 {current?.caption || current?.description || current?.name || current?.title || 'StoreLink'}
@@ -1035,6 +1123,12 @@ export default function ExploreReelCard({
                 >
                   {captionExpanded ? 'See less' : 'See more'}
                 </button>
+              ) : null}
+              {audioLabel ? (
+                <p className="mt-1.5 flex max-w-full items-center gap-1 text-[11px] font-semibold text-white/70">
+                  <Music size={12} strokeWidth={2.5} className="shrink-0" />
+                  <span className="truncate">{audioLabel}</span>
+                </p>
               ) : null}
               <div className="pointer-events-auto mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-black text-white/80">
                 {isPoster ? (
@@ -1065,10 +1159,39 @@ export default function ExploreReelCard({
                   {likesCount.toLocaleString()} {likesCount === 1 ? 'like' : 'likes'}
                 </button>
                 {isService ? <span className="text-amber-300">SERVICE</span> : null}
+                {isSponsored ? (
+                  <button
+                    type="button"
+                    className="text-amber-300"
+                    aria-label="Why this ad"
+                    onClick={() =>
+                      useWhyThisAdStore.getState().show({
+                        campaignId: String(current.campaign_id),
+                        placement: 'explore_reel',
+                        advertiserName: String(
+                          current?.seller?.display_name ||
+                            current?.seller_display_name ||
+                            current?.creator?.display_name ||
+                            'a StoreLink shop',
+                        ),
+                        countryCode:
+                          current?.seller_location_country_code ||
+                          current?.campaign_country_code ||
+                          current?.seller?.location_country_code ||
+                          viewerCountry ||
+                          null,
+                        listingLabel:
+                          current?.product_name || current?.service_title || current?.caption || current?.name || null,
+                      })
+                    }
+                  >
+                    SPONSORED
+                  </button>
+                ) : null}
               </div>
 
               {bottomGlassListingHref != null ? (
-                <Link href={bottomGlassListingHref} className={bottomGlassRowClass}>
+                <Link href={bottomGlassListingHref} onClick={logSponsoredClick} className={bottomGlassRowClass}>
                   <div className="relative h-9 w-9 overflow-hidden rounded-lg bg-(--card)/10">
                     {taggedCardThumbSrc ? <Image src={taggedCardThumbSrc} alt="" fill className="object-cover" unoptimized /> : null}
                   </div>
@@ -1101,12 +1224,20 @@ export default function ExploreReelCard({
                   type="button"
                   className={`${bottomGlassRowClass} text-left`}
                   onClick={() => {
+                    if (sellerProfileHref) {
+                      window.location.href = sellerProfileHref;
+                      return;
+                    }
+                    if (inAppShell) {
+                      window.location.href = '/app';
+                      return;
+                    }
                     if (onTrap) onTrap(current);
                     else if (typeof window !== 'undefined') {
                       window.location.href = `/download?intent=${encodeURIComponent(pathname || '/')}`;
                     }
                   }}
-                  aria-label="Open this listing in the StoreLink app"
+                  aria-label={inAppShell ? 'Open this seller on StoreLink' : 'Continue with this listing'}
                 >
                   <div className="relative h-9 w-9 overflow-hidden rounded-lg bg-(--card)/10">
                     {taggedCardThumbSrc ? <Image src={taggedCardThumbSrc} alt="" fill className="object-cover" unoptimized /> : null}
@@ -1160,6 +1291,7 @@ export default function ExploreReelCard({
                       promptAuth('Adding this item to cart');
                       return;
                     }
+                    logSponsoredClick();
                     if (isService) {
                       addService({
                         service_listing_id: String(targetItemId || current?.id || ''),
@@ -1168,6 +1300,12 @@ export default function ExploreReelCard({
                         hero_price: Number(current?.price || 0),
                       delivery_type: current?.delivery_type || null,
                       location_type: current?.location_type || null,
+                      service_category: current?.service_category || current?.category || null,
+                      preferred_fulfillment: defaultFulfillmentMode({
+                        deliveryType: current?.delivery_type,
+                        locationType: current?.location_type,
+                        serviceCategory: current?.service_category || current?.category,
+                      }),
                       service_distance_label:
                         current?.service_distance_label ||
                         (typeof current?.distance_km === 'number' ? `${Number(current.distance_km).toFixed(1)} km away` : null) ||
@@ -1193,6 +1331,7 @@ export default function ExploreReelCard({
                         image_url: thumbSrc || null,
                         seller_slug: current?.seller?.slug || null,
                         seller_name: current?.seller?.display_name || null,
+                        requires_shipping: current?.requires_shipping !== false,
                       });
                     }
                   }}

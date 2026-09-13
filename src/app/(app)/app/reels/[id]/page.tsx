@@ -69,6 +69,11 @@ export default async function AppReelDetailPage({ params }: { params: Promise<{ 
     currency_code: isService ? reel?.service?.currency_code || 'NGN' : reel?.product?.currency_code || 'NGN',
     image_urls: isService ? serviceMedia : reel?.product?.image_urls || [reel.thumbnail_url].filter(Boolean),
     video_url: reel.video_url || null,
+    video_url_720: reel.video_url_720 || null,
+    playback_hls_url: reel.playback_hls_url || null,
+    processing_status: reel.processing_status || null,
+    audio_label: reel.audio_label || null,
+    audio_source_type: reel.audio_source_type || null,
     thumbnail_url: reel.thumbnail_url || null,
     is_flash_drop: Boolean(reel?.product?.is_flash_drop),
     flash_price: reel?.product?.flash_price || null,
@@ -90,5 +95,5 @@ export default async function AppReelDetailPage({ params }: { params: Promise<{ 
     },
   };
 
-  return <WebFeedDetailShell item={normalized} surface="explore_discovery" backHref="/app/profile" />;
+  return <WebFeedDetailShell item={normalized} surface="explore_discovery" backHref="/app/explore" />;
 }

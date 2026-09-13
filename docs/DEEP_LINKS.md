@@ -29,9 +29,25 @@
    - Current mappings include:
      - `/p/:slug` and `/product/:slugOrId` -> resolve product -> `/product/[id]`
      - `/r/:shortCodeOrId` and `/reel/:shortCodeOrId` -> `/reels/feed?initialReelId=...`
-     - `/@slug`, `/s/:username`, `/u/:slugOrId`, and single-segment profile slugs -> resolve profile -> `/u/[id]`
+     - `/@slug`, `/s/:username`, `/u/:slugOrId`, `/profile/:slug`, and single-segment profile slugs -> resolve profile -> `/u/[id]`
      - `/service/:id` and `/s/:username/service/:serviceId` -> resolve service -> `/service/[id]`
+     - `/service-checkout/:token` and `/app/service-booking/:token` (with query prefill) -> `/service/[id]?openCheckout=1&fromCart=1&...` -> auto `/service-checkout/[id]`
+     - `/sp/:id` and `/spotlight/:id` -> `/spotlight/[id]`
+     - `/story-viewer/:id` -> `/story-viewer/[id]`
+     - `/curation/:id` and `/curation/service/:id` -> with `?curatorId=` preserved
+     - `/?ref=CODE` -> `/auth/signup?ref=CODE` (invite referral)
+     - `/download?intent=...` -> recursive resolve of intent
      - `storelink://...` custom scheme paths are normalized to the same route mapping.
+     - Generic passthrough preserves query string for unmatched routes.
+
+4. **Pending deep link restore (implemented)**
+   - When a logged-out user opens a share URL, the path is saved to `AsyncStorage` before redirecting to `/auth/login`.
+   - After login + verification + onboarding gates pass, the pending path is consumed and the user lands on the shared content.
+   - Store: `store-link-mobile/src/lib/pendingDeepLink.ts`
+
+5. **Region block on deep links (implemented)**
+   - Cross-country blocking on product, reel, profile, and service detail screens.
+   - Uses `useCrossCountryBlocked` hook with `app_deep_link` surface.
 
 With this in place, app-side route resolution is no longer the blocker.
 

@@ -7,6 +7,7 @@ import HomeCommentsSheet from './HomeCommentsSheet';
 import HomeLikesSheet from './HomeLikesSheet';
 import { enqueueRankingEventWeb } from '@/lib/rankingEventsWeb';
 import { buildProductShareUrl, buildServiceShareUrl } from '@/lib/sharingContract';
+import { openShareSheet } from '@/lib/openShareSheet';
 
 export default function HomeFeedCard({
   item,
@@ -141,23 +142,20 @@ export default function HomeFeedCard({
       setPendingWishlist(false);
     }
   };
-  const handleShare = async (target: any) => {
+  const handleShare = (target: any) => {
     const isService = target?.type === 'service' || target?.service_listing_id;
     const serviceToken = String(target?.service_slug || target?.service?.slug || target?.service_listing_id || target?.id || '').trim();
     const sellerSlug = String(target?.seller?.slug || target?.seller_slug || '').trim();
     const productToken = String(target?.slug || target?.product?.slug || target?.product_id || target?.id || '').trim();
-    const href = isService
-      ? buildServiceShareUrl(serviceToken, sellerSlug || null)
-      : buildProductShareUrl(productToken);
-    try {
-      if (navigator.share) {
-        await navigator.share({ title: target?.name || 'StoreLink item', url: href });
-      } else if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(href);
-      }
-    } catch {
-      // user cancelled share
-    }
+    openShareSheet({
+      surface: isService ? 'service' : 'product',
+      shareType: isService ? 'service' : 'product',
+      url: isService
+        ? buildServiceShareUrl(serviceToken, sellerSlug || null)
+        : buildProductShareUrl(productToken),
+      title: String(target?.name || target?.title || 'StoreLink item'),
+      sellerSlug: sellerSlug || null,
+    });
   };
 
   return (

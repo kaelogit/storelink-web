@@ -3,10 +3,13 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { AlertCircle, CheckCircle, Clock, MapPin, Sparkles, User } from 'lucide-react';
+import { AlertCircle, Clock, MapPin, Sparkles, User } from 'lucide-react';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { getFollowButtonLabel } from '@/lib/followButtonLabel';
 import { getSellerPlanState, showDiamondBadge as computeDiamondBadge } from '@/lib/sellerStatus';
+import WebProfileBadgesRow from '@/components/profile-web/WebProfileBadgesRow';
+import type { ProfileBadgeKey } from '@/lib/profileBadges';
+import { formatServiceCategoryLabel } from '@/constants/ServiceCategories';
 
 /** Mirrors mobile `ProfileHeader` `formatName`. */
 export function formatProfileDisplayName(name?: string | null) {
@@ -31,6 +34,8 @@ export type WebProfileHeaderProps = {
   onAvatarPress?: () => void;
   /** Self: countdown / upgrade row links here (default `/app/subscription`). */
   subscriptionHref?: string;
+  onBadgePress?: (key: ProfileBadgeKey) => void;
+  onAboutBadgesPress?: () => void;
 };
 
 const BIO_THRESHOLD = 90;
@@ -59,6 +64,8 @@ export default function WebProfileHeader({
   isDiamond: isDiamondProp,
   onAvatarPress,
   subscriptionHref = '/app/subscription',
+  onBadgePress,
+  onAboutBadgesPress,
 }: WebProfileHeaderProps) {
   const [avatarFailed, setAvatarFailed] = useState(false);
 
@@ -115,10 +122,6 @@ export default function WebProfileHeader({
     normalizeWebMediaUrl(profileData?.logo_url) ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData?.display_name || 'User')}&background=334155&color=fff`;
 
-  const verified =
-    profileData?.verification_status === 'verified' ||
-    (profileData?.is_verified === true && profileData?.verification_status !== 'unverified');
-
   return (
     <div className="flex w-full flex-col items-center px-6 pt-2 pb-4">
       <div className="mb-4 mt-2">
@@ -158,10 +161,16 @@ export default function WebProfileHeader({
           <h1 className="text-center text-xl font-black tracking-tight text-(--foreground)">
             {formatProfileDisplayName(profileData?.full_name || profileData?.display_name)}
           </h1>
-          {isSeller && verified ? (
-            <CheckCircle size={18} className="shrink-0 text-emerald-500" fill="rgba(16, 185, 129, 0.12)" aria-hidden />
-          ) : null}
         </div>
+
+        {onBadgePress ? (
+          <WebProfileBadgesRow
+            profile={profileData}
+            isSelf={isSelf}
+            onBadgePress={onBadgePress}
+            onAboutPress={onAboutBadgesPress}
+          />
+        ) : null}
 
         {(profileData?.category || profileData?.service_category || profileData?.location_city || profileData?.location_state) && (
           <div className="mb-4 flex flex-wrap items-center justify-center gap-2 opacity-80">
@@ -171,7 +180,8 @@ export default function WebProfileHeader({
                 isSeller && (sellerType === 'product' || sellerType === 'both') ? profileData?.category : null;
               const serviceCategory =
                 isSeller && (sellerType === 'service' || sellerType === 'both') ? profileData?.service_category : null;
-              const formatServiceCategory = (v?: string | null) => (v ?? '').replace(/_/g, ' ').trim().toUpperCase();
+              const formatServiceCategory = (v?: string | null) =>
+                formatServiceCategoryLabel(v).toUpperCase();
 
               if (sellerType === 'both' && productCategory && serviceCategory) {
                 return (

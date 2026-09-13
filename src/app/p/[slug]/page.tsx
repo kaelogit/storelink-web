@@ -30,7 +30,7 @@ async function getProductData(rawSlug: string) {
   // B. Fetch Seller
   const { data: seller, error: sellerError } = await supabase
     .from('profiles')
-    .select('id, display_name, slug, logo_url, is_verified, subscription_plan')
+    .select('id, display_name, slug, logo_url, is_verified, subscription_plan, location_city, location_state, location_country, category')
     .eq('id', product.seller_id)
     .single();
 

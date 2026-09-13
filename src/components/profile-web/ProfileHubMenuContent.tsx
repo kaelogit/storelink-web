@@ -5,10 +5,12 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import {
   Bell,
+  Building2,
   ChevronRight,
   Coins,
   Heart,
   Landmark,
+  BarChart3,
   LayoutDashboard,
   LifeBuoy,
   Package,
@@ -16,17 +18,23 @@ import {
   ShieldCheck,
   ShoppingBag,
   Sparkles,
+  Megaphone,
   UserPlus,
   Wand2,
   X,
 } from 'lucide-react';
 import { countSellerManageOrdersExcludingServicePlaceholders } from '@/lib/sellerProductOrderBadgeCount';
+import { businessVerificationHref, isNigeriaSeller } from '@/lib/profileBadges';
 import { profileHubPaths, withDrawerParam } from './profileHubPaths';
 
 export type ProfileHubMenuProfile = {
   id: string;
   is_seller?: boolean | null;
   seller_type?: string | null;
+  location_country_code?: string | null;
+  verification_status?: string | null;
+  kyc_status?: string | null;
+  business_verification_status?: string | null;
 };
 
 type ProfileHubMenuContentProps = {
@@ -203,11 +211,25 @@ export default function ProfileHubMenuContent({
               icon={<LayoutDashboard size={20} className="text-emerald-600" strokeWidth={2.2} />}
             />
             <MenuRow
+              href={profileHubPaths.creatorAnalytics}
+              label="Creator analytics"
+              sub="Views, watch time & audience"
+              onNavigate={onNavigate}
+              icon={<BarChart3 size={20} className="text-emerald-600" strokeWidth={2.2} />}
+            />
+            <MenuRow
               href={profileHubPaths.inventory}
               label="My inventory"
               sub={inventorySub}
               onNavigate={onNavigate}
               icon={<Package size={20} className="text-emerald-600" strokeWidth={2.2} />}
+            />
+            <MenuRow
+              href={profileHubPaths.promotions}
+              label="Promotions"
+              sub="Boost listings & track spend"
+              onNavigate={onNavigate}
+              icon={<Megaphone size={20} className="text-emerald-600" strokeWidth={2.2} />}
             />
             {sellsProducts ? (
               <MenuRow
@@ -245,6 +267,15 @@ export default function ProfileHubMenuContent({
               onNavigate={onNavigate}
               icon={<ShieldCheck size={20} className="text-emerald-600" strokeWidth={2.2} />}
             />
+            {isNigeriaSeller(profile) ? (
+              <MenuRow
+                href={businessVerificationHref(profile)}
+                label="Business verification"
+                sub="Nigeria CAC — RC number & certificate"
+                onNavigate={onNavigate}
+                icon={<Building2 size={20} className="text-emerald-600" strokeWidth={2.2} />}
+              />
+            ) : null}
             <MenuRow
               href={profileHubPaths.membership}
               label="Membership"

@@ -4,11 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Clapperboard, Heart, MessageCircle, Play, Share2, Smartphone, Volume2, VolumeX } from 'lucide-react';
+import { Clapperboard, Heart, MessageCircle, Play, Share2, Volume2, VolumeX } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import StoreLinkLogo from '@/components/ui/StoreLinkLogo';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { createBrowserClient } from '@/lib/supabase';
 import { ensureAuthAction } from '@/lib/guestActionPrompt';
+import { buildSpotlightShareUrl } from '@/lib/sharingContract';
+import { openShareSheet } from '@/lib/openShareSheet';
 
 type SpotlightDetailProps = {
   post: Record<string, any>;
@@ -67,15 +70,16 @@ export default function WebSpotlightDetail({ post, backHref }: SpotlightDetailPr
     void syncEngagement();
   }, [syncEngagement]);
 
-  const handleShare = async () => {
-    const url = `${window.location.origin}/sp/${encodeURIComponent(postId)}`;
-    const title = creator?.display_name ? `${creator.display_name} on StoreLink Spotlight` : 'StoreLink Spotlight';
-    try {
-      if (navigator.share) await navigator.share({ title, url });
-      else if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
-    } catch {
-      // ignore
-    }
+  const handleShare = () => {
+    openShareSheet({
+      surface: 'spotlight',
+      shareType: 'spotlight',
+      url: buildSpotlightShareUrl(postId),
+      title: creator?.display_name ? `${creator.display_name} on StoreLink Spotlight` : 'StoreLink Spotlight',
+      viewerId,
+      ownerId: creator?.id || null,
+      sellerSlug: creator?.slug || null,
+    });
   };
 
   const handleToggleLike = async () => {
@@ -149,9 +153,7 @@ export default function WebSpotlightDetail({ post, backHref }: SpotlightDetailPr
         <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-black/20 via-transparent to-black/80" />
 
         <div className="absolute top-6 right-0 left-0 z-20 flex items-center justify-between px-4 pointer-events-auto">
-          <Link href={backHref} className="text-lg font-black tracking-tighter text-white">
-            StoreLink.
-          </Link>
+          <StoreLinkLogo variant="overlay" href={backHref} />
           <div className="flex items-center gap-2">
             {videoSrc ? (
               <button
@@ -170,13 +172,12 @@ export default function WebSpotlightDetail({ post, backHref }: SpotlightDetailPr
                 {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
               </button>
             ) : null}
-            <a
-              href={`storelink://sp/${post.id}`}
+            <Link
+              href={`/app/spotlight/${encodeURIComponent(String(post.id))}`}
               className="flex items-center gap-1.5 rounded-full bg-(--emerald)/90 px-3 py-1.5 text-[10px] font-bold tracking-wide text-white uppercase backdrop-blur-md hover:bg-(--emerald)"
             >
-              <Smartphone size={12} />
-              Open in app
-            </a>
+              Continue on web
+            </Link>
             <Button
               href={`/download?intent=${encodeURIComponent(`/sp/${post.id}`)}`}
               size="sm"

@@ -6,6 +6,8 @@ import { createBrowserClient } from '@/lib/supabase';
 import Image from 'next/image';
 import Link from 'next/link';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
+import { resolveReelPlaybackSource } from '@/lib/resolveReelPlaybackSource';
+import AdaptiveVideo from '@/components/media/AdaptiveVideo';
 import { 
   Heart, MessageCircle, Share2, ShoppingBag,
   TrendingUp, Play, Zap, Gem, MapPin, Wrench
@@ -180,6 +182,10 @@ export default function TheFeed() {
                    : (item.product?.image_urls?.[0] || item.seller?.logo_url)
                ) || null;
                const sellerLogoSource = normalizeWebMediaUrl(item.seller?.logo_url) || null;
+               const feedVideoSrc =
+                 normalizeWebMediaUrl(resolveReelPlaybackSource(item).url) ||
+                 normalizeWebMediaUrl(item.video_url) ||
+                 '';
 
                return (
                   <div key={`${item.id}-${i}`} className="pr-4 md:pr-8 shrink-0">
@@ -195,7 +201,8 @@ export default function TheFeed() {
 
                       {/* 📹 VIDEO PLAYER */}
                       <div className="w-full h-full relative bg-slate-900">
-                          <video
+                          <AdaptiveVideo
+                            src={feedVideoSrc}
                             autoPlay
                             loop
                             muted
@@ -203,9 +210,7 @@ export default function TheFeed() {
                             preload="metadata"
                             poster={thumbSource || undefined}
                             className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-500"
-                          >
-                            <source src={item.video_url} type="video/mp4" />
-                          </video>
+                          />
                           <div className="absolute inset-0 bg-linear-to-t from-black via-black/20 to-transparent pointer-events-none" />
                           
                           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 md:w-16 h-12 md:h-16 bg-black/40 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none border border-white/20">

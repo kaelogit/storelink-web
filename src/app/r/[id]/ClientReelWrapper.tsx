@@ -4,11 +4,16 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Heart, MessageCircle, Play, Share2, Smartphone, Volume2, VolumeX } from 'lucide-react';
+import { Heart, MessageCircle, Play, Share2, Volume2, VolumeX } from 'lucide-react';
 import Button from '../../../components/ui/Button';
+import StoreLinkLogo from '@/components/ui/StoreLinkLogo';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
+import { resolveReelPlaybackSource } from '@/lib/resolveReelPlaybackSource';
 import { createBrowserClient } from '@/lib/supabase';
 import { ensureAuthAction } from '@/lib/guestActionPrompt';
+import { buildReelShareUrl } from '@/lib/sharingContract';
+import { openShareSheet } from '@/lib/openShareSheet';
+import AdaptiveVideo from '@/components/media/AdaptiveVideo';
 
 export default function ClientReelWrapper({ reel }: any) {
   const pathname = usePathname();
@@ -24,10 +29,10 @@ export default function ClientReelWrapper({ reel }: any) {
 
   const thumbSrc = normalizeWebMediaUrl(reel.thumbnail_url);
   const sellerAvatarSrc = normalizeWebMediaUrl(reel.seller?.logo_url);
-  const videoSrc = useMemo(
-    () => normalizeWebMediaUrl(reel.video_url || reel.video_url_720 || reel.media_url),
-    [reel.video_url, reel.video_url_720, reel.media_url],
-  );
+  const videoSrc = useMemo(() => {
+    const resolved = resolveReelPlaybackSource(reel);
+    return normalizeWebMediaUrl(resolved.url);
+  }, [reel]);
 
   const productId = reel?.product_id ? String(reel.product_id).trim() : '';
   const serviceListingId = reel?.service_listing_id ? String(reel.service_listing_id).trim() : '';
@@ -106,15 +111,29 @@ export default function ClientReelWrapper({ reel }: any) {
   const onVideoPlay = () => setIsPlaying(true);
   const onVideoPause = () => setIsPlaying(false);
 
-  const handleShare = async () => {
-    const url = `${window.location.origin}/r/${encodeURIComponent(String(reel.short_code ?? reel.id ?? '').trim())}`;
-    const title = reel?.seller?.display_name ? `Watch ${reel.seller.display_name} on StoreLink` : 'Watch on StoreLink';
-    try {
-      if (navigator.share) await navigator.share({ title, url });
-      else if (navigator.clipboard?.writeText) await navigator.clipboard.writeText(url);
-    } catch {
-      // cancelled share or clipboard denied
-    }
+  const handleShare = () => {
+    const code = String(reel.short_code ?? reel.id ?? '').trim();
+    openShareSheet({
+      surface: 'reel',
+      shareType: 'reel',
+      url: buildReelShareUrl(code),
+      title: reel?.seller?.display_name ? `Watch ${reel.seller.display_name} on StoreLink` : 'Watch on StoreLink',
+      imageUrl: thumbSrc || undefined,
+      viewerId,
+      ownerId: reel?.seller_id || reel?.seller?.id || null,
+      sellerSlug: reel?.seller?.slug || null,
+      menuActions: reel?.seller?.slug
+        ? [
+            {
+              id: 'visit_shop',
+              label: `Visit @${reel.seller.slug}`,
+              onPress: () => {
+                window.location.href = `/${encodeURIComponent(String(reel.seller.slug))}`;
+              },
+            },
+          ]
+        : undefined,
+    });
   };
 
   const handleToggleLike = async () => {
@@ -176,18 +195,17 @@ export default function ClientReelWrapper({ reel }: any) {
 
       <div className="relative h-[85vh] w-full max-w-[400px] overflow-hidden rounded-none border border-(--border) bg-(--charcoal) shadow-2xl md:rounded-3xl">
         {videoSrc ? (
-          <video
+          <AdaptiveVideo
             ref={videoRef}
             className="absolute inset-0 h-full w-full object-contain"
+            src={videoSrc || ''}
             poster={thumbSrc || undefined}
             playsInline
             muted={isMuted}
             onPlay={onVideoPlay}
             onPause={onVideoPause}
             onClick={() => togglePlayback()}
-          >
-            <source src={videoSrc} type="video/mp4" />
-          </video>
+          />
         ) : thumbSrc ? (
           <Image src={thumbSrc} alt="Reel preview" fill className="object-cover opacity-80" unoptimized={true} />
         ) : (
@@ -197,9 +215,7 @@ export default function ClientReelWrapper({ reel }: any) {
         <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-black/20 via-transparent to-black/80" />
 
         <div className="absolute top-6 right-0 left-0 z-20 flex items-center justify-between px-4">
-          <Link href="/" className="text-lg font-black tracking-tighter text-white">
-            StoreLink.
-          </Link>
+          <StoreLinkLogo variant="overlay" href="/" />
           <div className="flex items-center gap-2">
             {videoSrc ? (
               <button
@@ -218,13 +234,12 @@ export default function ClientReelWrapper({ reel }: any) {
                 {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
               </button>
             ) : null}
-            <a
-              href={`storelink://r/${reel.id}`}
+            <Link
+              href={`/app/reels/${encodeURIComponent(String(reel.short_code ?? reel.id))}`}
               className="flex items-center gap-1.5 rounded-full bg-(--emerald)/90 px-3 py-1.5 text-[10px] font-bold tracking-wide text-white uppercase backdrop-blur-md hover:bg-(--emerald)"
             >
-              <Smartphone size={12} />
-              Open in app
-            </a>
+              Continue on web
+            </Link>
             <Button
               href={`/download?intent=${encodeURIComponent(`/r/${reel.short_code ?? reel.id}`)}`}
               size="sm"
@@ -260,7 +275,7 @@ export default function ClientReelWrapper({ reel }: any) {
 
         {!videoSrc ? (
           <p className="absolute bottom-28 left-4 right-4 z-20 text-center text-xs text-white/70 pointer-events-none">
-            Video preview isn&apos;t available in the browser for this clip. Use Open in app or download StoreLink to watch.
+            Video preview isn&apos;t available in this browser. Continue on the web shop or download the app to watch.
           </p>
         ) : null}
 

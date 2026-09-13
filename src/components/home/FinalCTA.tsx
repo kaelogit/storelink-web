@@ -2,6 +2,8 @@
 
 import { motion } from 'framer-motion';
 import Button from '@/components/ui/Button';
+import { storeCtaHref } from '@/lib/storeUrls';
+import { useStoreListingUrls } from '@/lib/useStoreUrls';
 
 // Custom SVGs for Authenticity
 const AppleLogo = () => (
@@ -17,6 +19,10 @@ const PlayStoreLogo = () => (
 );
 
 export default function FinalCTA() {
+  const stores = useStoreListingUrls();
+  const iosHref = storeCtaHref(stores.ios);
+  const androidHref = storeCtaHref(stores.android);
+
   return (
     <section className="section-dark py-40 md:py-56 flex items-center justify-center border-t border-white/5" aria-label="Final call to action">
       <div className="section-spotlight-emerald" aria-hidden />
@@ -43,9 +49,10 @@ export default function FinalCTA() {
 
             <div className="flex flex-col sm:flex-row items-center gap-5 justify-center">
               <Button
-                href="/download"
+                href={iosHref}
                 size="lg"
                 className="w-full sm:w-auto justify-center gap-3 bg-(--card)! text-black! hover:bg-emerald-50! hover:scale-105 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]"
+                {...(stores.ios ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
               >
                 <AppleLogo />
                 <div className="text-left leading-none">
@@ -54,10 +61,11 @@ export default function FinalCTA() {
                 </div>
               </Button>
               <Button
-                href="/download"
+                href={androidHref}
                 variant="outline"
                 size="lg"
                 className="w-full sm:w-auto justify-center gap-3 bg-(--card)/5! border-white/10! text-white! hover:bg-(--card)/10! hover:border-white/20! hover:scale-105 backdrop-blur-md"
+                {...(stores.android ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
               >
                 <PlayStoreLogo />
                 <div className="text-left leading-none">

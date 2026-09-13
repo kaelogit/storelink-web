@@ -1,12 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ChevronLeft, Flag, Gem, Lock, MoreVertical, Share2, Slash, Store } from 'lucide-react';
-import ShareProfileModal from '../../components/shared/ShareProfileModal';
+import { buildProfileShareUrl } from '@/lib/sharingContract';
+import { openShareSheet } from '@/lib/openShareSheet';
 import Button from '../../components/ui/Button';
 import { showDiamondBadge } from '@/lib/sellerStatus';
 import WebProfileHeader from '@/components/profile-web/WebProfileHeader';
+import WebBadgeExplainerModal, { type WebBadgeExplainerRef } from '@/components/profile-web/WebBadgeExplainerModal';
+import type { ProfileBadgeKey } from '@/lib/profileBadges';
 import WebProfileStats from '@/components/profile-web/WebProfileStats';
 import WebProfileTabBar, { type WebPublicProfileTab } from '@/components/profile-web/WebProfileTabBar';
 import WebProfileMasonryGrid from '@/components/profile-web/WebProfileMasonryGrid';
@@ -14,15 +18,25 @@ import { createBrowserClient } from '@/lib/supabase';
 import { fetchPublicCollectionFromManifest } from '@/lib/fetchPublicCollectionFromManifest';
 import { fetchProfileSpotlightPosts } from '@/lib/fetchProfileSpotlight';
 import { ensureAuthAction } from '@/lib/guestActionPrompt';
+import { isFeatureEnabled } from '@/lib/featureFlags';
+import WebProfileFollowSuggestionsRail from '@/components/profile-web/WebProfileFollowSuggestionsRail';
+import {
+  dismissFollowRail,
+  fetchBuyerFollowSuggestions,
+  fetchFollowSuggestions,
+  isFollowRailDismissed,
+  type FollowSuggestionKind,
+  type FollowSuggestionRow,
+} from '@/lib/followSuggestions';
 
 export default function ClientProfileWrapper({ profile, products, services = [], reels = [] }: any) {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = useMemo(() => createBrowserClient(), []);
   const [activeTab, setActiveTab] = useState<WebPublicProfileTab>('collection');
   const defaultTabProfileIdRef = useRef<string | null>(null);
 
-  const [shareOpen, setShareOpen] = useState(false);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [bioExpanded, setBioExpanded] = useState(false);
 
@@ -35,6 +49,13 @@ export default function ClientProfileWrapper({ profile, products, services = [],
   const [followsMe, setFollowsMe] = useState(false);
   const [followBusy, setFollowBusy] = useState(false);
   const [messageBusy, setMessageBusy] = useState(false);
+  const [suggestions, setSuggestions] = useState<FollowSuggestionRow[]>([]);
+  const [suggestionKind, setSuggestionKind] = useState<FollowSuggestionKind>('store');
+  const [suggestionFollowingIds, setSuggestionFollowingIds] = useState<Set<string>>(new Set());
+  const [suggestionFollowerIds, setSuggestionFollowerIds] = useState<Set<string>>(new Set());
+  const [railDismissed, setRailDismissed] = useState(true);
+  const [suggestionBusyId, setSuggestionBusyId] = useState<string | null>(null);
+  const badgeSheetRef = useRef<WebBadgeExplainerRef>(null);
   const isAppMode = (pathname || '').startsWith('/app/');
 
   const isDiamond = showDiamondBadge(profile);
@@ -54,15 +75,25 @@ export default function ClientProfileWrapper({ profile, products, services = [],
     [showSellerTabs, services, profile?.slug],
   );
   const displayReels = isSeller ? reels : [];
+  const profileExploreHref = isAppMode ? '/app/explore' : '/';
+  const profileReelHrefBase = isAppMode ? '/app/reels' : '/r';
+  const profileSpotlightHrefBase = isAppMode ? '/app/spotlight' : '/sp';
 
   useEffect(() => {
     const currentProfileId = profile?.id ? String(profile.id) : null;
     if (!currentProfileId) return;
     if (defaultTabProfileIdRef.current === currentProfileId) return;
     defaultTabProfileIdRef.current = currentProfileId;
-    if (isSeller) setActiveTab('drops');
-    else setActiveTab('collection');
-  }, [profile?.id, isSeller]);
+    if (isSeller) {
+      const tabParam = String(searchParams.get('tab') || '').toLowerCase();
+      if (tabParam === 'services' || tabParam === 'drops' || tabParam === 'reels' || tabParam === 'spotlight') {
+        setActiveTab(tabParam as WebPublicProfileTab);
+      } else {
+        const sellerType = String(profile?.seller_type || 'product').toLowerCase();
+        setActiveTab(sellerType === 'service' ? 'services' : 'drops');
+      }
+    } else setActiveTab('collection');
+  }, [profile?.id, isSeller, profile?.seller_type, searchParams]);
 
   useEffect(() => {
     if (!showSellerTabs) {
@@ -105,14 +136,6 @@ export default function ClientProfileWrapper({ profile, products, services = [],
     };
   }, [supabase, profile?.id, isSeller, isWardrobePrivate]);
 
-  const promptAuth = (action: string) => {
-    return ensureAuthAction({
-      viewerId,
-      nextPath: pathname || `/${profile.slug}`,
-      action,
-    });
-  };
-
   useEffect(() => {
     let active = true;
     void (async () => {
@@ -126,6 +149,37 @@ export default function ClientProfileWrapper({ profile, products, services = [],
   }, [supabase]);
 
   const isSelf = Boolean(viewerId && profile?.id != null && String(viewerId) === String(profile.id));
+
+  useEffect(() => {
+    const contextId = profile?.id ? String(profile.id) : '';
+    if (!viewerId || !contextId || isSelf) {
+      setRailDismissed(true);
+      setSuggestions([]);
+      return;
+    }
+    setRailDismissed(isFollowRailDismissed(contextId));
+  }, [viewerId, profile?.id, isSelf]);
+
+  const promptAuth = (action: string) => {
+    return ensureAuthAction({
+      viewerId,
+      nextPath: pathname || `/${profile.slug}`,
+      action,
+    });
+  };
+
+  const openProfileShare = () => {
+    openShareSheet({
+      surface: 'profile',
+      shareType: 'profile',
+      url: buildProfileShareUrl(String(profile.slug || '')),
+      title: String(profile.display_name || profile.slug || 'Profile'),
+      imageUrl: profile.logo_url || undefined,
+      viewerId,
+      ownerId: profile?.id || null,
+      sellerSlug: profile?.slug || null,
+    });
+  };
 
   useEffect(() => {
     if (!viewerId || !profile?.id || isSelf) {
@@ -157,6 +211,105 @@ export default function ClientProfileWrapper({ profile, products, services = [],
       cancelled = true;
     };
   }, [supabase, viewerId, profile?.id, isSelf]);
+
+  useEffect(() => {
+    const contextId = profile?.id ? String(profile.id) : '';
+    if (!viewerId || !contextId || isSelf || !isFollowing || railDismissed) {
+      setSuggestions([]);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      try {
+        const { data: viewer } = await supabase
+          .from('profiles')
+          .select('buyer_interested_categories, location_country')
+          .eq('id', viewerId)
+          .maybeSingle();
+        if (cancelled) return;
+
+        const categories = Array.isArray(viewer?.buyer_interested_categories)
+          ? (viewer.buyer_interested_categories as string[])
+          : [];
+        const locationCountry = (viewer?.location_country as string | null) ?? null;
+        const buyerFollowOn = !isSeller ? await isFeatureEnabled('buyer_follow_enabled', true) : false;
+        if (cancelled) return;
+
+        const kind: FollowSuggestionKind = !isSeller && buyerFollowOn ? 'buyer' : 'store';
+        setSuggestionKind(kind);
+
+        const rows =
+          kind === 'buyer'
+            ? await fetchBuyerFollowSuggestions(supabase, {
+                userId: viewerId,
+                limit: 12,
+                locationCountry,
+                contextProfileId: contextId,
+              })
+            : await fetchFollowSuggestions(supabase, {
+                userId: viewerId,
+                categories,
+                limit: 12,
+                locationCountry,
+                contextProfileId: contextId,
+              });
+        if (cancelled) return;
+
+        const filtered = rows.filter((row) => row.id !== contextId && row.id !== viewerId);
+        setSuggestions(filtered);
+
+        const ids = filtered.map((row) => row.id);
+        if (!ids.length) {
+          setSuggestionFollowingIds(new Set());
+          setSuggestionFollowerIds(new Set());
+          return;
+        }
+        const [{ data: followingRows }, { data: followerRows }] = await Promise.all([
+          supabase.from('follows').select('following_id').eq('follower_id', viewerId).in('following_id', ids),
+          supabase.from('follows').select('follower_id').eq('following_id', viewerId).in('follower_id', ids),
+        ]);
+        if (cancelled) return;
+        setSuggestionFollowingIds(new Set((followingRows || []).map((row: { following_id: string }) => String(row.following_id))));
+        setSuggestionFollowerIds(new Set((followerRows || []).map((row: { follower_id: string }) => String(row.follower_id))));
+      } catch {
+        if (!cancelled) setSuggestions([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [supabase, viewerId, profile?.id, isSelf, isFollowing, isSeller, railDismissed]);
+
+  const handleDismissFollowRail = () => {
+    const contextId = profile?.id ? String(profile.id) : '';
+    if (contextId) dismissFollowRail(contextId);
+    setRailDismissed(true);
+    setSuggestions([]);
+  };
+
+  const handleSuggestionFollowToggle = async (row: FollowSuggestionRow) => {
+    if (!viewerId) return;
+    const previous = new Set(suggestionFollowingIds);
+    const currently = previous.has(row.id);
+    const next = new Set(previous);
+    if (currently) next.delete(row.id);
+    else next.add(row.id);
+    setSuggestionFollowingIds(next);
+    setSuggestionBusyId(row.id);
+    try {
+      if (currently) {
+        await supabase.from('follows').delete().eq('follower_id', viewerId).eq('following_id', row.id);
+      } else {
+        await supabase
+          .from('follows')
+          .upsert({ follower_id: viewerId, following_id: row.id }, { ignoreDuplicates: true });
+      }
+    } catch {
+      setSuggestionFollowingIds(previous);
+    } finally {
+      setSuggestionBusyId(null);
+    }
+  };
 
   const handleFollowToggle = async () => {
     if (!promptAuth('Following this profile')) return;
@@ -277,7 +430,11 @@ export default function ClientProfileWrapper({ profile, products, services = [],
           <div className="sticky top-0 z-40 flex items-center justify-center border-b border-(--border) bg-(--card)/95 px-4 py-4 backdrop-blur-md lg:hidden">
             <div className="flex items-center gap-1.5 rounded-full border border-(--border) bg-(--surface) px-5 py-2 shadow-sm">
               <span className="text-[10px] font-black tracking-[1.5px] text-(--foreground) uppercase">@{profile.slug}</span>
-              {isDiamond ? <Gem size={10} className="text-violet-500" fill="currentColor" /> : null}
+              {isDiamond ? (
+                <button type="button" onClick={() => badgeSheetRef.current?.open('diamond')} aria-label="About Diamond badge">
+                  <Gem size={10} className="text-violet-500" fill="currentColor" />
+                </button>
+              ) : null}
             </div>
           </div>
         ) : null}
@@ -304,14 +461,16 @@ export default function ClientProfileWrapper({ profile, products, services = [],
                   }
             }
             onEdit={isSelf ? () => router.push('/app/profile') : undefined}
-            onSharePress={() => setShareOpen(true)}
+            onSharePress={openProfileShare}
             bioExpanded={bioExpanded}
             onBioExpandedChange={setBioExpanded}
             isDiamond={isDiamond}
+            onBadgePress={(key: ProfileBadgeKey) => badgeSheetRef.current?.open(key)}
+            onAboutBadgesPress={() => badgeSheetRef.current?.open()}
           />
           <button
             type="button"
-            onClick={() => setShareOpen(true)}
+            onClick={openProfileShare}
             className="mb-4 text-xs font-black tracking-wide text-emerald-600 underline-offset-2 hover:underline"
           >
             Share this profile
@@ -332,6 +491,20 @@ export default function ClientProfileWrapper({ profile, products, services = [],
           </div>
         </div>
 
+        {!railDismissed && isFollowing && !isSelf && suggestions.length > 0 ? (
+          <WebProfileFollowSuggestionsRail
+            suggestions={suggestions}
+            variant={suggestionKind}
+            followingIds={suggestionFollowingIds}
+            followerIds={suggestionFollowerIds}
+            busyId={suggestionBusyId}
+            onDismiss={handleDismissFollowRail}
+            onToggleFollow={(row) => {
+              void handleSuggestionFollowToggle(row);
+            }}
+          />
+        ) : null}
+
         <WebProfileTabBar
           variant="public"
           activeTab={activeTab}
@@ -350,7 +523,9 @@ export default function ClientProfileWrapper({ profile, products, services = [],
                 loyaltyEnabled={!!profile.loyalty_enabled}
                 loyaltyPercentage={Number(profile.loyalty_percentage ?? 0)}
                 numColumns={2}
-                exploreHref="/"
+                exploreHref={profileExploreHref}
+                reelHrefBase={profileReelHrefBase}
+                spotlightHrefBase={profileSpotlightHrefBase}
               />
             ) : (
               <div className="py-20 text-center text-[10px] font-bold uppercase tracking-widest text-(--muted)">
@@ -368,16 +543,13 @@ export default function ClientProfileWrapper({ profile, products, services = [],
                 loyaltyEnabled={!!profile.loyalty_enabled}
                 loyaltyPercentage={Number(profile.loyalty_percentage ?? 0)}
                 numColumns={2}
-                exploreHref="/"
+                exploreHref={profileExploreHref}
+                reelHrefBase={profileReelHrefBase}
+                spotlightHrefBase={profileSpotlightHrefBase}
               />
             ) : (
-              <div className="px-4 py-3">
-                <p className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-(--muted)">
-                  Finish booking in the StoreLink app to secure your service with escrow.
-                </p>
-                <div className="py-12 text-center text-[10px] font-bold uppercase tracking-widest text-(--muted)">
-                  {emptyLabel('services')}
-                </div>
+              <div className="py-20 text-center text-[10px] font-bold uppercase tracking-widest text-(--muted)">
+                {emptyLabel('services')}
               </div>
             )
           ) : null}
@@ -389,7 +561,9 @@ export default function ClientProfileWrapper({ profile, products, services = [],
                 activeTab="reels"
                 sellerId={String(profile.id)}
                 numColumns={3}
-                exploreHref="/"
+                exploreHref={profileExploreHref}
+                reelHrefBase={profileReelHrefBase}
+                spotlightHrefBase={profileSpotlightHrefBase}
               />
             ) : (
               <div className="py-20 text-center text-[10px] font-bold uppercase tracking-widest text-(--muted)">
@@ -417,7 +591,9 @@ export default function ClientProfileWrapper({ profile, products, services = [],
                 activeTab="collection"
                 sellerId={String(profile.id)}
                 numColumns={2}
-                exploreHref="/"
+                exploreHref={profileExploreHref}
+                reelHrefBase={profileReelHrefBase}
+                spotlightHrefBase={profileSpotlightHrefBase}
               />
             ) : (
               <div className="py-20 text-center text-[10px] font-bold uppercase tracking-widest text-(--muted)">
@@ -437,7 +613,9 @@ export default function ClientProfileWrapper({ profile, products, services = [],
                 activeTab="spotlight"
                 sellerId={String(profile.id)}
                 numColumns={3}
-                exploreHref="/"
+                exploreHref={profileExploreHref}
+                reelHrefBase={profileReelHrefBase}
+                spotlightHrefBase={profileSpotlightHrefBase}
               />
             ) : (
               <div className="py-20 text-center text-[10px] font-bold uppercase tracking-widest text-(--muted)">
@@ -459,12 +637,12 @@ export default function ClientProfileWrapper({ profile, products, services = [],
                   <p className="text-[10px] font-medium text-(--muted)">Secure payments & buyer protection</p>
                 </div>
               </div>
-              <a
-                href={`storelink://@${profile.slug}`}
+              <Link
+                href={`/app/profile/${encodeURIComponent(String(profile.slug || ''))}`}
                 className="rounded-xl bg-(--emerald) px-3 py-2.5 text-xs font-black tracking-wide text-white transition-opacity hover:opacity-90"
               >
-                Open in app
-              </a>
+                Continue on web
+              </Link>
               <Button
                 href={`/download?intent=${encodeURIComponent(`/@${profile.slug}`)}`}
                 size="sm"
@@ -477,7 +655,7 @@ export default function ClientProfileWrapper({ profile, products, services = [],
         ) : null}
       </div>
 
-      <ShareProfileModal isOpen={shareOpen} onClose={() => setShareOpen(false)} profile={profile} />
+      <WebBadgeExplainerModal ref={badgeSheetRef} profile={profile} isSelf={isSelf} />
       {optionsOpen ? (
         <div className="fixed inset-0 z-120 flex items-end justify-center bg-black/40 p-4" onClick={() => setOptionsOpen(false)}>
           <div
@@ -490,7 +668,7 @@ export default function ClientProfileWrapper({ profile, products, services = [],
               className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-(--foreground) hover:bg-(--surface)"
               onClick={() => {
                 setOptionsOpen(false);
-                setShareOpen(true);
+                openProfileShare();
               }}
             >
               <Share2 size={18} />

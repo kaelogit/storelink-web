@@ -11,11 +11,15 @@ const APP = (path: string) => {
 
 export const profileHubPaths = {
   salesDashboard: APP('/seller/dashboard'),
+  creatorAnalytics: APP('/seller/analytics'),
   inventory: APP('/seller/inventory'),
+  promotions: APP('/seller/promotions'),
   manageOrders: APP('/seller/orders'),
   servicesBookings: APP('/bookings?perspective=seller'),
   pastClients: APP('/seller/clients'),
   verifications: APP('/seller/verification-consent'),
+  businessVerification: APP('/seller/business-verification'),
+  businessVerificationIntro: APP('/seller/business-verification-intro'),
   membership: APP('/subscription'),
   payoutSettings: APP('/settings/bank'),
   wallet: APP('/wallet'),

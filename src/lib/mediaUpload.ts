@@ -1,13 +1,26 @@
 import { createBrowserClient } from '@/lib/supabase';
 
-export async function uploadFileToR2(file: File, key: string): Promise<string> {
+/**
+ * Upload a File/Blob to Cloudflare R2 via the get-upload-url Edge Function.
+ * Returns the public R2 URL (never Supabase Storage).
+ */
+export async function uploadFileToR2(
+  file: File | Blob,
+  key: string,
+  contentType?: string,
+): Promise<string> {
   const supabase = createBrowserClient();
+  const type =
+    contentType ||
+    (file instanceof File && file.type ? file.type : '') ||
+    'application/octet-stream';
+
   const { data, error } = await supabase.functions.invoke<{
     uploadUrl?: string;
     publicUrl?: string;
     error?: string;
   }>('get-upload-url', {
-    body: { key, contentType: file.type || 'application/octet-stream' },
+    body: { key, contentType: type },
   });
 
   if (error) throw error;
@@ -16,10 +29,13 @@ export async function uploadFileToR2(file: File, key: string): Promise<string> {
   if (!data.uploadUrl || !data.publicUrl) {
     throw new Error('R2 upload helper did not return uploadUrl or publicUrl');
   }
+  if (!/^https?:\/\//i.test(data.publicUrl)) {
+    throw new Error(`R2 publicUrl is not a valid http(s) url: ${data.publicUrl}`);
+  }
 
   const response = await fetch(data.uploadUrl, {
     method: 'PUT',
-    headers: { 'Content-Type': file.type || 'application/octet-stream' },
+    headers: { 'Content-Type': type },
     body: file,
   });
 

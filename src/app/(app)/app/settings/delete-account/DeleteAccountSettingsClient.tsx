@@ -34,7 +34,7 @@ export default function DeleteAccountSettingsClient() {
   };
 
   return (
-    <SettingsFrame title="Delete account" subtitle="This action is permanent and cannot be undone.">
+    <SettingsFrame title="Delete account" subtitle="This action is permanent and cannot be undone." parentHref="/app/settings/account">
       <div className="mx-auto max-w-xl space-y-5">
         {error ? <p className="rounded-xl border border-rose-300/30 bg-rose-500/10 px-3 py-2 text-sm text-rose-300">{error}</p> : null}
 

@@ -29,9 +29,9 @@ export async function resolveServiceByToken(
   if (!serviceKey) return null;
 
   const serviceSelectWithSlug =
-    'id, slug, seller_id, title, description, hero_price_min, currency_code, service_category, delivery_type, location_type, service_address, service_areas, media, location_country_code';
+    'id, slug, seller_id, title, description, hero_price_min, currency_code, service_category, delivery_type, location_type, service_address, service_areas, media, location_country_code, menu, availability_settings, travel_fee_minor, cancellation_policy, deposit_policy, deposit_enabled, deposit_mode, deposit_percent, deposit_minor, allows_booking_requests, allows_quick_book';
   const serviceSelectNoSlug =
-    'id, seller_id, title, description, hero_price_min, currency_code, service_category, delivery_type, location_type, service_address, service_areas, media, location_country_code';
+    'id, seller_id, title, description, hero_price_min, currency_code, service_category, delivery_type, location_type, service_address, service_areas, media, location_country_code, menu, availability_settings, travel_fee_minor, cancellation_policy, deposit_policy, deposit_enabled, deposit_mode, deposit_percent, deposit_minor, allows_booking_requests, allows_quick_book';
   const needsActive = opts?.activeOnly !== false;
 
   const isMissingSlugColumnError = (err: any) => {

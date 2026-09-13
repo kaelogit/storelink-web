@@ -1,6 +1,6 @@
 /**
  * Shared horizontal rhythm + safe-area for web (mobile-first).
- * Matches store-link-storefront naming so cross-repo mental model stays one line.
+ * Shared mobile layout breakpoints for storelink-web.
  */
 export const STOREFRONT_GUTTER_X =
   "pl-[max(1rem,env(safe-area-inset-left,0px))] pr-[max(1rem,env(safe-area-inset-right,0px))] sm:pl-[max(1.25rem,env(safe-area-inset-left,0px))] sm:pr-[max(1.25rem,env(safe-area-inset-right,0px))] md:pl-[max(1.5rem,env(safe-area-inset-left,0px))] md:pr-[max(1.5rem,env(safe-area-inset-right,0px))] lg:pl-[max(2rem,env(safe-area-inset-left,0px))] lg:pr-[max(2rem,env(safe-area-inset-right,0px))]";

@@ -16,16 +16,29 @@ import {
   Play,
   Package,
   Search,
-  Send,
   Sparkles,
   X,
 } from 'lucide-react';
 import { ChatActiveOrdersStrip } from '@/components/chat/ChatActiveOrdersStrip';
+import { ChatCommercePickerSheet, type ChatProductPick, type ChatServicePick } from '@/components/chat/ChatCommercePickerSheet';
 import { ChatLinkPreviewCard } from '@/components/chat/ChatLinkPreviewCard';
+import { ChatMessageComposer } from '@/components/chat/ChatMessageComposer';
+import { CommerceCardMessage } from '@/components/chat/CommerceCardMessage';
+import { MessageRequestBanner } from '@/components/chat/MessageRequestBanner';
 import { fetchActiveCommerceForChat, type ChatProductOrderRow, type ChatServiceOrderRow } from '@/lib/chatCommerce';
 import { parseStoreLinkFromText } from '@/lib/chatShareUtils';
 import { createBrowserClient } from '@/lib/supabase';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
+import { sendChatImageMessage } from '@/lib/chatImageSend';
+import {
+  buildProductCardMessageText,
+  buildProductCommerceCardMetadata,
+  buildServiceCardMessageText,
+  buildServiceCommerceCardMetadata,
+  isCommerceCardMessage,
+} from '@/lib/commerceCardMessage';
+import { getServiceListingHeroImage } from '@/lib/serviceListingMedia';
+import { blockChatPartner, isMessageRequestFolder, submitMessageRequestReport } from '@/lib/messageRequests';
 
 type ChatRow = {
   id: string;
@@ -69,6 +82,7 @@ type Msg = {
   reply_to_snippet?: string | null;
   reply_to_id?: string | null;
   reactions?: Record<string, string[]> | null;
+  metadata?: unknown;
 };
 
 type PartnerPresence = {
@@ -84,6 +98,7 @@ function time(iso?: string | null) {
 }
 
 function previewTextForBubble(m: Msg) {
+  if (isCommerceCardMessage(m)) return String(m.text || '').trim() || 'Shared listing';
   const kind = String(m.type || 'TEXT').toUpperCase();
   if (kind === 'IMAGE') return m.text?.trim() ? `📷 ${m.text}` : '📷 Photo';
   if (kind === 'VIDEO') return m.text?.trim() ? `🎥 ${m.text}` : '🎥 Video';
@@ -130,6 +145,9 @@ export default function ChatConversationClient() {
   const [replyTo, setReplyTo] = useState<{ id: string; snippet: string } | null>(null);
   const [bubbleMenu, setBubbleMenu] = useState<{ x: number; y: number; message: Msg } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [chatFolder, setChatFolder] = useState<'primary' | 'requests'>('primary');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [commercePickerOpen, setCommercePickerOpen] = useState(false);
   const touchSwipeStartX = useRef<number | null>(null);
   const touchSwipeTriggered = useRef(false);
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -141,6 +159,8 @@ export default function ChatConversationClient() {
     return chat.buyer_id === userId ? chat.seller : chat.buyer;
   }, [chat, userId]);
   const isSeller = !!userId && !!chat?.seller_id && userId === chat.seller_id;
+  const isRequest = isMessageRequestFolder(chatFolder);
+  const showCommerceAttach = isSeller && !isRequest;
   const partnerOnline = useMemo(() => isPartnerOnline(presence?.last_seen_at), [presence?.last_seen_at]);
   const showPartnerOnline = Boolean(presence?.share_online_status) && partnerOnline;
 
@@ -187,7 +207,7 @@ export default function ChatConversationClient() {
       const uid = auth.user?.id || null;
       setUserId(uid);
 
-      const [chatRes, msgRes, commerce, profileRes] = await Promise.all([
+      const [chatRes, msgRes, commerce, profileRes, inboxRes] = await Promise.all([
         supabase
           .from('chats')
           .select(
@@ -197,13 +217,14 @@ export default function ChatConversationClient() {
           .maybeSingle(),
         supabase
           .from('messages')
-          .select('id,sender_id,text,created_at,type,delivered_at,is_read,image_url,video_url,audio_url,document_url,document_name,reply_to_snippet,reply_to_id,reactions')
+          .select('id,sender_id,text,created_at,type,delivered_at,is_read,image_url,video_url,audio_url,document_url,document_name,reply_to_snippet,reply_to_id,reactions,metadata')
           .eq('conversation_id', chatId)
           .order('created_at', { ascending: true }),
         fetchActiveCommerceForChat(supabase, chatId),
         uid
           ? supabase.from('profiles').select('email, coin_balance').eq('id', uid).maybeSingle()
           : Promise.resolve({ data: null } as const),
+        uid ? supabase.rpc('get_my_inbox_with_receipts') : Promise.resolve({ data: null } as const),
       ]);
 
       const authEmail = auth.user?.email?.trim() || '';
@@ -215,6 +236,12 @@ export default function ChatConversationClient() {
       setMessages((msgRes.data as Msg[]) || []);
       setProductOrders(commerce.productOrders);
       setServiceOrders(commerce.serviceOrders);
+
+      const inboxRow = ((inboxRes.data as { chat_id?: string; folder?: string }[] | null) || []).find(
+        (row) => row?.chat_id === chatId,
+      );
+      const folder = String(inboxRow?.folder || 'primary').toLowerCase();
+      setChatFolder(folder === 'requests' ? 'requests' : 'primary');
 
       if (uid) {
         await supabase.rpc('mark_messages_read', { p_conversation_id: chatId, p_user_id: uid });
@@ -315,6 +342,135 @@ export default function ChatConversationClient() {
     setSending(false);
   };
 
+  const sendImage = async (file: File) => {
+    if (!chatId || !userId || uploadingImage) return;
+    setUploadingImage(true);
+    const tempId = `temp-img-${Date.now()}`;
+    const optimistic: Msg = {
+      id: tempId,
+      sender_id: userId,
+      text: 'Sent a photo',
+      created_at: new Date().toISOString(),
+      type: 'IMAGE',
+      is_optimistic: true,
+      delivery_state: 'pending',
+    };
+    setMessages((old) => [...old, optimistic]);
+    try {
+      const inserted = await sendChatImageMessage(supabase, { chatId, userId, file });
+      setMessages((old) =>
+        old.map((m) =>
+          m.id === tempId
+            ? { ...m, id: inserted.id, image_url: inserted.image_url, text: inserted.text, created_at: inserted.created_at, is_optimistic: false, delivery_state: 'sent' }
+            : m,
+        ),
+      );
+    } catch (e: unknown) {
+      setMessages((old) => old.filter((m) => m.id !== tempId));
+      toast.error(e instanceof Error ? e.message : 'Could not send photo.');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const sendCommerceCard = async (input: {
+    type: 'product_card' | 'service_card';
+    text: string;
+    metadata: Record<string, unknown>;
+  }) => {
+    if (!chatId || !userId || !showCommerceAttach) return;
+    const tempId = `temp-card-${Date.now()}`;
+    setMessages((old) => [
+      ...old,
+      {
+        id: tempId,
+        sender_id: userId,
+        text: input.text,
+        type: input.type.toUpperCase(),
+        metadata: input.metadata,
+        created_at: new Date().toISOString(),
+        is_optimistic: true,
+        delivery_state: 'pending',
+      },
+    ]);
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .insert({
+          conversation_id: chatId,
+          sender_id: userId,
+          text: input.text,
+          type: input.type,
+          metadata: input.metadata,
+        })
+        .select('id, text, type, metadata, created_at')
+        .single();
+      if (error) throw error;
+      setMessages((old) =>
+        old.map((m) => (m.id === tempId ? { ...m, ...(data as Msg), is_optimistic: false, delivery_state: 'sent' } : m)),
+      );
+    } catch (e: unknown) {
+      setMessages((old) => old.filter((m) => m.id !== tempId));
+      toast.error(e instanceof Error ? e.message : 'Could not share listing.');
+    }
+  };
+
+  const handleSelectProductCard = (product: ChatProductPick) => {
+    const metadata = buildProductCommerceCardMetadata({
+      productId: product.id,
+      productSlug: product.slug,
+      productName: product.name,
+      price: product.price,
+      currencyCode: product.currency_code || 'NGN',
+      imageUrl: product.image_urls?.[0] ?? null,
+    });
+    void sendCommerceCard({ type: 'product_card', text: buildProductCardMessageText(metadata), metadata });
+  };
+
+  const handleSelectServiceCard = (service: ChatServicePick) => {
+    const metadata = buildServiceCommerceCardMetadata({
+      serviceListingId: service.id,
+      serviceSlug: service.slug,
+      serviceTitle: service.title,
+      serviceCategory: service.service_category ?? null,
+      heroPriceMin: service.hero_price_min ?? null,
+      currencyCode: service.currency_code || 'NGN',
+      imageUrl: getServiceListingHeroImage(service.media),
+    });
+    void sendCommerceCard({ type: 'service_card', text: buildServiceCardMessageText(metadata), metadata });
+  };
+
+  const reportRequest = async () => {
+    if (!userId || !partner?.id || !chatId) return;
+    const result = await submitMessageRequestReport(supabase, {
+      reporterId: userId,
+      subjectUserId: String(partner.id),
+      chatId,
+      reason: 'spam',
+    });
+    if (result.ok) toast.success('Report submitted. Our team will review this request.');
+    else toast.error(result.error);
+  };
+
+  const blockRequest = async () => {
+    if (!userId || !partner?.id || !chatId) return;
+    if (!window.confirm('Block this user? They won\'t be able to message you.')) return;
+    const result = await blockChatPartner(supabase, { blockerId: userId, blockedId: String(partner.id) });
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+    await supabase.rpc('delete_chat', { p_chat_id: chatId });
+    toast.success('User blocked.');
+    router.push('/app/messages');
+  };
+
+  const deleteRequestChat = async () => {
+    if (!chatId) return;
+    await supabase.rpc('delete_chat', { p_chat_id: chatId });
+    router.push('/app/messages');
+  };
+
   const toggleReaction = useCallback(
     async (messageId: string, emoji: string) => {
       if (!userId || !messageId) return;
@@ -364,7 +520,7 @@ export default function ChatConversationClient() {
               const qs = searchParams.toString();
               const returnTo = `${pathname}${qs ? `?${qs}` : ''}`;
               router.push(
-                `/app/chat/${encodeURIComponent(chatId)}/menu?returnTo=${encodeURIComponent(returnTo)}&isRequest=0`,
+                `/app/chat/${encodeURIComponent(chatId)}/menu?returnTo=${encodeURIComponent(returnTo)}&isRequest=${isRequest ? '1' : '0'}`,
               );
             }}
             className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl py-1 text-left hover:bg-(--surface)"
@@ -399,21 +555,23 @@ export default function ChatConversationClient() {
               </div>
             </div>
           </button>
-          <button
-            type="button"
-            onClick={() => {
-              const phone = partner?.phone_number?.trim();
-              if (!phone) {
-                window.alert('No contact\n\nThis user has not listed a phone number.');
-                return;
-              }
-              window.location.href = `tel:${encodeURIComponent(phone)}`;
-            }}
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(--surface) text-(--foreground)"
-            aria-label="Call"
-          >
-            <Phone size={20} strokeWidth={2} />
-          </button>
+          {!isRequest ? (
+            <button
+              type="button"
+              onClick={() => {
+                const phone = partner?.phone_number?.trim();
+                if (!phone) {
+                  window.alert('No contact\n\nThis user has not listed a phone number.');
+                  return;
+                }
+                window.location.href = `tel:${encodeURIComponent(phone)}`;
+              }}
+              className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(--surface) text-(--foreground)"
+              aria-label="Call"
+            >
+              <Phone size={20} strokeWidth={2} />
+            </button>
+          ) : null}
         </div>
         {inChatSearch ? (
           <div className="mt-2 flex items-center gap-2 rounded-xl border border-(--border) bg-(--surface) px-3 py-2">
@@ -447,6 +605,15 @@ export default function ChatConversationClient() {
         />
       ) : null}
 
+      {isRequest ? (
+        <MessageRequestBanner
+          partnerName={partner?.display_name || partner?.slug}
+          onReport={() => void reportRequest()}
+          onBlock={() => void blockRequest()}
+          onDelete={() => void deleteRequestChat()}
+        />
+      ) : null}
+
       <div ref={messagesScrollRef} className="min-h-0 flex-1 overflow-y-auto bg-(--surface) px-4 py-4">
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center">
@@ -476,6 +643,7 @@ export default function ChatConversationClient() {
               const textWithoutLink = parsedLink ? String(m.text || '').replace(parsedLink.url, '').trim() : String(m.text || '');
               const showLinkCard =
                 !!parsedLink &&
+                !isCommerceCardMessage(m) &&
                 !m.image_url &&
                 !m.video_url &&
                 !m.audio_url &&
@@ -556,6 +724,10 @@ export default function ChatConversationClient() {
                     {m.reply_to_snippet ? (
                       <p className="mb-1 border-l-2 border-emerald-500/60 pl-2 text-xs text-(--muted)">{m.reply_to_snippet}</p>
                     ) : null}
+                    {isCommerceCardMessage(m) ? (
+                      <CommerceCardMessage message={m} isSellerView={isSeller} />
+                    ) : (
+                      <>
                     {m.image_url ? (
                       <Link href={m.image_url} target="_blank" className="mb-1 block">
                         <img src={normalizeWebMediaUrl(m.image_url)} alt="Shared image" className="max-h-72 w-full max-w-64 rounded-xl border border-(--border) object-cover" />
@@ -602,6 +774,8 @@ export default function ChatConversationClient() {
                     ) : (
                       <p className="whitespace-pre-wrap text-[15px] leading-6 text-(--foreground)">{body}</p>
                     )}
+                      </>
+                    )}
                     <div className={`mt-0.5 inline-flex items-center gap-1 text-[10px] text-(--muted) ${mine ? 'justify-end' : 'justify-start'}`}>
                       <span>{time(m.created_at)}</span>
                       {receiptIcon}
@@ -626,26 +800,30 @@ export default function ChatConversationClient() {
         )}
       </div>
 
-      <div className="border-t border-(--border) bg-(--card) p-3">
-        {replyTo ? (
-          <div className="mb-2 flex items-center justify-between rounded-lg border border-(--border) bg-(--surface) px-2 py-1.5">
-            <p className="truncate text-xs text-(--muted)">Replying to: {replyTo.snippet}</p>
-            <button type="button" onClick={() => setReplyTo(null)} className="text-xs font-semibold text-(--muted)">Cancel</button>
-          </div>
-        ) : null}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            void send();
-          }}
-          className="flex items-center gap-2"
-        >
-          <input value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="Type a message" className="h-11 w-full rounded-xl border border-(--border) bg-(--surface) px-3 text-sm text-(--foreground) outline-none placeholder:text-(--muted)" />
-          <button type="submit" disabled={!draft.trim() || sending} className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white disabled:opacity-50">
-            {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-          </button>
-        </form>
-      </div>
+      <ChatMessageComposer
+        draft={draft}
+        onDraftChange={setDraft}
+        onSendText={() => void send()}
+        onPickImage={(file) => void sendImage(file)}
+        sending={sending}
+        uploadingImage={uploadingImage}
+        replyTo={replyTo}
+        onClearReply={() => setReplyTo(null)}
+        showCommerceAttach={showCommerceAttach}
+        onOpenCommercePicker={() => setCommercePickerOpen(true)}
+      />
+
+      {commercePickerOpen && userId ? (
+        <ChatCommercePickerSheet
+          open={commercePickerOpen}
+          sellerId={userId}
+          chatId={chatId}
+          supabase={supabase}
+          onClose={() => setCommercePickerOpen(false)}
+          onSelectProduct={handleSelectProductCard}
+          onSelectService={handleSelectServiceCard}
+        />
+      ) : null}
 
       {mediaTrayOpen ? (
         <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/45 p-4" role="dialog" aria-modal="true">

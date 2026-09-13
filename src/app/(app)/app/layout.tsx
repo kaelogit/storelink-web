@@ -7,6 +7,7 @@ import RightRail from '@/components/app-shell/RightRail';
 import MobileBottomTabs from '@/components/app-shell/MobileBottomTabs';
 import WebFloatingCart from '@/components/cart/WebFloatingCart';
 import { AppShellProfileProvider } from '@/components/app-shell/app-shell-profile';
+import ClawbackLockGate from '@/components/seller/ClawbackLockGate';
 import { createServerClient } from '@/lib/supabase-server';
 import type { ReactNode } from 'react';
 
@@ -39,6 +40,7 @@ export default async function AppLayerLayout({ children }: { children: ReactNode
   return (
     <WebAuthGate initialState={initialState}>
       <AppShellProfileProvider>
+        <ClawbackLockGate />
         <div className="min-h-dvh bg-(--background)">
           <AppTopBar />
           <LeftRail />

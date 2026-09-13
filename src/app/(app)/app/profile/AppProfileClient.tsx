@@ -6,6 +6,8 @@ import { createBrowserClient } from '@/lib/supabase';
 import { showDiamondBadge } from '@/lib/sellerStatus';
 import { fetchProfileSpotlightPosts } from '@/lib/fetchProfileSpotlight';
 import WebProfileHeader from '@/components/profile-web/WebProfileHeader';
+import WebBadgeExplainerModal, { type WebBadgeExplainerRef } from '@/components/profile-web/WebBadgeExplainerModal';
+import type { ProfileBadgeKey } from '@/lib/profileBadges';
 import WebProfileNavBar from '@/components/profile-web/WebProfileNavBar';
 import WebProfileStats from '@/components/profile-web/WebProfileStats';
 import WebProfileTabBar, { type WebSelfProfileTab } from '@/components/profile-web/WebProfileTabBar';
@@ -38,6 +40,7 @@ export default function AppProfileClient() {
   const [wardrobe, setWardrobe] = useState<any[]>([]);
   const [spotlight, setSpotlight] = useState<any[]>([]);
   const [hiddenRows, setHiddenRows] = useState<{ product_id?: string | null; service_listing_id?: string | null }[]>([]);
+  const badgeSheetRef = useRef<WebBadgeExplainerRef>(null);
   const sellerDefaultAppliedRef = useRef(false);
 
   const load = useCallback(async () => {
@@ -82,6 +85,10 @@ export default function AppProfileClient() {
       id: String(profile.id),
       is_seller: profile.is_seller,
       seller_type: profile.seller_type,
+      location_country_code: profile.location_country_code,
+      verification_status: profile.verification_status,
+      kyc_status: profile.kyc_status,
+      business_verification_status: profile.business_verification_status,
     };
   }, [profile]);
 
@@ -100,24 +107,17 @@ export default function AppProfileClient() {
     if (!profile?.id) return;
     if (isSeller) {
       if (!sellerDefaultAppliedRef.current) {
-        setActiveTab(() => {
-          const hasDrops = drops.length > 0;
-          const hasServices = services.length > 0;
-          if (hasDrops) return 'drops';
-          if (hasServices) return 'services';
-          return 'drops';
-        });
+        const sellerType = String(profile?.seller_type || 'product').toLowerCase();
+        setActiveTab(sellerType === 'service' ? 'services' : 'drops');
         sellerDefaultAppliedRef.current = true;
       }
       return;
     }
     sellerDefaultAppliedRef.current = false;
-    if (!isSeller) {
-      if (activeTab === 'drops' || activeTab === 'reels' || activeTab === 'services') {
-        setActiveTab('wardrobe');
-      }
+    if (activeTab === 'drops' || activeTab === 'reels' || activeTab === 'services') {
+      setActiveTab('wardrobe');
     }
-  }, [profile, isSeller, activeTab, drops.length, services.length]);
+  }, [profile, isSeller, activeTab]);
 
   useEffect(() => {
     if (!profile?.id) return;
@@ -342,6 +342,7 @@ export default function AppProfileClient() {
         isDiamond={isDiamond}
         showRightMenu
         onMenuPress={() => setMenuOpen(true)}
+        onDiamondPress={() => badgeSheetRef.current?.open('diamond')}
       />
 
       <WebProfileHeader
@@ -354,6 +355,8 @@ export default function AppProfileClient() {
         bioExpanded={bioExpanded}
         onBioExpandedChange={setBioExpanded}
         isDiamond={isDiamond}
+        onBadgePress={(key: ProfileBadgeKey) => badgeSheetRef.current?.open(key)}
+        onAboutBadgesPress={() => badgeSheetRef.current?.open()}
       />
 
       {profileForStats ? (
@@ -421,12 +424,7 @@ export default function AppProfileClient() {
                     exploreHref="/app"
                   />
                 ) : (
-                  <div className="px-4 py-3">
-                    <p className="mb-3 text-center text-[10px] font-semibold uppercase tracking-[0.18em] text-(--muted)">
-                      Finish booking in the StoreLink app to secure your service with escrow.
-                    </p>
-                    {emptyBlock('NO SERVICES YET', { href: '/app/seller/post-service', text: 'POST SERVICE' })}
-                  </div>
+                  emptyBlock('NO SERVICES YET', { href: '/app/seller/post-service', text: 'POST SERVICE' })
                 )
               ) : null}
 
@@ -520,6 +518,7 @@ export default function AppProfileClient() {
           logo_url: profile.logo_url != null ? String(profile.logo_url) : null,
         }}
       />
+      <WebBadgeExplainerModal ref={badgeSheetRef} profile={profile} isSelf />
 
       {menuOpen ? (
         <div className="fixed inset-0 z-50 lg:hidden">

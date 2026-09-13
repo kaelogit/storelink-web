@@ -1,14 +1,19 @@
 'use client';
 
-import { useMemo, useState, useEffect, useLayoutEffect, useRef } from 'react';
+import { useMemo, useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import ClientExploreWrapper from '@/app/explore/ClientExploreWrapper';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { Search } from 'lucide-react';
+import { SEARCH_HREF } from '@/components/app-shell/shellConfig';
 
 type ExploreMode = 'discovery' | 'for_you' | 'spotlight';
 const MODE_SCROLL_STORAGE_KEY = 'storelink:app-explore:scroll-by-mode';
 
 export default function AppExploreSurface() {
   const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
   const [mode, setMode] = useState<ExploreMode>('discovery');
   const scrollByModeRef = useRef<Record<ExploreMode, number>>({
     discovery: 0,
@@ -40,6 +45,18 @@ export default function AppExploreSurface() {
       // ignore storage write failures
     }
   };
+
+  const selectMode = useCallback(
+    (next: ExploreMode) => {
+      setMode(next);
+      const params = new URLSearchParams(searchParams.toString());
+      if (next === 'discovery') params.delete('mode');
+      else params.set('mode', next);
+      const qs = params.toString();
+      router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
 
   useEffect(() => {
     const fromUrl = searchParams.get('mode');
@@ -87,13 +104,22 @@ export default function AppExploreSurface() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <div className="sticky top-[72px] z-30 bg-(--background)/92 backdrop-blur-xl border-b border-(--border)">
+      <div className="sticky top-0 z-30 bg-(--background)/92 backdrop-blur-xl border-b border-(--border) lg:top-[72px]">
         <div className="px-2 sm:px-4 py-3 flex items-center justify-between gap-3">
           <h1 className="text-base sm:text-lg font-black text-(--foreground) tracking-tight">Explore · {title}</h1>
-          <div className="flex items-center gap-2 rounded-2xl border border-(--border) bg-(--card) p-1">
-            <ModeBtn active={mode === 'discovery'} onClick={() => setMode('discovery')} label="Discovery" />
-            <ModeBtn active={mode === 'for_you'} onClick={() => setMode('for_you')} label="For You" />
-            <ModeBtn active={mode === 'spotlight'} onClick={() => setMode('spotlight')} label="Spotlight" />
+          <div className="flex items-center gap-2">
+            <Link
+              href={`${SEARCH_HREF}?from=explore`}
+              aria-label="Open search"
+              className="flex h-10 w-10 items-center justify-center rounded-2xl border border-(--border) bg-(--surface) text-(--foreground) hover:border-emerald-500/40"
+            >
+              <Search size={18} strokeWidth={2.4} />
+            </Link>
+            <div className="flex items-center gap-2 rounded-2xl border border-(--border) bg-(--card) p-1">
+              <ModeBtn active={mode === 'discovery'} onClick={() => selectMode('discovery')} label="Discovery" />
+              <ModeBtn active={mode === 'for_you'} onClick={() => selectMode('for_you')} label="For You" />
+              <ModeBtn active={mode === 'spotlight'} onClick={() => selectMode('spotlight')} label="Spotlight" />
+            </div>
           </div>
         </div>
       </div>

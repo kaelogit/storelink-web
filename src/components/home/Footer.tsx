@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import StoreLinkLogo from '@/components/ui/StoreLinkLogo';
+import { storeCtaHref } from '@/lib/storeUrls';
+import { useStoreListingUrls } from '@/lib/useStoreUrls';
 
 const categories = [
   'Fashion', 'Beauty', 'Tech', 'Home',
@@ -13,6 +15,10 @@ const footerLinkClass =
   'text-slate-300 hover:text-slate-50 transition-colors dark:text-slate-300 dark:hover:text-slate-50';
 
 export default function Footer() {
+  const stores = useStoreListingUrls();
+  const iosHref = storeCtaHref(stores.ios);
+  const androidHref = storeCtaHref(stores.android);
+
   return (
     <footer className="section-dark pt-16 md:pt-24 pb-8 md:pb-12 border-t border-slate-800" role="contentinfo">
       <div className="max-w-7xl mx-auto px-6">
@@ -86,6 +92,20 @@ export default function Footer() {
           </div>
 
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-4 md:gap-8 order-1 lg:order-2 w-full lg:w-auto">
+            <a
+              href={iosHref}
+              {...(stores.ios ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+              className="text-xs font-bold uppercase tracking-[0.2em] text-slate-200 hover:text-emerald-400 transition-colors flex items-center gap-1"
+            >
+              App Store {stores.ios ? <ArrowUpRight size={14} className="text-slate-500" /> : null}
+            </a>
+            <a
+              href={androidHref}
+              {...(stores.android ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
+              className="text-xs font-bold uppercase tracking-[0.2em] text-slate-200 hover:text-emerald-400 transition-colors flex items-center gap-1"
+            >
+              Google Play {stores.android ? <ArrowUpRight size={14} className="text-slate-500" /> : null}
+            </a>
             <a
               href="https://twitter.com/storelink"
               target="_blank"

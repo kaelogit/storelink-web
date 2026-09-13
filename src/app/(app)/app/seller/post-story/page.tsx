@@ -4,8 +4,15 @@ import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, Camera, Film, ImageIcon, Loader2, Type, Upload } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
+import { uploadFileToR2 } from '@/lib/mediaUpload';
 import { PostPublishResultSheet } from '@/components/seller/PostPublishResultSheet';
 import { PostPublishingOverlay } from '@/components/seller/PostPublishingOverlay';
+import {
+  LISTING_TAG_CAP_TITLE,
+  assertCanTagListing,
+  listingTagCapBody,
+  mapListingTagCapError,
+} from '@/lib/listingTagCap';
 
 const STORY_TEXT_MAX_LENGTH = 120;
 const STORY_VIDEO_MAX_SEC = 60;
@@ -255,14 +262,11 @@ export default function AppSellerPostStoryPage() {
   const uploadToStoriesBucket = async (userId: string, file: File, kind: 'image' | 'video') => {
     const ext = (file.name.split('.').pop() || (kind === 'video' ? 'mp4' : 'jpg')).toLowerCase();
     const path = `${userId}/story_${Date.now()}.${ext}`;
-    const contentType = file.type || (kind === 'video' ? 'video/mp4' : 'image/jpeg');
     setUploadStage('uploading');
     setUploadProgress(20);
-    const { error } = await supabase.storage.from('stories').upload(path, file, { contentType, upsert: false });
-    if (error) throw error;
+    const publicUrl = await uploadFileToR2(file, `stories/${path}`);
     setUploadProgress(85);
-    const { data } = supabase.storage.from('stories').getPublicUrl(path);
-    return data.publicUrl;
+    return publicUrl;
   };
 
   const ensureLinkedEntityStillActive = async (userId: string): Promise<boolean> => {
@@ -388,6 +392,21 @@ export default function AppSellerPostStoryPage() {
 
       const linkedProductId = showLinkTypeTabs ? (linkType === 'product' ? selectedProductId || null : null) : canLinkProduct ? selectedProductId || null : null;
       const linkedServiceId = showLinkTypeTabs ? (linkType === 'service' ? selectedServiceId || null : null) : canLinkService ? selectedServiceId || null : null;
+      const tagId = linkedProductId || linkedServiceId;
+      if (tagId) {
+        const capResult = await assertCanTagListing(supabase, {
+          listingType: linkedProductId ? 'product' : 'service',
+          listingId: tagId,
+          slotsNeeded: 1,
+        });
+        if (!capResult.ok) {
+          setError(`${LISTING_TAG_CAP_TITLE}. ${listingTagCapBody(capResult.capacity.max_per_listing, capResult.capacity.active_count)}`);
+          setSubmitting(false);
+          setUploadStage(null);
+          setUploadProgress(0);
+          return;
+        }
+      }
 
       const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
 
@@ -412,6 +431,9 @@ export default function AppSellerPostStoryPage() {
         setStoryBackgroundId('none');
         setStoryFont('system');
         setResultSheetOpen(true);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('storelink:stories-refresh'));
+        }
       } else if (mode === 'image' && imageFile) {
         const publicUrl = await uploadToStoriesBucket(userId, imageFile, 'image');
         setUploadStage('finalizing');
@@ -429,6 +451,9 @@ export default function AppSellerPostStoryPage() {
         setUploadProgress(100);
         clearMediaPreview();
         setResultSheetOpen(true);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('storelink:stories-refresh'));
+        }
       } else if (mode === 'video' && videoFile) {
         const publicUrl = await uploadToStoriesBucket(userId, videoFile, 'video');
         setUploadStage('finalizing');
@@ -446,9 +471,12 @@ export default function AppSellerPostStoryPage() {
         setUploadProgress(100);
         clearMediaPreview();
         setResultSheetOpen(true);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('storelink:stories-refresh'));
+        }
       }
     } catch (e: any) {
-      setError(e?.message || 'Failed to post story.');
+      setError(mapListingTagCapError(e?.message, undefined, undefined, 'Failed to post story.'));
     } finally {
       setSubmitting(false);
       setUploadStage(null);
@@ -683,7 +711,7 @@ export default function AppSellerPostStoryPage() {
       open={resultSheetOpen}
       onClose={() => setResultSheetOpen(false)}
       title="Story is live"
-      description="Your story is on your profile for the next 12 hours. Shoppers can tap your catalog link while it is active."
+      description="Your story is on the Home row for the next 12 hours. Shoppers can tap your catalog link while it is active."
       tone="amber"
       primaryAction={{ label: 'Go to home', href: '/app' }}
       secondaryAction={{ label: 'Post hub', href: '/app/post' }}

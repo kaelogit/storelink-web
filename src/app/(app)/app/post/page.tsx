@@ -125,7 +125,9 @@ export default function AppPostPage() {
   const isSeller = Boolean(profile?.is_seller);
   const isVerified = String(profile?.verification_status || '').toLowerCase() === 'verified' || Boolean(profile?.is_verified);
   const hasPayoutAccount = Boolean(profile?.bank_details?.recipient_code);
-  const sellerType = String(profile?.seller_type || 'both');
+  const sellerType = String(profile?.seller_type || '').toLowerCase();
+  const canPostProduct = sellerType !== 'service';
+  const canPostService = sellerType === 'service' || sellerType === 'both';
 
   if (loading) {
     return (
@@ -210,10 +212,12 @@ export default function AppPostPage() {
     <div className="mx-auto max-w-xl rounded-[28px] border border-(--border) bg-(--card) p-6 sm:p-7">
       <p className="text-xs font-black uppercase tracking-[0.18em] text-(--muted)">What are you sharing?</p>
       <div className="mt-5 space-y-3">
-        {sellerType !== 'service' ? (
+        {canPostProduct ? (
           <PostActionCard href="/app/seller/post-product" title="PRODUCT LISTING" subtitle="Add a new item to your store" icon={<ShoppingBag size={22} className="text-(--foreground)" />} tone="neutral" />
         ) : null}
-        <PostActionCard href="/app/seller/post-service" title="SERVICE LISTING" subtitle="Create a service and start bookings" icon={<Wrench size={22} className="text-violet-500" />} tone="violet" />
+        {canPostService ? (
+          <PostActionCard href="/app/seller/post-service" title="SERVICE LISTING" subtitle="Create a service and start bookings" icon={<Wrench size={22} className="text-violet-500" />} tone="violet" />
+        ) : null}
         <PostActionCard href="/app/seller/post-reel" title="POST REEL" subtitle="Seller-only video content for your store feed" icon={<Play size={22} className="fill-emerald-500 text-emerald-500" />} tone="emerald" />
         <PostActionCard href="/app/seller/post-story" title="STORY DROP" subtitle="Share a temporary 12-hour update" icon={<Camera size={22} className="fill-amber-500 text-amber-500" />} tone="gold" />
         {spotlightEnabled ? <PostActionCard href="/app/spotlight/post" title="SPOTLIGHT REEL" subtitle="Buyer/seller proof post for successful buys and bookings" icon={<Clapperboard size={22} className="text-violet-500" />} tone="violet" /> : null}
