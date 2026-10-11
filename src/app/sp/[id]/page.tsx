@@ -32,8 +32,23 @@ export default async function PublicSpotlightPage({ params }: { params: Promise<
       media_url,
       thumbnail_url,
       created_at,
+      source_kind,
+      views_count,
       moderation_state,
-      creator:profiles!creator_id(display_name,slug,logo_url)
+      creator:profiles!creator_id(display_name,slug,logo_url,subscription_plan),
+      tags:spotlight_post_tags(
+        seller_id,
+        is_primary,
+        seller:profiles!seller_id(
+          id,
+          display_name,
+          slug,
+          logo_url,
+          subscription_plan,
+          loyalty_enabled,
+          loyalty_percentage
+        )
+      )
     `,
     )
     .eq('id', spotlightId)
@@ -51,6 +66,13 @@ export default async function PublicSpotlightPage({ params }: { params: Promise<
       .eq('is_deleted', false),
   ]);
   const creatorRow = Array.isArray((data as any)?.creator) ? (data as any).creator[0] : (data as any)?.creator || {};
+  const tags = Array.isArray((data as any)?.tags) ? (data as any).tags : [];
+  const primaryTag =
+    tags.find((t: any) => t?.is_primary) ||
+    tags.find((t: any) => t?.seller_id && t.seller_id !== data.creator_id) ||
+    tags[0] ||
+    null;
+  const seller = primaryTag?.seller || {};
   const normalized = {
     id: data.id,
     spotlight_post_id: data.id,
@@ -63,8 +85,8 @@ export default async function PublicSpotlightPage({ params }: { params: Promise<
     comments_count: Number((commentsRes as any)?.data?.length || 0),
     comment_count: Number((commentsRes as any)?.data?.length || 0),
     is_spotlight: true,
-    seller_id: (data as any)?.creator_id || null,
-    seller_slug: creatorRow?.slug || '',
+    seller_id: primaryTag?.seller_id || null,
+    seller_slug: seller?.slug || '',
     creator_id: (data as any)?.creator_id || null,
     creator: {
       id: (data as any)?.creator_id || null,
@@ -74,13 +96,13 @@ export default async function PublicSpotlightPage({ params }: { params: Promise<
       subscription_plan: creatorRow?.subscription_plan || null,
     },
     seller: {
-      id: (data as any)?.creator_id || null,
-      display_name: creatorRow?.display_name || 'Store',
-      slug: creatorRow?.slug || '',
-      logo_url: creatorRow?.logo_url || null,
-      subscription_plan: creatorRow?.subscription_plan || null,
-      loyalty_enabled: creatorRow?.loyalty_enabled || false,
-      loyalty_percentage: Number(creatorRow?.loyalty_percentage || 0),
+      id: seller?.id || primaryTag?.seller_id || null,
+      display_name: seller?.display_name || 'Store',
+      slug: seller?.slug || '',
+      logo_url: seller?.logo_url || null,
+      subscription_plan: seller?.subscription_plan || null,
+      loyalty_enabled: seller?.loyalty_enabled || false,
+      loyalty_percentage: Number(seller?.loyalty_percentage || 0),
     },
   };
 

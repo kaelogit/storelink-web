@@ -36,7 +36,11 @@ export default async function AppSpotlightPage({ params }: { params: Promise<{ i
       views_count,
       moderation_state,
       creator:profiles!creator_id(display_name,slug,logo_url),
-      tags:spotlight_post_tags(seller_id, seller:profiles!seller_id(id,display_name,slug,logo_url,subscription_plan,loyalty_enabled,loyalty_percentage))
+      tags:spotlight_post_tags(
+        seller_id,
+        is_primary,
+        seller:profiles!seller_id(id,display_name,slug,logo_url,subscription_plan,loyalty_enabled,loyalty_percentage)
+      )
     `,
     )
     .eq('id', spotlightId)
@@ -53,7 +57,12 @@ export default async function AppSpotlightPage({ params }: { params: Promise<{ i
       .eq('spotlight_post_id', spotlightId)
       .eq('is_deleted', false),
   ]);
-  const tag = Array.isArray((data as any)?.tags) ? (data as any).tags[0] : null;
+  const tags = Array.isArray((data as any)?.tags) ? (data as any).tags : [];
+  const tag =
+    tags.find((t: any) => t?.is_primary) ||
+    tags.find((t: any) => t?.seller_id && t.seller_id !== data.creator_id) ||
+    tags[0] ||
+    null;
   const seller = tag?.seller || {};
   const creator = Array.isArray((data as any)?.creator) ? (data as any).creator[0] : (data as any)?.creator || {};
   const normalized = {
