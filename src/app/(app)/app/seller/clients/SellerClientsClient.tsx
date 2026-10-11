@@ -48,7 +48,7 @@ export default function SellerClientsClient() {
         return;
       }
 
-      const { data: profileRow } = await supabase.from('profiles').select('*').eq('id', uid).single();
+      const { data: profileRow } = await supabase.rpc('get_my_profile');
       setProfile(profileRow || null);
       const localSellerType = (profileRow?.seller_type as 'product' | 'service' | 'both' | undefined) ?? undefined;
       const localSellsProducts = !localSellerType || localSellerType === 'product' || localSellerType === 'both';

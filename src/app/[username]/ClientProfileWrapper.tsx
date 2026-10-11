@@ -28,6 +28,7 @@ import {
   type FollowSuggestionKind,
   type FollowSuggestionRow,
 } from '@/lib/followSuggestions';
+import { clearFollowEdgesWith, toggleFollowRateLimited } from '@/lib/rateLimitedSocial';
 
 export default function ClientProfileWrapper({ profile, products, services = [], reels = [] }: any) {
   const pathname = usePathname();
@@ -298,11 +299,9 @@ export default function ClientProfileWrapper({ profile, products, services = [],
     setSuggestionBusyId(row.id);
     try {
       if (currently) {
-        await supabase.from('follows').delete().eq('follower_id', viewerId).eq('following_id', row.id);
+        await toggleFollowRateLimited(supabase, { targetUserId: row.id, follow: false });
       } else {
-        await supabase
-          .from('follows')
-          .upsert({ follower_id: viewerId, following_id: row.id }, { ignoreDuplicates: true });
+        await toggleFollowRateLimited(supabase, { targetUserId: row.id, follow: true });
       }
     } catch {
       setSuggestionFollowingIds(previous);
@@ -319,17 +318,10 @@ export default function ClientProfileWrapper({ profile, products, services = [],
     setFollowBusy(true);
     setIsFollowing(next);
     try {
-      if (next) {
-        await supabase
-          .from('follows')
-          .upsert({ follower_id: viewerId, following_id: String(profile.id) }, { ignoreDuplicates: true });
-      } else {
-        await supabase
-          .from('follows')
-          .delete()
-          .eq('follower_id', viewerId)
-          .eq('following_id', String(profile.id));
-      }
+      await toggleFollowRateLimited(supabase, {
+        targetUserId: String(profile.id),
+        follow: next,
+      });
     } catch {
       setIsFollowing(previous);
     } finally {
@@ -378,10 +370,7 @@ export default function ClientProfileWrapper({ profile, products, services = [],
         blocker_id: viewerId,
         blocked_id: String(profile.id),
       });
-      await Promise.all([
-        supabase.from('follows').delete().eq('follower_id', viewerId).eq('following_id', String(profile.id)),
-        supabase.from('follows').delete().eq('follower_id', String(profile.id)).eq('following_id', viewerId),
-      ]);
+      await clearFollowEdgesWith(supabase, String(profile.id));
       router.push('/app');
     } catch {
       // Keep this lightweight for now; support screen remains available for fallback reporting.

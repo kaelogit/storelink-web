@@ -7,7 +7,7 @@ import { isClawbackAllowedPath } from '@/lib/clawbackSupportRoutes';
 
 /**
  * Sellers with an open clawback debt stay on repayment + support until the balance clears.
- * Matches mobile `_layout` clawback lock.
+ * Fail-closed: RPC errors are treated as may-have-debt (matches mobile).
  */
 export default function ClawbackLockGate() {
   const pathname = usePathname();
@@ -29,16 +29,20 @@ export default function ClawbackLockGate() {
       if (cancelled) return;
 
       const allowed = isClawbackAllowedPath(pathname);
-      const hasOpenDebt = Boolean(openDebt);
-      if (debtError && process.env.NODE_ENV === 'development') {
-        console.warn('clawback debt check failed', debtError.message);
-      }
+      // Fail closed: if debt check errors, keep seller in clawback flow until cleared.
+      const hasOrMayHaveDebt = Boolean(openDebt) || Boolean(debtError);
 
-      if (hasOpenDebt && !allowed) {
+      if (hasOrMayHaveDebt && !allowed) {
         router.replace('/app/seller/clawback-due');
         return;
       }
-      if (!hasOpenDebt && (pathname || '').startsWith('/app/seller/clawback-due')) {
+      if (!hasOrMayHaveDebt && (pathname || '').startsWith('/app/seller/clawback-due')) {
+        router.replace('/app');
+      }
+      if (
+        !hasOrMayHaveDebt &&
+        (pathname || '').startsWith('/app/seller/clawback-success')
+      ) {
         router.replace('/app');
       }
     })();

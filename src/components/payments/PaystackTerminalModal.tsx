@@ -16,6 +16,8 @@ export type PaystackTerminalModalProps = {
   amount: number;
   currency?: string;
   metadata?: Record<string, unknown>;
+  /** Pre-reserved Paystack reference from begin_order_checkout (freezes order totals). */
+  reference?: string | null;
 };
 
 /**
@@ -30,6 +32,7 @@ export function PaystackTerminalModal({
   amount,
   currency = 'NGN',
   metadata,
+  reference,
 }: PaystackTerminalModalProps) {
   const id = useId();
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -67,6 +70,7 @@ export function PaystackTerminalModal({
           amount: ${amountSmallest},
           currency: ${JSON.stringify(currencyCode)},
           metadata: ${JSON.stringify(metaObj)},
+          ${reference ? `ref: ${JSON.stringify(String(reference))},` : ''}
           onClose: function () {
             post({ kind: 'close' });
           },
@@ -85,7 +89,7 @@ export function PaystackTerminalModal({
   </script>
 </body>
 </html>`;
-  }, [amountSmallest, currencyCode, email, metadata, paystackKey]);
+  }, [amountSmallest, currencyCode, email, metadata, paystackKey, reference]);
 
   useEffect(() => {
     if (!isOpen) return;

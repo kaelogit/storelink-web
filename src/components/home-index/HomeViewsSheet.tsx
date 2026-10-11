@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Eye, X } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
@@ -19,6 +20,7 @@ export default function HomeViewsSheet({
   postId: string;
   mode: Mode;
 }) {
+  const router = useRouter();
   const supabase = useMemo(() => createBrowserClient(), []);
   const [rows, setRows] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -91,7 +93,7 @@ export default function HomeViewsSheet({
     const slug = row?.profile?.slug;
     if (!slug) return;
     onClose();
-    window.location.href = `/${slug}`;
+    router.push(`/${slug}`);
   };
 
   if (!open) return null;

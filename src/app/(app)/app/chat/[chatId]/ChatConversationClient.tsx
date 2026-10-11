@@ -27,6 +27,7 @@ import { CommerceCardMessage } from '@/components/chat/CommerceCardMessage';
 import { MessageRequestBanner } from '@/components/chat/MessageRequestBanner';
 import { fetchActiveCommerceForChat, type ChatProductOrderRow, type ChatServiceOrderRow } from '@/lib/chatCommerce';
 import { parseStoreLinkFromText } from '@/lib/chatShareUtils';
+import { messageSendErrorText } from '@/lib/rateLimit';
 import { createBrowserClient } from '@/lib/supabase';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { sendChatImageMessage } from '@/lib/chatImageSend';
@@ -38,7 +39,7 @@ import {
   isCommerceCardMessage,
 } from '@/lib/commerceCardMessage';
 import { getServiceListingHeroImage } from '@/lib/serviceListingMedia';
-import { blockChatPartner, isMessageRequestFolder, submitMessageRequestReport } from '@/lib/messageRequests';
+import { blockChatPartner, isMessageRequestFolder, formatMessageRequestSendError, MESSAGE_REQUEST_PLAIN_TEXT_HINT, redactMessageRequestRichContent, submitMessageRequestReport } from '@/lib/messageRequests';
 
 type ChatRow = {
   id: string;
@@ -146,6 +147,7 @@ export default function ChatConversationClient() {
   const [bubbleMenu, setBubbleMenu] = useState<{ x: number; y: number; message: Msg } | null>(null);
   const [loading, setLoading] = useState(true);
   const [chatFolder, setChatFolder] = useState<'primary' | 'requests'>('primary');
+  const [allowsRichDm, setAllowsRichDm] = useState(true);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [commercePickerOpen, setCommercePickerOpen] = useState(false);
   const touchSwipeStartX = useRef<number | null>(null);
@@ -160,17 +162,22 @@ export default function ChatConversationClient() {
   }, [chat, userId]);
   const isSeller = !!userId && !!chat?.seller_id && userId === chat.seller_id;
   const isRequest = isMessageRequestFolder(chatFolder);
-  const showCommerceAttach = isSeller && !isRequest;
+  const showCommerceAttach = isSeller && !isRequest && allowsRichDm;
+  const displayMessages = useMemo(
+    () => (isRequest ? messages.map((m) => redactMessageRequestRichContent(m as any) as Msg) : messages),
+    [isRequest, messages],
+  );
   const partnerOnline = useMemo(() => isPartnerOnline(presence?.last_seen_at), [presence?.last_seen_at]);
   const showPartnerOnline = Boolean(presence?.share_online_status) && partnerOnline;
 
   const filteredMessages = useMemo(() => {
     const q = chatSearchQuery.trim().toLowerCase();
-    if (!q) return messages;
-    return messages.filter((m) => String(m.text || '').toLowerCase().includes(q));
-  }, [messages, chatSearchQuery]);
+    if (!q) return displayMessages;
+    return displayMessages.filter((m) => String(m.text || '').toLowerCase().includes(q));
+  }, [displayMessages, chatSearchQuery]);
 
   const mediaLinks = useMemo(() => {
+    if (isRequest) return [];
     const out: { id: string; label: string; href: string; kind: string }[] = [];
     for (const m of messages) {
       if (m.image_url) {
@@ -197,7 +204,7 @@ export default function ChatConversationClient() {
       }
     }
     return out;
-  }, [messages]);
+  }, [isRequest, messages]);
 
   const loadAll = useCallback(async () => {
     if (!chatId) return;
@@ -211,7 +218,7 @@ export default function ChatConversationClient() {
         supabase
           .from('chats')
           .select(
-            'id, buyer_id, seller_id, buyer:buyer_id(id,display_name,slug,logo_url,is_seller,phone_number,subscription_plan), seller:seller_id(id,display_name,slug,logo_url,is_seller,phone_number,subscription_plan)',
+            'id, buyer_id, seller_id, buyer:buyer_id(id,display_name,slug,logo_url,is_seller,subscription_plan), seller:seller_id(id,display_name,slug,logo_url,is_seller,subscription_plan)',
           )
           .eq('id', chatId)
           .maybeSingle(),
@@ -222,7 +229,7 @@ export default function ChatConversationClient() {
           .order('created_at', { ascending: true }),
         fetchActiveCommerceForChat(supabase, chatId),
         uid
-          ? supabase.from('profiles').select('email, coin_balance').eq('id', uid).maybeSingle()
+          ? supabase.rpc('get_my_profile')
           : Promise.resolve({ data: null } as const),
         uid ? supabase.rpc('get_my_inbox_with_receipts') : Promise.resolve({ data: null } as const),
       ]);
@@ -236,6 +243,19 @@ export default function ChatConversationClient() {
       setMessages((msgRes.data as Msg[]) || []);
       setProductOrders(commerce.productOrders);
       setServiceOrders(commerce.serviceOrders);
+
+      if (uid && chatId) {
+        const [{ data: blocked }, { data: richOk }] = await Promise.all([
+          supabase.rpc('chat_is_blocked_for_me', { p_chat_id: chatId }),
+          supabase.rpc('chat_allows_rich_dm', { p_chat_id: chatId }),
+        ]);
+        if (blocked === true) {
+          toast.error("You can't message this user.");
+          router.replace('/app/messages');
+          return;
+        }
+        setAllowsRichDm(richOk === true);
+      }
 
       const inboxRow = ((inboxRes.data as { chat_id?: string; folder?: string }[] | null) || []).find(
         (row) => row?.chat_id === chatId,
@@ -259,7 +279,7 @@ export default function ChatConversationClient() {
     } finally {
       setLoading(false);
     }
-  }, [chatId, supabase]);
+  }, [chatId, router, supabase]);
 
   useEffect(() => {
     void loadAll();
@@ -310,6 +330,10 @@ export default function ChatConversationClient() {
   const send = async () => {
     const text = draft.trim();
     if (!text || !chatId || !userId || sending) return;
+    if (!allowsRichDm && (/https?:\/\//i.test(text) || /\bwww\./i.test(text))) {
+      toast.error(MESSAGE_REQUEST_PLAIN_TEXT_HINT);
+      return;
+    }
     setSending(true);
     setDraft('');
     const temp: Msg = {
@@ -337,13 +361,21 @@ export default function ChatConversationClient() {
     if (error) {
       setMessages((old) => old.filter((m) => m.id !== temp.id));
       setDraft(text);
-      toast.error(error.message || 'Could not send message.');
+      toast.error(formatMessageRequestSendError(error) || messageSendErrorText(error));
+    } else {
+      void supabase.rpc('chat_allows_rich_dm', { p_chat_id: chatId }).then(({ data }) => {
+        setAllowsRichDm(data === true);
+      });
     }
     setSending(false);
   };
 
   const sendImage = async (file: File) => {
     if (!chatId || !userId || uploadingImage) return;
+    if (!allowsRichDm) {
+      toast.error(MESSAGE_REQUEST_PLAIN_TEXT_HINT);
+      return;
+    }
     setUploadingImage(true);
     const tempId = `temp-img-${Date.now()}`;
     const optimistic: Msg = {
@@ -367,7 +399,7 @@ export default function ChatConversationClient() {
       );
     } catch (e: unknown) {
       setMessages((old) => old.filter((m) => m.id !== tempId));
-      toast.error(e instanceof Error ? e.message : 'Could not send photo.');
+      toast.error(messageSendErrorText(e, 'Could not send photo.'));
     } finally {
       setUploadingImage(false);
     }
@@ -411,7 +443,7 @@ export default function ChatConversationClient() {
       );
     } catch (e: unknown) {
       setMessages((old) => old.filter((m) => m.id !== tempId));
-      toast.error(e instanceof Error ? e.message : 'Could not share listing.');
+      toast.error(messageSendErrorText(e, 'Could not share listing.'));
     }
   };
 
@@ -455,12 +487,15 @@ export default function ChatConversationClient() {
   const blockRequest = async () => {
     if (!userId || !partner?.id || !chatId) return;
     if (!window.confirm('Block this user? They won\'t be able to message you.')) return;
-    const result = await blockChatPartner(supabase, { blockerId: userId, blockedId: String(partner.id) });
+    const result = await blockChatPartner(supabase, {
+      blockerId: userId,
+      blockedId: String(partner.id),
+      chatId,
+    });
     if (!result.ok) {
       toast.error(result.error);
       return;
     }
-    await supabase.rpc('delete_chat', { p_chat_id: chatId });
     toast.success('User blocked.');
     router.push('/app/messages');
   };
@@ -559,12 +594,22 @@ export default function ChatConversationClient() {
             <button
               type="button"
               onClick={() => {
-                const phone = partner?.phone_number?.trim();
-                if (!phone) {
-                  window.alert('No contact\n\nThis user has not listed a phone number.');
-                  return;
-                }
-                window.location.href = `tel:${encodeURIComponent(phone)}`;
+                void (async () => {
+                  const partnerId = partner?.id;
+                  if (!partnerId) {
+                    window.alert('No contact\n\nThis user has not listed a phone number.');
+                    return;
+                  }
+                  const { data: phone } = await supabase.rpc('get_counterparty_phone', {
+                    p_profile_id: partnerId,
+                  });
+                  const trimmed = typeof phone === 'string' ? phone.trim() : '';
+                  if (!trimmed) {
+                    window.alert('No contact\n\nThis user has not listed a phone number.');
+                    return;
+                  }
+                  window.location.href = `tel:${encodeURIComponent(trimmed)}`;
+                })();
               }}
               className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-(--surface) text-(--foreground)"
               aria-label="Call"
@@ -811,6 +856,7 @@ export default function ChatConversationClient() {
         onClearReply={() => setReplyTo(null)}
         showCommerceAttach={showCommerceAttach}
         onOpenCommercePicker={() => setCommercePickerOpen(true)}
+        allowAttachments={allowsRichDm}
       />
 
       {commercePickerOpen && userId ? (

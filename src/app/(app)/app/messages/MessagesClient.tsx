@@ -42,6 +42,7 @@ import {
 import { createBrowserClient } from '@/lib/supabase';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { sendChatImageMessage } from '@/lib/chatImageSend';
+import { messageSendErrorText } from '@/lib/rateLimit';
 import {
   buildProductCardMessageText,
   buildProductCommerceCardMetadata,
@@ -55,6 +56,9 @@ import {
   blockChatPartner,
   getMessageRequestInboxPreview,
   isMessageRequestFolder,
+  formatMessageRequestSendError,
+  MESSAGE_REQUEST_PLAIN_TEXT_HINT,
+  redactMessageRequestRichContent,
   submitMessageRequestReport,
 } from '@/lib/messageRequests';
 import {
@@ -156,13 +160,8 @@ function renderPreviewText(
   return text || 'No messages yet';
 }
 
-function effectiveThreadFolder(
-  thread: InboxThread | null,
-  following: Set<string>,
-): 'primary' | 'requests' {
+function effectiveThreadFolder(thread: InboxThread | null): 'primary' | 'requests' {
   if (!thread) return 'primary';
-  const partnerId = String(thread.partner?.id || '');
-  if (thread.folder === 'requests' && partnerId && following.has(partnerId)) return 'primary';
   return thread.folder === 'requests' ? 'requests' : 'primary';
 }
 
@@ -199,7 +198,6 @@ export default function MessagesClient() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [hiddenChatIds, setHiddenChatIds] = useState<string[]>([]);
   const [mutedChatIds, setMutedChatIds] = useState<string[]>([]);
-  const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [activeOrderChatIds, setActiveOrderChatIds] = useState<Set<string>>(new Set());
   const [paneProductOrders, setPaneProductOrders] = useState<ChatProductOrderRow[]>([]);
   const [paneServiceOrders, setPaneServiceOrders] = useState<ChatServiceOrderRow[]>([]);
@@ -239,7 +237,6 @@ export default function MessagesClient() {
 
   const hiddenSet = useMemo(() => new Set(hiddenChatIds), [hiddenChatIds]);
   const mutedSet = useMemo(() => new Set(mutedChatIds), [mutedChatIds]);
-  const followingSet = useMemo(() => new Set(followingIds), [followingIds]);
 
   useEffect(() => {
     try {
@@ -254,19 +251,26 @@ export default function MessagesClient() {
     [threads, selectedChatId],
   );
   const selectedThreadFolder = useMemo(
-    () => effectiveThreadFolder(selectedThread, followingSet),
-    [selectedThread, followingSet],
+    () => effectiveThreadFolder(selectedThread),
+    [selectedThread],
   );
   const selectedIsRequest = selectedThreadFolder === 'requests';
-  const showCommerceAttach = paneIsSeller && !selectedIsRequest;
+  const [allowsRichDm, setAllowsRichDm] = useState(true);
+  const showCommerceAttach = paneIsSeller && !selectedIsRequest && allowsRichDm;
+
+  const displayMessages = useMemo(
+    () => (selectedIsRequest ? messages.map((m) => redactMessageRequestRichContent(m as any) as ChatMessage) : messages),
+    [messages, selectedIsRequest],
+  );
 
   const filteredMessages = useMemo(() => {
     const q = chatSearchQuery.trim().toLowerCase();
-    if (!q) return messages;
-    return messages.filter((m) => String(m.text || '').toLowerCase().includes(q));
-  }, [messages, chatSearchQuery]);
+    if (!q) return displayMessages;
+    return displayMessages.filter((m) => String(m.text || '').toLowerCase().includes(q));
+  }, [displayMessages, chatSearchQuery]);
 
   const mediaLinks = useMemo(() => {
+    if (selectedIsRequest) return [];
     const out: { id: string; label: string; href: string; kind: string }[] = [];
     for (const m of messages) {
       if (m.image_url) {
@@ -291,7 +295,7 @@ export default function MessagesClient() {
       }
     }
     return out;
-  }, [messages]);
+  }, [messages, selectedIsRequest]);
 
   const showPartnerOnline =
     showOnlineStatus &&
@@ -329,11 +333,10 @@ export default function MessagesClient() {
         return;
       }
 
-      const [{ data: me }, { data: hidden }, { data: muted }, { data: follows }, { data, error }, groups, invites] = await Promise.all([
-        supabase.from('profiles').select('share_online_status, email, coin_balance').eq('id', uid).maybeSingle(),
+      const [{ data: me }, { data: hidden }, { data: muted }, { data, error }, groups, invites] = await Promise.all([
+        supabase.rpc('get_my_profile'),
         supabase.rpc('get_my_hidden_chat_ids'),
         supabase.from('chat_mutes').select('chat_id').eq('user_id', uid),
-        supabase.from('follows').select('following_id').eq('follower_id', uid),
         supabase.rpc('get_my_inbox_with_receipts'),
         fetchMyGroupsInbox(supabase).catch(() => [] as GroupInboxRow[]),
         fetchMyPendingGroupInvites(supabase).catch(() => [] as GroupInviteRow[]),
@@ -346,7 +349,6 @@ export default function MessagesClient() {
       setBuyerCoinBalance(Number(meRow?.coin_balance || 0));
       setHiddenChatIds(((hidden as string[]) || []).filter(Boolean));
       setMutedChatIds(((muted || []) as Array<{ chat_id: string }>).map((r) => r.chat_id));
-      setFollowingIds(((follows || []) as Array<{ following_id: string }>).map((r) => r.following_id));
 
       const rows = ((data || []) as InboxThread[]).sort((a, b) => {
         const ta = a.updated_at ? new Date(a.updated_at).getTime() : 0;
@@ -389,6 +391,8 @@ export default function MessagesClient() {
       setMessages((data || []) as ChatMessage[]);
 
       if (currentUserId) {
+        const { data: richOk } = await supabase.rpc('chat_allows_rich_dm', { p_chat_id: selectedChatId });
+        setAllowsRichDm(richOk === true);
         await supabase.rpc('mark_messages_read', {
           p_conversation_id: selectedChatId,
           p_user_id: currentUserId,
@@ -510,15 +514,7 @@ export default function MessagesClient() {
   }, [currentUserId, loadThreads, selectedChatId, supabase]);
 
   const filteredThreads = useMemo(() => {
-    let rows = threads
-      .map((t) => {
-        const partnerId = String(t.partner?.id || '');
-        if (t.folder === 'requests' && partnerId && followingSet.has(partnerId)) {
-          return { ...t, folder: 'primary' as const };
-        }
-        return t;
-      })
-      .filter((t) => !hiddenSet.has(t.chat_id));
+    let rows = threads.filter((t) => !hiddenSet.has(t.chat_id));
 
     if (activeTab !== 'all') rows = rows.filter((t) => (t.folder || 'primary') === activeTab);
     const q = search.trim().toLowerCase();
@@ -537,7 +533,7 @@ export default function MessagesClient() {
       const tb = b.updated_at ? new Date(b.updated_at).getTime() : 0;
       return tb - ta;
     });
-  }, [activeTab, followingSet, hiddenSet, search, threads]);
+  }, [activeTab, hiddenSet, search, threads]);
 
   const filteredGroupThreads = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -573,22 +569,14 @@ export default function MessagesClient() {
   };
 
   const tabCounts = useMemo(() => {
-    const visible = threads
-      .map((t) => {
-        const partnerId = String(t.partner?.id || '');
-        if (t.folder === 'requests' && partnerId && followingSet.has(partnerId)) {
-          return { ...t, folder: 'primary' as const };
-        }
-        return t;
-      })
-      .filter((t) => !hiddenSet.has(t.chat_id));
+    const visible = threads.filter((t) => !hiddenSet.has(t.chat_id));
     return {
       all: visible.length,
       primary: visible.filter((t) => (t.folder || 'primary') === 'primary').length,
       requests: visible.filter((t) => (t.folder || 'primary') === 'requests').length,
       groups: groupThreads.length,
     };
-  }, [followingSet, groupThreads.length, hiddenSet, threads]);
+  }, [groupThreads.length, hiddenSet, threads]);
 
   useEffect(() => {
     const close = () => {
@@ -619,6 +607,10 @@ export default function MessagesClient() {
   const sendMessage = async () => {
     const text = draft.trim();
     if (!text || !selectedChatId || !currentUserId) return;
+    if (!allowsRichDm && (/https?:\/\//i.test(text) || /\bwww\./i.test(text))) {
+      toast.error(MESSAGE_REQUEST_PLAIN_TEXT_HINT);
+      return;
+    }
     setDraft('');
     const optimistic: ChatMessage = {
       id: `temp-${Date.now()}`,
@@ -650,12 +642,20 @@ export default function MessagesClient() {
     if (error) {
       setDraft(text);
       setMessages((old) => old.filter((m) => m.id !== optimistic.id));
-      toast.error(error.message || 'Could not send message.');
+      toast.error(formatMessageRequestSendError(error) || messageSendErrorText(error));
+    } else {
+      void supabase.rpc('chat_allows_rich_dm', { p_chat_id: selectedChatId }).then(({ data }) => {
+        setAllowsRichDm(data === true);
+      });
     }
   };
 
   const sendImage = async (file: File) => {
     if (!selectedChatId || !currentUserId || uploadingImage) return;
+    if (!allowsRichDm) {
+      toast.error(MESSAGE_REQUEST_PLAIN_TEXT_HINT);
+      return;
+    }
     setUploadingImage(true);
     const tempId = `temp-img-${Date.now()}`;
     const optimistic: ChatMessage = {
@@ -691,7 +691,7 @@ export default function MessagesClient() {
       void loadThreads();
     } catch (e: unknown) {
       setMessages((old) => old.filter((m) => m.id !== tempId));
-      toast.error(e instanceof Error ? e.message : 'Could not send photo.');
+      toast.error(messageSendErrorText(e, 'Could not send photo.'));
     } finally {
       setUploadingImage(false);
     }
@@ -749,7 +749,7 @@ export default function MessagesClient() {
       void loadThreads();
     } catch (e: unknown) {
       setMessages((old) => old.filter((m) => m.id !== tempId));
-      toast.error(e instanceof Error ? e.message : 'Could not share listing.');
+      toast.error(messageSendErrorText(e, 'Could not share listing.'));
     }
   };
 
@@ -806,12 +806,15 @@ export default function MessagesClient() {
     const partnerId = String(thread.partner?.id || '');
     if (!partnerId) return;
     if (!window.confirm('Block this user? They won\'t be able to message you.')) return;
-    const result = await blockChatPartner(supabase, { blockerId: currentUserId, blockedId: partnerId });
+    const result = await blockChatPartner(supabase, {
+      blockerId: currentUserId,
+      blockedId: partnerId,
+      chatId: thread.chat_id,
+    });
     if (!result.ok) {
       toast.error(result.error);
       return;
     }
-    await supabase.rpc('delete_chat', { p_chat_id: thread.chat_id });
     setThreads((old) => old.filter((t) => t.chat_id !== thread.chat_id));
     setHiddenChatIds((old) => [...old, thread.chat_id]);
     if (selectedChatId === thread.chat_id) updateQueryChat(null);
@@ -1016,7 +1019,7 @@ export default function MessagesClient() {
             ) : filteredThreads.length === 0 ? (
               <p className="p-4 text-sm text-(--muted)">
                 {activeTab === 'requests'
-                  ? 'Requests from people you don’t follow appear here. Message previews stay hidden until you accept.'
+                  ? 'Requests from people you don’t follow appear here. Decline a request to stop them messaging you; previews stay hidden until you open the chat.'
                   : activeTab === 'primary'
                     ? 'No primary messages yet.'
                     : 'No conversations yet.'}
@@ -1028,7 +1031,7 @@ export default function MessagesClient() {
                 const avatar = normalizeWebMediaUrl(thread.partner?.logo_url || '');
                 const isMuted = mutedSet.has(thread.chat_id);
                 const hasActiveOrder = activeOrderChatIds.has(thread.chat_id);
-                const threadFolder = effectiveThreadFolder(thread, followingSet);
+                const threadFolder = effectiveThreadFolder(thread);
                 const isRequestRow = threadFolder === 'requests';
                 const previewType = String(thread.last_message_type || 'TEXT').toUpperCase();
                 const previewText = renderPreviewText(thread.last_message, previewType, threadFolder);
@@ -1426,6 +1429,7 @@ export default function MessagesClient() {
                 onClearReply={() => setReplyTo(null)}
                 showCommerceAttach={showCommerceAttach}
                 onOpenCommercePicker={() => setCommercePickerOpen(true)}
+                allowAttachments={allowsRichDm}
               />
 
               {commercePickerOpen && currentUserId ? (

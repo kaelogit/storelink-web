@@ -184,7 +184,7 @@ export default function WalletClient() {
       return;
     }
     const [{ data: p }, { data: txs, error: txErr }] = await Promise.all([
-      supabase.from('profiles').select('id, coin_balance').eq('id', uid).maybeSingle(),
+      supabase.rpc('get_my_profile'),
       supabase.from('coin_transactions').select('*').eq('user_id', uid).neq('type', 'ORDER_PAYMENT').order('created_at', { ascending: false }),
     ]);
     if (txErr) throw txErr;

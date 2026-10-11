@@ -23,7 +23,7 @@ export default function EditEmailClient() {
       const { data: auth } = await supabase.auth.getUser();
       const uid = auth.user?.id;
       if (!uid) return;
-      const { data } = await supabase.from('profiles').select('email,is_verified').eq('id', uid).maybeSingle();
+      const { data } = await supabase.rpc('get_my_profile');
       setCurrent(String(data?.email || auth.user?.email || ''));
       setVerified(data?.is_verified === true);
     })();

@@ -8,7 +8,9 @@ import MobileBottomTabs from '@/components/app-shell/MobileBottomTabs';
 import WebFloatingCart from '@/components/cart/WebFloatingCart';
 import { AppShellProfileProvider } from '@/components/app-shell/app-shell-profile';
 import ClawbackLockGate from '@/components/seller/ClawbackLockGate';
+import AccountAccessLockGate from '@/components/auth/AccountAccessLockGate';
 import { createServerClient } from '@/lib/supabase-server';
+import { isAccountAccessLocked, accountLockRoute } from '@/lib/accountAccess';
 import type { ReactNode } from 'react';
 
 export default async function AppLayerLayout({ children }: { children: ReactNode }) {
@@ -19,9 +21,13 @@ export default async function AppLayerLayout({ children }: { children: ReactNode
   if (data?.user?.id) {
     const { data: profile } = await supabase
       .from('profiles')
-      .select('is_verified,onboarding_completed')
+      .select('is_verified,onboarding_completed,account_status')
       .eq('id', data.user.id)
       .maybeSingle();
+
+    if (profile && isAccountAccessLocked(profile.account_status)) {
+      redirect(accountLockRoute(profile.account_status));
+    }
 
     if (profile && !profile.is_verified) {
       const email = data.user.email ?? '';
@@ -40,6 +46,7 @@ export default async function AppLayerLayout({ children }: { children: ReactNode
   return (
     <WebAuthGate initialState={initialState}>
       <AppShellProfileProvider>
+        <AccountAccessLockGate />
         <ClawbackLockGate />
         <div className="min-h-dvh bg-(--background)">
           <AppTopBar />

@@ -84,6 +84,47 @@ export async function verifyPhoneOtp(phone: string, code: string): Promise<Phone
   return payload;
 }
 
+export type BankDetailsPayload = {
+  bank_name: string;
+  bank_code: string;
+  account_name: string;
+  account_number: string;
+  currency?: string;
+};
+
+/** OTP-gated bank change (existing recipient). First-time saves use paystack-account-resolve action=save_first_time. */
+export async function confirmBankDetailsChange(
+  code: string,
+  bankDetails: BankDetailsPayload,
+): Promise<PhoneOtpResult> {
+  const token = await getAccessToken();
+  if (!token) {
+    return { ok: false, message: 'Sign in again and try.' };
+  }
+
+  const supabase = createBrowserClient();
+  const { data, error } = await supabase.functions.invoke('confirm-bank-details-change', {
+    body: { code, bank_details: bankDetails },
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (error) {
+    return { ok: false, message: 'Could not confirm bank change. Check your connection and try again.' };
+  }
+
+  const payload = data as PhoneOtpResult | null;
+  if (!payload?.ok) {
+    return {
+      ok: false,
+      message: payload?.message ?? 'Could not update bank details.',
+      code: payload?.code,
+      retry_after_seconds: payload?.retry_after_seconds,
+    };
+  }
+
+  return payload;
+}
+
 /** Where to go after OTP success or “Verify later”. Web paths (mobile uses Expo routes). */
 export function continueAfterPhoneVerification(params: {
   from?: string | string[] | null;
@@ -93,7 +134,8 @@ export function continueAfterPhoneVerification(params: {
   const returnTo = Array.isArray(params.returnTo) ? params.returnTo[0] : params.returnTo;
   if (from === 'onboarding-upgrade') return '/app/profile';
   if (from === 'onboarding') return '/onboarding/store-address';
-  if (from === 'collector') return '/onboarding/follow-stores';
+  // Shopper: home pin before follow suggestions (needs discovery location).
+  if (from === 'collector') return '/buyer/home-address?next=%2Fonboarding%2Ffollow-stores&required=true';
   if (returnTo) return returnTo;
   return '/app/settings/account';
 }

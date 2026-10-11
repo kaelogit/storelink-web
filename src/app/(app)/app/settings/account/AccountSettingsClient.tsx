@@ -44,13 +44,7 @@ export default function AccountSettingsClient() {
       setProfile(null);
       return;
     }
-    const { data } = await supabase
-      .from('profiles')
-      .select(
-        'id,is_seller,full_name,display_name,slug,bio,email,phone_number,phone_verified,is_verified,date_of_birth,location_city,location_state,location_country_code,business_verification_status',
-      )
-      .eq('id', uid)
-      .maybeSingle();
+    const { data } = await supabase.rpc('get_my_profile');
     setProfile((data as ProfileRow) || null);
   }, [supabase]);
 

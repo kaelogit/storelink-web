@@ -138,9 +138,19 @@ export function ChatPartnerMenuView({
     void (async () => {
       setRepLoading(true);
       try {
-        const { data } = await supabase.from('profiles').select('id,slug,display_name,logo_url,phone_number,is_seller,subscription_plan').eq('id', profile.id).maybeSingle();
+        const { data } = await supabase
+          .from('public_profiles')
+          .select('id,slug,display_name,logo_url,is_seller,subscription_plan')
+          .eq('id', profile.id)
+          .maybeSingle();
         if (!cancelled && data) {
           setProfile((p) => ({ ...p, ...(data as SheetPartner) }));
+        }
+        const { data: phone } = await supabase.rpc('get_counterparty_phone', {
+          p_profile_id: profile.id,
+        });
+        if (!cancelled && typeof phone === 'string' && phone.trim()) {
+          setProfile((p) => ({ ...p, phone_number: phone.trim() }));
         }
       } catch {
         /* keep incoming partner */

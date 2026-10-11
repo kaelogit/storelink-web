@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createBrowserClient } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/activity-feed';
+import { formatPrepayReviseFreezeError } from '@/lib/beginOrderCheckout';
 
 export default function ReviseBookingPricePage() {
   const router = useRouter();
@@ -103,7 +104,7 @@ export default function ReviseBookingPricePage() {
       toast.success('Price updated');
       router.replace(`/app/bookings/${serviceOrderId}`);
     } catch (e: any) {
-      toast.error(e?.message || 'Could not update price');
+      toast.error(formatPrepayReviseFreezeError(e));
     } finally {
       setSaving(false);
     }

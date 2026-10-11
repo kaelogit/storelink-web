@@ -55,21 +55,17 @@ export default function RoleSetupPage() {
       const role = ROLES.find((r) => r.id === selectedRole);
       if (!role) throw new Error('Invalid role selected');
 
-      // 🔄 DATABASE SYNC: Perfectly matching the Mobile Payload
+      // 🔄 DATABASE SYNC: money/plan fields via RPC (not client-writable)
       const nextStep = role.isSeller ? '/onboarding/setup' : '/onboarding/pick-categories';
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          is_seller: role.isSeller,
-          prestige_weight: role.prestige,
-          subscription_plan: role.isSeller ? 'standard' : null,
-          subscription_status: role.isSeller ? 'active' : null,
-          onboarding_step: 'location-permission', // Handing off to the next screen
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', session.user.id);
+      const { data: roleResult, error: updateError } = await supabase.rpc('apply_onboarding_role_choice', {
+        p_is_seller: role.isSeller,
+        p_onboarding_step: 'location-permission',
+      });
 
       if (updateError) throw updateError;
+      if (roleResult && (roleResult as { ok?: boolean }).ok === false) {
+        throw new Error('Could not save your role choice.');
+      }
 
       // 🚀 Route to the location permission explainer with the correct next step.
       router.push(`/onboarding/location-permission?next=${encodeURIComponent(nextStep)}`);

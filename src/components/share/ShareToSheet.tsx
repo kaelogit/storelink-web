@@ -18,6 +18,9 @@ import { toast } from 'sonner';
 import { createBrowserClient } from '@/lib/supabase';
 import { buildShareDmMetadata, buildShareDmText, type ShareType } from '@/lib/shareDm';
 import {
+  formatMessageRequestSendError,
+} from '@/lib/messageRequests';
+import {
   buildSmsShareUrl,
   buildWhatsAppShareUrl,
   type SharePlatformId,
@@ -198,8 +201,8 @@ export default function ShareToSheet() {
         }
         toast.success('Sent in chat');
         close();
-      } catch {
-        toast.error('Send failed');
+      } catch (err) {
+        toast.error(formatMessageRequestSendError(err) || 'Send failed');
       } finally {
         setSendingToId(null);
       }

@@ -8,8 +8,8 @@ import { createBrowserClient } from '@/lib/supabase';
 type ProfileRow = {
   is_seller?: boolean | null;
   seller_type?: string | null;
-  is_verified?: boolean | null;
   verification_status?: string | null;
+  kyc_status?: string | null;
   bank_details?: { recipient_code?: string | null } | null;
   location_country?: string | null;
 };
@@ -100,7 +100,7 @@ export default function AppPostPage() {
       }
       const { data } = await supabase
         .from('profiles')
-        .select('is_seller,seller_type,is_verified,verification_status,bank_details,location_country')
+        .select('is_seller,seller_type,verification_status,kyc_status,bank_details,location_country')
         .eq('id', userId)
         .maybeSingle();
       if (!active) return;
@@ -123,7 +123,9 @@ export default function AppPostPage() {
   }, [supabase]);
 
   const isSeller = Boolean(profile?.is_seller);
-  const isVerified = String(profile?.verification_status || '').toLowerCase() === 'verified' || Boolean(profile?.is_verified);
+  const isVerified =
+    String(profile?.verification_status || '').toLowerCase() === 'verified' ||
+    String(profile?.kyc_status || '').toLowerCase() === 'verified';
   const hasPayoutAccount = Boolean(profile?.bank_details?.recipient_code);
   const sellerType = String(profile?.seller_type || '').toLowerCase();
   const canPostProduct = sellerType !== 'service';

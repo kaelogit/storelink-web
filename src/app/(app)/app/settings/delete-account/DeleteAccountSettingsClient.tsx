@@ -19,7 +19,10 @@ export default function DeleteAccountSettingsClient() {
     setBusy(true);
     setError(null);
     try {
-      // Keep parity with current mobile behavior: deactivation notice + sign out.
+      const { data, error: rpcError } = await supabase.rpc('request_account_disable');
+      if (rpcError) throw rpcError;
+      const payload = data as { ok?: boolean } | null;
+      if (!payload?.ok) throw new Error('Could not disable account.');
       setDone(true);
     } catch (e: any) {
       setError(e?.message || 'Could not process deletion request.');
@@ -71,7 +74,9 @@ export default function DeleteAccountSettingsClient() {
         {done ? (
           <section className="rounded-2xl border border-emerald-300/30 bg-emerald-500/10 p-4">
             <p className="text-sm font-semibold text-(--foreground)">Account scheduled for deletion</p>
-            <p className="mt-1 text-sm text-(--muted)">Your account has been deactivated and enters deletion processing.</p>
+            <p className="mt-1 text-sm text-(--muted)">
+              Your account is disabled and scheduled for deletion in 30 days. Sign in again before then to reactivate.
+            </p>
             <button
               type="button"
               onClick={() => void onDismissSuccess()}

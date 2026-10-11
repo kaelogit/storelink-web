@@ -1,4 +1,5 @@
 import { formatCurrency } from '@/lib/activity-feed';
+import { fromSmallestUnit } from '@/lib/paystackPublic';
 
 export type ClawbackDebtStatus = 'open' | 'paid' | 'waived';
 
@@ -15,13 +16,14 @@ export type ClawbackDebtPreview = {
   buyer_name?: string | null;
   buyer_slug?: string | null;
   buyer_id?: string;
+  open_count?: number;
 };
 
 export const CLAWBACK_DEFAULT_REASON =
   'Company-funded dispute refund recovery after payout was already released to you.';
 
 export function formatClawbackAmount(debt: Pick<ClawbackDebtPreview, 'amount_minor' | 'currency_code'>): string {
-  const main = Number(debt.amount_minor || 0) / 100;
+  const main = fromSmallestUnit(Number(debt.amount_minor || 0), debt.currency_code || 'NGN');
   return formatCurrency(main, debt.currency_code || 'NGN');
 }
 

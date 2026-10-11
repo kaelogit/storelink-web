@@ -21,7 +21,7 @@ export default function EditBirthdayClient() {
       const uid = auth.user?.id;
       if (!uid) return;
       setProfileId(uid);
-      const { data } = await supabase.from('profiles').select('date_of_birth').eq('id', uid).maybeSingle();
+      const { data } = await supabase.rpc('get_my_profile');
       const iso = data?.date_of_birth ? String(data.date_of_birth).slice(0, 10) : '';
       setExisting(iso || null);
       setValue(iso);

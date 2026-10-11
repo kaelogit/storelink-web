@@ -169,10 +169,13 @@ export async function confirmAdCampaignPayment(
   reference: string,
 ): Promise<Record<string, unknown>> {
   const supabase = createBrowserClient();
-  const { data, error } = await supabase.rpc('confirm_ad_campaign_payment', {
-    p_campaign_id: campaignId,
-    p_reference: reference,
+  const { data, error } = await supabase.functions.invoke('confirm-ad-campaign-payment', {
+    body: { campaign_id: campaignId, reference },
   });
   if (error) throw error;
-  return (data ?? {}) as Record<string, unknown>;
+  const payload = (data ?? {}) as Record<string, unknown>;
+  if (payload.ok === false) {
+    throw new Error(String(payload.message || 'Payment confirmation failed'));
+  }
+  return payload;
 }

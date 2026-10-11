@@ -7,28 +7,44 @@ import Footer from '../../components/home/Footer';
 import Section from '../../components/ui/Section';
 import Card from '../../components/ui/Card';
 import Button from '../../components/ui/Button';
+import { TurnstileWidget, turnstileConfigured } from '../../components/security/TurnstileWidget';
 
 export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSent, setIsSent] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const [turnstileReset, setTurnstileReset] = useState(0);
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
     email: '',
     topic: 'General Inquiry',
     message: '',
+    website: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError(null);
+    if (turnstileConfigured() && !turnstileToken) {
+      setSubmitError('Please complete the captcha before sending.');
+      return;
+    }
     setIsSubmitting(true);
     try {
       const response = await fetch('/api/support/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          firstName: form.firstName,
+          lastName: form.lastName,
+          email: form.email,
+          topic: form.topic,
+          message: form.message,
+          website: form.website,
+          turnstileToken: turnstileToken || undefined,
+        }),
       });
       if (!response.ok) {
         const payload = await response.json().catch(() => ({}));
@@ -41,10 +57,15 @@ export default function ContactPage() {
         email: '',
         topic: 'General Inquiry',
         message: '',
+        website: '',
       });
+      setTurnstileToken(null);
+      setTurnstileReset((n) => n + 1);
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : 'Could not send your message right now.';
       setSubmitError(errorMessage);
+      setTurnstileToken(null);
+      setTurnstileReset((n) => n + 1);
     } finally {
       setIsSubmitting(false);
     }
@@ -144,7 +165,7 @@ export default function ContactPage() {
                             </Button>
                         </motion.div>
                     ) : (
-                        <form onSubmit={handleSubmit} className="space-y-6">
+                        <form onSubmit={handleSubmit} className="space-y-6 relative">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <Input label="First Name" placeholder="Jane" value={form.firstName} onChange={(v) => setForm((prev) => ({ ...prev, firstName: v }))} />
                                 <Input label="Last Name" placeholder="Doe" value={form.lastName} onChange={(v) => setForm((prev) => ({ ...prev, lastName: v }))} />
@@ -170,16 +191,36 @@ export default function ContactPage() {
                                     onChange={(e) => setForm((prev) => ({ ...prev, message: e.target.value }))}
                                     className="w-full bg-(--card) border border-(--border) rounded-xl px-4 py-4 text-(--foreground) placeholder:text-(--muted) focus:outline-none focus:border-(--emerald) transition-colors duration-(--duration-150) resize-none"
                                     placeholder="Tell us how we can help..."
+                                    maxLength={4000}
                                     required
                                 />
                             </div>
+
+                            {/* Honeypot — hidden from users */}
+                            <div className="absolute -left-[9999px] opacity-0 h-0 w-0 overflow-hidden" aria-hidden="true">
+                              <label htmlFor="contact-website">Website</label>
+                              <input
+                                id="contact-website"
+                                type="text"
+                                tabIndex={-1}
+                                autoComplete="off"
+                                value={form.website}
+                                onChange={(e) => setForm((prev) => ({ ...prev, website: e.target.value }))}
+                              />
+                            </div>
+
+                            <TurnstileWidget
+                              onToken={setTurnstileToken}
+                              resetSignal={turnstileReset}
+                            />
+
                             {submitError && (
                               <p className="text-sm text-red-500 font-semibold">{submitError}</p>
                             )}
 
                             <Button
                                 type="submit"
-                                disabled={isSubmitting}
+                                disabled={isSubmitting || (turnstileConfigured() && !turnstileToken)}
                                 variant="secondary"
                                 size="lg"
                                 className="w-full justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"

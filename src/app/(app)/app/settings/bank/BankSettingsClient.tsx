@@ -6,6 +6,11 @@ import { ArrowLeft, CheckCircle2, ChevronRight, Landmark, Search, X } from 'luci
 import { useSearchParams } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase';
 import Button from '@/components/ui/Button';
+import {
+  confirmBankDetailsChange,
+  formatPhoneForDisplay,
+  sendPhoneOtp,
+} from '@/lib/phoneOtp';
 
 type BankItem = { name: string; code: string };
 
@@ -23,7 +28,6 @@ type BankFormState = {
   bank_code: string;
   account_name: string;
   account_number: string;
-  recipient_code: string;
   currency: string;
 };
 
@@ -31,6 +35,8 @@ type ProfileRow = {
   id: string;
   is_seller?: boolean | null;
   bank_details?: BankDetails | null;
+  phone_number?: string | null;
+  phone_verified?: boolean | null;
 };
 
 export default function BankSettingsClient() {
@@ -47,15 +53,19 @@ export default function BankSettingsClient() {
   const [showPicker, setShowPicker] = useState(false);
   const [pickerSearch, setPickerSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [awaitingOtp, setAwaitingOtp] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSending, setOtpSending] = useState(false);
 
   const hasExistingDetails = Boolean(profile?.bank_details?.recipient_code);
+  const phoneE164 = String(profile?.phone_number || '').trim();
+  const phoneVerified = Boolean(profile?.phone_verified && phoneE164);
   const [isEditing, setIsEditing] = useState(false);
   const [form, setForm] = useState<BankFormState>({
     bank_name: '',
     bank_code: '',
     account_number: '',
     account_name: '',
-    recipient_code: '',
     currency: 'NGN',
   });
 
@@ -68,7 +78,7 @@ export default function BankSettingsClient() {
     }
     const { data, error: pErr } = await supabase
       .from('profiles')
-      .select('id, is_seller, bank_details')
+      .select('id, is_seller, bank_details, phone_number, phone_verified')
       .eq('id', uid)
       .maybeSingle();
     if (pErr) throw pErr;
@@ -80,10 +90,11 @@ export default function BankSettingsClient() {
       bank_code: String(bank.bank_code || ''),
       account_number: String(bank.account_number || ''),
       account_name: String(bank.account_name || ''),
-      recipient_code: String(bank.recipient_code || ''),
       currency: String(bank.currency || 'NGN'),
     });
     setIsEditing(!bank.recipient_code);
+    setAwaitingOtp(false);
+    setOtpCode('');
   }, [supabase]);
 
   const loadBanks = useCallback(async () => {
@@ -133,10 +144,9 @@ export default function BankSettingsClient() {
         setForm((prev) => ({
           ...prev,
           account_name: String(data.account_name || ''),
-          recipient_code: String(data.recipient_code || ''),
         }));
       } catch (e: any) {
-        setForm((prev) => ({ ...prev, account_name: '', recipient_code: '' }));
+        setForm((prev) => ({ ...prev, account_name: '' }));
         setError(e?.message || 'Could not verify account.');
       } finally {
         setVerifying(false);
@@ -156,34 +166,92 @@ export default function BankSettingsClient() {
 
   const save = useCallback(async () => {
     if (!profile?.id) return;
-    if (!form.recipient_code) {
+    if (!form.account_name || form.account_number.length !== 10 || !form.bank_code) {
       setError('Please verify account first.');
       return;
     }
+    if (!phoneVerified) {
+      setError('Verify your phone number before setting or changing payout details.');
+      return;
+    }
+
+    const payload: BankFormState = {
+      bank_name: form.bank_name,
+      bank_code: form.bank_code,
+      account_name: form.account_name,
+      account_number: form.account_number,
+      currency: 'NGN',
+    };
+
     setSaving(true);
     setError(null);
     try {
-      const payload: BankFormState = {
-        bank_name: form.bank_name,
-        bank_code: form.bank_code,
-        account_name: form.account_name,
-        account_number: form.account_number,
-        recipient_code: form.recipient_code,
-        currency: 'NGN',
-      };
-      const { error: upErr } = await supabase
-        .from('profiles')
-        .update({ bank_details: payload, updated_at: new Date().toISOString() })
-        .eq('id', profile.id);
-      if (upErr) throw upErr;
+      if (hasExistingDetails) {
+        if (!awaitingOtp) {
+          setOtpSending(true);
+          const sent = await sendPhoneOtp(phoneE164);
+          setOtpSending(false);
+          if (!sent.ok) throw new Error(sent.message);
+          setAwaitingOtp(true);
+          setOtpCode('');
+          return;
+        }
+        if (otpCode.trim().length < 4) {
+          setError('Enter the SMS code to confirm the change.');
+          return;
+        }
+        const confirmed = await confirmBankDetailsChange(otpCode.trim(), payload);
+        if (!confirmed.ok) throw new Error(confirmed.message);
+      } else {
+        const { data, error: invokeErr } = await supabase.functions.invoke('paystack-account-resolve', {
+          body: {
+            action: 'save_first_time',
+            account_number: form.account_number,
+            bank_code: form.bank_code,
+            bank_name: form.bank_name,
+          },
+        });
+        if (invokeErr) throw invokeErr;
+        if (!data?.success) {
+          throw new Error(data?.message || 'Could not save bank account.');
+        }
+      }
       await loadProfile();
       setIsEditing(false);
+      setAwaitingOtp(false);
+      setOtpCode('');
     } catch (e: any) {
       setError(e?.message || 'Could not save bank account.');
     } finally {
       setSaving(false);
+      setOtpSending(false);
     }
-  }, [form, loadProfile, profile?.id, supabase]);
+  }, [
+    awaitingOtp,
+    form,
+    hasExistingDetails,
+    loadProfile,
+    otpCode,
+    phoneE164,
+    phoneVerified,
+    profile?.id,
+    supabase,
+  ]);
+
+  const resendOtp = useCallback(async () => {
+    if (!phoneE164) return;
+    setOtpSending(true);
+    setError(null);
+    try {
+      const sent = await sendPhoneOtp(phoneE164);
+      if (!sent.ok) throw new Error(sent.message);
+      setAwaitingOtp(true);
+    } catch (e: any) {
+      setError(e?.message || 'Could not resend code.');
+    } finally {
+      setOtpSending(false);
+    }
+  }, [phoneE164]);
 
   if (loading) {
     return (
@@ -273,7 +341,7 @@ export default function BankSettingsClient() {
               value={form.account_number}
               onChange={(e) => {
                 const v = e.target.value.replace(/\D/g, '');
-                setForm((prev) => ({ ...prev, account_number: v, account_name: '', recipient_code: '' }));
+                setForm((prev) => ({ ...prev, account_number: v, account_name: '' }));
               }}
               placeholder="0000000000"
               className="w-full bg-transparent text-[15px] font-bold text-(--foreground) outline-none placeholder:text-(--muted)"
@@ -288,14 +356,63 @@ export default function BankSettingsClient() {
             </div>
           ) : null}
 
+          {hasExistingDetails && awaitingOtp ? (
+            <div className="mt-6">
+              <label className="mb-2 ml-1 block text-[11px] font-black uppercase tracking-[0.14em] text-(--muted)">
+                SMS code ({formatPhoneForDisplay(phoneE164)})
+              </label>
+              <div className="flex h-14 items-center rounded-2xl border border-(--border) bg-(--card) px-4">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={8}
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ''))}
+                  placeholder="••••••"
+                  className="w-full bg-transparent text-[15px] font-bold tracking-[0.3em] text-(--foreground) outline-none placeholder:text-(--muted)"
+                />
+              </div>
+              <button
+                type="button"
+                className="mt-2 text-xs font-semibold text-(--muted) hover:underline"
+                disabled={otpSending}
+                onClick={() => {
+                  void resendOtp();
+                }}
+              >
+                {otpSending ? 'Sending…' : 'Resend code'}
+              </button>
+            </div>
+          ) : null}
+
+          {!phoneVerified ? (
+            <p className="mt-4 text-sm text-amber-600">
+              Verify your phone number in profile settings before saving payout details.
+            </p>
+          ) : null}
+
           <div className="mt-8 flex items-center gap-3">
             {hasExistingDetails ? (
-              <Button variant="ghost" className="min-w-24" onClick={() => setIsEditing(false)}>
+              <Button
+                variant="ghost"
+                className="min-w-24"
+                onClick={() => {
+                  setIsEditing(false);
+                  setAwaitingOtp(false);
+                  setOtpCode('');
+                }}
+              >
                 Cancel
               </Button>
             ) : null}
-            <Button className="flex-1" onClick={save} disabled={saving || !form.recipient_code}>
-              {saving ? 'Saving…' : 'Save account'}
+            <Button className="flex-1" onClick={save} disabled={saving || otpSending || !form.account_name || !phoneVerified}>
+              {saving || otpSending
+                ? 'Working…'
+                : hasExistingDetails
+                  ? awaitingOtp
+                    ? 'Confirm change'
+                    : 'Send code & save'
+                  : 'Save account'}
             </Button>
           </div>
         </section>
@@ -329,7 +446,7 @@ export default function BankSettingsClient() {
                   type="button"
                   className="w-full border-b border-(--border) px-5 py-3.5 text-left text-sm font-semibold text-(--foreground) hover:bg-(--surface)"
                   onClick={() => {
-                    setForm((prev) => ({ ...prev, bank_name: bank.name, bank_code: bank.code, account_name: '', recipient_code: '' }));
+                    setForm((prev) => ({ ...prev, bank_name: bank.name, bank_code: bank.code, account_name: '' }));
                     setShowPicker(false);
                     setPickerSearch('');
                   }}

@@ -8,6 +8,7 @@ import { ArrowLeft, Gem, Search, X } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { getFollowButtonLabel, UNFOLLOW_RECIPROCAL_SUBTITLE } from '@/lib/followButtonLabel';
+import { toggleFollowRateLimited } from '@/lib/rateLimitedSocial';
 
 type Tab = 'followers' | 'following' | 'mutuals';
 
@@ -138,8 +139,7 @@ export default function FollowListPageClient() {
       const isCurrentlyFollowing = myFollowingIds.includes(other.id);
       const theyFollowMe = myFollowerIds.includes(other.id);
       if (!isCurrentlyFollowing) {
-        const { error } = await supabase.from('follows').insert({ follower_id: myId, following_id: other.id });
-        if (error && (error as any).code !== '23505') throw error;
+        await toggleFollowRateLimited(supabase, { targetUserId: other.id, follow: true });
         setMyFollowingIds((prev) => [...new Set([...prev, other.id])]);
         await loadLists();
         return;
@@ -148,7 +148,7 @@ export default function FollowListPageClient() {
         const ok = typeof window !== 'undefined' && window.confirm(UNFOLLOW_RECIPROCAL_SUBTITLE);
         if (!ok) return;
       }
-      await supabase.from('follows').delete().eq('follower_id', myId).eq('following_id', other.id);
+      await toggleFollowRateLimited(supabase, { targetUserId: other.id, follow: false });
       setMyFollowingIds((prev) => prev.filter((id) => id !== other.id));
       await loadLists();
     } finally {

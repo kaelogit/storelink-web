@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { createBrowserClient } from '@/lib/supabase';
 import { formatCurrency } from '@/lib/activity-feed';
+import { formatPrepayReviseFreezeError } from '@/lib/beginOrderCheckout';
 
 export default function ReviseShippingFeePage() {
   const router = useRouter();
@@ -99,7 +100,7 @@ export default function ReviseShippingFeePage() {
       toast.success('Delivery fee updated');
       router.replace(`/app/orders/${orderId}`);
     } catch (e: any) {
-      toast.error(e?.message || 'Could not update delivery fee');
+      toast.error(formatPrepayReviseFreezeError(e));
     } finally {
       setSaving(false);
     }

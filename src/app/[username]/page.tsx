@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import ClientProfileWrapper from './ClientProfileWrapper';
 import type { Metadata } from 'next';
 import { buildProfileShareMetadata, normalizeUsername } from '@/lib/metadata/shareMetadata';
+import { PUBLIC_PROFILE_COLUMNS, asPublicProfileRow } from '@/lib/publicProfile';
 
 export { normalizeUsername };
 
@@ -25,12 +26,13 @@ async function getProfileData(username: string) {
   if (!slug || RESERVED_SLUGS.has(slug)) return null;
 
   const supabase = createServerClient();
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
+  const { data: profileRaw } = await supabase
+    .from('public_profiles')
+    .select(PUBLIC_PROFILE_COLUMNS)
     .ilike('slug', slug)
     .single();
 
+  const profile = asPublicProfileRow(profileRaw);
   if (!profile) return null;
 
   const { data: products } = await supabase

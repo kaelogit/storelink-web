@@ -51,7 +51,7 @@ export default function ClawbackDueClient() {
     setEmail(auth.user?.email || '');
     const [{ data, error: debtErr }, { data: profile }, { data: ticketRows }] = await Promise.all([
       supabase.rpc('get_my_open_clawback_debt'),
-      supabase.from('profiles').select('email,currency_code').eq('id', uid).maybeSingle(),
+      supabase.rpc('get_my_profile'),
       supabase
         .from('support_tickets')
         .select('id, subject, status, updated_at')
@@ -193,7 +193,11 @@ export default function ClawbackDueClient() {
         <div>
           <p className="text-sm font-black text-(--foreground)">Repayment required</p>
           <p className="mt-1 text-sm text-(--muted)">
-            Your seller account is paused until this balance is cleared. You can still message our support team below.
+            Your seller account is paused until this balance is cleared. You can still message our support team below
+            {Number(debt.open_count || 1) > 1
+              ? ` · ${debt.open_count} open repayments (oldest shown first)`
+              : ''}
+            .
           </p>
         </div>
       </div>

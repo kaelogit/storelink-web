@@ -112,11 +112,13 @@ export default function HomeCommentsSheet({
       setSubmitting(false);
       return;
     }
-    const table = isSpotlight ? 'spotlight_comments' : isService ? 'service_comments' : 'product_comments';
-    const fk = isSpotlight ? 'spotlight_post_id' : isService ? 'service_listing_id' : 'product_id';
-    const payload: Record<string, any> = { user_id: userId, content, parent_id: replyTo?.id || null };
-    payload[fk] = commentTargetId;
-    const { error } = await supabase.from(table).insert(payload);
+    const sourceType = isSpotlight ? 'spotlight' : isService ? 'service' : 'product';
+    const { error } = await supabase.rpc('post_comment', {
+      p_source_type: sourceType,
+      p_target_id: commentTargetId,
+      p_content: content,
+      p_parent_id: replyTo?.id || null,
+    });
     if (!error) {
       setText('');
       setReplyTo(null);
@@ -163,8 +165,11 @@ export default function HomeCommentsSheet({
     setPendingDeleteIds((prev) => new Set(prev).add(commentId));
     const snapshot = rows;
     setRows((prev) => prev.filter((r: any) => r.id !== commentId && r.parent_id !== commentId));
-    const table = isSpotlight ? 'spotlight_comments' : isService ? 'service_comments' : 'product_comments';
-    const res = await supabase.from(table).delete().eq('id', commentId);
+    const sourceType = isSpotlight ? 'spotlight' : isService ? 'service' : 'product';
+    const res = await supabase.rpc('delete_own_comment', {
+      p_source_type: sourceType,
+      p_comment_id: commentId,
+    });
     if (res.error) setRows(snapshot);
     else {
       await refresh();

@@ -22,7 +22,7 @@ export default function NotificationsSettingsClient() {
     const { data: auth } = await supabase.auth.getUser();
     const uid = auth.user?.id;
     if (!uid) return;
-    const { data } = await supabase.from('profiles').select('notification_prefs').eq('id', uid).maybeSingle();
+    const { data } = await supabase.rpc('get_my_profile');
     setPrefs(normalizeNotificationPrefs((data as { notification_prefs?: NotificationPrefs } | null)?.notification_prefs));
   }, [supabase]);
 

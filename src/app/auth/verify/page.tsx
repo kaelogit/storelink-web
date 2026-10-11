@@ -8,6 +8,18 @@ import Section from '@/components/ui/Section';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import StoreLinkLogo from '@/components/ui/StoreLinkLogo';
+import {
+  sendRecoveryEmailOtp,
+  sendSignupEmailOtp,
+  verifyRecoveryEmailOtp,
+  verifySignupEmailOtp,
+} from '@/lib/emailOtp';
+import { getWebReferralDeviceSignal } from '@/lib/referralDeviceSignal';
+import {
+  clearWebPendingReferralCode,
+  peekWebPendingReferralCode,
+  resolveWebReferralCode,
+} from '@/lib/pendingReferralCode';
 
 const RESEND_COOLDOWN_SEC = 300;
 
@@ -25,6 +37,11 @@ function VerifyPageContent() {
   const type = (params.get('type') || 'signup').trim();
   const nextPath = params.get('next') || (type === 'signup' ? '/onboarding/country-select' : '/app');
   const referralCode = (params.get('ref') || '').trim();
+  const signupBackHref = `/auth/signup${
+    referralCode || peekWebPendingReferralCode()
+      ? `?ref=${encodeURIComponent(referralCode || peekWebPendingReferralCode() || '')}`
+      : ''
+  }`;
 
   const effectiveNextPath = type === 'signup' ? '/onboarding/country-select' : nextPath;
   const supabase = useMemo(() => createBrowserClient(), []);
@@ -33,7 +50,7 @@ function VerifyPageContent() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [timer, setTimer] = useState(RESEND_COOLDOWN_SEC);
+  const [timer, setTimer] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,28 +64,19 @@ function VerifyPageContent() {
 
   useEffect(() => {
     if (!email) return;
-    let cancelled = false;
-    const syncCooldown = async () => {
-      const { data: otpRow } = await supabase
-        .from('otp_verifications')
-        .select('created_at')
-        .eq('email', email.toLowerCase())
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (cancelled) return;
-      if (otpRow?.created_at) {
-        const elapsedSec = Math.floor((Date.now() - new Date(otpRow.created_at).getTime()) / 1000);
-        setTimer(Math.max(0, RESEND_COOLDOWN_SEC - elapsedSec));
-      } else {
+    try {
+      const key = `storelink.otp_last_sent:email:${type}:${email.toLowerCase()}`;
+      const raw = window.localStorage.getItem(key);
+      if (!raw) {
         setTimer(0);
+        return;
       }
-    };
-    void syncCooldown();
-    return () => {
-      cancelled = true;
-    };
-  }, [email, supabase]);
+      const elapsed = (Date.now() - Number(raw)) / 1000;
+      setTimer(Math.max(0, Math.ceil(RESEND_COOLDOWN_SEC - elapsed)));
+    } catch {
+      setTimer(0);
+    }
+  }, [email, type]);
 
   useEffect(() => {
     if (timer <= 0) return;
@@ -83,37 +91,25 @@ function VerifyPageContent() {
     setMessage(null);
 
     try {
-      const newCode = Math.floor(100000 + Math.random() * 900000).toString();
-      const { error: otpError } = await supabase
-        .from('otp_verifications')
-        .upsert(
-          {
-            email: email.toLowerCase(),
-            code: newCode,
-            expires_at: new Date(Date.now() + 10 * 60_000).toISOString(),
-          },
-          { onConflict: 'email' },
-        );
-
-      if (otpError) throw otpError;
-
-      const emailResponse = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: email.toLowerCase(),
-          type: type === 'recovery' ? 'PASSWORD_RESET' : 'VERIFY_SIGNUP',
-          code: newCode,
-        }),
-      });
-
-      if (!emailResponse.ok) {
-        const errorData = await emailResponse.json();
-        throw new Error(errorData.error || 'Failed to send verification email');
+      const result =
+        type === 'recovery'
+          ? await sendRecoveryEmailOtp(email)
+          : await sendSignupEmailOtp(email);
+      if (!result.ok) {
+        if (result.retry_after_seconds) setTimer(result.retry_after_seconds);
+        throw new Error(result.message || 'Unable to resend code.');
       }
-
       setMessage('A new code has been sent. Check your inbox.');
-      setTimer(RESEND_COOLDOWN_SEC);
+      const cooldown = result.retry_after_seconds ?? RESEND_COOLDOWN_SEC;
+      try {
+        window.localStorage.setItem(
+          `storelink.otp_last_sent:email:${type}:${email.toLowerCase()}`,
+          String(Date.now()),
+        );
+      } catch {
+        // ignore
+      }
+      setTimer(cooldown);
       inputRef.current?.focus();
     } catch (err: any) {
       setError(err.message || 'Unable to resend code. Please try again.');
@@ -133,47 +129,63 @@ function VerifyPageContent() {
     setMessage(null);
 
     try {
-      const { data: otpRow, error: otpError } = await supabase
-        .from('otp_verifications')
-        .select('*')
-        .eq('email', email.toLowerCase())
-        .eq('code', code)
-        .maybeSingle();
+      const result =
+        type === 'recovery'
+          ? await verifyRecoveryEmailOtp(email, code)
+          : await verifySignupEmailOtp(email, code);
 
-      if (otpError || !otpRow) {
-        throw new Error('The code is invalid or expired.');
+      if (!result.ok) {
+        throw new Error(result.message || 'The code is invalid or expired.');
       }
 
-      if (otpRow.expires_at && new Date(otpRow.expires_at).getTime() < Date.now()) {
-        throw new Error('This code has expired. Request a new one.');
-      }
-
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ is_verified: true, updated_at: new Date().toISOString() })
-        .eq('email', email.toLowerCase());
-
-      if (profileError) throw profileError;
-
-      await supabase.from('otp_verifications').delete().eq('email', email.toLowerCase());
-
-      if (type === 'signup' && referralCode) {
+      if (type === 'signup') {
         try {
-          await supabase.rpc('set_my_referred_by', { p_referral_code: referralCode });
+          const code = resolveWebReferralCode(referralCode);
+          if (code) {
+            const signal = getWebReferralDeviceSignal();
+            const { data } = await supabase.rpc('set_my_referred_by', {
+              p_referral_code: code,
+              p_device_fingerprint: signal.fingerprint,
+              p_device_meta: signal.meta,
+            });
+            const result = data as {
+              ok?: boolean;
+              reason?: string;
+              reward_held?: boolean;
+              review_status?: string;
+              retry_after_seconds?: number;
+            } | null;
+            const reason = result?.reason;
+            if (
+              result?.ok ||
+              reason === 'already_set' ||
+              reason === 'invalid_code' ||
+              reason === 'self' ||
+              reason === 'not_new_account'
+            ) {
+              clearWebPendingReferralCode();
+            }
+            if (reason === 'rate_limited') {
+              const mins = Math.max(1, Math.ceil((result?.retry_after_seconds ?? 3600) / 60));
+              setMessage(
+                `Invite pause: too many attempts. We’ll retry automatically (about ${mins} min).`,
+              );
+              await new Promise((r) => setTimeout(r, 1600));
+            } else if (result?.ok && (result.reward_held || result.review_status === 'pending_review')) {
+              setMessage('Invite received — under a quick security review before coins unlock.');
+              await new Promise((r) => setTimeout(r, 1600));
+            }
+          }
         } catch {
           // Non-blocking referral attribution failure
         }
       }
 
-      if (type !== 'recovery') {
-        void fetch('/api/send-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            email: email.toLowerCase(),
-            type: 'WELCOME',
-          }),
-        }).catch(() => {});
+      if (type === 'recovery' && result.reset_ticket) {
+        router.push(
+          `/auth/reset-password?email=${encodeURIComponent(email.toLowerCase())}&ticket=${encodeURIComponent(result.reset_ticket)}`,
+        );
+        return;
       }
 
       router.push(effectiveNextPath);
@@ -261,7 +273,10 @@ function VerifyPageContent() {
           </div>
 
           <div className="mt-6 text-center">
-            <Link href="/auth/signup" className="text-sm text-(--muted) hover:text-(--foreground)">
+            <Link
+              href={signupBackHref}
+              className="text-sm text-(--muted) hover:text-(--foreground)"
+            >
               ← Back to signup
             </Link>
           </div>

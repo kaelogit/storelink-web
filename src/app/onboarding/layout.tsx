@@ -2,6 +2,8 @@
 
 import { ReactNode, useMemo } from 'react';
 import { usePathname } from 'next/navigation';
+import AccountAccessLockGate from '@/components/auth/AccountAccessLockGate';
+import ReferralAttributionRetry from '@/components/auth/ReferralAttributionRetry';
 
 export default function OnboardingLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -26,6 +28,8 @@ export default function OnboardingLayout({ children }: { children: ReactNode }) 
 
   return (
     <div className="min-h-dvh bg-(--background) flex flex-col">
+      <AccountAccessLockGate />
+      <ReferralAttributionRetry />
       {/* Progress Bar */}
       <div className="sticky top-0 z-50 border-b border-(--border) bg-(--background)/95 backdrop-blur-sm">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-4">

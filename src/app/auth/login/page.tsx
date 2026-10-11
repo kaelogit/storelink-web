@@ -8,6 +8,25 @@ import Section from '@/components/ui/Section';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import StoreLinkLogo from '@/components/ui/StoreLinkLogo';
+import { isAccountAccessLocked, accountLockRoute } from '@/lib/accountAccess';
+
+async function resolvePostLoginPath(
+  supabase: ReturnType<typeof createBrowserClient>,
+  fallback: string,
+) {
+  const { data: auth } = await supabase.auth.getUser();
+  const uid = auth.user?.id;
+  if (!uid) return fallback;
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('account_status')
+    .eq('id', uid)
+    .maybeSingle();
+  if (isAccountAccessLocked(profile?.account_status)) {
+    return accountLockRoute(profile?.account_status);
+  }
+  return fallback;
+}
 
 function LoginPageContent() {
   const router = useRouter();
@@ -26,19 +45,14 @@ function LoginPageContent() {
     (async () => {
       const { data } = await supabase.auth.getSession();
       if (cancelled || !data.session?.user) return;
-      if (referralCode) {
-        try {
-          await supabase.rpc('set_my_referred_by', { p_referral_code: referralCode });
-        } catch {
-          // No-op: attribution is best-effort and one-time on backend.
-        }
-      }
-      router.replace(nextPath);
+      // Do not attribute referrals on login — only fresh signups (verify) may claim an invite.
+      const dest = await resolvePostLoginPath(supabase, nextPath);
+      if (!cancelled) router.replace(dest);
     })();
     return () => {
       cancelled = true;
     };
-  }, [supabase, router, nextPath, referralCode]);
+  }, [supabase, router, nextPath]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,19 +62,15 @@ function LoginPageContent() {
       email: email.trim().toLowerCase(),
       password,
     });
-    setLoading(false);
     if (signInError) {
+      setLoading(false);
       setError(signInError.message);
       return;
     }
-    if (referralCode) {
-      try {
-        await supabase.rpc('set_my_referred_by', { p_referral_code: referralCode });
-      } catch {
-        // No-op: backend handles invalid/already-set referrals safely.
-      }
-    }
-    router.push(nextPath);
+    // Referral attribution is signup-only (see set_my_referred_by fresh-account gate).
+    const dest = await resolvePostLoginPath(supabase, nextPath);
+    setLoading(false);
+    router.push(dest);
   };
 
   return (

@@ -56,7 +56,7 @@ export default function ChatPartnerMenuPage() {
       const { data: row, error } = await supabase
         .from('chats')
         .select(
-          'id, buyer_id, seller_id, buyer:buyer_id(id,display_name,slug,logo_url,is_seller,phone_number,subscription_plan), seller:seller_id(id,display_name,slug,logo_url,is_seller,phone_number,subscription_plan)',
+          'id, buyer_id, seller_id, buyer:buyer_id(id,display_name,slug,logo_url,is_seller,subscription_plan), seller:seller_id(id,display_name,slug,logo_url,is_seller,subscription_plan)',
         )
         .eq('id', chatId)
         .maybeSingle();
@@ -109,7 +109,7 @@ export default function ChatPartnerMenuPage() {
         slug: partner.slug,
         display_name: partner.display_name,
         logo_url: partner.logo_url,
-        phone_number: partner.phone_number,
+        phone_number: null,
         is_seller: partner.is_seller,
         subscription_plan: partner.subscription_plan,
       }}

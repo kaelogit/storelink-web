@@ -150,11 +150,7 @@ export default function ServiceBookingClient({
       if (!active) return;
       setBuyerId(uid);
       if (!uid) return;
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('shipping_details, phone_verified, phone_number')
-        .eq('id', uid)
-        .maybeSingle();
+      const { data: profile } = await supabase.rpc('get_my_profile');
       if (!active) return;
       setBuyerPhone({
         phone_verified: (profile as { phone_verified?: boolean | null } | null)?.phone_verified,

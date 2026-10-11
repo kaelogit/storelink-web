@@ -163,11 +163,7 @@ export default function AppCartPage() {
       const uid = data.user?.id ?? null;
       setBuyerId(uid);
       if (!uid) return;
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('coin_balance, shipping_details, phone_verified, phone_number')
-        .eq('id', uid)
-        .maybeSingle();
+      const { data: profile } = await supabase.rpc('get_my_profile');
       setCoinBalance(Number(profile?.coin_balance || 0));
       setBuyerPhone({
         phone_verified: (profile as { phone_verified?: boolean | null } | null)?.phone_verified,
@@ -619,7 +615,7 @@ export default function AppCartPage() {
         });
       }
       for (const p of selectedProducts) removeProduct(p.product_id);
-      const { data: profile } = await supabase.from('profiles').select('coin_balance').eq('id', buyerId).maybeSingle();
+      const { data: profile } = await supabase.rpc('get_my_profile');
       setCoinBalance(Number(profile?.coin_balance || 0));
       toast.success(TRANSACTION_COPY.orderSuccessToast);
       if (orderId) {

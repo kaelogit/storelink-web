@@ -34,11 +34,7 @@ export default function CheckupSettingsClient() {
       setMfaLoading(false);
       const uid = auth.user?.id;
       if (!uid) return;
-      const { data } = await supabase
-        .from('profiles')
-        .select('phone_number,phone_verified,email,is_verified')
-        .eq('id', uid)
-        .maybeSingle();
+      const { data } = await supabase.rpc('get_my_profile');
       if (mounted) setProfile((data as ProfileRow) || null);
     })();
     return () => {

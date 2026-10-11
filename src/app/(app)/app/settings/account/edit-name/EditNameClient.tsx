@@ -19,7 +19,7 @@ export default function EditNameClient() {
         return;
       }
       setProfileId(uid);
-      const { data } = await supabase.from('profiles').select('full_name,display_name').eq('id', uid).maybeSingle();
+      const { data } = await supabase.rpc('get_my_profile');
       setInitial(String(data?.full_name || data?.display_name || ''));
     })();
   }, []);

@@ -24,6 +24,63 @@ export function followListPath(profileId: string, type: 'followers' | 'following
   return `/app/u/follow-list?${q.toString()}`;
 }
 
+function StatBox({
+  label,
+  value,
+  isLocked,
+  onPress,
+  minWidthClass,
+  isDiamond,
+}: {
+  label: string;
+  value: number;
+  isLocked?: boolean;
+  onPress?: () => void;
+  minWidthClass: string;
+  isDiamond?: boolean;
+}) {
+  const inner = (
+    <>
+      {isLocked ? (
+        <div className="flex h-6 items-center justify-center">
+          <Lock size={16} className="text-(--muted)" aria-hidden />
+        </div>
+      ) : (
+        <span
+          className={`text-lg font-black tracking-tight ${
+            isDiamond && label === 'FOLLOWERS' ? 'text-violet-600 dark:text-violet-400' : 'text-(--foreground)'
+          }`}
+        >
+          {formatCompact(value)}
+        </span>
+      )}
+      <span className="text-[10px] font-black uppercase tracking-[0.14em] text-(--muted) opacity-80">{label}</span>
+    </>
+  );
+
+  if (onPress && !isLocked) {
+    return (
+      <button
+        type="button"
+        onClick={onPress}
+        className={`flex flex-1 flex-col items-center gap-1 py-1 ${minWidthClass} min-w-0 rounded-xl hover:bg-(--surface) focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40`}
+      >
+        {inner}
+      </button>
+    );
+  }
+
+  return (
+    <div className={`flex flex-1 flex-col items-center gap-1 py-1 ${minWidthClass} min-w-0`}>
+      {inner}
+    </div>
+  );
+}
+
+function Divider() {
+  return <div className="h-5 w-px shrink-0 bg-(--border) opacity-40" aria-hidden />;
+}
+
 /**
  * Web port of mobile `ProfileStats` — seller vs buyer layouts, service count fetch,
  * follow counts fetch, wardrobe lock for private collection (non-self), diamond follower tint.
@@ -124,59 +181,6 @@ export default function WebProfileStats({ profileId, profileData, isDiamond }: W
     [profileId, router, viewerId],
   );
 
-  const StatBox = ({
-    label,
-    value,
-    isLocked,
-    onPress,
-    minWidthClass,
-  }: {
-    label: string;
-    value: number;
-    isLocked?: boolean;
-    onPress?: () => void;
-    minWidthClass: string;
-  }) => {
-    const inner = (
-      <>
-        {isLocked ? (
-          <div className="flex h-6 items-center justify-center">
-            <Lock size={16} className="text-(--muted)" aria-hidden />
-          </div>
-        ) : (
-          <span
-            className={`text-lg font-black tracking-tight ${
-              isDiamond && label === 'FOLLOWERS' ? 'text-violet-600 dark:text-violet-400' : 'text-(--foreground)'
-            }`}
-          >
-            {formatCompact(value)}
-          </span>
-        )}
-        <span className="text-[10px] font-black uppercase tracking-[0.14em] text-(--muted) opacity-80">{label}</span>
-      </>
-    );
-
-    if (onPress && !isLocked) {
-      return (
-        <button
-          type="button"
-          onClick={onPress}
-          className={`flex flex-1 flex-col items-center gap-1 py-1 ${minWidthClass} min-w-0 rounded-xl hover:bg-(--surface) focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/40`}
-        >
-          {inner}
-        </button>
-      );
-    }
-
-    return (
-      <div className={`flex flex-1 flex-col items-center gap-1 py-1 ${minWidthClass} min-w-0`}>
-        {inner}
-      </div>
-    );
-  };
-
-  const Divider = () => <div className="h-5 w-px shrink-0 bg-(--border) opacity-40" aria-hidden />;
-
   if (isSeller) {
     const statKeys: string[] = [];
     if (showDrops) statKeys.push('drops');
@@ -185,15 +189,41 @@ export default function WebProfileStats({ profileId, profileData, isDiamond }: W
     const minWidthClass = statKeys.length >= 4 ? 'min-w-[52px]' : 'min-w-[70px]';
 
     const nodes: Array<{ key: string; el: ReactNode }> = [];
-    if (showDrops) nodes.push({ key: 'drops', el: <StatBox label="DROPS" value={dropCount} minWidthClass={minWidthClass} /> });
-    if (showServices) nodes.push({ key: 'services', el: <StatBox label="SERVICES" value={serviceCount} minWidthClass={minWidthClass} /> });
+    if (showDrops) {
+      nodes.push({
+        key: 'drops',
+        el: <StatBox label="DROPS" value={dropCount} minWidthClass={minWidthClass} isDiamond={isDiamond} />,
+      });
+    }
+    if (showServices) {
+      nodes.push({
+        key: 'services',
+        el: <StatBox label="SERVICES" value={serviceCount} minWidthClass={minWidthClass} isDiamond={isDiamond} />,
+      });
+    }
     nodes.push({
       key: 'followers',
-      el: <StatBox label="FOLLOWERS" value={followerCount} minWidthClass={minWidthClass} onPress={() => goFollowList('followers')} />,
+      el: (
+        <StatBox
+          label="FOLLOWERS"
+          value={followerCount}
+          minWidthClass={minWidthClass}
+          isDiamond={isDiamond}
+          onPress={() => goFollowList('followers')}
+        />
+      ),
     });
     nodes.push({
       key: 'following',
-      el: <StatBox label="FOLLOWING" value={followingCount} minWidthClass={minWidthClass} onPress={() => goFollowList('following')} />,
+      el: (
+        <StatBox
+          label="FOLLOWING"
+          value={followingCount}
+          minWidthClass={minWidthClass}
+          isDiamond={isDiamond}
+          onPress={() => goFollowList('following')}
+        />
+      ),
     });
 
     return (
@@ -210,15 +240,28 @@ export default function WebProfileStats({ profileId, profileData, isDiamond }: W
 
   return (
     <div className="mx-auto mb-1 flex w-full max-w-[360px] flex-row items-stretch justify-between gap-0 px-1 py-3">
-      <StatBox label="FOLLOWERS" value={followerCount} minWidthClass="min-w-0 flex-1" onPress={() => goFollowList('followers')} />
+      <StatBox
+        label="FOLLOWERS"
+        value={followerCount}
+        minWidthClass="min-w-0 flex-1"
+        isDiamond={isDiamond}
+        onPress={() => goFollowList('followers')}
+      />
       <Divider />
-      <StatBox label="FOLLOWING" value={followingCount} minWidthClass="min-w-0 flex-1" onPress={() => goFollowList('following')} />
+      <StatBox
+        label="FOLLOWING"
+        value={followingCount}
+        minWidthClass="min-w-0 flex-1"
+        isDiamond={isDiamond}
+        onPress={() => goFollowList('following')}
+      />
       <Divider />
       <StatBox
         label="COLLECTION"
         value={Number(profileData?.wardrobe_count ?? 0)}
         isLocked={isCollectionHidden}
         minWidthClass="min-w-0 flex-1"
+        isDiamond={isDiamond}
       />
     </div>
   );

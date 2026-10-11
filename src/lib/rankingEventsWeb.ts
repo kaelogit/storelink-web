@@ -14,7 +14,7 @@ type RankingEventInput = {
 const BATCH_MAX = 40;
 const BATCH_INTERVAL_MS = 5000;
 const supabase = createBrowserClient();
-let queue: RankingEventInput[] = [];
+const queue: RankingEventInput[] = [];
 let timer: ReturnType<typeof setTimeout> | null = null;
 
 async function flush() {

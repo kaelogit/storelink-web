@@ -133,7 +133,15 @@ export async function sendGroupTextMessage(
     p_text: text,
     p_reply_to_id: replyToId ?? null,
   });
-  if (error) throw error;
+  if (error) {
+    const blob = `${error.message || ''}\n${(error as { hint?: string }).hint || ''}`;
+    const match = blob.match(/rate_limited[:\s]+(\d+)/i);
+    if (match || /rate_limited/i.test(blob)) {
+      const s = Math.max(1, Number(match?.[1]) || 60);
+      throw new Error(`You're going too fast. Try again in ${s}s.`);
+    }
+    throw error;
+  }
   return String(data);
 }
 

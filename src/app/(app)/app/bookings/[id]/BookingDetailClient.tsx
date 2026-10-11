@@ -24,6 +24,8 @@ import {
 } from 'lucide-react';
 import { RateSellerModal, type RateSellerPending } from '@/components/ratings/RateSellerModal';
 import { createBrowserClient } from '@/lib/supabase';
+import { confirmOrderPayment } from '@/lib/confirmPaystackPayment';
+import { beginOrderCheckout } from '@/lib/beginOrderCheckout';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { serviceBookingEligibleForRating } from '@/lib/ratingEligibility';
 import { PaystackTerminalModal } from '@/components/payments/PaystackTerminalModal';
@@ -286,6 +288,8 @@ export default function BookingDetailClient() {
   const [paymentOrderId, setPaymentOrderId] = useState<string | null>(null);
   const [paystackChargeMajor, setPaystackChargeMajor] = useState<number | null>(null);
   const [activePaymentLeg, setActivePaymentLeg] = useState<PaymentLeg | null>(null);
+  const [checkoutReference, setCheckoutReference] = useState<string | null>(null);
+  const [checkoutMetadata, setCheckoutMetadata] = useState<Record<string, unknown> | null>(null);
   const [settlingPayment, setSettlingPayment] = useState(false);
   const [rebookBusy, setRebookBusy] = useState(false);
   const [rateSellerOpen, setRateSellerOpen] = useState(false);
@@ -399,7 +403,7 @@ export default function BookingDetailClient() {
           .eq('service_order_id', bookingId)
           .maybeSingle(),
         uid
-          ? supabase.from('profiles').select('email, coin_balance').eq('id', uid).maybeSingle()
+          ? supabase.rpc('get_my_profile')
           : Promise.resolve({ data: null as { email?: string | null; coin_balance?: number | null } | null }),
       ]);
 
@@ -790,6 +794,12 @@ export default function BookingDetailClient() {
       setPaystackChargeMajor(
         typeof payload?.total === 'number' ? payload.total : Math.max(0, nextChargeMajor - appliedCoinForPayment),
       );
+      const oid = payload?.order_id ? String(payload.order_id) : null;
+      if (!oid) throw new Error('Missing payment order');
+      const intent = await beginOrderCheckout(supabase, oid);
+      setCheckoutReference(intent.reference);
+      setCheckoutMetadata(intent.metadata);
+      setPaystackChargeMajor(Number(intent.amount) || Number(payload?.total) || null);
       setPaystackOpen(true);
     } catch (e: unknown) {
       const msg = e && typeof e === 'object' && 'message' in e ? String((e as { message: unknown }).message) : 'Could not start payment.';
@@ -806,8 +816,7 @@ export default function BookingDetailClient() {
     setSettlingPayment(true);
     try {
       if (oid) {
-        const { error } = await supabase.rpc('confirm_payment_success', { p_order_id: oid, p_reference: reference });
-        if (error) throw error;
+        await confirmOrderPayment(oid, reference);
       }
       await waitForPaymentSettlement();
       if (paidLeg === 'deposit') {
@@ -820,6 +829,8 @@ export default function BookingDetailClient() {
       setPaymentOrderId(null);
       setPaystackChargeMajor(null);
       setActivePaymentLeg(null);
+      setCheckoutReference(null);
+      setCheckoutMetadata(null);
     }
   };
 
@@ -1433,24 +1444,30 @@ export default function BookingDetailClient() {
           setPaymentOrderId(null);
           setPaystackChargeMajor(null);
           setActivePaymentLeg(null);
+          setCheckoutReference(null);
+          setCheckoutMetadata(null);
         }}
         onSuccess={(ref) => void handlePaymentSuccess(ref)}
         email={payEmail}
         amount={paystackChargeMajor ?? Math.max(0, nextChargeMajor - appliedCoinForPayment)}
         currency={currency}
+        reference={checkoutReference}
         metadata={
-          paymentOrderId && booking
+          checkoutMetadata ??
+          (paymentOrderId && booking
             ? {
                 order_id: paymentOrderId,
                 is_escrow: true,
+                purpose: 'escrow_order',
                 service_order_id: booking.id,
                 payment_leg: activePaymentLeg || payLegHint,
               }
             : {
                 is_escrow: true,
+                purpose: 'escrow_order',
                 service_order_id: booking?.id,
                 payment_leg: activePaymentLeg || payLegHint,
-              }
+              })
         }
       />
 

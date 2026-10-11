@@ -14,6 +14,8 @@ type ChatMessageComposerProps = {
   onClearReply: () => void;
   showCommerceAttach?: boolean;
   onOpenCommercePicker?: () => void;
+  /** Gap 8: hide photo / listing attach until partner accepts */
+  allowAttachments?: boolean;
 };
 
 export function ChatMessageComposer({
@@ -27,6 +29,7 @@ export function ChatMessageComposer({
   onClearReply,
   showCommerceAttach = false,
   onOpenCommercePicker,
+  allowAttachments = true,
 }: ChatMessageComposerProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const busy = sending || uploadingImage;
@@ -41,6 +44,11 @@ export function ChatMessageComposer({
           </button>
         </div>
       ) : null}
+      {!allowAttachments ? (
+        <p className="mb-2 text-[11px] font-semibold text-(--muted)">
+          Text only until they accept your message request.
+        </p>
+      ) : null}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -48,36 +56,40 @@ export function ChatMessageComposer({
         }}
         className="flex items-center gap-2"
       >
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) onPickImage(file);
-            e.target.value = '';
-          }}
-        />
-        <button
-          type="button"
-          disabled={busy}
-          onClick={() => fileInputRef.current?.click()}
-          className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-(--border) bg-(--surface) text-(--foreground) disabled:opacity-50"
-          aria-label="Attach photo"
-        >
-          {uploadingImage ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
-        </button>
-        {showCommerceAttach && onOpenCommercePicker ? (
-          <button
-            type="button"
-            disabled={busy}
-            onClick={onOpenCommercePicker}
-            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-(--border) bg-(--surface) text-(--foreground) disabled:opacity-50"
-            aria-label="Share listing"
-          >
-            <ShoppingBag size={16} />
-          </button>
+        {allowAttachments ? (
+          <>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) onPickImage(file);
+                e.target.value = '';
+              }}
+            />
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => fileInputRef.current?.click()}
+              className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-(--border) bg-(--surface) text-(--foreground) disabled:opacity-50"
+              aria-label="Attach photo"
+            >
+              {uploadingImage ? <Loader2 size={16} className="animate-spin" /> : <Camera size={16} />}
+            </button>
+            {showCommerceAttach && onOpenCommercePicker ? (
+              <button
+                type="button"
+                disabled={busy}
+                onClick={onOpenCommercePicker}
+                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-(--border) bg-(--surface) text-(--foreground) disabled:opacity-50"
+                aria-label="Share listing"
+              >
+                <ShoppingBag size={16} />
+              </button>
+            ) : null}
+          </>
         ) : null}
         <input
           value={draft}
@@ -93,7 +105,7 @@ export function ChatMessageComposer({
           {sending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
         </button>
       </form>
-      {showCommerceAttach ? (
+      {showCommerceAttach && allowAttachments ? (
         <p className="mt-1.5 flex items-center gap-1 text-[10px] text-(--muted)">
           <Paperclip size={10} />
           Share photos or listings with buyers in Primary chats.

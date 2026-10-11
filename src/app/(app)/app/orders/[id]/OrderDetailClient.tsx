@@ -28,6 +28,8 @@ import { PaystackTerminalModal } from '@/components/payments/PaystackTerminalMod
 import { RateSellerModal, type RateSellerPending } from '@/components/ratings/RateSellerModal';
 import RefundStatusTimelineWeb from '@/components/transactions/RefundStatusTimelineWeb';
 import { createBrowserClient } from '@/lib/supabase';
+import { confirmOrderPayment } from '@/lib/confirmPaystackPayment';
+import { beginOrderCheckout } from '@/lib/beginOrderCheckout';
 import { productShippingModeLabel } from '@/lib/foodDeliveryZones';
 import { productOrderEligibleForRating } from '@/lib/ratingEligibility';
 import { canRequestRefund } from '@/lib/refundEligibility';
@@ -88,6 +90,9 @@ export default function OrderDetailClient() {
   const [cancelModal, setCancelModal] = useState(false);
   const [cancelReason, setCancelReason] = useState('');
   const [paystackOpen, setPaystackOpen] = useState(false);
+  const [checkoutReference, setCheckoutReference] = useState<string | null>(null);
+  const [checkoutMetadata, setCheckoutMetadata] = useState<Record<string, unknown> | null>(null);
+  const [checkoutAmount, setCheckoutAmount] = useState<number | null>(null);
   const [settlingPayment, setSettlingPayment] = useState(false);
   const [buyerEmail, setBuyerEmail] = useState('');
   const [rateSellerOpen, setRateSellerOpen] = useState(false);
@@ -103,8 +108,8 @@ export default function OrderDetailClient() {
         .select(`
           *,
           order_items (*, product:product_id(name, image_urls, is_flash_drop, flash_end_time)),
-          merchant:seller_id (id, display_name, slug, logo_url, phone_number, location_city, subscription_plan, loyalty_enabled, loyalty_percentage),
-          buyer:user_id (id, display_name, slug, logo_url, phone_number, location_city),
+          merchant:seller_id (id, display_name, slug, logo_url, location_city, subscription_plan, loyalty_enabled, loyalty_percentage),
+          buyer:user_id (id, display_name, slug, logo_url, location_city),
           chat_id
         `)
         .eq('id', orderId)
@@ -225,11 +230,13 @@ export default function OrderDetailClient() {
   const handlePaymentSuccess = useCallback(
     async (reference: string) => {
       setPaystackOpen(false);
+      setCheckoutReference(null);
+      setCheckoutMetadata(null);
+      setCheckoutAmount(null);
       setSettlingPayment(true);
       setError(null);
       try {
-        const { error: e } = await supabase.rpc('confirm_payment_success', { p_order_id: orderId, p_reference: reference });
-        if (e) throw e;
+        await confirmOrderPayment(orderId, reference);
         for (let i = 0; i < 8; i += 1) {
           const { data, error: qe } = await supabase.from('orders').select('status').eq('id', orderId).maybeSingle();
           if (!qe) {
@@ -264,7 +271,19 @@ export default function OrderDetailClient() {
       }
       return;
     }
-    setPaystackOpen(true);
+    try {
+      const intent = await beginOrderCheckout(supabase, orderId);
+      setCheckoutReference(intent.reference);
+      setCheckoutMetadata(intent.metadata);
+      setCheckoutAmount(Number(intent.amount) || null);
+      setPaystackOpen(true);
+    } catch (e: unknown) {
+      const msg =
+        e && typeof e === 'object' && 'message' in e
+          ? String((e as { message: unknown }).message)
+          : 'Could not start payment.';
+      toast.error(msg);
+    }
   }, [loadOrder, orderId, supabase]);
 
   useEffect(() => {
@@ -278,8 +297,8 @@ export default function OrderDetailClient() {
     if (order.user_id !== profileId) return;
     if (String(order.status || '').toUpperCase() !== 'AWAITING_PAYMENT') return;
     payDeepLinkConsumedRef.current = true;
-    setPaystackOpen(true);
-  }, [loading, order, profileId, searchParams]);
+    void handleOpenPaystackSafely();
+  }, [loading, order, profileId, searchParams, handleOpenPaystackSafely]);
 
   if (loading) return <div className="py-10 text-center text-sm text-(--muted)">Loading order…</div>;
   if (!order) return <div className="py-10 text-center text-sm text-(--muted)">Order not found.</div>;
@@ -742,12 +761,25 @@ export default function OrderDetailClient() {
 
       <PaystackTerminalModal
         isOpen={paystackOpen}
-        onClose={() => setPaystackOpen(false)}
+        onClose={() => {
+          setPaystackOpen(false);
+          setCheckoutReference(null);
+          setCheckoutMetadata(null);
+          setCheckoutAmount(null);
+        }}
         onSuccess={(ref) => void handlePaymentSuccess(ref)}
         email={buyerEmail.trim() ? buyerEmail : profileId ? `buyer-${profileId}@storelink.ng` : 'buyer@storelink.ng'}
-        amount={Number(order.total_amount || 0)}
+        amount={(checkoutAmount ?? Number(order.total_amount || 0)) || 0}
         currency={String(order.currency_code || 'NGN')}
-        metadata={{ order_id: order.id, is_escrow: true, buyer_id: profileId }}
+        reference={checkoutReference}
+        metadata={
+          checkoutMetadata ?? {
+            order_id: order.id,
+            is_escrow: true,
+            purpose: 'escrow_order',
+            buyer_id: profileId,
+          }
+        }
       />
 
       {settlingPayment ? (

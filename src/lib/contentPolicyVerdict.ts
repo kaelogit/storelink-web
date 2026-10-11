@@ -42,10 +42,13 @@ export function parseContentPolicyScanResponse(data: unknown): ContentPolicyScan
     : [];
   const reason = row.reason != null ? String(row.reason).trim() : null;
   const skipped = row.skipped === true;
-  const blocked = !allowed && !skipped && shouldBlockOnConfidence(confidence);
+  const blocked =
+    row.blocked === true ||
+    (skipped && !allowed) ||
+    (!allowed && !skipped && shouldBlockOnConfidence(confidence));
 
   return {
-    allowed: allowed || skipped,
+    allowed: (allowed || skipped) && !blocked,
     blocked,
     confidence,
     reason,
@@ -67,6 +70,19 @@ export function failOpenContentPolicyScan(): ContentPolicyScanResult {
     blocked: false,
     confidence: null,
     reason: null,
+    categories: [],
+    skipped: true,
+  };
+}
+
+export function failClosedContentPolicyScan(reason?: string | null): ContentPolicyScanResult {
+  return {
+    allowed: false,
+    blocked: true,
+    confidence: null,
+    reason:
+      reason?.trim() ||
+      'Creative check is temporarily unavailable. Try again shortly.',
     categories: [],
     skipped: true,
   };

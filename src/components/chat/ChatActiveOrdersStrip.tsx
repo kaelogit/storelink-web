@@ -18,6 +18,8 @@ import {
   Pencil,
 } from 'lucide-react';
 import { PaystackTerminalModal } from '@/components/payments/PaystackTerminalModal';
+import { confirmOrderPayment } from '@/lib/confirmPaystackPayment';
+import { beginOrderCheckout } from '@/lib/beginOrderCheckout';
 import type { ChatProductOrderRow, ChatServiceOrderRow } from '@/lib/chatCommerce';
 import { coinsToCurrency, formatCurrency } from '@/lib/activity-feed';
 import { DISPUTE_COPY } from '@/constants/disputeCopy';
@@ -224,10 +226,15 @@ export function ChatActiveOrdersStrip({
 }: ChatActiveOrdersStripProps) {
   const [actionBusyKey, setActionBusyKey] = useState<string | null>(null);
   const [productPayOrder, setProductPayOrder] = useState<ChatProductOrderRow | null>(null);
+  const [productCheckoutReference, setProductCheckoutReference] = useState<string | null>(null);
+  const [productCheckoutMetadata, setProductCheckoutMetadata] = useState<Record<string, unknown> | null>(null);
+  const [productCheckoutAmount, setProductCheckoutAmount] = useState<number | null>(null);
   const [servicePayOpen, setServicePayOpen] = useState(false);
   const [servicePayBooking, setServicePayBooking] = useState<ChatServiceOrderRow | null>(null);
   const [servicePaymentOrderId, setServicePaymentOrderId] = useState<string | null>(null);
   const [servicePaystackChargeMajor, setServicePaystackChargeMajor] = useState<number | null>(null);
+  const [serviceCheckoutReference, setServiceCheckoutReference] = useState<string | null>(null);
+  const [serviceCheckoutMetadata, setServiceCheckoutMetadata] = useState<Record<string, unknown> | null>(null);
   const [servicePayCreatingId, setServicePayCreatingId] = useState<string | null>(null);
   const [productDisplayById, setProductDisplayById] = useState<Record<string, string>>({});
   const [serviceDisplayById, setServiceDisplayById] = useState<Record<string, string>>({});
@@ -315,14 +322,16 @@ export function ChatActiveOrdersStrip({
   const handleProductPaymentSuccess = useCallback(
     async (reference: string, order: ChatProductOrderRow) => {
       setProductPayOrder(null);
+      setProductCheckoutReference(null);
+      setProductCheckoutMetadata(null);
+      setProductCheckoutAmount(null);
       const oid = order.id;
       const revertTo = String(order.status || '').toUpperCase();
       setProductDisplayById((p) => ({ ...p, [oid]: 'PAID' }));
       const shortId = String(order?.id ?? '').slice(0, 8).toUpperCase();
       await postTimeline(`💳 Buyer paid for order #${shortId}.`);
       try {
-        const { error } = await supabase.rpc('confirm_payment_success', { p_order_id: order.id, p_reference: reference });
-        if (error) throw error;
+        await confirmOrderPayment(order.id, reference);
       } catch (err: unknown) {
         setProductDisplayById((p) => ({ ...p, [oid]: revertTo }));
         const msg =
@@ -358,6 +367,11 @@ export function ChatActiveOrdersStrip({
         setServicePaystackChargeMajor(
           typeof payload?.total === 'number' ? payload.total : Math.max(0, amountMajor - applied),
         );
+        if (!orderId) throw new Error('Missing payment order');
+        const intent = await beginOrderCheckout(supabase, orderId);
+        setServiceCheckoutReference(intent.reference);
+        setServiceCheckoutMetadata(intent.metadata);
+        setServicePaystackChargeMajor(Number(intent.amount) || Number(payload?.total) || null);
         setServicePayBooking(booking);
         setServicePayOpen(true);
       } catch (err: unknown) {
@@ -375,6 +389,8 @@ export function ChatActiveOrdersStrip({
     setServicePaymentOrderId(null);
     setServicePaystackChargeMajor(null);
     setServicePayBooking(null);
+    setServiceCheckoutReference(null);
+    setServiceCheckoutMetadata(null);
   }, []);
 
   const handleServicePaymentSuccess = useCallback(
@@ -387,7 +403,7 @@ export function ChatActiveOrdersStrip({
       const shortBookingId = String(booking?.id ?? '').slice(0, 8).toUpperCase();
       if (paidOrderId) {
         try {
-          await supabase.rpc('confirm_payment_success', { p_order_id: paidOrderId, p_reference: reference });
+          await confirmOrderPayment(paidOrderId, reference);
         } catch {
           // Realtime paths still reconcile (mobile parity).
         }
@@ -536,7 +552,21 @@ export function ChatActiveOrdersStrip({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            setProductPayOrder(o);
+            void (async () => {
+              try {
+                const intent = await beginOrderCheckout(supabase, o.id);
+                setProductCheckoutReference(intent.reference);
+                setProductCheckoutMetadata(intent.metadata);
+                setProductCheckoutAmount(Number(intent.amount) || null);
+                setProductPayOrder(o);
+              } catch (err: unknown) {
+                const msg =
+                  err && typeof err === 'object' && 'message' in err
+                    ? String((err as { message: unknown }).message)
+                    : 'Could not start payment.';
+                onError?.(msg);
+              }
+            })();
           }}
           className={primaryBtnClass}
         >
@@ -833,11 +863,24 @@ export function ChatActiveOrdersStrip({
       {productPayOrder ? (
         <PaystackTerminalModal
           isOpen
-          onClose={() => setProductPayOrder(null)}
+          onClose={() => {
+            setProductPayOrder(null);
+            setProductCheckoutReference(null);
+            setProductCheckoutMetadata(null);
+            setProductCheckoutAmount(null);
+          }}
           email={payEmail}
-          amount={Number(productPayOrder.total_amount) || 0}
+          amount={(productCheckoutAmount ?? Number(productPayOrder.total_amount)) || 0}
           currency={productPayOrder.currency_code || 'NGN'}
-          metadata={{ order_id: productPayOrder.id, is_escrow: true, buyer_id: userId }}
+          reference={productCheckoutReference}
+          metadata={
+            productCheckoutMetadata ?? {
+              order_id: productPayOrder.id,
+              is_escrow: true,
+              purpose: 'escrow_order',
+              buyer_id: userId,
+            }
+          }
           onSuccess={(ref) => void handleProductPaymentSuccess(ref, productPayOrder)}
         />
       ) : null}
@@ -861,10 +904,12 @@ export function ChatActiveOrdersStrip({
             )
           }
           currency={servicePayCurrency}
+          reference={serviceCheckoutReference}
           metadata={
-            servicePaymentOrderId
-              ? { order_id: servicePaymentOrderId, is_escrow: true, service_order_id: servicePayBooking.id }
-              : { is_escrow: true, service_order_id: servicePayBooking.id }
+            serviceCheckoutMetadata ??
+            (servicePaymentOrderId
+              ? { order_id: servicePaymentOrderId, is_escrow: true, purpose: 'escrow_order', service_order_id: servicePayBooking.id }
+              : { is_escrow: true, purpose: 'escrow_order', service_order_id: servicePayBooking.id })
           }
           onSuccess={(ref) => void handleServicePaymentSuccess(ref)}
         />

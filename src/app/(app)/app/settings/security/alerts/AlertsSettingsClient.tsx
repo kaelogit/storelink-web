@@ -44,11 +44,7 @@ export default function AlertsSettingsClient() {
         setSessions(Array.isArray(sessRes.data) ? (sessRes.data as SecuritySession[]) : []);
         const uid = auth.user?.id;
         if (uid) {
-          const { data } = await supabase
-            .from('profiles')
-            .select('phone_number,phone_verified,is_verified')
-            .eq('id', uid)
-            .maybeSingle();
+          const { data } = await supabase.rpc('get_my_profile');
           if (!mounted) return;
           setPhoneOk(data?.phone_verified === true && !!data?.phone_number);
           setEmailOk(data?.is_verified === true);

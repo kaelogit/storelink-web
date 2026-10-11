@@ -4,6 +4,7 @@ import { notFound, redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 import { buildProfileShareMetadata, normalizeUsername } from '@/lib/metadata/shareMetadata';
 import ClientProfileWrapper from '../../../../[username]/ClientProfileWrapper';
+import { PUBLIC_PROFILE_COLUMNS, asPublicProfileRow } from '@/lib/publicProfile';
 
 export async function generateMetadata({ params }: { params: Promise<{ username: string }> }): Promise<Metadata> {
   const resolved = await params;
@@ -52,12 +53,13 @@ export default async function AppProfileBySlugPage({
   if (!slug || RESERVED_SLUGS.has(slug)) return notFound();
 
   const supabase = createServerClient();
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
+  const { data: profileRaw } = await supabase
+    .from('public_profiles')
+    .select(PUBLIC_PROFILE_COLUMNS)
     .ilike('slug', slug)
     .single();
 
+  const profile = asPublicProfileRow(profileRaw);
   if (!profile) return notFound();
 
   const { data: products } = await supabase

@@ -107,7 +107,8 @@ export default function AppSpotlightPostPage() {
 
   const uploadVideo = async (userId: string, file: File) => {
     const ext = (file.name.split('.').pop() || 'mp4').toLowerCase();
-    const path = `spotlight/${userId}/spotlight_${Date.now()}.${ext}`;
+    // Must be reels/{auth.uid()}/… for get-upload-url KEY_UID bind
+    const path = `${userId}/spotlight_${Date.now()}.${ext}`;
     setUploadStage('uploading');
     setUploadProgress(20);
     const publicUrl = await uploadFileToR2(file, `reels/${path}`);
@@ -136,7 +137,7 @@ export default function AppSpotlightPostPage() {
       try {
         const frameBlob = await captureVideoFrameJpegBlob(videoFile);
         if (frameBlob) {
-          const thumbPath = `spotlight/${userId}/spotlight_${Date.now()}_thumb.jpg`;
+          const thumbPath = `${userId}/spotlight_${Date.now()}_thumb.jpg`;
           try {
             thumbnailUrl = await uploadFileToR2(frameBlob, `reels/${thumbPath}`, 'image/jpeg');
           } catch {

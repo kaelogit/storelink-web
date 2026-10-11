@@ -6,6 +6,7 @@ import { Heart, Sparkles, X } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import { firstNonEmptyId } from '@/lib/firstNonEmptyId';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
+import { toggleFollowRateLimited } from '@/lib/rateLimitedSocial';
 
 export default function HomeLikesSheet({
   open,
@@ -95,8 +96,9 @@ export default function HomeLikesSheet({
       next.delete(targetId);
       return next;
     });
-    const res = await supabase.from('follows').delete().eq('follower_id', viewerId).eq('following_id', targetId);
-    if (res.error) {
+    try {
+      await toggleFollowRateLimited(supabase, { targetUserId: targetId, follow: false });
+    } catch {
       setFollowingIds((prev) => new Set(prev).add(targetId));
     }
     setPendingFollowIds((prev) => {
@@ -125,8 +127,9 @@ export default function HomeLikesSheet({
       next.add(targetId);
       return next;
     });
-    const res = await supabase.from('follows').upsert({ follower_id: viewerId, following_id: targetId }, { ignoreDuplicates: true });
-    if (res.error) {
+    try {
+      await toggleFollowRateLimited(supabase, { targetUserId: targetId, follow: true });
+    } catch {
       setFollowingIds((prev) => {
         const next = new Set(prev);
         next.delete(targetId);

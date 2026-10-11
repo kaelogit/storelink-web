@@ -65,7 +65,7 @@ export default function ShippingSettingsClient() {
       setAddresses([]);
       return;
     }
-    const { data, error } = await supabase.from('profiles').select('id,phone_number,shipping_details').eq('id', uid).maybeSingle();
+    const { data, error } = await supabase.rpc('get_my_profile');
     if (error) throw error;
     const p = (data as ProfileRow) || null;
     setProfile(p);

@@ -54,9 +54,19 @@ function HomeAddressContent() {
     setError(null);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        setError('Sign in to search addresses.');
+        setHits([]);
+        return;
+      }
+
       const response = await fetch('/api/geocode', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ q: normalizedQuery }),
         signal: controller.signal,
       });
@@ -77,7 +87,7 @@ function HomeAddressContent() {
       setLoading(false);
       if (inFlightRef.current === controller) inFlightRef.current = null;
     }
-  }, [query]);
+  }, [query, supabase]);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {

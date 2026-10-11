@@ -7,6 +7,8 @@ export const CLAWBACK_ALLOWED_PATH_PARTS = [
   '/app/activity/support-new',
   '/app/activity/support-detail',
   '/app/activity/support-history',
+  '/app/bookings',
+  '/help-center',
   '/terms',
 ] as const;
 

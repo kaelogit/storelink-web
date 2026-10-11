@@ -24,6 +24,13 @@ import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { withDrawerParam } from '@/components/profile-web/profileHubPaths';
 import { boostCreateHref } from '@/lib/boostRoutes';
 import { isFeatureEnabled } from '@/lib/featureFlags';
+import {
+  flashPriceFloor,
+  isListingContentLocked,
+  LISTING_PRICE_CHANGE_CAP_PCT,
+  mapListingLockError,
+  validateFlashPrice,
+} from '@/lib/listingContentLock';
 
 type ProductRow = {
   id: string;
@@ -34,6 +41,7 @@ type ProductRow = {
   is_flash_drop?: boolean | null;
   flash_price?: number | null;
   flash_end_time?: string | null;
+  content_locked_at?: string | null;
 };
 
 type ServiceRow = {
@@ -240,9 +248,12 @@ export default function InventoryClient() {
       try {
         const { error } = await supabase.from('products').update(updates).eq('id', id);
         if (error) throw error;
-      } catch (e) {
+      } catch (e: any) {
         setProducts(previous);
-        setAlertMsg({ title: 'Update failed', subtitle: 'Could not save that change. Please try again.' });
+        setAlertMsg({
+          title: 'Update failed',
+          subtitle: mapListingLockError(e?.message || 'Could not save that change. Please try again.'),
+        });
         if (process.env.NODE_ENV === 'development') console.error(e);
       } finally {
         setUpdatingId(null);
@@ -252,7 +263,10 @@ export default function InventoryClient() {
 
   const openFlash = (p: ProductRow) => {
     setSelectedProduct(p);
-    setFlashPrice((p.price * 0.9).toFixed(0));
+    const locked = isListingContentLocked(p);
+    const floor = flashPriceFloor(p.price, locked);
+    const suggested = Math.max(floor, Math.round(p.price * 0.9));
+    setFlashPrice(String(suggested));
     setFlashDuration(3);
     setFlashOpen(true);
   };
@@ -260,8 +274,15 @@ export default function InventoryClient() {
   const confirmFlash = () => {
     if (!selectedProduct || !flashPrice) return;
     const price = parseFloat(flashPrice);
-    if (isNaN(price) || price >= selectedProduct.price) {
-      setAlertMsg({ title: 'Invalid price', subtitle: 'Flash price must be lower than original price.' });
+    const locked = isListingContentLocked(selectedProduct);
+    const check = validateFlashPrice({
+      listPrice: Number(selectedProduct.price),
+      flashPrice: price,
+      durationHours: flashDuration,
+      contentLocked: locked,
+    });
+    if (!check.ok) {
+      setAlertMsg({ title: 'Invalid flash', subtitle: check.message });
       return;
     }
     const endTime = new Date();
@@ -689,6 +710,18 @@ export default function InventoryClient() {
                 autoFocus
               />
             </div>
+            {selectedProduct?.price ? (
+              <p className="mt-2 text-xs text-(--muted)">
+                Min flash price: ₦
+                {flashPriceFloor(
+                  Number(selectedProduct.price),
+                  isListingContentLocked(selectedProduct),
+                )}
+                {isListingContentLocked(selectedProduct)
+                  ? ` (max ${LISTING_PRICE_CHANGE_CAP_PCT}% off while locked)`
+                  : ' (max 70% off)'}
+              </p>
+            ) : null}
             <p className="mt-4 text-xs font-extrabold tracking-widest text-(--muted)">DURATION</p>
             <div className="mt-2 flex gap-2">
               {([3, 6, 12] as const).map((hr) => (

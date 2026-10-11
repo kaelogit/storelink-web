@@ -35,11 +35,10 @@ function VerifyPhoneContent() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [resending, setResending] = useState(false);
-  const [timer, setTimer] = useState(RESEND_COOLDOWN_SEC);
+  const [timer, setTimer] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
-  const initialSendRef = useRef(false);
 
   useEffect(() => {
     if (!phoneE164) {
@@ -52,6 +51,8 @@ function VerifyPhoneContent() {
     const id = window.setTimeout(() => setTimer((prev) => Math.max(prev - 1, 0)), 1000);
     return () => window.clearTimeout(id);
   }, [timer]);
+
+  const cooldownKey = `storelink.otp_last_sent:phone:${phoneE164}`;
 
   const sendOtp = async (opts?: { force?: boolean }) => {
     if (!phoneE164 || resending) return;
@@ -67,16 +68,33 @@ function VerifyPhoneContent() {
         return;
       }
       setMessage('Code sent.');
-      setTimer(result.retry_after_seconds ?? RESEND_COOLDOWN_SEC);
+      const cooldown = result.retry_after_seconds ?? RESEND_COOLDOWN_SEC;
+      try {
+        window.localStorage.setItem(cooldownKey, String(Date.now()));
+      } catch {
+        // ignore
+      }
+      setTimer(cooldown);
       inputRef.current?.focus();
     } finally {
       setResending(false);
     }
   };
 
+  // Restore cooldown on reopen; auto-send only the first time.
   useEffect(() => {
-    if (!phoneE164 || initialSendRef.current) return;
-    initialSendRef.current = true;
+    if (!phoneE164) return;
+    try {
+      const raw = window.localStorage.getItem(cooldownKey);
+      if (raw) {
+        const elapsed = (Date.now() - Number(raw)) / 1000;
+        const remaining = Math.max(0, Math.ceil(RESEND_COOLDOWN_SEC - elapsed));
+        setTimer(remaining);
+        return;
+      }
+    } catch {
+      // fall through to first send
+    }
     void sendOtp({ force: true });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phoneE164]);

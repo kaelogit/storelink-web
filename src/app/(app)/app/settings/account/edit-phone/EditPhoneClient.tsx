@@ -28,11 +28,7 @@ export default function EditPhoneClient() {
         setInitial('');
         return;
       }
-      const { data } = await supabase
-        .from('profiles')
-        .select('phone_number,phone_verified,location_country_code')
-        .eq('id', uid)
-        .maybeSingle();
+      const { data } = await supabase.rpc('get_my_profile');
       const nextPrefix = getPhonePrefixForCountry(data?.location_country_code);
       setPrefix(nextPrefix);
       setVerified(data?.phone_verified === true);

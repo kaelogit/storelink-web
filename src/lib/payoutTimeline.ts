@@ -21,7 +21,8 @@ export function formatPayoutEta(eligibleAt: string | null | undefined, now = new
  * Seller payout state machine (product orders + service booking legs).
  *
  * ## Status → step
- * - `pending` before `payout_eligible_at` → **queued** (clearing window, typically ~1h after completion).
+ * - `pending` before `payout_eligible_at` → **queued** (48h inspection hold after buyer confirms receipt on chat/escrow orders; storefront may differ).
+ * - `held` → frozen while a dispute is open (not paid by cron).
  * - `pending` / `retry_queued` after eligible time → **processing** (cron / Paystack transfer).
  * - `processing` (service legs) → **processing**.
  * - `retry_queued` before next attempt → **queued** with retry ETA visible.
@@ -141,6 +142,23 @@ export function resolvePayoutTimeline(input: PayoutTimelineInput): PayoutTimelin
     };
   }
 
+  if (status === 'held') {
+    return {
+      visible: true,
+      currentStep: 'queued',
+      activeIndex: 0,
+      isComplete: false,
+      isFailed: false,
+      isRetryScheduled: false,
+      statusLabel: 'On hold',
+      headline: legLabel ? `${legLabel} payout on hold` : 'Payout on hold',
+      detail:
+        errorLog ||
+        'Payout is frozen while a dispute is open. It resumes when the dispute is resolved.',
+      etaLabel: null,
+    };
+  }
+
   if (status === 'paid') {
     return {
       visible: true,
@@ -199,7 +217,7 @@ export function resolvePayoutTimeline(input: PayoutTimelineInput): PayoutTimelin
       return `${retryHint}We hit a temporary issue and will retry automatically${etaLabel ? ` ${etaLabel}` : ''}.`;
     }
     if (!eligiblePassed) {
-      return `Payouts run after the clearing window${etaLabel ? ` (${etaLabel})` : ''}. Product orders typically clear about 1 hour after completion.`;
+      return `Payouts run after the 48-hour inspection window${etaLabel ? ` (${etaLabel})` : ''}.`;
     }
     return 'Eligible for payout — our processor will pick this up shortly.';
   })();

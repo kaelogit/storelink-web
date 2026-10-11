@@ -7,6 +7,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { PaystackTerminalModal } from '@/components/payments/PaystackTerminalModal';
 import { createBrowserClient } from '@/lib/supabase';
+import { confirmSubscriptionPayment } from '@/lib/confirmPaystackPayment';
 import { calculateDiamondPrice } from '@/lib/membershipCopy';
 import { getSellerPlanState, showDiamondBadge } from '@/lib/sellerStatus';
 import MembershipPricingBody from '@/components/membership/MembershipPricingBody';
@@ -101,17 +102,12 @@ export default function AppMembershipClient() {
   }, [billingCurrency, lockedRole, pendingDiamondMonths, profile?.id]);
 
   const handleSubscriptionPaySuccess = useCallback(
-    async (_reference: string) => {
+    async (reference: string) => {
       setPaystackOpen(false);
       if (!profile?.id || pendingDiamondMonths == null) return;
       setUpgradeBusy(true);
       try {
-        const { error } = await supabase.rpc('upgrade_user_subscription', {
-          p_user_id: profile.id,
-          p_plan: 'diamond',
-          p_months: pendingDiamondMonths,
-        });
-        if (error) throw error;
+        await confirmSubscriptionPayment(reference, billingCurrency);
         await load();
         toast.success('Upgrade successful — you are now on Diamond.');
       } catch (e: unknown) {
@@ -122,7 +118,7 @@ export default function AppMembershipClient() {
         setPendingDiamondMonths(null);
       }
     },
-    [load, pendingDiamondMonths, profile?.id, supabase],
+    [billingCurrency, load, pendingDiamondMonths, profile?.id],
   );
 
   return (
@@ -202,6 +198,7 @@ export default function AppMembershipClient() {
           plan_type: 'diamond',
           duration_months: pendingDiamondMonths ?? 1,
           is_seller_upgrade: lockedRole === 'seller',
+          purpose: 'subscription',
         }}
       />
     </div>

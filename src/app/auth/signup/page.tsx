@@ -8,6 +8,12 @@ import Section from '@/components/ui/Section';
 import Card from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import StoreLinkLogo from '@/components/ui/StoreLinkLogo';
+import { sendSignupEmailOtp } from '@/lib/emailOtp';
+import {
+  clearWebPendingReferralCode,
+  persistWebPendingReferralCode,
+  resolveWebReferralCode,
+} from '@/lib/pendingReferralCode';
 
 function SignupPageContent() {
   const router = useRouter();
@@ -26,13 +32,18 @@ function SignupPageContent() {
     let cancelled = false;
     (async () => {
       const { data } = await supabase.auth.getSession();
-      if (cancelled || !data.session?.user) return;
-      router.replace(nextPath);
+      if (cancelled) return;
+      if (data.session?.user) {
+        clearWebPendingReferralCode();
+        router.replace(nextPath);
+        return;
+      }
+      if (referralCode) persistWebPendingReferralCode(referralCode);
     })();
     return () => {
       cancelled = true;
     };
-  }, [supabase, router, nextPath]);
+  }, [supabase, router, nextPath, referralCode]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,47 +73,39 @@ function SignupPageContent() {
           if (signInError) {
             throw new Error('This email is already registered. Please log in.');
           }
+          clearWebPendingReferralCode();
           router.push(nextPath);
           return;
         }
         throw signUpError;
       }
 
-      const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
-      const { error: otpError } = await supabase
-        .from('otp_verifications')
-        .upsert(
-          {
-            email: cleanEmail,
-            code: otpCode,
-            expires_at: new Date(Date.now() + 10 * 60_000).toISOString(),
-          },
-          { onConflict: 'email' },
-        );
-
-      if (otpError) throw otpError;
-
-      const emailResponse = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: cleanEmail,
-          type: 'VERIFY_SIGNUP',
-          code: otpCode,
-        }),
-      });
-
-      if (!emailResponse.ok) {
-        const errorData = await emailResponse.json();
-        throw new Error(errorData.error || 'Failed to send verification email');
-      }
-
+      const otpSend = await sendSignupEmailOtp(cleanEmail);
+      const resolvedRef = resolveWebReferralCode(referralCode);
       const verifyUrl = new URLSearchParams({
         email: cleanEmail,
         next: nextPath,
         type: 'signup',
       });
-      if (referralCode) verifyUrl.set('ref', referralCode);
+      if (resolvedRef) verifyUrl.set('ref', resolvedRef);
+
+      if (!otpSend.ok) {
+        setMessage(
+          otpSend.message ||
+            "Account created, but we couldn't send the code yet. Use Resend on the next screen.",
+        );
+        router.push(`/auth/verify?${verifyUrl.toString()}`);
+        return;
+      }
+
+      try {
+        window.localStorage.setItem(
+          `storelink.otp_last_sent:email:signup:${cleanEmail}`,
+          String(Date.now()),
+        );
+      } catch {
+        // ignore
+      }
 
       router.push(`/auth/verify?${verifyUrl.toString()}`);
     } catch (err: any) {

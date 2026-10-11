@@ -3,6 +3,7 @@
 import { createBrowserClient } from '@/lib/supabase';
 import {
   contentPolicyBlockSheet,
+  failClosedContentPolicyScan,
   failOpenContentPolicyScan,
   parseContentPolicyScanResponse,
   type ContentPolicyScanResult,
@@ -10,6 +11,19 @@ import {
 } from '@/lib/contentPolicyVerdict';
 
 export { contentPolicyBlockSheet };
+
+async function adsEnabled(supabase: ReturnType<typeof createBrowserClient>): Promise<boolean> {
+  try {
+    const { data } = await supabase
+      .from('feature_flags')
+      .select('enabled')
+      .eq('key', 'ads_enabled')
+      .maybeSingle();
+    return data?.enabled === true;
+  } catch {
+    return false;
+  }
+}
 
 export async function scanAdCreative(params: {
   textParts: string[];
@@ -45,11 +59,17 @@ export async function scanAdCreative(params: {
       },
     );
 
+    if (data && typeof data === 'object' && (data as { allowed?: boolean }).allowed === false) {
+      return parseContentPolicyScanResponse(data);
+    }
+
     if (error) {
       if (process.env.NODE_ENV === 'development') {
         console.warn('[adCreativePolicy] invoke failed', error);
       }
-      return failOpenContentPolicyScan();
+      return (await adsEnabled(supabase))
+        ? failClosedContentPolicyScan('Creative policy check unavailable. Try again shortly.')
+        : failOpenContentPolicyScan();
     }
 
     return parseContentPolicyScanResponse(data);
@@ -57,7 +77,10 @@ export async function scanAdCreative(params: {
     if (process.env.NODE_ENV === 'development') {
       console.warn('[adCreativePolicy] scan error', err);
     }
-    return failOpenContentPolicyScan();
+    const supabase = createBrowserClient();
+    return (await adsEnabled(supabase))
+      ? failClosedContentPolicyScan('Creative policy check unavailable. Try again shortly.')
+      : failOpenContentPolicyScan();
   }
 }
 
