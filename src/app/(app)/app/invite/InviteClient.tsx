@@ -28,7 +28,11 @@ export default function InviteClient() {
       if (!auth.user?.id || !alive) return;
 
       // Backfill missing codes, then load profile + program status.
-      await supabase.rpc('ensure_my_referral_code').catch(() => null);
+      try {
+        await supabase.rpc('ensure_my_referral_code');
+      } catch {
+        // non-blocking: invite page still loads without a code backfill
+      }
 
       const [{ data: profile }, { data: program }] = await Promise.all([
         supabase.rpc('get_my_profile'),
