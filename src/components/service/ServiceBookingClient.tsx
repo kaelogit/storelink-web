@@ -31,9 +31,16 @@ import {
 import { phoneVerifyHref } from '@/lib/phoneOtp';
 import { parseAvailabilitySettings } from '@/lib/foodAvailability';
 import {
+  QUOTE_ZONE_ID,
   buildMenuItemWithDelivery,
+  deliveryZoneHasGeoPin,
+  formatMatchedDeliveryZoneLabel,
+  matchDeliveryZoneForPoint,
   resolveHomeVisitFee,
 } from '@/lib/foodDeliveryZones';
+import { getBuyerDropoffGeoFromSavedAddresses } from '@/lib/shippingAddress';
+import { buildDeliveryQuoteRequestInsert } from '@/lib/deliveryQuoteRequestMessage';
+import { WebDeliveryZonePicker } from '@/components/cart/WebDeliveryZonePicker';
 
 const formatMoney = (amountMinor: number, currency: string) => {
   const main = (Number(amountMinor) || 0) / 100;
@@ -74,6 +81,11 @@ export default function ServiceBookingClient({
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [address, setAddress] = useState('');
+  const [discoveryPin, setDiscoveryPin] = useState<{
+    discovery_latitude?: number | null;
+    discovery_longitude?: number | null;
+  } | null>(null);
+  const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -114,27 +126,54 @@ export default function ServiceBookingClient({
     return Number(service?.hero_price_min || 0);
   }, [selectedMenuPriceMinor, selectedMenuName, menuItems, service?.hero_price_min]);
 
-  const deliveryZones = useMemo(() => {
-    const avail = parseAvailabilitySettings(service?.availability_settings);
-    return avail?.delivery_zones ?? [];
-  }, [service?.availability_settings]);
+  const availabilitySettings = useMemo(
+    () => parseAvailabilitySettings(service?.availability_settings),
+    [service?.availability_settings],
+  );
+  const deliveryZones = availabilitySettings?.delivery_zones ?? [];
+  const outsideZonePolicy = availabilitySettings?.outside_zone ?? 'quote';
+
+  const buyerDropoffGeo = useMemo(
+    () => getBuyerDropoffGeoFromSavedAddresses(savedAddresses, selectedAddressId, discoveryPin),
+    [savedAddresses, selectedAddressId, discoveryPin],
+  );
+
+  const zoneMatch = useMemo(
+    () => matchDeliveryZoneForPoint(deliveryZones, buyerDropoffGeo),
+    [deliveryZones, buyerDropoffGeo],
+  );
+  const matchedZoneLabel = formatMatchedDeliveryZoneLabel(zoneMatch);
+  const noPinHint = !buyerDropoffGeo && deliveryZones.some(deliveryZoneHasGeoPin);
+
+  useEffect(() => {
+    if (!isHomeFulfillment || !deliveryZones.some(deliveryZoneHasGeoPin)) return;
+    if (!buyerDropoffGeo) return;
+    if (zoneMatch) {
+      setSelectedZoneId(zoneMatch.zone.id);
+    } else if (outsideZonePolicy === 'quote') {
+      setSelectedZoneId(QUOTE_ZONE_ID);
+    } else {
+      setSelectedZoneId(null);
+    }
+  }, [buyerDropoffGeo, deliveryZones, isHomeFulfillment, outsideZonePolicy, zoneMatch]);
 
   const deliveryResolved = useMemo(
     () =>
       resolveHomeVisitFee({
         zones: deliveryZones,
-        zoneId: null,
+        zoneId: selectedZoneId,
         foodTotalMinor: menuPriceMinor,
-        freeAboveMinor: parseAvailabilitySettings(service?.availability_settings)?.delivery_free_above_minor,
+        freeAboveMinor: availabilitySettings?.delivery_free_above_minor,
         isHome: isHomeFulfillment,
         travelFeeMinor: service?.travel_fee_minor,
         travelZoneName: travelFeeLabels(service?.service_category).zoneName,
       }),
     [
+      availabilitySettings?.delivery_free_above_minor,
       deliveryZones,
       isHomeFulfillment,
       menuPriceMinor,
-      service?.availability_settings,
+      selectedZoneId,
       service?.service_category,
       service?.travel_fee_minor,
     ],
@@ -155,6 +194,10 @@ export default function ServiceBookingClient({
       setBuyerPhone({
         phone_verified: (profile as { phone_verified?: boolean | null } | null)?.phone_verified,
         phone_number: (profile as { phone_number?: string | null } | null)?.phone_number,
+      });
+      setDiscoveryPin({
+        discovery_latitude: (profile as any)?.discovery_latitude ?? null,
+        discovery_longitude: (profile as any)?.discovery_longitude ?? null,
       });
       const details = Array.isArray((profile as any)?.shipping_details)
         ? (profile as any).shipping_details
@@ -208,6 +251,43 @@ export default function ServiceBookingClient({
     if (isHomeFulfillment && !address.trim()) {
       setError('Please add or select a home service address before continuing.');
       return;
+    }
+    if (isHomeFulfillment && deliveryZones.length > 0) {
+      if (!selectedZoneId || (selectedZoneId === QUOTE_ZONE_ID && outsideZonePolicy === 'block')) {
+        setError(
+          outsideZonePolicy === 'block'
+            ? 'Delivery only to listed axes. Pick the area that matches your address.'
+            : 'Pick where your address falls so we can add the right delivery fee.',
+        );
+        return;
+      }
+      if (selectedZoneId === QUOTE_ZONE_ID || deliveryResolved.isQuote) {
+        setSubmitting(true);
+        try {
+          const { data: chatId, error: chatError } = await supabase.rpc('create_smart_chat', {
+            p_initiator_id: buyerId,
+            p_recipient_id: service.seller_id,
+            p_is_checkout: true,
+          });
+          if (chatError || !chatId) throw new Error(chatError?.message || 'Could not open seller chat.');
+          await supabase.from('messages').insert(
+            buildDeliveryQuoteRequestInsert({
+              conversationId: String(chatId),
+              senderId: buyerId,
+              address: address.trim() || 'my address',
+              latitude: buyerDropoffGeo?.latitude,
+              longitude: buyerDropoffGeo?.longitude,
+            }),
+          );
+          toast.message('Outside listed axes — messaging the seller for a quote…');
+          router.replace(`/app/chat/${encodeURIComponent(String(chatId))}`);
+        } catch (err: any) {
+          setError(err?.message || 'Could not message seller.');
+        } finally {
+          setSubmitting(false);
+        }
+        return;
+      }
     }
     if (service?.allows_booking_requests === false) {
       setError('This service is not accepting booking requests right now.');
@@ -402,10 +482,51 @@ export default function ServiceBookingClient({
                   localStorage.setItem('storelink:web:cart:shipping-address', formatted);
                 }}
               />
+              {deliveryZones.length > 0 ? (
+                <div className="mt-3">
+                  <WebDeliveryZonePicker
+                    zones={deliveryZones}
+                    selectedZoneId={selectedZoneId}
+                    outsidePolicy={outsideZonePolicy}
+                    currencyCode={currencyCode || service?.currency_code || 'NGN'}
+                    onSelectZone={setSelectedZoneId}
+                    matchedLabel={matchedZoneLabel}
+                    noPinHint={noPinHint}
+                    onMessageSeller={() => {
+                      void (async () => {
+                        if (!buyerId) return;
+                        try {
+                          const { data: chatId, error: chatError } = await supabase.rpc(
+                            'create_smart_chat',
+                            {
+                              p_initiator_id: buyerId,
+                              p_recipient_id: service.seller_id,
+                              p_is_checkout: true,
+                            },
+                          );
+                          if (chatError || !chatId) throw new Error('Could not open seller chat.');
+                          await supabase.from('messages').insert(
+                            buildDeliveryQuoteRequestInsert({
+                              conversationId: String(chatId),
+                              senderId: buyerId,
+                              address: address.trim() || 'my address',
+                              latitude: buyerDropoffGeo?.latitude,
+                              longitude: buyerDropoffGeo?.longitude,
+                            }),
+                          );
+                          router.push(`/app/chat/${encodeURIComponent(String(chatId))}`);
+                        } catch (e: unknown) {
+                          toast.error(e instanceof Error ? e.message : 'Could not message seller.');
+                        }
+                      })();
+                    }}
+                  />
+                </div>
+              ) : null}
             </div>
           ) : null}
 
-          {isHomeFulfillment && deliveryResolved.fee_minor > 0 ? (
+          {isHomeFulfillment && deliveryResolved.fee_minor > 0 && !deliveryResolved.isQuote ? (
             <div className="mt-5 flex items-center justify-between rounded-2xl border border-(--border) bg-(--surface) px-3 py-3">
               <p className="text-xs font-black uppercase tracking-widest text-(--muted)">
                 {deliveryResolved.feeNoun}

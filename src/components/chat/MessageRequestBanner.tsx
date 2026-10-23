@@ -1,51 +1,54 @@
 'use client';
 
-import { Ban, Flag, MessageCircle, Trash2 } from 'lucide-react';
+import { MESSAGE_REQUEST_BODY, messageRequestHeadline } from '@/lib/messageRequests';
 
 type MessageRequestBannerProps = {
   partnerName?: string | null;
+  accepting?: boolean;
   onReport: () => void;
-  onBlock: () => void;
   onDelete: () => void;
+  onAccept: () => void;
 };
 
-export function MessageRequestBanner({ partnerName, onReport, onBlock, onDelete }: MessageRequestBannerProps) {
-  const label = partnerName?.trim() || 'This person';
-
+export function MessageRequestBanner({
+  partnerName,
+  accepting = false,
+  onReport,
+  onDelete,
+  onAccept,
+}: MessageRequestBannerProps) {
   return (
-    <div className="mx-4 mb-3 rounded-[14px] border border-(--border) bg-(--surface) p-4">
-      <div className="flex items-center gap-2">
-        <MessageCircle size={18} className="text-emerald-600" strokeWidth={2.2} />
-        <p className="text-sm font-bold text-(--foreground)">Message request</p>
-      </div>
-      <p className="mt-2 text-sm leading-relaxed text-(--muted)">
-        {label} isn&apos;t someone you follow or have ordered from yet. Reply to move this chat to Primary.
-        Decline stops them from messaging you here; report or block if it looks like spam.
+    <div className="border-t border-(--border) bg-(--card) px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-4">
+      <p className="text-center text-base font-black tracking-tight text-(--foreground)">
+        {messageRequestHeadline(partnerName)}
       </p>
-      <div className="mt-3 flex gap-2">
+      <p className="mt-1 text-center text-sm leading-snug text-(--muted)">{MESSAGE_REQUEST_BODY}</p>
+      <div className="mt-3 flex items-center">
         <button
           type="button"
           onClick={onReport}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-(--border) px-2 py-2.5 text-xs font-semibold text-(--foreground)"
+          disabled={accepting}
+          className="flex-1 py-3 text-sm font-semibold text-red-500 disabled:opacity-50"
         >
-          <Flag size={14} className="text-amber-500" />
           Report
         </button>
-        <button
-          type="button"
-          onClick={onBlock}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-(--border) px-2 py-2.5 text-xs font-semibold text-red-500"
-        >
-          <Ban size={14} />
-          Block
-        </button>
+        <span className="h-4 w-px bg-(--border)" />
         <button
           type="button"
           onClick={onDelete}
-          className="flex flex-1 items-center justify-center gap-1.5 rounded-[10px] border border-(--border) px-2 py-2.5 text-xs font-semibold text-(--muted)"
+          disabled={accepting}
+          className="flex-1 py-3 text-sm font-semibold text-(--foreground) disabled:opacity-50"
         >
-          <Trash2 size={14} />
-          Decline
+          Delete
+        </button>
+        <span className="h-4 w-px bg-(--border)" />
+        <button
+          type="button"
+          onClick={onAccept}
+          disabled={accepting}
+          className="flex-1 py-3 text-sm font-bold text-(--foreground) disabled:opacity-50"
+        >
+          {accepting ? 'Accepting…' : 'Accept'}
         </button>
       </div>
     </div>

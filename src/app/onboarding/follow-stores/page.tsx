@@ -108,15 +108,15 @@ export default function FollowStoresPage() {
       const { error: updateError } = await supabase
         .from('profiles')
         .update({
-          onboarding_step: 'completed',
+          onboarding_step: 'profile-photo',
         })
         .eq('id', session.session.user.id);
 
       if (updateError) throw updateError;
 
-      router.push('/app/home');
+      router.push('/onboarding/profile-photo');
     } catch (err: any) {
-      setError(err?.message || 'Failed to complete onboarding');
+      setError(err?.message || 'Failed to continue');
     } finally {
       setLoading(false);
     }
@@ -223,7 +223,7 @@ export default function FollowStoresPage() {
           disabled={loading}
           className="w-full"
         >
-          {loading ? 'Completing...' : 'Complete Onboarding'}
+          {loading ? 'Continuing...' : 'Continue'}
         </Button>
 
         <Button

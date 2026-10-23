@@ -443,7 +443,7 @@ export default function ExploreReelCard({
     }
     const [likesRes, commentsRes, wishlistRes, likedRes, wishRes] = await Promise.all([
       supabase.from('product_likes').select('id', { count: 'exact', head: true }).eq('product_id', targetItemId),
-      supabase.from('product_comments').select('id', { count: 'exact', head: true }).eq('product_id', targetItemId),
+      supabase.from('product_comments').select('id', { count: 'exact', head: true }).eq('product_id', targetItemId).eq('is_deleted', false).eq('is_hidden', false),
       supabase.from('wishlist').select('id', { count: 'exact', head: true }).eq('product_id', targetItemId),
       userId
         ? supabase.from('product_likes').select('id').eq('product_id', targetItemId).eq('user_id', userId).maybeSingle()

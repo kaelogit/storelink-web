@@ -575,7 +575,12 @@ export default function ClientProductWrapper({ product, seller }: any) {
           comment_count: commentsCount,
         }}
         onChanged={async () => {
-          const { count } = await supabase.from('product_comments').select('id', { count: 'exact', head: true }).eq('product_id', product.id);
+          const { count } = await supabase
+            .from('product_comments')
+            .select('id', { count: 'exact', head: true })
+            .eq('product_id', product.id)
+            .eq('is_deleted', false)
+            .eq('is_hidden', false);
           setEngagement((prev) => ({ ...prev, commentsCount: Number(count || 0) }));
         }}
       />

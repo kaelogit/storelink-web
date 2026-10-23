@@ -63,9 +63,9 @@ export function getTermsContent(countryCode: string) {
         title: '3. THE ESCROW SERVICE',
         bullets: [
           'StoreLink acts as a neutral third-party escrow agent for transactions.',
-          'Buyer funds are held in a secure Escrow Wallet until the order is marked \'Delivered\' and the inspection period (48 hours) expires.',
-          'If a Buyer raises a Dispute within 48 hours of delivery, funds remain frozen until the dispute is resolved by StoreLink Moderation.',
-          'Once funds are released to the Seller, the transaction is final and non-reversible.',
+          'Buyer funds are held in a secure Escrow Wallet until the order is marked \'Delivered\' and the inspection period (6 hours) expires.',
+          'If a Buyer raises a Dispute after delivery, funds stay frozen if still in escrow, or may be clawed back if a payout already started, until StoreLink Moderation resolves the case.',
+          'After the 6-hour inspection window, funds are released to the Seller. A later dispute may still freeze or claw back payout until StoreLink Moderation resolves the case.',
         ],
       },
       {

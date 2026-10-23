@@ -1025,7 +1025,9 @@ export default function ClientServiceWrapper({ service, seller }: any) {
           const { count } = await supabase
             .from('service_comments')
             .select('id', { count: 'exact', head: true })
-            .eq('service_listing_id', service.id);
+            .eq('service_listing_id', service.id)
+            .eq('is_deleted', false)
+            .eq('is_hidden', false);
           setEngagement((prev) => ({ ...prev, commentsCount: Number(count || 0) }));
         }}
       />

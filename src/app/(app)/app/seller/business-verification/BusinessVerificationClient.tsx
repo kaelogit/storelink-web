@@ -261,7 +261,7 @@ export default function BusinessVerificationClient() {
         </div>
         <h1 className="text-xl font-black tracking-tight text-(--foreground)">Business verified</h1>
         <p className="max-w-sm text-sm text-(--muted)">
-          Your CAC registration was approved. Your Verified badge now shows a double check.
+          Your CAC registration was approved. Your profile badge now reads Business.
         </p>
         <Button href={backHref} variant="secondary" className="mt-2 rounded-full px-6">
           Done

@@ -54,6 +54,9 @@ import {
 } from '@/lib/foodAvailability';
 import {
   buildProductShippingZonePayload,
+  deliveryZoneHasGeoPin,
+  formatMatchedDeliveryZoneLabel,
+  matchDeliveryZoneForPoint,
   parseStoreDeliverySettings,
   QUOTE_ZONE_ID,
   resolveDeliveryFee,
@@ -62,6 +65,8 @@ import {
   type OutsideZonePolicy,
   type StoreDeliverySettings,
 } from '@/lib/foodDeliveryZones';
+import { getBuyerDropoffGeoFromSavedAddresses } from '@/lib/shippingAddress';
+import { buildDeliveryQuoteRequestInsert } from '@/lib/deliveryQuoteRequestMessage';
 import { fetchListingBookingCountsByDay } from '@/lib/foodCapacity';
 import { cartLinesRequireShipping } from '@/lib/productShipping';
 import {
@@ -103,6 +108,11 @@ export default function AppCartPage() {
   const [savedAddresses, setSavedAddresses] = useState<any[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
   const [address, setAddress] = useState('');
+  const [discoveryPin, setDiscoveryPin] = useState<{
+    discovery_latitude?: number | null;
+    discovery_longitude?: number | null;
+  } | null>(null);
+  const [serviceZoneById, setServiceZoneById] = useState<Record<string, string>>({});
   const [loadingSellerKey, setLoadingSellerKey] = useState<string | null>(null);
   const [coinTogglesBySeller, setCoinTogglesBySeller] = useState<Record<string, boolean>>({});
   const [selectedProductIds, setSelectedProductIds] = useState<Record<string, boolean>>({});
@@ -146,7 +156,6 @@ export default function AppCartPage() {
   const [sellerDeliveryById, setSellerDeliveryById] = useState<
     Record<string, StoreDeliverySettings | null>
   >({});
-  const [serviceZoneById, setServiceZoneById] = useState<Record<string, string>>({});
   const [checkoutSession, setCheckoutSession] = useState<{
     kind: 'products' | 'services';
     sellerKey: string;
@@ -171,6 +180,10 @@ export default function AppCartPage() {
       });
       const shippingDetails = Array.isArray((profile as any)?.shipping_details) ? (profile as any).shipping_details : [];
       setSavedAddresses(shippingDetails);
+      setDiscoveryPin({
+        discovery_latitude: (profile as any)?.discovery_latitude ?? null,
+        discovery_longitude: (profile as any)?.discovery_longitude ?? null,
+      });
       if (shippingDetails.length > 0) {
         const preferred = shippingDetails.find((a: any) => a?.is_default) || shippingDetails[0];
         const formatted = `${preferred.street_address}, ${preferred.city}, ${preferred.state || ''} ${preferred.postal_code}, ${preferred.country} \n📞 ${preferred.phone_contact}`;
@@ -180,6 +193,57 @@ export default function AppCartPage() {
     };
     void load();
   }, [supabase]);
+
+  const buyerDropoffGeo = useMemo(
+    () => getBuyerDropoffGeoFromSavedAddresses(savedAddresses, selectedAddressId, discoveryPin),
+    [savedAddresses, selectedAddressId, discoveryPin],
+  );
+
+  /** Auto-match product-shop axes to buyer pin. */
+  useEffect(() => {
+    if (!buyerDropoffGeo) return;
+    for (const [sellerId, settings] of Object.entries(sellerDeliveryById)) {
+      const zones = settings?.delivery_zones || [];
+      if (!zones.some(deliveryZoneHasGeoPin)) continue;
+      const match = matchDeliveryZoneForPoint(zones, buyerDropoffGeo);
+      if (match) {
+        setDeliveryZoneForSeller(sellerId, match.zone.id);
+      } else if ((settings?.outside_zone ?? 'quote') === 'quote') {
+        setDeliveryZoneForSeller(sellerId, QUOTE_ZONE_ID);
+      } else {
+        setDeliveryZoneForSeller(sellerId, null);
+      }
+    }
+  }, [buyerDropoffGeo, sellerDeliveryById, setDeliveryZoneForSeller]);
+
+  /** Auto-match service listing axes to buyer pin. */
+  useEffect(() => {
+    if (!buyerDropoffGeo) return;
+    setServiceZoneById((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const [listingId, meta] of Object.entries(serviceMetaById)) {
+        const zones = meta.delivery_zones || [];
+        if (!zones.some(deliveryZoneHasGeoPin)) continue;
+        const match = matchDeliveryZoneForPoint(zones, buyerDropoffGeo);
+        if (match) {
+          if (next[listingId] !== match.zone.id) {
+            next[listingId] = match.zone.id;
+            changed = true;
+          }
+        } else if ((meta.outside_zone ?? 'quote') === 'quote') {
+          if (next[listingId] !== QUOTE_ZONE_ID) {
+            next[listingId] = QUOTE_ZONE_ID;
+            changed = true;
+          }
+        } else if (next[listingId]) {
+          delete next[listingId];
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
+    });
+  }, [buyerDropoffGeo, serviceMetaById]);
 
   useEffect(() => {
     setSelectedProductIds((prev) => {
@@ -529,7 +593,8 @@ export default function AppCartPage() {
         return;
       }
       if (selectedZoneId === QUOTE_ZONE_ID) {
-        toast.error('This area needs a custom quote — message the seller first.');
+        toast.message('Outside listed axes — messaging the seller for a quote…');
+        void messageSellerForQuote(sellerId);
         return;
       }
     }
@@ -804,6 +869,31 @@ export default function AppCartPage() {
     setSelectedAddressId(id);
     setAddress(formatted);
     localStorage.setItem('storelink:web:cart:shipping-address', formatted);
+  };
+
+  const messageSellerForQuote = async (sellerId: string) => {
+    if (!buyerId || !sellerId) return;
+    try {
+      const { data: chatId, error: chatError } = await supabase.rpc('create_smart_chat', {
+        p_initiator_id: buyerId,
+        p_recipient_id: sellerId,
+        p_is_checkout: true,
+      });
+      if (chatError || !chatId) throw new Error('Could not open seller chat.');
+      await supabase.from('messages').insert(
+        buildDeliveryQuoteRequestInsert({
+          conversationId: String(chatId),
+          senderId: buyerId,
+          address: address || 'my address',
+          latitude: buyerDropoffGeo?.latitude,
+          longitude: buyerDropoffGeo?.longitude,
+        }),
+      );
+      closeCheckout();
+      router.push(`/app/chat/${encodeURIComponent(String(chatId))}`);
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Could not message seller.');
+    }
   };
 
   return (
@@ -1412,6 +1502,9 @@ export default function AppCartPage() {
               const sellerId = String(activeCheckoutGroup.sellerId || '');
               const settings = sellerDeliveryById[sellerId];
               const zones = settings?.delivery_zones || [];
+              const productZoneMatch = matchDeliveryZoneForPoint(zones, buyerDropoffGeo);
+              const productMatchedLabel = formatMatchedDeliveryZoneLabel(productZoneMatch);
+              const productNoPinHint = !buyerDropoffGeo && zones.some(deliveryZoneHasGeoPin);
               const currency =
                 activeCheckoutGroup.products[0]?.currency_code || 'NGN';
               const ship = productShippingCopy();
@@ -1478,6 +1571,9 @@ export default function AppCartPage() {
                           outsidePolicy={settings?.outside_zone ?? 'quote'}
                           currencyCode={currency}
                           onSelectZone={(id) => setDeliveryZoneForSeller(sellerId, id)}
+                          onMessageSeller={() => void messageSellerForQuote(sellerId)}
+                          matchedLabel={productMatchedLabel}
+                          noPinHint={productNoPinHint}
                         />
                       ) : null}
                     </>
@@ -1502,6 +1598,9 @@ export default function AppCartPage() {
               ? serviceModeById[firstService.service_listing_id] || 'home'
               : 'home';
             const zones = meta?.delivery_zones || [];
+            const serviceZoneMatch = matchDeliveryZoneForPoint(zones, buyerDropoffGeo);
+            const serviceMatchedLabel = formatMatchedDeliveryZoneLabel(serviceZoneMatch);
+            const serviceNoPinHint = !buyerDropoffGeo && zones.some(deliveryZoneHasGeoPin);
 
             return (
               <div className="space-y-4">
@@ -1577,6 +1676,11 @@ export default function AppCartPage() {
                             [firstService.service_listing_id]: id,
                           }))
                         }
+                        onMessageSeller={() =>
+                          void messageSellerForQuote(String(activeCheckoutGroup.sellerId || ''))
+                        }
+                        matchedLabel={serviceMatchedLabel}
+                        noPinHint={serviceNoPinHint}
                       />
                     ) : (Number(meta?.travel_fee_minor) || 0) > 0 ? (
                       <div className="rounded-2xl border border-(--border) bg-(--surface) px-4 py-3">

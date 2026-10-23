@@ -346,7 +346,12 @@ export default function ClientExploreWrapper({
     const isServiceItem = target?.type === 'service' || !!target?.service_listing_id;
     const table = isServiceItem ? 'service_comments' : 'product_comments';
     const fk = isServiceItem ? 'service_listing_id' : 'product_id';
-    const { count } = await supabase.from(table).select('id', { count: 'exact', head: true }).eq(fk, itemId);
+    const { count } = await supabase
+      .from(table)
+      .select('id', { count: 'exact', head: true })
+      .eq(fk, itemId)
+      .eq('is_deleted', false)
+      .eq('is_hidden', false);
     const nextCount = Number(count || 0);
     setProducts((prev) =>
       prev.map((row: any) => {
@@ -904,7 +909,12 @@ export default function ClientExploreWrapper({
         ? supabase.from('product_likes').select('product_id,user_id,created_at').in('product_id', productIds).order('created_at', { ascending: false })
         : Promise.resolve({ data: [] as any[] }),
       productIds.length
-        ? supabase.from('product_comments').select('product_id').in('product_id', productIds)
+        ? supabase
+            .from('product_comments')
+            .select('product_id')
+            .in('product_id', productIds)
+            .eq('is_deleted', false)
+            .eq('is_hidden', false)
         : Promise.resolve({ data: [] as any[] }),
       productIds.length
         ? supabase.from('wishlist').select('product_id').in('product_id', productIds)
@@ -919,7 +929,12 @@ export default function ClientExploreWrapper({
         ? supabase.from('service_likes').select('service_listing_id,user_id,created_at').in('service_listing_id', serviceIds).order('created_at', { ascending: false })
         : Promise.resolve({ data: [] as any[] }),
       serviceIds.length
-        ? supabase.from('service_comments').select('service_listing_id').in('service_listing_id', serviceIds)
+        ? supabase
+            .from('service_comments')
+            .select('service_listing_id')
+            .in('service_listing_id', serviceIds)
+            .eq('is_deleted', false)
+            .eq('is_hidden', false)
         : Promise.resolve({ data: [] as any[] }),
       serviceIds.length
         ? supabase.from('service_wishlist').select('service_listing_id').in('service_listing_id', serviceIds)
@@ -934,7 +949,12 @@ export default function ClientExploreWrapper({
         ? supabase.from('spotlight_likes').select('spotlight_post_id,user_id').in('spotlight_post_id', spotlightIds)
         : Promise.resolve({ data: [] as any[] }),
       spotlightIds.length
-        ? supabase.from('spotlight_comments').select('spotlight_post_id,is_deleted').in('spotlight_post_id', spotlightIds)
+        ? supabase
+            .from('spotlight_comments')
+            .select('spotlight_post_id,is_deleted,is_hidden')
+            .in('spotlight_post_id', spotlightIds)
+            .eq('is_deleted', false)
+            .eq('is_hidden', false)
         : Promise.resolve({ data: [] as any[] }),
     ]);
 
@@ -1647,7 +1667,12 @@ export default function ClientExploreWrapper({
           if (productIds.length > 0) {
             const [likesRows, commentsRows, wishlistRows, likedRows, wishRows] = await Promise.all([
               supabase.from('product_likes').select('product_id,user_id,created_at').in('product_id', productIds).order('created_at', { ascending: false }),
-              supabase.from('product_comments').select('product_id').in('product_id', productIds),
+              supabase
+                .from('product_comments')
+                .select('product_id')
+                .in('product_id', productIds)
+                .eq('is_deleted', false)
+                .eq('is_hidden', false),
               supabase.from('wishlist').select('product_id').in('product_id', productIds),
               viewerId
                 ? supabase.from('product_likes').select('product_id').eq('user_id', viewerId).in('product_id', productIds)

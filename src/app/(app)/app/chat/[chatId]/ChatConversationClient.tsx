@@ -24,7 +24,10 @@ import { ChatCommercePickerSheet, type ChatProductPick, type ChatServicePick } f
 import { ChatLinkPreviewCard } from '@/components/chat/ChatLinkPreviewCard';
 import { ChatMessageComposer } from '@/components/chat/ChatMessageComposer';
 import { CommerceCardMessage } from '@/components/chat/CommerceCardMessage';
+import { DeliveryQuoteRequestCard } from '@/components/chat/DeliveryQuoteRequestCard';
 import { MessageRequestBanner } from '@/components/chat/MessageRequestBanner';
+import { MessageRequestHero } from '@/components/chat/MessageRequestHero';
+import { isDeliveryQuoteRequestMessage } from '@/lib/deliveryQuoteRequestMessage';
 import { fetchActiveCommerceForChat, type ChatProductOrderRow, type ChatServiceOrderRow } from '@/lib/chatCommerce';
 import { parseStoreLinkFromText } from '@/lib/chatShareUtils';
 import { messageSendErrorText } from '@/lib/rateLimit';
@@ -39,7 +42,7 @@ import {
   isCommerceCardMessage,
 } from '@/lib/commerceCardMessage';
 import { getServiceListingHeroImage } from '@/lib/serviceListingMedia';
-import { blockChatPartner, isMessageRequestFolder, formatMessageRequestSendError, MESSAGE_REQUEST_PLAIN_TEXT_HINT, redactMessageRequestRichContent, submitMessageRequestReport } from '@/lib/messageRequests';
+import { acceptMessageRequest, isMessageRequestFolder, formatMessageRequestSendError, MESSAGE_REQUEST_PLAIN_TEXT_HINT, redactMessageRequestRichContent, submitMessageRequestReport } from '@/lib/messageRequests';
 
 type ChatRow = {
   id: string;
@@ -100,6 +103,7 @@ function time(iso?: string | null) {
 
 function previewTextForBubble(m: Msg) {
   if (isCommerceCardMessage(m)) return String(m.text || '').trim() || 'Shared listing';
+  if (isDeliveryQuoteRequestMessage(m)) return 'Delivery quote request';
   const kind = String(m.type || 'TEXT').toUpperCase();
   if (kind === 'IMAGE') return m.text?.trim() ? `📷 ${m.text}` : '📷 Photo';
   if (kind === 'VIDEO') return m.text?.trim() ? `🎥 ${m.text}` : '🎥 Video';
@@ -148,6 +152,7 @@ export default function ChatConversationClient() {
   const [loading, setLoading] = useState(true);
   const [chatFolder, setChatFolder] = useState<'primary' | 'requests'>('primary');
   const [allowsRichDm, setAllowsRichDm] = useState(true);
+  const [acceptingRequest, setAcceptingRequest] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [commercePickerOpen, setCommercePickerOpen] = useState(false);
   const touchSwipeStartX = useRef<number | null>(null);
@@ -484,26 +489,27 @@ export default function ChatConversationClient() {
     else toast.error(result.error);
   };
 
-  const blockRequest = async () => {
-    if (!userId || !partner?.id || !chatId) return;
-    if (!window.confirm('Block this user? They won\'t be able to message you.')) return;
-    const result = await blockChatPartner(supabase, {
-      blockerId: userId,
-      blockedId: String(partner.id),
-      chatId,
-    });
-    if (!result.ok) {
-      toast.error(result.error);
-      return;
-    }
-    toast.success('User blocked.');
-    router.push('/app/messages');
-  };
-
   const deleteRequestChat = async () => {
     if (!chatId) return;
     await supabase.rpc('delete_chat', { p_chat_id: chatId });
     router.push('/app/messages');
+  };
+
+  const acceptRequestChat = async () => {
+    if (!chatId || acceptingRequest) return;
+    setAcceptingRequest(true);
+    try {
+      const result = await acceptMessageRequest(supabase, chatId);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+      setChatFolder('primary');
+      setAllowsRichDm(true);
+      toast.success('Request accepted.');
+    } finally {
+      setAcceptingRequest(false);
+    }
   };
 
   const toggleReaction = useCallback(
@@ -650,23 +656,29 @@ export default function ChatConversationClient() {
         />
       ) : null}
 
-      {isRequest ? (
-        <MessageRequestBanner
-          partnerName={partner?.display_name || partner?.slug}
-          onReport={() => void reportRequest()}
-          onBlock={() => void blockRequest()}
-          onDelete={() => void deleteRequestChat()}
-        />
-      ) : null}
-
-      <div ref={messagesScrollRef} className="min-h-0 flex-1 overflow-y-auto bg-(--surface) px-4 py-4">
+      <div
+        ref={messagesScrollRef}
+        className="min-h-0 flex-1 overflow-y-auto bg-(--surface) px-4 py-4"
+      >
+        {partner ? (
+          <MessageRequestHero
+            partner={partner}
+            showViewProfile
+            onViewProfile={() => {
+              const slug = partner.slug;
+              if (slug) router.push(`/${encodeURIComponent(slug)}`);
+            }}
+          />
+        ) : null}
         {messages.length === 0 ? (
+          isRequest || partner ? null : (
           <div className="flex h-full items-center justify-center">
             <div className="text-center">
               <Package size={20} className="mx-auto text-(--muted)" />
               <p className="mt-2 text-sm text-(--muted)">No messages yet.</p>
             </div>
           </div>
+          )
         ) : filteredMessages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
             <Search size={22} className="text-(--muted)" />
@@ -689,6 +701,7 @@ export default function ChatConversationClient() {
               const showLinkCard =
                 !!parsedLink &&
                 !isCommerceCardMessage(m) &&
+                !isDeliveryQuoteRequestMessage(m) &&
                 !m.image_url &&
                 !m.video_url &&
                 !m.audio_url &&
@@ -769,7 +782,13 @@ export default function ChatConversationClient() {
                     {m.reply_to_snippet ? (
                       <p className="mb-1 border-l-2 border-emerald-500/60 pl-2 text-xs text-(--muted)">{m.reply_to_snippet}</p>
                     ) : null}
-                    {isCommerceCardMessage(m) ? (
+                    {isDeliveryQuoteRequestMessage(m) ? (
+                      <DeliveryQuoteRequestCard
+                        message={m}
+                        isSellerView={isSeller && !mine}
+                        conversationId={chatId}
+                      />
+                    ) : isCommerceCardMessage(m) ? (
                       <CommerceCardMessage message={m} isSellerView={isSeller} />
                     ) : (
                       <>
@@ -845,6 +864,15 @@ export default function ChatConversationClient() {
         )}
       </div>
 
+      {isRequest ? (
+        <MessageRequestBanner
+          partnerName={partner?.display_name || partner?.slug}
+          accepting={acceptingRequest}
+          onReport={() => void reportRequest()}
+          onDelete={() => void deleteRequestChat()}
+          onAccept={() => void acceptRequestChat()}
+        />
+      ) : (
       <ChatMessageComposer
         draft={draft}
         onDraftChange={setDraft}
@@ -858,6 +886,7 @@ export default function ChatConversationClient() {
         onOpenCommercePicker={() => setCommercePickerOpen(true)}
         allowAttachments={allowsRichDm}
       />
+      )}
 
       {commercePickerOpen && userId ? (
         <ChatCommercePickerSheet

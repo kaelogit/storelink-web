@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { ArrowLeft, Camera, ChevronRight, Plus, ShieldCheck, Trash2, Upload, Wand2 } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
@@ -105,6 +105,11 @@ function PostServiceForm() {
   const [windowStart, setWindowStart] = useState('09:00');
   const [windowEnd, setWindowEnd] = useState('18:00');
   const [blackoutDates, setBlackoutDates] = useState<string[]>([]);
+  const preservedDeliverySettingsRef = useRef<{
+    delivery_zones?: unknown;
+    delivery_free_above_minor?: number;
+    outside_zone?: 'block' | 'quote';
+  }>({});
   const [isActive, setIsActive] = useState(true);
   const [files, setFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<string[]>([]);
@@ -228,6 +233,15 @@ function PostServiceForm() {
           if (parsedAvail?.window_start) setWindowStart(parsedAvail.window_start);
           if (parsedAvail?.window_end) setWindowEnd(parsedAvail.window_end);
           setBlackoutDates(Array.isArray(parsedAvail?.blackout_dates) ? [...parsedAvail.blackout_dates] : []);
+          preservedDeliverySettingsRef.current = {
+            ...(parsedAvail?.delivery_zones?.length
+              ? { delivery_zones: parsedAvail.delivery_zones }
+              : {}),
+            ...(parsedAvail?.delivery_free_above_minor
+              ? { delivery_free_above_minor: parsedAvail.delivery_free_above_minor }
+              : {}),
+            ...(parsedAvail?.outside_zone ? { outside_zone: parsedAvail.outside_zone } : {}),
+          };
         }
         setServiceAreasInput(
           Array.isArray(row.service_areas) ? row.service_areas.join(', ') : '',
@@ -374,12 +388,18 @@ function PostServiceForm() {
   const buildAvailabilitySettings = () => {
     if (!serviceCategorySupportsAvailability(serviceCategory)) return null;
     const max = Number(String(maxJobsPerDay).replace(/[^\d]/g, '')) || 0;
+    const preserved = preservedDeliverySettingsRef.current;
     const settings: Record<string, unknown> = {
       ...(max > 0 ? { max_jobs_per_day: max } : {}),
       ...(availWeekdays.length ? { weekdays: availWeekdays } : {}),
       window_start: windowStart,
       window_end: windowEnd,
       ...(blackoutDates.length ? { blackout_dates: [...blackoutDates].sort() } : {}),
+      ...(preserved.delivery_zones ? { delivery_zones: preserved.delivery_zones } : {}),
+      ...(preserved.delivery_free_above_minor
+        ? { delivery_free_above_minor: preserved.delivery_free_above_minor }
+        : {}),
+      ...(preserved.outside_zone ? { outside_zone: preserved.outside_zone } : {}),
     };
     return Object.keys(settings).length ? settings : null;
   };

@@ -14,7 +14,7 @@ const ICONS: Record<ProfileBadgeKey, typeof Gem> = {
 const COLORS: Record<ProfileBadgeKey, string> = {
   diamond: 'var(--violet)',
   identity: '#10b981',
-  business: '#0d9488',
+  business: '#0f766e',
   phone: '#10b981',
   email: '#60a5fa',
 };
@@ -35,7 +35,8 @@ export default function WebProfileBadgesRow({ profile, isSelf, onBadgePress, onA
       {badges.map((badge) => {
         const Icon = ICONS[badge.key];
         const color = COLORS[badge.key];
-        const checks = badge.checkCount ?? 1;
+        const filled = badge.filled === true;
+        const mark = filled ? '#ffffff' : color;
         return (
           <button
             key={badge.key}
@@ -43,16 +44,14 @@ export default function WebProfileBadgesRow({ profile, isSelf, onBadgePress, onA
             onClick={() => onBadgePress(badge.key)}
             className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[11px] font-bold transition-opacity hover:opacity-90"
             style={{
-              color,
-              borderColor: `${color}33`,
-              backgroundColor: `${color}14`,
+              color: mark,
+              borderColor: filled ? color : `${color}33`,
+              backgroundColor: filled ? color : `${color}14`,
             }}
           >
             <Icon size={13} strokeWidth={2.2} />
             {badge.label}
-            {Array.from({ length: checks }).map((_, i) => (
-              <BadgeCheck key={i} size={11} />
-            ))}
+            <BadgeCheck size={11} />
           </button>
         );
       })}

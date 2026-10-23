@@ -33,6 +33,7 @@ import { ChatCommercePickerSheet, type ChatProductPick, type ChatServicePick } f
 import { ChatMessageComposer } from '@/components/chat/ChatMessageComposer';
 import { CommerceCardMessage } from '@/components/chat/CommerceCardMessage';
 import { MessageRequestBanner } from '@/components/chat/MessageRequestBanner';
+import { MessageRequestHero } from '@/components/chat/MessageRequestHero';
 import {
   buildActiveCommerceChatIds,
   fetchActiveCommerceForChat,
@@ -53,8 +54,10 @@ import {
 } from '@/lib/commerceCardMessage';
 import { getServiceListingHeroImage } from '@/lib/serviceListingMedia';
 import {
+  acceptMessageRequest,
   blockChatPartner,
   getMessageRequestInboxPreview,
+  inboxThreadHasVisibleMessage,
   isMessageRequestFolder,
   formatMessageRequestSendError,
   MESSAGE_REQUEST_PLAIN_TEXT_HINT,
@@ -256,6 +259,7 @@ export default function MessagesClient() {
   );
   const selectedIsRequest = selectedThreadFolder === 'requests';
   const [allowsRichDm, setAllowsRichDm] = useState(true);
+  const [acceptingRequest, setAcceptingRequest] = useState(false);
   const showCommerceAttach = paneIsSeller && !selectedIsRequest && allowsRichDm;
 
   const displayMessages = useMemo(
@@ -350,7 +354,9 @@ export default function MessagesClient() {
       setHiddenChatIds(((hidden as string[]) || []).filter(Boolean));
       setMutedChatIds(((muted || []) as Array<{ chat_id: string }>).map((r) => r.chat_id));
 
-      const rows = ((data || []) as InboxThread[]).sort((a, b) => {
+      const rows = ((data || []) as InboxThread[])
+        .filter(inboxThreadHasVisibleMessage)
+        .sort((a, b) => {
         const ta = a.updated_at ? new Date(a.updated_at).getTime() : 0;
         const tb = b.updated_at ? new Date(b.updated_at).getTime() : 0;
         return tb - ta;
@@ -846,6 +852,25 @@ export default function MessagesClient() {
     }
   };
 
+  const acceptRequest = async (thread: InboxThread) => {
+    if (acceptingRequest) return;
+    setAcceptingRequest(true);
+    try {
+      const result = await acceptMessageRequest(supabase, thread.chat_id);
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+      setThreads((old) =>
+        old.map((t) => (t.chat_id === thread.chat_id ? { ...t, folder: 'primary' } : t)),
+      );
+      setAllowsRichDm(true);
+      toast.success('Request accepted.');
+    } finally {
+      setAcceptingRequest(false);
+    }
+  };
+
   const deleteForMe = async (thread: InboxThread) => {
     setThreadMenuOpenFor(null);
     await supabase.rpc('delete_chat', { p_chat_id: thread.chat_id });
@@ -1245,16 +1270,20 @@ export default function MessagesClient() {
                 />
               ) : null}
 
-              {selectedIsRequest && selectedThread ? (
-                <MessageRequestBanner
-                  partnerName={selectedThread.partner?.display_name || selectedThread.partner?.slug}
-                  onReport={() => void reportRequest(selectedThread)}
-                  onBlock={() => void blockRequest(selectedThread)}
-                  onDelete={() => void deleteForMe(selectedThread)}
-                />
-              ) : null}
-
-              <div ref={messagesScrollRef} className="min-h-0 flex-1 overflow-y-auto bg-(--surface) px-4 py-4">
+              <div
+                ref={messagesScrollRef}
+                className="min-h-0 flex-1 overflow-y-auto bg-(--surface) px-4 py-4"
+              >
+                {selectedThread?.partner ? (
+                  <MessageRequestHero
+                    partner={selectedThread.partner}
+                    showViewProfile
+                    onViewProfile={() => {
+                      const slug = selectedThread.partner?.slug;
+                      if (slug) router.push(`/${encodeURIComponent(slug)}`);
+                    }}
+                  />
+                ) : null}
                 {loadingMessages ? (
                   <p className="text-sm text-(--muted)">Loading chat...</p>
                 ) : messagesLoadError ? (
@@ -1269,9 +1298,11 @@ export default function MessagesClient() {
                     </button>
                   </div>
                 ) : messages.length === 0 ? (
+                  selectedThread?.partner ? null : (
                   <div className="flex h-full items-center justify-center">
                     <p className="text-sm text-(--muted)">No messages yet. Say hello.</p>
                   </div>
+                  )
                 ) : filteredMessages.length === 0 ? (
                   <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
                     <Search size={22} className="text-(--muted)" />
@@ -1419,6 +1450,15 @@ export default function MessagesClient() {
                 )}
               </div>
 
+              {selectedIsRequest && selectedThread ? (
+                <MessageRequestBanner
+                  partnerName={selectedThread.partner?.display_name || selectedThread.partner?.slug}
+                  accepting={acceptingRequest}
+                  onReport={() => void reportRequest(selectedThread)}
+                  onDelete={() => void deleteForMe(selectedThread)}
+                  onAccept={() => void acceptRequest(selectedThread)}
+                />
+              ) : (
               <ChatMessageComposer
                 draft={draft}
                 onDraftChange={setDraft}
@@ -1431,6 +1471,7 @@ export default function MessagesClient() {
                 onOpenCommercePicker={() => setCommercePickerOpen(true)}
                 allowAttachments={allowsRichDm}
               />
+              )}
 
               {commercePickerOpen && currentUserId ? (
                 <ChatCommercePickerSheet

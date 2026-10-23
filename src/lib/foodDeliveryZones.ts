@@ -4,20 +4,94 @@
  * Seller-fulfilled only — StoreLink does not deliver.
  */
 
+import { distanceKmBetween, toGeoPoint, type GeoPoint } from './geoDistance';
+
 export type DeliveryZone = {
   id: string;
   name: string;
   /** Fee in minor units (kobo). */
   fee_minor: number;
   note?: string;
+  /** Axis center — required for GPS auto-match. */
+  latitude?: number;
+  longitude?: number;
+  /** Delivery radius from center (km). */
+  radius_km?: number;
 };
 
 export type OutsideZonePolicy = 'block' | 'quote';
 
 export const QUOTE_ZONE_ID = '__quote__';
+export const DEFAULT_ZONE_RADIUS_KM = 3;
+export const MIN_ZONE_RADIUS_KM = 1;
+export const MAX_ZONE_RADIUS_KM = 15;
 
 export function createDeliveryZoneId(): string {
   return `z_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
+export function clampZoneRadiusKm(raw: unknown): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return DEFAULT_ZONE_RADIUS_KM;
+  return Math.min(MAX_ZONE_RADIUS_KM, Math.max(MIN_ZONE_RADIUS_KM, Math.round(n * 10) / 10));
+}
+
+export function deliveryZoneHasGeoPin(zone: DeliveryZone): boolean {
+  return toGeoPoint(zone.latitude, zone.longitude) != null;
+}
+
+export function deliveryZoneRadiusKm(zone: DeliveryZone): number {
+  return clampZoneRadiusKm(zone.radius_km ?? DEFAULT_ZONE_RADIUS_KM);
+}
+
+export type MatchDeliveryZoneResult = {
+  zone: DeliveryZone;
+  distance_km: number;
+  radius_km: number;
+};
+
+/**
+ * Auto-match buyer dropoff against geo axes.
+ * Among hits: lowest fee, then nearer center. Name-only (legacy) zones are skipped.
+ */
+/** Buyer-facing matched-axis line, e.g. "Matched: Sangotedo · within 3 km". */
+export function formatMatchedDeliveryZoneLabel(
+  match: MatchDeliveryZoneResult | null | undefined,
+): string | null {
+  if (!match) return null;
+  const km =
+    Number.isFinite(match.radius_km) ? String(match.radius_km).replace(/\.0$/, '') : String(DEFAULT_ZONE_RADIUS_KM);
+  return `Matched: ${match.zone.name} · within ${km} km`;
+}
+
+export function matchDeliveryZoneForPoint(
+  zones: DeliveryZone[],
+  point: { latitude?: number | null; longitude?: number | null } | GeoPoint | null | undefined,
+): MatchDeliveryZoneResult | null {
+  const drop = point
+    ? toGeoPoint(
+        'latitude' in point ? point.latitude : (point as GeoPoint).latitude,
+        'longitude' in point ? point.longitude : (point as GeoPoint).longitude,
+      )
+    : null;
+  if (!drop) return null;
+
+  let best: MatchDeliveryZoneResult | null = null;
+  for (const zone of zones) {
+    const center = toGeoPoint(zone.latitude, zone.longitude);
+    if (!center) continue;
+    const radius_km = deliveryZoneRadiusKm(zone);
+    const distance_km = distanceKmBetween(drop, center);
+    if (distance_km > radius_km) continue;
+    if (
+      !best ||
+      zone.fee_minor < best.zone.fee_minor ||
+      (zone.fee_minor === best.zone.fee_minor && distance_km < best.distance_km)
+    ) {
+      best = { zone, distance_km, radius_km };
+    }
+  }
+  return best;
 }
 
 export function normalizeDeliveryZones(raw: unknown): DeliveryZone[] {
@@ -37,7 +111,22 @@ export function normalizeDeliveryZones(raw: unknown): DeliveryZone[] {
         : createDeliveryZoneId();
     const note =
       typeof o.note === 'string' && o.note.trim() ? o.note.trim() : undefined;
-    out.push({ id, name, fee_minor, ...(note ? { note } : {}) });
+    const pin = toGeoPoint(o.latitude ?? o.lat, o.longitude ?? o.lng ?? o.lon);
+    const hasRadius = o.radius_km != null && o.radius_km !== '';
+    const zone: DeliveryZone = {
+      id,
+      name,
+      fee_minor,
+      ...(note ? { note } : {}),
+      ...(pin
+        ? {
+            latitude: pin.latitude,
+            longitude: pin.longitude,
+            radius_km: clampZoneRadiusKm(hasRadius ? o.radius_km : DEFAULT_ZONE_RADIUS_KM),
+          }
+        : {}),
+    };
+    out.push(zone);
     if (out.length >= 6) break;
   }
   return out;
@@ -124,7 +213,9 @@ export function formatDeliveryZonesSummary(
       feeMajor <= 0
         ? 'Free'
         : `₦${feeMajor.toLocaleString('en-NG', { maximumFractionDigits: 0 })}`;
-    return `${z.name} ${feeLabel}`;
+    const radius =
+      deliveryZoneHasGeoPin(z) ? ` · ${deliveryZoneRadiusKm(z)} km` : '';
+    return `${z.name} ${feeLabel}${radius}`;
   });
   let line = parts.slice(0, 3).join(' · ');
   if (parts.length > 3) line += ` · +${parts.length - 3} more`;
@@ -228,6 +319,11 @@ export function buildProductShippingZonePayload(opts: {
     base.id = opts.zone.id;
     base.name = opts.zone.name;
     if (opts.zone.note) base.note = opts.zone.note;
+    if (deliveryZoneHasGeoPin(opts.zone)) {
+      base.latitude = opts.zone.latitude;
+      base.longitude = opts.zone.longitude;
+      base.radius_km = deliveryZoneRadiusKm(opts.zone);
+    }
   }
   if (typeof opts.feeMinor === 'number') base.fee_minor = opts.feeMinor;
   if (opts.free) base.free = true;

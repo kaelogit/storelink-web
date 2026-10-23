@@ -93,7 +93,7 @@ function getOrderShippedBuyerHtml(orderId: string) {
 function getOrderDeliveredSellerHtml(orderId: string, totalAmount: string) {
   return wrapBody(`
     <h1 style="${headingStyle}">Order delivered – payout on the way</h1>
-    <p style="${textStyle}">Order #${orderId} (${totalAmount}) was marked delivered. Your payout will be processed according to your payout schedule.</p>
+    <p style="${textStyle}">Order #${orderId} (${totalAmount}) was marked delivered. Your payout becomes eligible in 6 hours, then we send it to your bank.</p>
     <p style="${textStyle}">Open the app to see your earnings.</p>
     <a href="${SITE}/download" style="${btnStyle}">Open StoreLink</a>
   `);

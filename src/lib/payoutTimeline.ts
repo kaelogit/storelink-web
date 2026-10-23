@@ -21,7 +21,7 @@ export function formatPayoutEta(eligibleAt: string | null | undefined, now = new
  * Seller payout state machine (product orders + service booking legs).
  *
  * ## Status → step
- * - `pending` before `payout_eligible_at` → **queued** (48h inspection hold after buyer confirms receipt on chat/escrow orders; storefront may differ).
+ * - `pending` before `payout_eligible_at` → **queued** (6h inspection hold after buyer confirms receipt on chat/escrow orders; storefront may differ).
  * - `held` → frozen while a dispute is open (not paid by cron).
  * - `pending` / `retry_queued` after eligible time → **processing** (cron / Paystack transfer).
  * - `processing` (service legs) → **processing**.
@@ -217,7 +217,10 @@ export function resolvePayoutTimeline(input: PayoutTimelineInput): PayoutTimelin
       return `${retryHint}We hit a temporary issue and will retry automatically${etaLabel ? ` ${etaLabel}` : ''}.`;
     }
     if (!eligiblePassed) {
-      return `Payouts run after the 48-hour inspection window${etaLabel ? ` (${etaLabel})` : ''}.`;
+      if (input.kind === 'service_leg') {
+        return `This payout becomes eligible${etaLabel ? ` ${etaLabel}` : ' shortly'}.`;
+      }
+      return `Payouts run after the 6-hour inspection window${etaLabel ? ` (${etaLabel})` : ''}.`;
     }
     return 'Eligible for payout — our processor will pick this up shortly.';
   })();

@@ -96,8 +96,8 @@ export default function BusinessVerificationIntroClient() {
       <h2 className="text-xl font-black tracking-tight text-(--foreground)">Build trust with buyers</h2>
       <p className="mt-2 text-sm leading-relaxed text-(--muted)">
         Show that your shop is a registered Nigerian business. Upload your CAC / RC details and certificate for a
-        StoreLink review. You must complete identity verification first — this upgrades your Verified badge to a double
-        check.
+        StoreLink review. You must complete identity verification first — approval upgrades your Verified badge to
+        Business (same chip, filled).
       </p>
 
       <ul className="mt-6 space-y-3">

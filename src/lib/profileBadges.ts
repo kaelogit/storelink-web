@@ -28,7 +28,7 @@ export type ProfileBadgeDef = {
   active: boolean;
   public: boolean;
   showInRow?: boolean;
-  checkCount?: 1 | 2;
+  filled?: boolean;
 };
 
 export function isIdentityVerified(profile: ProfileLike | null | undefined): boolean {
@@ -58,7 +58,7 @@ export function businessVerificationHref(profile: ProfileLike | null | undefined
 
 export function businessVerificationStatusLabel(status?: string | null): string {
   const s = String(status || 'none').toLowerCase();
-  if (s === 'verified') return 'Verified';
+  if (s === 'verified') return 'Business';
   if (s === 'pending') return 'Under review';
   if (s === 'rejected') return 'Rejected';
   return 'Not started';
@@ -89,23 +89,21 @@ export function getProfileBadgeDefs(
     {
       key: 'identity',
       label: 'Verified',
-      title: businessVerified ? 'Identity + business verified' : 'Identity verified',
-      body: businessVerified
-        ? 'This seller completed personal ID checks and CAC business verification. The double check means identity and registered business are both verified.'
-        : 'This seller completed StoreLink ID checks (KYC). One check mark. Complete Business verification (Nigeria CAC) to earn a double check on this same badge.',
+      title: 'Identity verified',
+      body: 'This seller completed StoreLink ID checks — government ID and a selfie. That is personal identity only. It does not mean the shop is a registered company.',
       active: identityVerified,
       public: profile?.is_seller === true && identityVerified,
-      showInRow: true,
-      checkCount: businessVerified ? 2 : 1,
+      showInRow: identityVerified && !businessVerified,
     },
     {
       key: 'business',
       label: 'Business',
       title: 'Business verified',
-      body: 'Nigeria sellers who verify their CAC-registered company (RC number + certificate) upgrade the Verified badge to a double check. Requires identity verification first. Does not replace personal KYC.',
+      body: 'This seller verified their CAC-registered company (RC number and certificate). The profile chip upgrades from Verified to Business — same shape, filled, one mark. Identity verification is required first and stays separate.',
       active: businessVerified,
-      public: false,
-      showInRow: false,
+      public: businessVerified,
+      showInRow: businessVerified,
+      filled: true,
     },
     {
       key: 'phone',

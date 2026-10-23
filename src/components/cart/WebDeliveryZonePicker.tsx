@@ -2,6 +2,8 @@
 
 import {
   QUOTE_ZONE_ID,
+  deliveryZoneHasGeoPin,
+  deliveryZoneRadiusKm,
   type DeliveryZone,
   type OutsideZonePolicy,
 } from '@/lib/foodDeliveryZones';
@@ -23,6 +25,8 @@ export type WebDeliveryZonePickerProps = {
   onSelectZone: (zoneId: string) => void;
   onMessageSeller?: () => void;
   messageSellerLabel?: string;
+  matchedLabel?: string | null;
+  noPinHint?: boolean;
 };
 
 /**
@@ -36,17 +40,30 @@ export function WebDeliveryZonePicker({
   onSelectZone,
   onMessageSeller,
   messageSellerLabel = 'Message seller',
+  matchedLabel,
+  noPinHint,
 }: WebDeliveryZonePickerProps) {
   if (!zones.length) return null;
 
   const isQuote = selectedZoneId === QUOTE_ZONE_ID;
   const allowQuote = outsidePolicy !== 'block';
+  const hint = matchedLabel
+    ? matchedLabel
+    : noPinHint
+      ? 'Add a pin to your address to auto-match'
+      : 'Match your address';
 
   return (
     <div className="space-y-2">
       <div>
         <p className="text-[10px] font-black tracking-wide text-(--muted)">DELIVERY ZONE</p>
-        <p className="mt-0.5 text-[11px] font-semibold text-(--muted)">Match your address</p>
+        <p
+          className={`mt-0.5 text-[11px] font-semibold ${
+            matchedLabel ? 'text-emerald-600' : 'text-(--muted)'
+          }`}
+        >
+          {hint}
+        </p>
       </div>
       <div className="flex flex-col gap-2">
         {zones.map((z) => {
@@ -68,17 +85,33 @@ export function WebDeliveryZonePicker({
                   {feeLabel(z, currencyCode)}
                 </span>
               </div>
-              {z.note ? (
+              {deliveryZoneHasGeoPin(z) ? (
+                <p className="mt-0.5 truncate text-[11px] font-semibold text-(--muted)">
+                  Within {deliveryZoneRadiusKm(z)} km
+                  {on && matchedLabel ? ' · GPS matched' : ''}
+                </p>
+              ) : z.note ? (
                 <p className="mt-0.5 truncate text-[11px] font-semibold text-(--muted)">{z.note}</p>
-              ) : null}
+              ) : (
+                <p className="mt-0.5 truncate text-[11px] font-semibold text-(--muted)">
+                  Name only — pick if it matches your area
+                </p>
+              )}
             </button>
           );
         })}
         {allowQuote ? (
-          <button
-            type="button"
+          <div
+            role="button"
+            tabIndex={0}
             onClick={() => onSelectZone(QUOTE_ZONE_ID)}
-            className={`rounded-xl border border-dashed px-3 py-2.5 text-left ${
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onSelectZone(QUOTE_ZONE_ID);
+              }
+            }}
+            className={`cursor-pointer rounded-xl border border-dashed px-3 py-2.5 text-left ${
               isQuote
                 ? 'border-(--foreground) bg-(--surface)'
                 : 'border-(--border) bg-transparent hover:border-(--muted)'
@@ -100,8 +133,10 @@ export function WebDeliveryZonePicker({
                 {messageSellerLabel}
               </button>
             ) : null}
-          </button>
-        ) : null}
+          </div>
+        ) : (
+          <p className="text-[11px] font-semibold text-(--muted)">Delivery only to listed axes</p>
+        )}
       </div>
     </div>
   );

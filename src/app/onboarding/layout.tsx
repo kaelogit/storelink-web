@@ -17,7 +17,8 @@ export default function OnboardingLayout({ children }: { children: ReactNode }) 
       { path: '/onboarding/store-address', label: 'Store Address', progress: 62 },
       { path: '/onboarding/pick-categories', label: 'Interests', progress: 75 },
       { path: '/onboarding/collector-setup', label: 'Profile', progress: 88 },
-      { path: '/onboarding/follow-stores', label: 'Follow', progress: 100 },
+      { path: '/onboarding/follow-stores', label: 'Follow', progress: 92 },
+      { path: '/onboarding/profile-photo', label: 'Photo', progress: 100 },
     ];
 
     const current = steps.find((s) => pathname.startsWith(s.path)) || steps[0];

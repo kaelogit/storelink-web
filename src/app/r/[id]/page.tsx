@@ -37,10 +37,20 @@ export default async function ReelPage({ params }: { params: Promise<{ id: strin
       : Promise.resolve({ count: 0 }),
     isService
       ? targetId
-        ? supabase.from('service_comments').select('id', { count: 'exact', head: true }).eq('service_listing_id', targetId)
+        ? supabase
+            .from('service_comments')
+            .select('id', { count: 'exact', head: true })
+            .eq('service_listing_id', targetId)
+            .eq('is_deleted', false)
+            .eq('is_hidden', false)
         : Promise.resolve({ count: 0 })
       : targetId
-      ? supabase.from('product_comments').select('id', { count: 'exact', head: true }).eq('product_id', targetId)
+      ? supabase
+          .from('product_comments')
+          .select('id', { count: 'exact', head: true })
+          .eq('product_id', targetId)
+          .eq('is_deleted', false)
+          .eq('is_hidden', false)
       : Promise.resolve({ count: 0 }),
     isService
       ? targetId

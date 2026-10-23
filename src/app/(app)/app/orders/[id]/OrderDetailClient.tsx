@@ -641,6 +641,9 @@ export default function OrderDetailClient() {
                   >
                     <PackageCheck size={18} /> Confirm receipt
                   </button>
+                  <p className="text-center text-xs text-[var(--muted)]">
+                    The seller is paid from escrow after a 6-hour check.
+                  </p>
                   <Link
                     href={`/app/orders/dispute?orderId=${encodeURIComponent(orderId)}`}
                     className="flex w-full items-center justify-center gap-2 rounded-[16px] border border-amber-500 px-4 py-3 text-sm font-black text-amber-600"

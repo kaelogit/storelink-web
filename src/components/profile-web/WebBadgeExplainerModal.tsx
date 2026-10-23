@@ -117,9 +117,7 @@ const WebBadgeExplainerModal = forwardRef<WebBadgeExplainerRef, Props>(function 
                             className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold"
                             style={{ color, backgroundColor: `${color}22` }}
                           >
-                            {Array.from({ length: badge.checkCount ?? 1 }).map((_, i) => (
-                              <BadgeCheck key={i} size={12} />
-                            ))}
+                            <BadgeCheck size={12} />
                             Active
                           </span>
                         ) : (
