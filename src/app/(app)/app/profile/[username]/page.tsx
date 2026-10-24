@@ -22,6 +22,7 @@ const RESERVED_SLUGS = new Set([
   'explore',
   'download',
   'admin',
+  '.well-known',
   'about-us',
   'blog',
   'careers',

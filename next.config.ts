@@ -27,6 +27,28 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async headers() {
+    const wellKnown = [
+      {
+        key: "Content-Type",
+        value: "application/json",
+      },
+      {
+        key: "Cache-Control",
+        value: "public, max-age=3600",
+      },
+    ];
+    return [
+      {
+        source: "/.well-known/apple-app-site-association",
+        headers: wellKnown,
+      },
+      {
+        source: "/.well-known/assetlinks.json",
+        headers: wellKnown,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

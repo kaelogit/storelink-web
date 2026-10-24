@@ -3,9 +3,11 @@
     "apps": [],
     "details": [
       {
-        "appID": "TEAM_ID.com.storelink.mobile",
+        "appID": "QMF7S3F5N6.com.storelink.mobile",
+        "appIDs": ["QMF7S3F5N6.com.storelink.mobile"],
         "paths": [
           "/p/*",
+          "/product/*",
           "/r/*",
           "/reel/*",
           "/@*",
@@ -17,7 +19,34 @@
           "/curation/*",
           "/u/*",
           "/profile/*",
-          "/app/*"
+          "/app/*",
+          "/join/g/*",
+          "/service-checkout/*",
+          "/service-booking/*",
+          "/download",
+          "/download/*"
+        ],
+        "components": [
+          { "/": "/p/*" },
+          { "/": "/product/*" },
+          { "/": "/r/*" },
+          { "/": "/reel/*" },
+          { "/": "/@*" },
+          { "/": "/service/*" },
+          { "/": "/s/*" },
+          { "/": "/sp/*" },
+          { "/": "/spotlight/*" },
+          { "/": "/story-viewer/*" },
+          { "/": "/curation/*" },
+          { "/": "/u/*" },
+          { "/": "/profile/*" },
+          { "/": "/app/*" },
+          { "/": "/join/g/*" },
+          { "/": "/service-checkout/*" },
+          { "/": "/service-booking/*" },
+          { "/": "/download" },
+          { "/": "/download/*" },
+          { "/": "/", "?": { "ref": "?*" } }
         ]
       }
     ]

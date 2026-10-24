@@ -15,6 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ username:
 
 const RESERVED_SLUGS = new Set([
   'favicon.ico', 'p', 'api', '_next', 'r', 'sp', 'spotlight', 'explore', 'download', 'admin',
+  '.well-known',
   'about-us', 'blog', 'careers', 'contact', 'community', 'help-center', 'press',
   'pricing', 'privacy', 'safety', 'terms', 'shop', 'tools',
   'opengraph-image', 'sitemap.xml', 'robots.txt',
