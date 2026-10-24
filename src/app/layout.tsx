@@ -5,6 +5,7 @@ import Navbar from "../components/home/Navbar";
 import { ThemeProvider } from "../components/providers/ThemeProvider";
 import { ReactQueryProvider } from "../components/providers/ReactQueryProvider";
 import ShareSheetHost from "../components/share/ShareSheetHost";
+import OpenInAppBar from "../components/share/OpenInAppBar";
 import WhyThisAdHost from "../components/ads/WhyThisAdHost";
 import "./globals.css";
 
@@ -147,6 +148,7 @@ export default function RootLayout({
 
             <GoogleAnalytics gaId="G-LC8PN9CT62" />
             <ShareSheetHost />
+            <OpenInAppBar />
             <WhyThisAdHost />
           </ReactQueryProvider>
         </ThemeProvider>
