@@ -1,6 +1,6 @@
 /**
  * Universal cart checkout step spine (Option B).
- * Delivery → When → Review — skip empty steps.
+ * Delivery → When → Review - skip empty steps.
  */
 
 export type CartCheckoutStepId = 'delivery' | 'when' | 'review';

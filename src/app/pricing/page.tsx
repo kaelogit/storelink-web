@@ -32,8 +32,8 @@ export default function PricingPage() {
           </h1>
           <p className="text-lg md:text-xl text-(--muted) max-w-2xl mx-auto leading-relaxed font-light">
             Every account starts on <span className="text-(--foreground) font-semibold">Standard (free)</span>. Add{' '}
-            <span className="text-(--foreground) font-semibold">Diamond</span> for extra visibility, trust styling, and — for
-            sellers — AI listing tools.{' '}
+            <span className="text-(--foreground) font-semibold">Diamond</span> for extra visibility, trust styling, and, for
+            sellers, AI listing tools.{' '}
             {MEMBERSHIP_FOOTNOTES.identity.split('.')[0]}.
           </p>
           <p className="mt-4 text-sm text-(--muted) max-w-lg mx-auto">

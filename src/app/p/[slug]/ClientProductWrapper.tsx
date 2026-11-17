@@ -24,6 +24,7 @@ import { fetchSimilarProducts, type SimilarProductRow } from '@/lib/similarProdu
 import { formatProductCategoryLabel, resolveProductListingCategory } from '@/constants/ProductCategories';
 import { productCheckoutCtaWeb } from '@/lib/verticalCheckout';
 import { toast } from 'sonner';
+import { Avatar } from '@/components/ui/Avatar';
 // Helper
 const formatPrice = (amount: number, currency: string) => {
   return new Intl.NumberFormat('en-NG', {
@@ -76,10 +77,7 @@ export default function ClientProductWrapper({ product, seller }: any) {
   const likesCount = engagement.likesCount;
   const commentsCount = engagement.commentsCount;
   const wishlistCount = engagement.wishlistCount;
-  // Fallback avatar
-  const sellerAvatar =
-    normalizeWebMediaUrl(seller.logo_url) ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(seller.display_name || 'Store')}&background=10b981&color=fff`;
+  const sellerIsDiamond = String(seller.subscription_plan || '').toLowerCase() === 'diamond';
 
   const promptAuth = (action: string) => {
     return ensureAuthAction({
@@ -271,21 +269,21 @@ export default function ClientProductWrapper({ product, seller }: any) {
                if (window.history.length > 1) router.back();
                else router.push(viewerId && isAppMode ? '/app' : '/');
              }}
-             className="w-11 h-11 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors"
+             className="flex h-11 w-11 items-center justify-center rounded-full border border-white/35 bg-black/32 text-white backdrop-blur-md transition-colors hover:bg-black/45"
            >
               <ChevronLeft size={24} strokeWidth={2} />
            </button>
            <div className="flex items-center gap-2">
-             <button onClick={() => void handleToggleLike()} disabled={pendingLike} className={`w-11 h-11 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-black/40 transition-all duration-200 active:scale-95 disabled:opacity-60 ${engagement.isLiked ? 'text-emerald-400' : 'text-white'}`}>
+             <button onClick={() => void handleToggleLike()} disabled={pendingLike} className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/35 bg-black/32 backdrop-blur-md flex items-center justify-center hover:bg-black/40 transition-all duration-200 active:scale-95 disabled:opacity-60 ${engagement.isLiked ? 'text-emerald-400' : 'text-white'}`}>
                 <Heart size={18} strokeWidth={2.2} fill={engagement.isLiked ? 'currentColor' : 'none'} />
              </button>
-             <button onClick={() => void handleToggleWishlist()} disabled={pendingSave} className={`w-11 h-11 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center hover:bg-black/40 transition-all duration-200 active:scale-95 disabled:opacity-60 ${engagement.isSaved ? 'text-emerald-400' : 'text-white'}`}>
+             <button onClick={() => void handleToggleWishlist()} disabled={pendingSave} className={`flex h-11 w-11 items-center justify-center rounded-full border border-white/35 bg-black/32 backdrop-blur-md flex items-center justify-center hover:bg-black/40 transition-all duration-200 active:scale-95 disabled:opacity-60 ${engagement.isSaved ? 'text-emerald-400' : 'text-white'}`}>
                 <Bookmark size={18} strokeWidth={2.2} fill={engagement.isSaved ? 'currentColor' : 'none'} />
              </button>
              <button
                type="button"
                onClick={() => void handleShare()}
-              className="w-11 h-11 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors"
+              className="flex h-11 w-11 items-center justify-center rounded-full border border-white/35 bg-black/32 text-white backdrop-blur-md transition-colors hover:bg-black/45"
              >
                 <Share2 size={20} strokeWidth={2} />
              </button>
@@ -307,7 +305,7 @@ export default function ClientProductWrapper({ product, seller }: any) {
                 <div key={idx} className="w-full h-full shrink-0 snap-center relative">
                    <Image 
                      src={img} 
-                     alt={`${product.name} - ${idx + 1}`} 
+                     alt={`${product.name}, ${idx + 1}`} 
                      fill 
                      className="object-cover" 
                      priority={idx === 0}
@@ -386,9 +384,13 @@ export default function ClientProductWrapper({ product, seller }: any) {
           <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-(--muted)">SOLD BY</p>
           <Link href={sellerProfileHref} className="mb-6 flex items-center gap-3 rounded-[18px] border-[1.5px] border-(--border) bg-(--surface) p-4 active:bg-(--border) transition-colors duration-(--duration-150)">
               <div className="relative">
-                 <div className="w-11 h-11 rounded-[16px] bg-(--border) overflow-hidden border-[1.5px] border-(--border)">
-                    <Image src={sellerAvatar} alt={seller.display_name} fill className="object-cover" />
-                 </div>
+                 <Avatar
+                   uri={seller.logo_url}
+                   size={44}
+                   isSeller
+                   diamond={sellerIsDiamond}
+                   alt={seller.display_name || 'Store'}
+                 />
                  {seller.is_verified && (
                     <div className="absolute -bottom-1 -right-1 bg-(--card) p-0.5 rounded-full">
                        <CheckCircle size={14} className="text-emerald-500" fill="currentColor" />
@@ -398,7 +400,7 @@ export default function ClientProductWrapper({ product, seller }: any) {
               <div className="flex-1">
                  <div className="flex items-center gap-1.5">
                     <p className="text-sm font-bold text-(--foreground)">{seller.display_name}</p>
-                    {String(seller.subscription_plan || '').toLowerCase() === 'diamond' && (
+                    {sellerIsDiamond && (
                       <Gem size={12} className="text-purple-500" fill="currentColor" />
                     )}
                  </div>

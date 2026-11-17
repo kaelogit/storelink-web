@@ -41,7 +41,7 @@ export async function buildProductShareMetadata(slugRaw: string): Promise<Metada
     minimumFractionDigits: 0,
   }).format(product.price);
 
-  const title = `${product.name} - ${priceLabel} | StoreLink`;
+  const title = `${product.name}, ${priceLabel} | StoreLink`;
   const description = product.description?.slice(0, 160) || `Buy ${product.name} securely on StoreLink.`;
   const mainImage = product.image_urls?.[0] || `${origin}/default-product.png`;
 
@@ -203,7 +203,7 @@ export async function buildServiceShareMetadata(serviceTokenRaw: string): Promis
     minimumFractionDigits: 0,
   }).format(heroPriceMain || 0);
 
-  const title = `${row.title || 'Service'} - From ${priceLabel} | StoreLink`;
+  const title = `${row.title || 'Service'}, From ${priceLabel} | StoreLink`;
   const description =
     (typeof row.description === 'string' ? row.description : '')?.slice(0, 160) ||
     `Book ${row.title || 'this service'} with ${seller?.display_name || 'a seller'} on StoreLink.`;
@@ -234,7 +234,7 @@ export async function buildServiceShareMetadata(serviceTokenRaw: string): Promis
   };
 }
 
-/** `/app/s/**` catch-all — same OG as public `/s/...` canonical. */
+/** `/app/s/**` catch-all - same OG as public `/s/...` canonical. */
 export async function buildAppServiceCatchAllMetadata(parts: string[]): Promise<Metadata> {
   const p = Array.isArray(parts) ? parts : [];
   let serviceKey = '';
@@ -307,7 +307,7 @@ export async function buildSpotlightShareMetadata(spotlightIdRaw: string): Promi
   };
 }
 
-/** OG for seller stories — canonical public `/story-viewer/[id]` (redirects to `/app/story-viewer/...` in browser). */
+/** OG for seller stories - canonical public `/story-viewer/[id]` (redirects to `/app/story-viewer/...` in browser). */
 export async function buildStoryShareMetadata(storyIdRaw: string): Promise<Metadata> {
   const storyId = String(storyIdRaw || '').trim();
   const origin = siteOriginForMetadata();
@@ -440,7 +440,7 @@ export async function buildProductCurationShareMetadata(
     ? sellerRel[0]?.location_country_code ?? null
     : sellerRel?.location_country_code ?? null;
 
-  const title = curatorName ? `${curatorName} recommends ${name} | StoreLink` : `${name} — curated on StoreLink`;
+  const title = curatorName ? `${curatorName} recommends ${name} | StoreLink` : `${name}, curated on StoreLink`;
 
   return {
     title,
@@ -526,7 +526,7 @@ export async function buildServiceCurationShareMetadata(
   const canonical = `${origin}/curation/service/${encodeURIComponent(shareToken)}${q}`;
 
   const sellerCountry = seller?.location_country_code ?? null;
-  const pageTitle = curatorName ? `${curatorName} recommends ${titleStr} | StoreLink` : `${titleStr} — curated on StoreLink`;
+  const pageTitle = curatorName ? `${curatorName} recommends ${titleStr} | StoreLink` : `${titleStr}, curated on StoreLink`;
 
   return {
     title: pageTitle,

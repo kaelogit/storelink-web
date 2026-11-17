@@ -1,4 +1,4 @@
-/** Listing tag cap — same RPC and copy as mobile `listingTagCap.ts`. */
+/** Listing tag cap - same RPC and copy as mobile `listingTagCap.ts`. */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 

@@ -3,11 +3,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { CalendarCheck2, ChevronLeft, MapPin, ShieldCheck } from 'lucide-react';
+import { CalendarCheck2, ChevronLeft, CircleHelp, MapPin, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import Button from '@/components/ui/Button';
 import { WebCartAddressCard } from '@/components/cart/WebCartAddressCard';
 import { createBrowserClient } from '@/lib/supabase';
+import { SERVICE_BOOKING_POLICY_SNIPPETS } from '@/constants/serviceBookingPolicy';
 import { normalizeServiceMenu } from '@/lib/normalizeServiceMenu';
 import { buildBookingRequestMetadata } from '@/lib/bookingRequestMessage';
 import { useWebCartStore } from '@/store/useWebCartStore';
@@ -88,6 +89,9 @@ export default function ServiceBookingClient({
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [policyAcked, setPolicyAcked] = useState(false);
+  const [policyHelpOpen, setPolicyHelpOpen] = useState(false);
+  const policySnippet = SERVICE_BOOKING_POLICY_SNIPPETS.request_booking;
 
   const menuItems = useMemo(() => normalizeServiceMenu(service?.menu), [service?.menu]);
   const lockedMenuName = String(prefill.menuName || '').trim();
@@ -224,6 +228,10 @@ export default function ServiceBookingClient({
 
   const submitBooking = async () => {
     setError(null);
+    if (!policyAcked) {
+      setError('Please confirm you understand the booking policy.');
+      return;
+    }
     if (!buyerId) {
       window.location.href = `/auth/login?next=${encodeURIComponent(
         typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/app',
@@ -279,7 +287,7 @@ export default function ServiceBookingClient({
               longitude: buyerDropoffGeo?.longitude,
             }),
           );
-          toast.message('Outside listed axes — messaging the seller for a quote…');
+          toast.message('Outside listed axes. Messaging the seller for a quote…');
           router.replace(`/app/chat/${encodeURIComponent(String(chatId))}`);
         } catch (err: any) {
           setError(err?.message || 'Could not message seller.');
@@ -402,7 +410,7 @@ export default function ServiceBookingClient({
               Escrow protected
             </p>
             <p className="mt-1 text-[11px] leading-relaxed text-(--muted)">
-              Funds stay held until the seller confirms and work is completed — same flow as the app.
+              Funds stay held until the seller confirms and work is completed, same flow as the app.
             </p>
           </div>
 
@@ -446,7 +454,7 @@ export default function ServiceBookingClient({
                       <span>{row.name}</span>
                       {typeof row.price_minor === 'number' ? (
                         <span className="ml-1 text-emerald-600">
-                          — {formatMoney(row.price_minor, currencyCode || 'NGN')}
+                          , {formatMoney(row.price_minor, currencyCode || 'NGN')}
                         </span>
                       ) : null}
                       {meta ? (
@@ -546,12 +554,47 @@ export default function ServiceBookingClient({
 
           {error ? <p className="mt-3 text-sm font-semibold text-red-500">{error}</p> : null}
 
+          <div className="mt-5 flex items-start gap-2 rounded-sl-xl border border-(--border) bg-(--surface) px-3 py-3">
+            <input
+              id="service-policy-ack"
+              type="checkbox"
+              checked={policyAcked}
+              onChange={(e) => setPolicyAcked(e.target.checked)}
+              className="mt-1 h-4 w-4 accent-emerald-600"
+            />
+            <label htmlFor="service-policy-ack" className="min-w-0 flex-1 text-sm font-medium text-(--foreground)">
+              I understand StoreLink booking and escrow rules before I send this request.
+            </label>
+            <button
+              type="button"
+              onClick={() => setPolicyHelpOpen((v) => !v)}
+              className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-(--muted) hover:bg-(--card)"
+              aria-label="Booking policy help"
+            >
+              <CircleHelp size={18} strokeWidth={2.2} />
+            </button>
+          </div>
+          {policyHelpOpen ? (
+            <div className="mt-2 rounded-sl-xl border border-(--border) bg-(--card) px-3 py-3 text-sm">
+              <p className="font-black text-(--foreground)">{policySnippet.title}</p>
+              <p className="mt-1 text-(--muted)">{policySnippet.intro}</p>
+              <ul className="mt-2 list-disc space-y-1 pl-4 text-(--muted)">
+                {policySnippet.bullets.map((b) => (
+                  <li key={b}>{b}</li>
+                ))}
+              </ul>
+              <Link href="/legal/service-policies" className="mt-2 inline-block text-xs font-bold text-emerald-600 hover:underline">
+                Full service policies
+              </Link>
+            </div>
+          ) : null}
+
           <div className="mt-5 space-y-3">
             <Button
               onClick={() => void submitBooking()}
               variant="primary"
               size="lg"
-              disabled={submitting}
+              disabled={submitting || !policyAcked}
               className="w-full justify-center gap-2"
             >
               <CalendarCheck2 size={18} />

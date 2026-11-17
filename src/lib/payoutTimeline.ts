@@ -208,9 +208,9 @@ export function resolvePayoutTimeline(input: PayoutTimelineInput): PayoutTimelin
   const detail = (() => {
     if (currentStep === 'processing') {
       if (isRetryScheduled && retryCount > 0) {
-        return `Attempt ${retryCount} is running. Paystack transfers usually complete within 15–30 minutes.`;
+        return `Attempt ${retryCount} is running. Paystack transfers usually complete within 15-30 minutes.`;
       }
-      return 'Paystack is sending this payout to your bank. This usually completes within 15–30 minutes.';
+      return 'Paystack is sending this payout to your bank. This usually completes within 15-30 minutes.';
     }
     if (isRetryScheduled) {
       const retryHint = retryCount > 0 ? `Attempt ${retryCount} · ` : '';
@@ -222,7 +222,7 @@ export function resolvePayoutTimeline(input: PayoutTimelineInput): PayoutTimelin
       }
       return `Payouts run after the 6-hour inspection window${etaLabel ? ` (${etaLabel})` : ''}.`;
     }
-    return 'Eligible for payout — our processor will pick this up shortly.';
+    return 'Eligible for payout. Our processor will pick this up shortly.';
   })();
 
   return {
@@ -389,5 +389,5 @@ export function resolveOrderPayoutBadge(
     }
   }
 
-  return { label: String(orderStatus || '—').toUpperCase(), tone: 'neutral' };
+  return { label: String(orderStatus || '-').toUpperCase(), tone: 'neutral' };
 }

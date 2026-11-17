@@ -1,5 +1,5 @@
 /**
- * Beauty discovery helpers (Phase 5) — Home Beauty chip badges + filters.
+ * Beauty discovery helpers (Phase 5) - Home Beauty chip badges + filters.
  * Reuses food capacity / distance helpers; salon vs home visit language.
  */
 
@@ -97,7 +97,7 @@ export function summarizeBeautyMenuMeta(menu: unknown): string | null {
   const min = Math.min(...durations);
   const max = Math.max(...durations);
   if (min === max) return formatDurationMinutes(min);
-  return `${formatDurationMinutes(min)}–${formatDurationMinutes(max)}`;
+  return `${formatDurationMinutes(min)}-${formatDurationMinutes(max)}`;
 }
 
 export function buildBeautyServiceDiscoveryMeta(row: {

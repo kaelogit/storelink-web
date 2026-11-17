@@ -57,7 +57,7 @@ export const SEMANTIC_SEARCH_EXAMPLE_QUERIES = [
 export function semanticSearchEmptyHint(query: string): string {
   const trimmed = query.trim();
   if (!trimmed) {
-    return 'Describe what you need in your own words — products, services, occasions, or styles all work.';
+    return 'Describe what you need in your own words. Products, services, occasions, or styles all work.';
   }
   return `Nothing matched "${trimmed.slice(0, 40)}${trimmed.length > 40 ? '…' : ''}". Try a broader phrase like "${SEMANTIC_SEARCH_EXAMPLE_QUERIES[0]}" or "${SEMANTIC_SEARCH_EXAMPLE_QUERIES[2]}".`;
 }

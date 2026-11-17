@@ -22,7 +22,7 @@ const spaceGrotesk = Space_Grotesk({
   display: "swap",
 });
 
-/** Matches app `(tabs)/profile` nav @slug — `Lobster_400Regular` + `fontSizes.titleLg` (26). */
+/** Matches app `(tabs)/profile` nav @slug - `Lobster_400Regular` + `fontSizes.titleLg` (26). */
 const lobster = Lobster({
   weight: "400",
   subsets: ["latin"],

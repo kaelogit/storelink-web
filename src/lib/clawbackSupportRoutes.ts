@@ -36,7 +36,7 @@ export function clawbackSupportParams(debt: {
   return {
     fromClawback: '1' as const,
     category: 'PAYMENT',
-    subject: `Clawback repayment — booking #${bookingRef}`,
+    subject: `Clawback repayment, booking #${bookingRef}`,
     refId: debt.service_order_id,
     debtId: debt.id,
     prefilledMessage: [

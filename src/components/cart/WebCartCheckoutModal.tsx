@@ -70,7 +70,7 @@ export type WebCartCheckoutModalProps = {
 
 /**
  * Option B checkout spine (web modal).
- * Delivery → When → Review — skip unused steps.
+ * Delivery → When → Review - skip unused steps.
  */
 export function WebCartCheckoutModal({
   open,

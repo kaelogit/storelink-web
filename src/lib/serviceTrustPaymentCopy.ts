@@ -22,7 +22,7 @@ export function trustPaymentSummaryLine(opts: {
   }
   if (opts.cancellationPolicy.trim()) bits.push('Cancellation set');
   if (opts.depositPolicy.trim()) bits.push('Payment note');
-  return bits.length ? bits.join(' · ') : 'Optional — cancellation & deposit';
+  return bits.length ? bits.join(' · ') : 'Optional, cancellation & deposit';
 }
 
 export function cancellationPolicyPlaceholder(serviceCategory: string): string {

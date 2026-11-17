@@ -61,7 +61,7 @@ export default function EditEmailClient() {
       {info ? <p className="mb-3 rounded-xl border border-emerald-300/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-400">{info}</p> : null}
       <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-(--muted)">Current</p>
       <p className="mb-4 text-sm font-semibold text-(--foreground)">
-        {current || '—'} {verified ? <span className="text-xs text-emerald-500">(Verified)</span> : <span className="text-xs text-amber-500">(Not verified)</span>}
+        {current || '-'} {verified ? <span className="text-xs text-emerald-500">(Verified)</span> : <span className="text-xs text-amber-500">(Not verified)</span>}
       </p>
       <label className="mb-4 block">
         <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.08em] text-(--muted)">New email</span>

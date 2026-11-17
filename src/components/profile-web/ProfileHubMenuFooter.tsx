@@ -59,7 +59,7 @@ export default function ProfileHubMenuFooter({
           <div className="min-w-0 flex-1">
             <p className="text-sm font-black tracking-tight text-(--foreground)">Download the app</p>
             <p className="text-xs font-medium leading-snug text-(--muted)">
-              Get the full StoreLink experience—stories, checkout, and seller tools work best in the app.
+              Get the full StoreLink experience-stories, checkout, and seller tools work best in the app.
             </p>
           </div>
           <ChevronRight size={16} className="shrink-0 text-emerald-700 dark:text-emerald-400" strokeWidth={2.5} />

@@ -1,4 +1,4 @@
-/** Listing content lock — same rules as mobile `listingContentLock.ts`. */
+/** Listing content lock - same rules as mobile `listingContentLock.ts`. */
 
 export const LISTING_PRICE_CHANGE_CAP_PCT = 20;
 

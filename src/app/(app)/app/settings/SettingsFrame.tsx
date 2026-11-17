@@ -37,14 +37,14 @@ export default function SettingsFrame({
       : '/app/profile';
 
   return (
-    <div className="mx-auto max-w-3xl pb-10">
-      <header className="sticky top-0 z-20 -mx-4 mb-4 flex items-center justify-between border-b border-(--border) bg-(--background)/95 px-1 py-3 backdrop-blur-sm lg:hidden">
+    <div className="-mx-4 min-h-dvh bg-sl-grouped px-4 pb-10 dark:bg-(--background) sm:mx-auto sm:min-h-0 sm:max-w-3xl sm:bg-transparent sm:px-0 dark:sm:bg-transparent">
+      <header className="sticky top-0 z-20 -mx-4 mb-4 flex items-center justify-between border-b border-(--border) bg-sl-grouped/95 px-1 py-3 backdrop-blur-sm dark:bg-(--background)/95 lg:hidden">
         <Link
           href={headerBack}
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-(--surface) text-(--foreground)"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-(--card) text-(--foreground)"
           aria-label="Go back"
         >
-          <ArrowLeft size={22} strokeWidth={2.5} />
+          <ArrowLeft size={22} strokeWidth={2.4} />
         </Link>
         <h1 className="min-w-0 flex-1 text-center text-[12px] font-black uppercase tracking-[0.18em] text-(--foreground)">
           {title}
@@ -52,7 +52,7 @@ export default function SettingsFrame({
         <div className="h-11 w-11 shrink-0" />
       </header>
 
-      <section className="rounded-3xl border border-(--border) bg-(--card) p-5 md:p-7">
+      <section className="rounded-sl-2xl border border-(--border) bg-(--card) p-5 shadow-none md:p-7">
         <h1 className="hidden text-2xl font-black text-(--foreground) lg:block">{title}</h1>
         {subtitle ? <p className="mb-5 mt-2 text-sm text-(--muted)">{subtitle}</p> : <div className="mb-5 hidden lg:block" />}
         {children}

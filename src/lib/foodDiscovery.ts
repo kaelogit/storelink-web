@@ -1,5 +1,5 @@
 /**
- * Food discovery helpers (Phase 5) — Home/Explore Food chip badges + filters.
+ * Food discovery helpers (Phase 5) - Home/Explore Food chip badges + filters.
  * Seller-fulfilled only; no platform courier matching.
  */
 

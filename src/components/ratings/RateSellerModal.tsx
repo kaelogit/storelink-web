@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { useCallback, useEffect, useState } from 'react';
 import { Loader2, Star, X } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
+import { Sheet } from '@/components/ui/Sheet';
 
 export type RateSellerPending = {
   orderId: string;
@@ -14,27 +15,27 @@ export type RateSellerPending = {
 const RATING_STAR_GUIDE: { value: 1 | 2 | 3 | 4 | 5; title: string; description: string }[] = [
   {
     value: 1,
-    title: '1 star — Poor',
+    title: '1 star, Poor',
     description: 'Serious issues: major problems, unmet promises, or you would not buy or book again.',
   },
   {
     value: 2,
-    title: '2 stars — Below expectations',
+    title: '2 stars, Below expectations',
     description: 'Several clear problems; the experience fell short of what you expected.',
   },
   {
     value: 3,
-    title: '3 stars — Okay',
+    title: '3 stars, Okay',
     description: 'Acceptable overall: it worked, but nothing stood out as great.',
   },
   {
     value: 4,
-    title: '4 stars — Good',
+    title: '4 stars, Good',
     description: 'Solid experience; only minor nits. You would happily use this seller again.',
   },
   {
     value: 5,
-    title: '5 stars — Excellent',
+    title: '5 stars, Excellent',
     description: 'Outstanding: communication, delivery, and value. You would strongly recommend them.',
   },
 ];
@@ -181,10 +182,16 @@ export function RateSellerModal({ open, pending, onClose, supabase: supabaseProp
   const selectedGuide = rating >= 1 && rating <= 5 ? RATING_STAR_GUIDE[rating - 1] : null;
 
   return (
-    <div className="fixed inset-0 z-[220] flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4" role="dialog" aria-modal="true">
-      <div className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-t-[22px] border border-(--border) bg-(--card) shadow-xl sm:rounded-[22px]">
+    <Sheet
+      open={open && !!pending}
+      onClose={onClose}
+      titleId="rate-seller-title"
+      className="max-w-md"
+      zClassName="z-[220]"
+      panelClassName="max-h-[92vh] overflow-y-auto"
+    >
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-(--border) bg-(--card) px-4 py-3">
-          <span className="text-sm font-black text-(--foreground)">Rate seller</span>
+          <span id="rate-seller-title" className="text-sm font-black text-(--foreground)">Rate seller</span>
           <button type="button" onClick={onClose} className="rounded-full p-2 text-(--muted) hover:bg-(--surface)" aria-label="Close">
             <X size={20} />
           </button>
@@ -272,7 +279,6 @@ export function RateSellerModal({ open, pending, onClose, supabase: supabaseProp
             </button>
           </div>
         </div>
-      </div>
-    </div>
+    </Sheet>
   );
 }

@@ -25,8 +25,10 @@ import { ChatLinkPreviewCard } from '@/components/chat/ChatLinkPreviewCard';
 import { ChatMessageComposer } from '@/components/chat/ChatMessageComposer';
 import { CommerceCardMessage } from '@/components/chat/CommerceCardMessage';
 import { DeliveryQuoteRequestCard } from '@/components/chat/DeliveryQuoteRequestCard';
+import { LocationShareCard } from '@/components/chat/LocationShareCard';
 import { MessageRequestBanner } from '@/components/chat/MessageRequestBanner';
 import { MessageRequestHero } from '@/components/chat/MessageRequestHero';
+import { Avatar } from '@/components/ui/Avatar';
 import { isDeliveryQuoteRequestMessage } from '@/lib/deliveryQuoteRequestMessage';
 import { fetchActiveCommerceForChat, type ChatProductOrderRow, type ChatServiceOrderRow } from '@/lib/chatCommerce';
 import { parseStoreLinkFromText } from '@/lib/chatShareUtils';
@@ -109,6 +111,7 @@ function previewTextForBubble(m: Msg) {
   if (kind === 'VIDEO') return m.text?.trim() ? `🎥 ${m.text}` : '🎥 Video';
   if (kind === 'VOICE' || kind === 'AUDIO') return '🎤 Voice message';
   if (kind === 'DOCUMENT') return m.text?.trim() ? `📄 ${m.text}` : '📄 Document';
+  if (kind === 'LOCATION' || kind === 'LOCATION_SHARE') return m.text?.trim() || 'Shared location';
   return String(m.text || '');
 }
 
@@ -188,7 +191,7 @@ export default function ChatConversationClient() {
       if (m.image_url) {
         out.push({
           id: `${m.id}-img`,
-          label: m.text?.trim() ? `Photo — ${m.text.trim().slice(0, 40)}` : 'Photo',
+          label: m.text?.trim() ? `Photo, ${m.text.trim().slice(0, 40)}` : 'Photo',
           href: m.image_url,
           kind: 'image',
         });
@@ -199,7 +202,7 @@ export default function ChatConversationClient() {
       if (m.document_url) {
         out.push({
           id: `${m.id}-doc`,
-          label: m.document_name ? `Document — ${m.document_name}` : 'Document',
+          label: m.document_name ? `Document, ${m.document_name}` : 'Document',
           href: m.document_url,
           kind: 'document',
         });
@@ -375,7 +378,7 @@ export default function ChatConversationClient() {
     setSending(false);
   };
 
-  const sendImage = async (file: File) => {
+  const sendImage = async (file: File, caption?: string) => {
     if (!chatId || !userId || uploadingImage) return;
     if (!allowsRichDm) {
       toast.error(MESSAGE_REQUEST_PLAIN_TEXT_HINT);
@@ -386,7 +389,7 @@ export default function ChatConversationClient() {
     const optimistic: Msg = {
       id: tempId,
       sender_id: userId,
-      text: 'Sent a photo',
+      text: caption?.trim() || 'Sent a photo',
       created_at: new Date().toISOString(),
       type: 'IMAGE',
       is_optimistic: true,
@@ -394,7 +397,7 @@ export default function ChatConversationClient() {
     };
     setMessages((old) => [...old, optimistic]);
     try {
-      const inserted = await sendChatImageMessage(supabase, { chatId, userId, file });
+      const inserted = await sendChatImageMessage(supabase, { chatId, userId, file, caption });
       setMessages((old) =>
         old.map((m) =>
           m.id === tempId
@@ -566,16 +569,13 @@ export default function ChatConversationClient() {
             }}
             className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl py-1 text-left hover:bg-(--surface)"
           >
-            <div
-              className={`relative h-10 w-10 shrink-0 overflow-hidden rounded-2xl border border-(--border) bg-(--surface) ${
-                partner?.subscription_plan === 'diamond' ? 'ring-2 ring-violet-500' : ''
-              }`}
-            >
-              {normalizeWebMediaUrl(partner?.logo_url || '') ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={normalizeWebMediaUrl(partner?.logo_url || '')} alt="" className="h-full w-full object-cover" />
-              ) : null}
-            </div>
+            <Avatar
+              uri={partner?.logo_url}
+              size={40}
+              isSeller={!!partner?.is_seller}
+              diamond={partner?.subscription_plan === 'diamond'}
+              alt={partner?.display_name || partner?.slug || 'Chat'}
+            />
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1">
                 <p className="truncate text-[17px] font-semibold tracking-tight text-(--foreground)">
@@ -660,10 +660,9 @@ export default function ChatConversationClient() {
         ref={messagesScrollRef}
         className="min-h-0 flex-1 overflow-y-auto bg-(--surface) px-4 py-4"
       >
-        {partner ? (
+        {partner && messages.length === 0 ? (
           <MessageRequestHero
             partner={partner}
-            showViewProfile
             onViewProfile={() => {
               const slug = partner.slug;
               if (slug) router.push(`/${encodeURIComponent(slug)}`);
@@ -790,6 +789,19 @@ export default function ChatConversationClient() {
                       />
                     ) : isCommerceCardMessage(m) ? (
                       <CommerceCardMessage message={m} isSellerView={isSeller} />
+                    ) : String(m.type || '').toUpperCase() === 'LOCATION' ||
+                      String(m.type || '').toUpperCase() === 'LOCATION_SHARE' ? (
+                      <LocationShareCard
+                        label={(m.metadata as { label?: string } | null)?.label || 'Shared location'}
+                        address={
+                          (m.metadata as { address?: string } | null)?.address ||
+                          String(m.text || '').trim() ||
+                          null
+                        }
+                        linkedOrderHint={
+                          (m.metadata as { order_label?: string } | null)?.order_label || null
+                        }
+                      />
                     ) : (
                       <>
                     {m.image_url ? (
@@ -877,7 +889,7 @@ export default function ChatConversationClient() {
         draft={draft}
         onDraftChange={setDraft}
         onSendText={() => void send()}
-        onPickImage={(file) => void sendImage(file)}
+        onPickImage={(file, caption) => void sendImage(file, caption)}
         sending={sending}
         uploadingImage={uploadingImage}
         replyTo={replyTo}

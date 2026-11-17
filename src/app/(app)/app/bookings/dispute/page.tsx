@@ -162,7 +162,7 @@ export default function BookingDisputePage() {
       </header>
 
       <div className="mt-4 space-y-4 px-4">
-        <div className="flex items-start gap-3 rounded-[20px] border border-red-400/40 bg-red-500/10 p-4">
+        <div className="flex items-start gap-3 rounded-sl-2xl border border-red-400/40 bg-red-500/10 p-4">
           <ShieldAlert size={22} className="mt-0.5 shrink-0 text-red-500" />
           <div>
             <p className="text-sm font-black text-red-500">{DISPUTE_COPY.bookingWarningTitle}</p>
@@ -171,7 +171,7 @@ export default function BookingDisputePage() {
           </div>
         </div>
 
-        <div className="rounded-[20px] border border-(--border) bg-(--card) p-4">
+        <div className="rounded-sl-2xl border border-(--border) bg-(--card) p-4">
           {!serviceOrderId ? (
             <p className="mb-3 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-500">
               Missing booking reference. Go back to your bookings and retry.
@@ -203,7 +203,7 @@ export default function BookingDisputePage() {
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            className="mt-3 h-28 w-full rounded-[14px] border border-(--border) bg-(--surface) p-3 text-[13px] text-(--foreground) outline-none"
+            className="mt-3 h-28 w-full rounded-sl-lg border border-(--border) bg-(--surface) p-3 text-[13px] text-(--foreground) outline-none"
             placeholder="Explain exactly what went wrong with this booking..."
           />
 
@@ -247,7 +247,7 @@ export default function BookingDisputePage() {
             type="button"
             onClick={() => void submit()}
             disabled={busy || blocked || !selectedReason || description.trim().length < 10 || !serviceOrderId}
-            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[16px] bg-red-500 px-4 py-3 text-sm font-black text-white disabled:opacity-50"
+            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-sl-xl bg-red-500 px-4 py-3 text-sm font-black text-white disabled:opacity-50"
           >
             {busy ? <Loader2 size={16} className="animate-spin" /> : <AlertTriangle size={16} />}
             {busy ? 'Opening dispute…' : DISPUTE_COPY.bookingConfirmAction}

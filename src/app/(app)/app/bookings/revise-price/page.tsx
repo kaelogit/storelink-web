@@ -138,7 +138,7 @@ export default function ReviseBookingPricePage() {
             min={1}
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="mt-1 w-full rounded-[14px] border border-(--border) bg-(--surface) px-3 py-3 text-base font-semibold text-(--foreground)"
+            className="mt-1 w-full rounded-sl-lg border border-(--border) bg-(--surface) px-3 py-3 text-base font-semibold text-(--foreground)"
           />
           <label className="mt-4 block text-[10px] font-black tracking-wide text-(--muted)">
             NOTE (OPTIONAL)
@@ -148,13 +148,13 @@ export default function ReviseBookingPricePage() {
             onChange={(e) => setNote(e.target.value.slice(0, 300))}
             rows={3}
             placeholder="Add-ons, travel, materials…"
-            className="mt-1 w-full rounded-[14px] border border-(--border) bg-(--surface) px-3 py-2 text-sm text-(--foreground)"
+            className="mt-1 w-full rounded-sl-lg border border-(--border) bg-(--surface) px-3 py-2 text-sm text-(--foreground)"
           />
           <button
             type="button"
             disabled={saving}
             onClick={() => void save()}
-            className="mt-6 w-full rounded-[16px] bg-emerald-600 py-3 text-sm font-black text-white disabled:opacity-50"
+            className="mt-6 w-full rounded-sl-xl bg-emerald-600 py-3 text-sm font-black text-white disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save new price'}
           </button>

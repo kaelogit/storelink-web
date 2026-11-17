@@ -121,7 +121,7 @@ export default function HelpCenterPage() {
             How can we help you?
           </h1>
           <p className="text-sm text-(--muted) max-w-xl mx-auto mb-6">
-            These answers cover both products you buy and services you book on StoreLink — from escrow and safety to delivery and disputes.
+            These answers cover both products you buy and services you book on StoreLink, from escrow and safety to delivery and disputes.
           </p>
           <div className="relative max-w-xl mx-auto mb-10">
              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-(--muted)">

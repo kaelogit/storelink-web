@@ -24,15 +24,15 @@ export function buildServiceCartExpectationsCopy(params: {
     body = TRANSACTION_COPY.serviceCartMultiServiceNote.replace('{count}', String(serviceCount));
   } else if (providerCount > 1) {
     body = depositChargesActive
-      ? 'Each provider books separately. Tap Proceed for one provider at a time — some may take a deposit after they confirm, then balance before work starts.'
-      : 'Each provider books separately. Tap Proceed for one provider at a time — confirm and pay before starting the next.';
+      ? 'Each provider books separately. Tap Proceed for one provider at a time. Some may take a deposit after they confirm, then balance before work starts.'
+      : 'Each provider books separately. Tap Proceed for one provider at a time. Confirm and pay before starting the next.';
   }
 
   return {
     title: TRANSACTION_COPY.serviceCartExpectationsHeadline,
     body,
     steps: [
-      'Proceed — pick delivery and a time',
+      'Proceed opens Request booking (mode, address, time)',
       'Provider confirms your booking request',
       depositChargesActive
         ? TRANSACTION_COPY.serviceCartPayStepDeposit

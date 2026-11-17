@@ -76,8 +76,8 @@ export function WebCartCheckoutWhenStep({
         <p className="text-[10px] font-black tracking-wide text-(--muted)">WHEN DO YOU NEED IT?</p>
         <p className="mt-1 text-[11px] font-semibold text-(--muted)">
           {slots.length
-            ? 'Pick a suggested opening — or choose another time'
-            : 'No suggested openings right now — pick a time below'}
+            ? 'Pick a suggested opening, or choose another time'
+            : 'No suggested openings right now. Pick a time below'}
         </p>
       </div>
 

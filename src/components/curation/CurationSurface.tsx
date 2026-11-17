@@ -1,13 +1,12 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, Share2 } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
-import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { STOREFRONT_GUTTER_X } from '@/lib/mobileLayout';
+import { Avatar } from '@/components/ui/Avatar';
 
 export type CurationSurfaceProps = {
   backHref?: string;
@@ -113,13 +112,6 @@ export function CurationSurface({
 
   const showCuratorAttribution = Boolean(curatorAttributionLabel);
 
-  const curatorAttributionAvatar = useMemo(() => {
-    const fromProp = normalizeWebMediaUrl(String(curatorLogoUrl || '').trim());
-    if (fromProp) return fromProp;
-    const name = curatorAttributionLabel || 'Curator';
-    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=6366f1&color=fff`;
-  }, [curatorLogoUrl, curatorAttributionLabel]);
-
   const curatorPillLabel = useMemo(() => {
     const slug = String(curatorSlug || '').trim();
     if (slug) return `@${slug}`;
@@ -158,10 +150,6 @@ export function CurationSurface({
     }
   }, [shareBusy, shareText, shareTitle, shareUrl]);
 
-  const sellerAvatar =
-    String(providerLogoUrl || '').trim() ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(providerName || 'Store')}&background=10b981&color=fff`;
-
   const descText = String(description || '').trim();
   const descLong = descText.length > 220;
 
@@ -172,7 +160,7 @@ export function CurationSurface({
           <button
             type="button"
             onClick={handleBack}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-md transition-colors hover:bg-black/40"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/35 bg-black/32 text-white backdrop-blur-md transition-colors hover:bg-black/45"
             aria-label="Back"
           >
             <ChevronLeft size={24} strokeWidth={2} />
@@ -181,7 +169,7 @@ export function CurationSurface({
             type="button"
             onClick={() => void handleShare()}
             disabled={shareBusy}
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-black/20 text-white backdrop-blur-md transition-colors hover:bg-black/40 disabled:opacity-60"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/35 bg-black/32 text-white backdrop-blur-md transition-colors hover:bg-black/45 disabled:opacity-60"
             aria-label="Share"
           >
             <Share2 size={20} strokeWidth={2} />
@@ -207,9 +195,7 @@ export function CurationSurface({
           <div className={`mb-6 rounded-2xl border border-(--border) p-4 text-sm leading-relaxed ${quoteToneClass}`}>
             {showCuratorAttribution ? (
               <div className="mb-4 flex items-center gap-3 border-b border-(--border)/70 pb-4">
-                <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-full bg-(--muted) ring-2 ring-white/30">
-                  <Image src={curatorAttributionAvatar} alt="" fill className="object-cover" sizes="40px" />
-                </div>
+                <Avatar uri={curatorLogoUrl} size={40} isSeller={false} shape="circle" alt={curatorAttributionLabel || 'Curator'} />
                 <div className="min-w-0 flex-1">
                   <p className="text-[10px] font-black uppercase tracking-widest text-(--muted-foreground)">Picked by</p>
                   <div className="flex min-w-0 items-center gap-1">
@@ -246,9 +232,7 @@ export function CurationSurface({
               href={providerProfileHref}
               className="mb-6 flex items-center gap-3 rounded-[18px] border-[1.5px] border-(--border) bg-(--surface) p-4 transition-colors duration-(--duration-150) active:bg-(--border)"
             >
-              <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-[16px] border-[1.5px] border-(--border) bg-(--border)">
-                <Image src={sellerAvatar} alt={providerName} fill className="object-cover" sizes="44px" />
-              </div>
+              <Avatar uri={providerLogoUrl} size={44} isSeller diamond={!!providerIsDiamond} alt={providerName} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <p className="truncate text-sm font-bold text-(--foreground)">{providerName}</p>
@@ -266,10 +250,8 @@ export function CurationSurface({
               </span>
             </Link>
           ) : (
-            <div className="mb-6 flex items-center gap-3 rounded-[18px] border-[1.5px] border-(--border) bg-(--surface) p-4">
-              <div className="relative h-11 w-11 shrink-0 overflow-hidden rounded-[16px] border-[1.5px] border-(--border) bg-(--border)">
-                <Image src={sellerAvatar} alt={providerName} fill className="object-cover" sizes="44px" />
-              </div>
+            <div className="mb-6 flex items-center gap-3 rounded-sl-xl border-[1.5px] border-(--border) bg-(--surface) p-4">
+              <Avatar uri={providerLogoUrl} size={44} isSeller diamond={!!providerIsDiamond} alt={providerName} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
                   <p className="truncate text-sm font-bold text-(--foreground)">{providerName}</p>

@@ -45,7 +45,7 @@ function LoginPageContent() {
     (async () => {
       const { data } = await supabase.auth.getSession();
       if (cancelled || !data.session?.user) return;
-      // Do not attribute referrals on login — only fresh signups (verify) may claim an invite.
+      // Do not attribute referrals on login - only fresh signups (verify) may claim an invite.
       const dest = await resolvePostLoginPath(supabase, nextPath);
       if (!cancelled) router.replace(dest);
     })();

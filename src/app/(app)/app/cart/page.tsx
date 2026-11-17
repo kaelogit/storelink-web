@@ -3,10 +3,11 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { CalendarClock, ChevronDown, CreditCard, Minus, Plus, ShoppingBag, Trash2 } from 'lucide-react';
+import { CalendarClock, ChevronDown, CreditCard, Minus, Package, Plus, ShoppingBag, Trash2, Wrench } from 'lucide-react';
 import { toast } from 'sonner';
 import { useWebCartStore } from '@/store/useWebCartStore';
 import { createBrowserClient } from '@/lib/supabase';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { WebCartCheckbox } from '@/components/cart/WebCartCheckbox';
 import { WebCartAddressCard } from '@/components/cart/WebCartAddressCard';
 import { WebCartCheckoutModal } from '@/components/cart/WebCartCheckoutModal';
@@ -593,7 +594,7 @@ export default function AppCartPage() {
         return;
       }
       if (selectedZoneId === QUOTE_ZONE_ID) {
-        toast.message('Outside listed axes — messaging the seller for a quote…');
+        toast.message('Outside listed axes. Messaging the seller for a quote…');
         void messageSellerForQuote(sellerId);
         return;
       }
@@ -617,7 +618,7 @@ export default function AppCartPage() {
         })
       : null;
     const shipAddress = !needsShip
-      ? 'Digital delivery — no shipping'
+      ? 'Digital delivery, no shipping'
       : isPickup
         ? `Pickup${deliverySettings?.pickup_note ? ` · ${deliverySettings.pickup_note}` : ''}`
         : address.trim();
@@ -726,21 +727,18 @@ export default function AppCartPage() {
       if (dt === 'in_person' && lt === 'at_my_place') return false;
       return (serviceModeById[s.service_listing_id] || 'home') === 'home';
     });
-    if (needsAddress && !address.trim()) {
-      toast.error('Please select or add an address on the Delivery step.');
-      return;
-    }
+    // Mobile parity: skip Delivery/When/Review modal. Request booking collects mode/address/time.
     const mode = serviceModeById[first.service_listing_id] || 'home';
     const menuName = first.selected_menu_name || '';
     const menuPriceMinor = first.selected_menu_price_minor ?? null;
-    const scheduledIso = checkoutScheduledAt || null;
+    const scheduledIso = checkoutScheduledAt || String(first.preferred_scheduled_at || '').trim() || null;
     const prefill: ServiceBookingPrefill = {
       menuName,
       menuPriceMinor,
       fulfillment: mode,
       mode: 'request',
       scheduledAt: scheduledIso,
-      address: needsAddress ? address.trim() : null,
+      address: needsAddress && address.trim() ? address.trim() : null,
       buyerNote: buyerNote.trim() || null,
     };
     router.push(buildServiceBookingWebPath(firstServiceToken, prefill));
@@ -808,11 +806,8 @@ export default function AppCartPage() {
         listing_id: selected[0]?.service_listing_id,
       },
     });
-    setCheckoutScheduledAt(
-      String(selected[0]?.preferred_scheduled_at || '').trim(),
-    );
-    setBuyerNote('');
-    setCheckoutSession({ kind: 'services', sellerKey });
+    // Skip WebCartCheckoutModal Delivery/When/Review for services (mobile Request booking path).
+    checkSelectedServices(sellerKey);
   };
 
   const closeCheckout = useCallback(() => setCheckoutSession(null), []);
@@ -967,7 +962,12 @@ export default function AppCartPage() {
 
           {tab === 'products' ? (
             products.length === 0 ? (
-              <p className="py-12 text-center text-sm font-semibold text-(--muted)">No products yet.</p>
+              <EmptyState
+                icon={<Package size={28} className="text-(--muted)" strokeWidth={2.2} />}
+                title="No products yet"
+                message="Add items from a shop. They’ll show up here ready to checkout."
+                primaryCta={{ label: 'Browse shops', onClick: () => router.push('/app') }}
+              />
             ) : (
               <div className="space-y-4">
                 {sellerGroups
@@ -1126,7 +1126,12 @@ export default function AppCartPage() {
               </div>
             )
           ) : services.length === 0 ? (
-            <p className="py-12 text-center text-sm font-semibold text-(--muted)">No services saved yet.</p>
+            <EmptyState
+              icon={<Wrench size={28} className="text-(--muted)" strokeWidth={2.2} />}
+              title="No services saved yet"
+              message="Save a service from a listing. Proceed opens Request booking for one provider at a time."
+              primaryCta={{ label: 'Discover services', onClick: () => router.push('/app/discover') }}
+            />
           ) : (
             <div className="space-y-4">
               {sellerGroups
@@ -1243,7 +1248,7 @@ export default function AppCartPage() {
                                           return (
                                             <option key={`${s.service_listing_id}:${opt.name}`} value={opt.name}>
                                               {opt.name}
-                                              {opt.price_minor ? ` - ${money(opt.price_minor / 100, s.currency_code)}` : ''}
+                                              {opt.price_minor ? `, ${money(opt.price_minor / 100, s.currency_code)}` : ''}
                                               {meta ? ` · ${meta}` : ''}
                                             </option>
                                           );
@@ -1351,11 +1356,11 @@ export default function AppCartPage() {
         </div>
       </div>
 
-      {checkoutSession && activeCheckoutGroup ? (
+      {checkoutSession && checkoutSession.kind === 'products' && activeCheckoutGroup ? (
         <WebCartCheckoutModal
           open
           sellerName={String(activeCheckoutGroup.sellerName || 'Checkout')}
-          kind={checkoutSession.kind}
+          kind="products"
           needsDelivery={checkoutNeedsDelivery}
           needsWhen={checkoutNeedsWhen}
           sessionKey={checkoutSessionKey}
@@ -1433,7 +1438,7 @@ export default function AppCartPage() {
                   return 'Pick a delivery zone that matches your address.';
                 }
                 if (zid === QUOTE_ZONE_ID) {
-                  return 'This area needs a custom quote — message the seller first.';
+                  return 'This area needs a custom quote. Message the seller first.';
                 }
               }
               return null;
@@ -1454,7 +1459,7 @@ export default function AppCartPage() {
                 return 'Pick a delivery zone that matches your address.';
               }
               if (zid === QUOTE_ZONE_ID) {
-                return 'This area needs a custom quote — message the seller first.';
+                return 'This area needs a custom quote. Message the seller first.';
               }
             }
             return null;
@@ -1804,7 +1809,7 @@ export default function AppCartPage() {
                   <p className="text-[11px] font-semibold text-(--muted)">Address: {address.trim()}</p>
                 ) : null}
                 {!checkoutNeedsDelivery && checkoutSession.kind === 'products' ? (
-                  <p className="text-[11px] font-semibold text-(--muted)">Digital — no shipping</p>
+                  <p className="text-[11px] font-semibold text-(--muted)">Digital, no shipping</p>
                 ) : null}
                 {checkoutScheduledAt ? (
                   <p className="text-[11px] font-semibold text-(--muted)">

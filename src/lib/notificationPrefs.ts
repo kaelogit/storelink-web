@@ -67,7 +67,7 @@ export const NOTIFICATION_HUB_CATEGORIES: readonly NotificationHubCategory[] = [
     keys: ['likes', 'comments'],
     helpTitle: 'Interactions',
     helpBody:
-      'Alerts when people engage with your profile and content — likes, follows, comments, mentions, and shopping interest on your items.',
+      'Alerts when people engage with your profile and content, including likes, follows, comments, mentions, and shopping interest on your items.',
   },
   {
     id: 'messages',

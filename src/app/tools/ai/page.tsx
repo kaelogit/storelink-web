@@ -63,7 +63,7 @@ export default function AIWriterPage() {
                  <p className="text-xs font-bold text-purple-400 uppercase tracking-widest mb-4">GEMINI OUTPUT</p>
                  <div className="space-y-4">
                     <p className="text-white font-medium leading-relaxed">
-                       <span className="text-purple-300 font-bold">Headline:</span> Iconic Cherry Red Kicks – Street Ready 🍒👟
+                       <span className="text-purple-300 font-bold">Headline:</span> Iconic Cherry Red Kicks, Street Ready 🍒👟
                     </p>
                     <p className="text-(--muted) text-sm leading-relaxed">
                        Step out in confidence. These premium red sneakers feature a breathable mesh upper, orthopedic sole support, and a vibrant finish that turns heads. 

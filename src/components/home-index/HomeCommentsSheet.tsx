@@ -1,10 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Heart, MessageCircleReply, Send, Trash2, X } from 'lucide-react';
+import { Heart, MessageCircle, MessageCircleReply, Send, Trash2, X } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import { firstNonEmptyId } from '@/lib/firstNonEmptyId';
-import { normalizeWebMediaUrl } from '@/lib/media-url';
+import { Avatar } from '@/components/ui/Avatar';
+import { Sheet } from '@/components/ui/Sheet';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 export default function HomeCommentsSheet({
   open,
@@ -217,16 +219,17 @@ export default function HomeCommentsSheet({
     return `${d}d`;
   };
 
-  if (!open) return null;
   return (
-    <div className="fixed inset-0 z-90 bg-black/45 flex items-end sm:items-center sm:justify-center">
-      <button type="button" aria-label="Close comments" className="absolute inset-0" onClick={onClose} />
-      <div className="relative w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl bg-(--card) border border-(--border) max-h-[81vh] overflow-hidden flex flex-col">
-        <div className="py-3">
-          <div className="w-10 h-1 rounded-full bg-(--border) mx-auto" />
-        </div>
+    <Sheet
+      open={open}
+      onClose={onClose}
+      titleId="comments-sheet-title"
+      zClassName="z-90"
+      panelClassName="max-h-[81vh] overflow-hidden flex flex-col"
+      showHandle
+    >
         <div className="relative border-b border-(--border) pb-3 px-4">
-          <h3 className="text-base font-black text-(--foreground) text-center">
+          <h3 id="comments-sheet-title" className="text-base font-black text-(--foreground) text-center">
             {rows.length} {rows.length === 1 ? 'Comment' : 'Comments'}
           </h3>
           <button type="button" onClick={onClose} className="absolute right-4 top-0 text-(--foreground)">
@@ -236,7 +239,14 @@ export default function HomeCommentsSheet({
 
         <div className="mt-3 flex-1 overflow-y-auto px-4 pr-3 space-y-3">
           {loading ? <p className="text-sm text-(--muted)">Loading comments...</p> : null}
-          {!loading && structuredRows.length === 0 ? <p className="text-sm text-(--muted)">No comments yet.</p> : null}
+          {!loading && structuredRows.length === 0 ? (
+            <EmptyState
+              icon={<MessageCircle size={24} className="text-(--muted)" />}
+              title="No comments yet"
+              message="Be the first to leave a comment."
+              className="py-6"
+            />
+          ) : null}
           {structuredRows.map((entry: any, index: number) => {
             if (entry.kind === 'toggle') {
               return (
@@ -262,16 +272,13 @@ export default function HomeCommentsSheet({
             return (
               <div key={`${row.id}-${entry.kind}-${index}`} className={`flex items-start gap-2 relative ${isChild ? 'ml-9 -mt-1' : ''}`}>
                 {isChild ? <span className="absolute -left-5 top-[-10px] bottom-4 w-[2px] rounded-full bg-(--border)" /> : null}
-                <div className={`overflow-hidden border ${isChild ? 'h-7 w-7 rounded-[10px]' : 'h-[34px] w-[34px] rounded-xl'} ${String(row.user_plan || '').toLowerCase() === 'diamond' ? 'border-violet-500' : 'border-(--border)'}`}>
-                  <img
-                    src={
-                      normalizeWebMediaUrl(row.user_logo) ||
-                      `https://ui-avatars.com/api/?name=${encodeURIComponent(row.user_slug || 'U')}`
-                    }
-                    alt={row.user_slug || 'user'}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
+                <Avatar
+                  uri={row.user_logo}
+                  size={isChild ? 28 : 34}
+                  isSeller={false}
+                  diamond={String(row.user_plan || '').toLowerCase() === 'diamond'}
+                  alt={row.user_slug || 'user'}
+                />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1 text-xs">
                     <span className="font-black text-(--muted)">@{row.user_slug || 'user'}</span>
@@ -300,7 +307,7 @@ export default function HomeCommentsSheet({
           })}
         </div>
 
-        <div className="mt-3 rounded-xl border border-(--border) bg-(--surface) p-2 mx-4 mb-4 flex items-center gap-2 relative">
+        <div className="mt-3 mx-4 mb-[max(0.75rem,env(safe-area-inset-bottom))] flex items-center gap-2 relative rounded-sl-xl border border-(--border) bg-(--surface) p-2">
           {replyTo ? (
             <div className="absolute -top-8 left-0 text-xs text-(--muted) bg-(--surface) border border-(--border) px-2 py-1 rounded-lg inline-flex items-center gap-1">
               Replying to @{replyTo.user_slug}
@@ -319,8 +326,7 @@ export default function HomeCommentsSheet({
             <Send size={14} />
           </button>
         </div>
-      </div>
-    </div>
+    </Sheet>
   );
 }
 

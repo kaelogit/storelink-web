@@ -1,5 +1,5 @@
 /**
- * Same policy as mobile `sellerStatus.ts` — Diamond can expire; Standard is always active.
+ * Same policy as mobile `sellerStatus.ts` - Diamond can expire; Standard is always active.
  */
 
 export type ProfileLike = {

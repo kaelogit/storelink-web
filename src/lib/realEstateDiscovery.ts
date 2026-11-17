@@ -1,5 +1,5 @@
 /**
- * Real Estate discovery helpers (Phase 5) — Home Real Estate chip badges + filters.
+ * Real Estate discovery helpers (Phase 5) - Home Real Estate chip badges + filters.
  * Reuses food capacity / distance helpers; office vs property visit language.
  */
 

@@ -27,7 +27,7 @@ export const SERVICE_DISPUTE_REASON_OPTIONS: ServiceDisputeReasonOption[] = [
   { code: 'other', label: 'Something else', roles: ['buyer', 'seller'] },
 ];
 
-/** Food / catering labels — same DB codes, clearer buyer language. */
+/** Food / catering labels - same DB codes, clearer buyer language. */
 const CATERING_DISPUTE_LABELS: Partial<Record<ServiceDisputeReasonCode, string>> = {
   no_show_seller: 'Cook / provider did not show',
   no_show_buyer: 'Buyer did not collect or was not available',
@@ -36,7 +36,7 @@ const CATERING_DISPUTE_LABELS: Partial<Record<ServiceDisputeReasonCode, string>>
   other: 'Something else',
 };
 
-/** Fashion / tailor labels — same DB codes. */
+/** Fashion / tailor labels - same DB codes. */
 const FASHION_DISPUTE_LABELS: Partial<Record<ServiceDisputeReasonCode, string>> = {
   no_show_seller: 'Tailor / provider missed the fitting',
   no_show_buyer: 'Buyer missed the fitting or pickup',
@@ -45,7 +45,7 @@ const FASHION_DISPUTE_LABELS: Partial<Record<ServiceDisputeReasonCode, string>> 
   other: 'Something else',
 };
 
-/** Real estate / viewing labels — same DB codes. */
+/** Real estate / viewing labels - same DB codes. */
 const REAL_ESTATE_DISPUTE_LABELS: Partial<Record<ServiceDisputeReasonCode, string>> = {
   no_show_seller: 'Agent / inspector missed the viewing',
   no_show_buyer: 'Buyer missed the viewing or inspection',
@@ -54,7 +54,7 @@ const REAL_ESTATE_DISPUTE_LABELS: Partial<Record<ServiceDisputeReasonCode, strin
   other: 'Something else',
 };
 
-/** Wellness labels — same DB codes. */
+/** Wellness labels - same DB codes. */
 const WELLNESS_DISPUTE_LABELS: Partial<Record<ServiceDisputeReasonCode, string>> = {
   no_show_seller: 'Provider missed the session',
   no_show_buyer: 'Buyer missed the session',
@@ -63,7 +63,7 @@ const WELLNESS_DISPUTE_LABELS: Partial<Record<ServiceDisputeReasonCode, string>>
   other: 'Something else',
 };
 
-/** Automotive labels — same DB codes. */
+/** Automotive labels - same DB codes. */
 const AUTOMOTIVE_DISPUTE_LABELS: Partial<Record<ServiceDisputeReasonCode, string>> = {
   no_show_seller: 'Provider missed the job',
   no_show_buyer: 'Buyer / vehicle not available',
@@ -72,7 +72,7 @@ const AUTOMOTIVE_DISPUTE_LABELS: Partial<Record<ServiceDisputeReasonCode, string
   other: 'Something else',
 };
 
-/** Home trades labels — same DB codes. */
+/** Home trades labels - same DB codes. */
 const HOME_TRADES_DISPUTE_LABELS: Partial<Record<ServiceDisputeReasonCode, string>> = {
   no_show_seller: 'Provider missed the job',
   no_show_buyer: 'Buyer not available / access issue',
@@ -81,7 +81,7 @@ const HOME_TRADES_DISPUTE_LABELS: Partial<Record<ServiceDisputeReasonCode, strin
   other: 'Something else',
 };
 
-/** Electronics / device repair labels — same DB codes. */
+/** Electronics / device repair labels - same DB codes. */
 const ELECTRONICS_DISPUTE_LABELS: Partial<Record<ServiceDisputeReasonCode, string>> = {
   no_show_seller: 'Provider missed the repair appointment',
   no_show_buyer: 'Buyer not available / device not ready',
@@ -90,7 +90,7 @@ const ELECTRONICS_DISPUTE_LABELS: Partial<Record<ServiceDisputeReasonCode, strin
   other: 'Something else',
 };
 
-/** Events labels — same DB codes. */
+/** Events labels - same DB codes. */
 const EVENTS_DISPUTE_LABELS: Partial<Record<ServiceDisputeReasonCode, string>> = {
   no_show_seller: 'Provider missed the event',
   no_show_buyer: 'Event cancelled / venue access issue',
@@ -179,7 +179,7 @@ export function getServiceDisputeReasonLabel(
   return formatServiceDisputeReason(code, serviceCategory);
 }
 
-/** Product order dispute reasons — includes food + fashion-friendly options. */
+/** Product order dispute reasons - includes food + fashion-friendly options. */
 export const PRODUCT_DISPUTE_REASONS = [
   'Damaged Item',
   'Wrong Item Received',

@@ -134,7 +134,7 @@ export default function ReviseShippingFeePage() {
             min={0}
             value={fee}
             onChange={(e) => setFee(e.target.value)}
-            className="mt-1 w-full rounded-[14px] border border-(--border) bg-(--surface) px-3 py-3 text-base font-semibold text-(--foreground)"
+            className="mt-1 w-full rounded-sl-lg border border-(--border) bg-(--surface) px-3 py-3 text-base font-semibold text-(--foreground)"
           />
           <label className="mt-4 block text-[10px] font-black tracking-wide text-(--muted)">
             LABEL / NOTE (OPTIONAL)
@@ -144,13 +144,13 @@ export default function ReviseShippingFeePage() {
             value={note}
             onChange={(e) => setNote(e.target.value.slice(0, 300))}
             placeholder="e.g. Outside zone · Lekki"
-            className="mt-1 w-full rounded-[14px] border border-(--border) bg-(--surface) px-3 py-3 text-sm text-(--foreground)"
+            className="mt-1 w-full rounded-sl-lg border border-(--border) bg-(--surface) px-3 py-3 text-sm text-(--foreground)"
           />
           <button
             type="button"
             disabled={saving}
             onClick={() => void save()}
-            className="mt-6 w-full rounded-[16px] bg-emerald-600 py-3 text-sm font-black text-white disabled:opacity-50"
+            className="mt-6 w-full rounded-sl-xl bg-emerald-600 py-3 text-sm font-black text-white disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save delivery fee'}
           </button>

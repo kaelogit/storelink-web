@@ -172,7 +172,7 @@ function VerifyPageContent() {
               );
               await new Promise((r) => setTimeout(r, 1600));
             } else if (result?.ok && (result.reward_held || result.review_status === 'pending_review')) {
-              setMessage('Invite received — under a quick security review before coins unlock.');
+              setMessage('Invite received. Under a quick security review before coins unlock.');
               await new Promise((r) => setTimeout(r, 1600));
             }
           }

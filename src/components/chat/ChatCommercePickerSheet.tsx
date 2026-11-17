@@ -7,6 +7,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { formatCurrency } from '@/lib/activity-feed';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { getServiceListingHeroImage } from '@/lib/serviceListingMedia';
+import { Sheet } from '@/components/ui/Sheet';
 
 export type ChatProductPick = {
   id: string;
@@ -98,152 +99,156 @@ export function ChatCommercePickerSheet({
     }
   }, [open, initialTab, loadCatalog]);
 
-  if (!open) return null;
-
   const data = tab === 'product' ? products : services;
 
   return (
-    <div className="fixed inset-0 z-[95] flex items-end justify-center bg-black/45 p-4" role="dialog" aria-modal="true">
-      <button type="button" className="absolute inset-0 cursor-default" aria-label="Close" onClick={onClose} />
-      <div className="relative z-10 max-h-[72vh] w-full max-w-lg overflow-hidden rounded-2xl border border-(--border) bg-(--card) shadow-2xl">
-        <div className="flex items-center justify-between border-b border-(--border) px-4 py-3">
-          <p className="text-sm font-black text-(--foreground)">Share listing</p>
-          <button type="button" onClick={onClose} className="rounded-lg p-1 text-(--muted) hover:bg-(--surface)">
-            <X size={20} />
-          </button>
-        </div>
-
-        {chatId ? (
-          <div className="border-b border-(--border) px-4 py-3">
-            <Link
-              href={`/app/chat/${encodeURIComponent(chatId)}/custom-offer`}
-              onClick={onClose}
-              className="flex w-full items-center gap-3 rounded-xl border border-(--border) bg-(--surface) px-3 py-2.5 text-left hover:bg-(--card)"
-            >
-              <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600">
-                <Tag size={18} />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-bold text-(--foreground)">Custom offer</span>
-                <span className="block text-xs text-(--muted)">Send a priced quote in this chat</span>
-              </span>
-            </Link>
-          </div>
-        ) : null}
-
-        <div className="flex border-b border-(--border)">
-          <button
-            type="button"
-            onClick={() => setTab('product')}
-            className={`flex flex-1 items-center justify-center gap-2 border-b-2 px-3 py-2.5 text-sm font-semibold ${
-              tab === 'product' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-(--muted)'
-            }`}
-          >
-            <ShoppingBag size={16} />
-            Products
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab('service')}
-            className={`flex flex-1 items-center justify-center gap-2 border-b-2 px-3 py-2.5 text-sm font-semibold ${
-              tab === 'service' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-(--muted)'
-            }`}
-          >
-            <Wrench size={16} />
-            Services
-          </button>
-        </div>
-
-        <div className="max-h-[50vh] overflow-y-auto p-3">
-          {loading ? (
-            <div className="flex items-center justify-center gap-2 py-10 text-sm text-(--muted)">
-              <Loader2 size={18} className="animate-spin" />
-              Loading listings…
-            </div>
-          ) : loadError ? (
-            <div className="py-10 text-center">
-              <p className="text-sm text-rose-500">Could not load listings.</p>
-              <button type="button" onClick={() => void loadCatalog()} className="mt-2 text-sm font-bold text-emerald-600">
-                Retry
-              </button>
-            </div>
-          ) : data.length === 0 ? (
-            <p className="py-10 text-center text-sm text-(--muted)">
-              {tab === 'product' ? 'No active products in stock.' : 'No active services.'}
-            </p>
-          ) : tab === 'product' ? (
-            <div className="space-y-2">
-              {products.map((product) => {
-                const img = normalizeWebMediaUrl(product.image_urls?.[0] || '');
-                return (
-                  <button
-                    key={product.id}
-                    type="button"
-                    onClick={() => {
-                      onSelectProduct(product);
-                      onClose();
-                    }}
-                    className="flex w-full items-center gap-3 rounded-xl border border-(--border) bg-(--surface) p-2 text-left hover:border-emerald-500/40"
-                  >
-                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-(--background)">
-                      {img ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={img} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full items-center justify-center">
-                          <ShoppingBag size={18} className="text-emerald-600" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold text-(--foreground)">{product.name}</p>
-                      <p className="text-xs font-semibold text-emerald-600">
-                        {formatCurrency(product.price, product.currency_code || 'NGN')}
-                      </p>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {services.map((service) => {
-                const img = normalizeWebMediaUrl(getServiceListingHeroImage(service.media) || '');
-                return (
-                  <button
-                    key={service.id}
-                    type="button"
-                    onClick={() => {
-                      onSelectService(service);
-                      onClose();
-                    }}
-                    className="flex w-full items-center gap-3 rounded-xl border border-(--border) bg-(--surface) p-2 text-left hover:border-emerald-500/40"
-                  >
-                    <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-(--background)">
-                      {img ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={img} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full items-center justify-center">
-                          <Wrench size={18} className="text-emerald-600" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold text-(--foreground)">{service.title}</p>
-                      {service.hero_price_min != null ? (
-                        <p className="text-xs font-semibold text-emerald-600">
-                          From {formatCurrency(service.hero_price_min / 100, service.currency_code || 'NGN')}
-                        </p>
-                      ) : null}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
+    <Sheet
+      open={open}
+      onClose={onClose}
+      titleId="chat-commerce-picker-title"
+      zClassName="z-[95]"
+      panelClassName="max-h-[72vh] overflow-hidden flex flex-col"
+      showHandle={false}
+    >
+      <div className="flex items-center justify-between border-b border-(--border) px-4 py-3">
+        <p id="chat-commerce-picker-title" className="text-sm font-black text-(--foreground)">
+          Share listing
+        </p>
+        <button type="button" onClick={onClose} className="rounded-lg p-1 text-(--muted) hover:bg-(--surface)" aria-label="Close">
+          <X size={20} />
+        </button>
       </div>
-    </div>
+
+      {chatId ? (
+        <div className="border-b border-(--border) px-4 py-3">
+          <Link
+            href={`/app/chat/${encodeURIComponent(chatId)}/custom-offer`}
+            onClick={onClose}
+            className="flex w-full items-center gap-3 rounded-xl border border-(--border) bg-(--surface) px-3 py-2.5 text-left hover:bg-(--card)"
+          >
+            <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500/15 text-emerald-600">
+              <Tag size={18} />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-bold text-(--foreground)">Custom offer</span>
+              <span className="block text-xs text-(--muted)">Send a priced quote in this chat</span>
+            </span>
+          </Link>
+        </div>
+      ) : null}
+
+      <div className="flex border-b border-(--border)">
+        <button
+          type="button"
+          onClick={() => setTab('product')}
+          className={`flex flex-1 items-center justify-center gap-2 border-b-2 px-3 py-2.5 text-sm font-semibold ${
+            tab === 'product' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-(--muted)'
+          }`}
+        >
+          <ShoppingBag size={16} />
+          Products
+        </button>
+        <button
+          type="button"
+          onClick={() => setTab('service')}
+          className={`flex flex-1 items-center justify-center gap-2 border-b-2 px-3 py-2.5 text-sm font-semibold ${
+            tab === 'service' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-(--muted)'
+          }`}
+        >
+          <Wrench size={16} />
+          Services
+        </button>
+      </div>
+
+      <div className="max-h-[50vh] overflow-y-auto p-3">
+        {loading ? (
+          <div className="flex items-center justify-center gap-2 py-10 text-sm text-(--muted)">
+            <Loader2 size={18} className="animate-spin" />
+            Loading listings…
+          </div>
+        ) : loadError ? (
+          <div className="py-10 text-center">
+            <p className="text-sm text-rose-500">Could not load listings.</p>
+            <button type="button" onClick={() => void loadCatalog()} className="mt-2 text-sm font-bold text-emerald-600">
+              Retry
+            </button>
+          </div>
+        ) : data.length === 0 ? (
+          <p className="py-10 text-center text-sm text-(--muted)">
+            {tab === 'product' ? 'No active products in stock.' : 'No active services.'}
+          </p>
+        ) : tab === 'product' ? (
+          <div className="space-y-2">
+            {products.map((product) => {
+              const img = normalizeWebMediaUrl(product.image_urls?.[0] || '');
+              return (
+                <button
+                  key={product.id}
+                  type="button"
+                  onClick={() => {
+                    onSelectProduct(product);
+                    onClose();
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl border border-(--border) bg-(--surface) p-2 text-left hover:border-emerald-500/40"
+                >
+                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-(--background)">
+                    {img ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={img} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <ShoppingBag size={18} className="text-emerald-600" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-(--foreground)">{product.name}</p>
+                    <p className="text-xs font-semibold text-emerald-600">
+                      {formatCurrency(product.price, product.currency_code || 'NGN')}
+                    </p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {services.map((service) => {
+              const img = normalizeWebMediaUrl(getServiceListingHeroImage(service.media) || '');
+              return (
+                <button
+                  key={service.id}
+                  type="button"
+                  onClick={() => {
+                    onSelectService(service);
+                    onClose();
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl border border-(--border) bg-(--surface) p-2 text-left hover:border-emerald-500/40"
+                >
+                  <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-(--background)">
+                    {img ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={img} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <Wrench size={18} className="text-emerald-600" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-(--foreground)">{service.title}</p>
+                    {service.hero_price_min != null ? (
+                      <p className="text-xs font-semibold text-emerald-600">
+                        From {formatCurrency(service.hero_price_min / 100, service.currency_code || 'NGN')}
+                      </p>
+                    ) : null}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </Sheet>
   );
 }

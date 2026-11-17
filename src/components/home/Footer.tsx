@@ -92,20 +92,40 @@ export default function Footer() {
           </div>
 
           <div className="flex flex-wrap justify-center gap-x-6 gap-y-4 md:gap-8 order-1 lg:order-2 w-full lg:w-auto">
-            <a
-              href={iosHref}
-              {...(stores.ios ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-              className="text-xs font-bold uppercase tracking-[0.2em] text-slate-200 hover:text-emerald-400 transition-colors flex items-center gap-1"
-            >
-              App Store {stores.ios ? <ArrowUpRight size={14} className="text-slate-500" /> : null}
-            </a>
-            <a
-              href={androidHref}
-              {...(stores.android ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-              className="text-xs font-bold uppercase tracking-[0.2em] text-slate-200 hover:text-emerald-400 transition-colors flex items-center gap-1"
-            >
-              Google Play {stores.android ? <ArrowUpRight size={14} className="text-slate-500" /> : null}
-            </a>
+            {stores.ios ? (
+              <a
+                href={iosHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-bold uppercase tracking-[0.2em] text-slate-200 hover:text-emerald-400 transition-colors flex items-center gap-1"
+              >
+                App Store <ArrowUpRight size={14} className="text-slate-500" />
+              </a>
+            ) : (
+              <Link
+                href="/download"
+                className="text-xs font-bold uppercase tracking-[0.2em] text-slate-200 hover:text-emerald-400 transition-colors flex items-center gap-1"
+              >
+                Get the app
+              </Link>
+            )}
+            {stores.android ? (
+              <a
+                href={androidHref}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-bold uppercase tracking-[0.2em] text-slate-200 hover:text-emerald-400 transition-colors flex items-center gap-1"
+              >
+                Google Play <ArrowUpRight size={14} className="text-slate-500" />
+              </a>
+            ) : stores.ios ? (
+              <Link
+                href="/download"
+                className="text-xs font-bold uppercase tracking-[0.2em] text-slate-200 hover:text-emerald-400 transition-colors flex items-center gap-1"
+              >
+                Get updates
+              </Link>
+            ) : null}
             <a
               href="https://twitter.com/storelink"
               target="_blank"

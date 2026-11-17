@@ -27,7 +27,7 @@ export function isGuestReadableAppRoute(pathname: string | null): boolean {
   return false;
 }
 
-/** Nav destinations that guests must not open — send them to login instead. */
+/** Nav destinations that guests must not open - send them to login instead. */
 export function isGuestAuthRequiredNavHref(href: string): boolean {
   const path = href.split('?')[0].replace(/\/$/, '') || '/';
   return (

@@ -63,9 +63,9 @@ type FinanceBundle = {
 };
 
 function formatIsoSafe(iso: string | null | undefined): string {
-  if (!iso) return '—';
+  if (!iso) return '-';
   const d = new Date(iso);
-  if (!Number.isFinite(d.getTime())) return '—';
+  if (!Number.isFinite(d.getTime())) return '-';
   return d.toLocaleString('en-US', {
     month: 'short',
     day: '2-digit',
@@ -398,7 +398,7 @@ export default function SellerRevenueClient() {
   const numericChart =
     chartDataRaw.length > 0
       ? chartDataRaw.map((d) => ({ label: d.label ?? '', value: Number(d.value) || 0 }))
-      : [{ label: '—', value: 0 }];
+      : [{ label: '-', value: 0 }];
   const maxValue = Math.max(...numericChart.map((d) => d.value), 1);
   let peak = numericChart[0];
   for (const d of numericChart) {
@@ -532,13 +532,13 @@ export default function SellerRevenueClient() {
                 <p className="text-[10px] font-black uppercase tracking-widest text-(--muted)">Vs prior month</p>
                 <p className={`mt-1 flex items-center gap-1 text-sm font-black ${momPct != null && momPct < 0 ? 'text-red-500' : 'text-emerald-600'}`}>
                   {momPct != null && momPct < 0 ? <TrendingDown size={14} /> : <TrendingUp size={14} />}
-                  {momPct == null ? '—' : `${momPct > 0 ? '+' : ''}${momPct}%`}
+                  {momPct == null ? '-' : `${momPct > 0 ? '+' : ''}${momPct}%`}
                 </p>
                 <p className="text-[10px] text-(--muted)">From 6-mo chart</p>
               </div>
               <div className="rounded-2xl border border-(--border) bg-(--card) p-3">
                 <p className="text-[10px] font-black uppercase tracking-widest text-(--muted)">Peak month</p>
-                <p className="mt-1 truncate text-sm font-black">{peak?.label || '—'}</p>
+                <p className="mt-1 truncate text-sm font-black">{peak?.label || '-'}</p>
                 <p className="text-[10px] text-(--muted)">{formatCurrency(peak?.value || 0, currency)}</p>
               </div>
             </div>

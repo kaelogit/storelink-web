@@ -87,7 +87,7 @@ const WebBadgeExplainerModal = forwardRef<WebBadgeExplainerRef, Props>(function 
               </button>
             </div>
             <p className="px-5 pb-4 text-sm font-medium leading-relaxed text-(--muted) opacity-85">
-              Tap a badge on a profile to see what it means. Badges are earned — not bought for trust.
+              Tap a badge on a profile to see what it means. Badges are earned, not bought for trust.
             </p>
             <div className="flex-1 space-y-2 overflow-y-auto px-5 pb-6">
               {ordered.map((badge) => {

@@ -1,4 +1,4 @@
-# Success Criteria — StoreLink Web Rebuild
+# Success Criteria - StoreLink Web Rebuild
 
 Checklist from the rebuild plan (Section 6). Use this to verify before release and after major changes.
 
@@ -6,24 +6,24 @@ Checklist from the rebuild plan (Section 6). Use this to verify before release a
 
 ## Design system
 
-- [ ] **Tokens everywhere** — Every page uses CSS variables for color, type, radius, motion (`var(--foreground)`, `var(--radius-xl)`, etc.). No raw hex/slate-* for surfaces or text except intentional accents (e.g. orange on tools/stories).
-- [ ] **Section types only** — Every section uses one of: hero, light, dark, card (via `Section` or `section-hero` / `section-light` / `section-dark` / `section-card`).
-- [ ] **Brand** — Web matches app palette (emerald, violet, gold, charcoal) and typography scale.
+- [ ] **Tokens everywhere** - Every page uses CSS variables for color, type, radius, motion (`var(--foreground)`, `var(--radius-xl)`, etc.). No raw hex/slate-* for surfaces or text except intentional accents (e.g. orange on tools/stories). *(Product `/app` shell largely on tokens; marketing leftovers remain.)*
+- [ ] **Section types only** - Every section uses one of: hero, light, dark, card (via `Section` or `section-hero` / `section-light` / `section-dark` / `section-card`).
+- [x] **Brand** - Web matches app palette (emerald, violet, gold, charcoal) and typography scale. *(Plus chip / grouped / iosBlue; 2026-11-17.)*
 
 ---
 
 ## UX and consistency
 
-- [ ] **No generic SaaS look** — Distinct voice and visual character (Nigerian context, “Commerce without fear”).
-- [ ] **Shared components** — `Button`, `Card`, `Section` used across the site; `DownloadTrap` and `ShareProfileModal` use tokens.
+- [ ] **No generic SaaS look** - Distinct voice and visual character (Nigerian context, “Commerce without fear”).
+- [x] **Shared components** - `Button`, `Card`, `Section` plus product primitives `Avatar`, `Sheet`, `EmptyState`, `Skeleton` (2026-11-16/17). Marketing still uneven.
 
 ---
 
 ## Technical
 
-- [ ] **Routes** — All existing routes work: `/`, `/explore`, `/p/[slug]`, `/r/[id]` (and `/r/[short_code]`), `/[username]`, `/download`, tools/*, shop/*, legal, etc.
-- [ ] **Performance** — LCP and FCP improved vs pre-rebuild; no render-blocking Supabase or heavy motion on critical path. Target: LCP < 2.5s.
-- [ ] **Images** — Next.js `Image` with `priority` on hero only; below-fold images lazy with sensible `sizes`.
+- [ ] **Routes** - All existing routes work: `/`, `/explore`, `/p/[slug]`, `/r/[id]` (and `/r/[short_code]`), `/[username]`, `/download`, tools/*, shop/*, legal, etc.
+- [ ] **Performance** - LCP and FCP improved vs pre-rebuild; no render-blocking Supabase or heavy motion on critical path. Target: LCP < 2.5s.
+- [ ] **Images** - Next.js `Image` with `priority` on hero only; below-fold images lazy with sensible `sizes`.
 
 ---
 

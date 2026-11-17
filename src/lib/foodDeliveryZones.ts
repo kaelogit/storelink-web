@@ -1,7 +1,7 @@
 /**
  * Food / catering delivery zones & fees (Phase 4).
  * Stored inside service_listings.availability_settings jsonb.
- * Seller-fulfilled only — StoreLink does not deliver.
+ * Seller-fulfilled only - StoreLink does not deliver.
  */
 
 import { distanceKmBetween, toGeoPoint, type GeoPoint } from './geoDistance';
@@ -12,7 +12,7 @@ export type DeliveryZone = {
   /** Fee in minor units (kobo). */
   fee_minor: number;
   note?: string;
-  /** Axis center — required for GPS auto-match. */
+  /** Axis center - required for GPS auto-match. */
   latitude?: number;
   longitude?: number;
   /** Delivery radius from center (km). */
@@ -147,7 +147,7 @@ export type ResolveDeliveryFeeInput = {
   zoneId: string | null | undefined;
   foodTotalMinor: number;
   freeAboveMinor?: number | null;
-  /** Pickup / provider location — never charge delivery. */
+  /** Pickup / provider location - never charge delivery. */
   isDelivery: boolean;
 };
 
@@ -350,7 +350,7 @@ export function formatDeliveryFeeLine(opts: {
   feeMinor?: number | null;
   free?: boolean;
   currencyCode?: string;
-  /** Buyer-facing noun — Travel for flat home-visit fee, Delivery for catering zones. */
+  /** Buyer-facing noun - Travel for flat home-visit fee, Delivery for catering zones. */
   feeNoun?: 'Delivery' | 'Travel';
 }): string | null {
   const noun = opts.feeNoun === 'Travel' ? 'Travel' : 'Delivery';

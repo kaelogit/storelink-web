@@ -1,5 +1,5 @@
 /**
- * Wellness discovery helpers (Phase 5) — Home Wellness chip badges + filters.
+ * Wellness discovery helpers (Phase 5) - Home Wellness chip badges + filters.
  * Reuses food capacity / distance helpers; venue vs at-your-place language.
  */
 

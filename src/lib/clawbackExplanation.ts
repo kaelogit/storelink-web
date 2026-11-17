@@ -40,7 +40,7 @@ export function getClawbackHeadline(status: ClawbackDebtStatus): string {
 
 export function getClawbackBodyCopy(status: ClawbackDebtStatus): string {
   if (status === 'open') {
-    return 'A service booking was refunded to the buyer after funds had already been released to you. StoreLink paid the buyer back — repay this amount to restore full seller access.';
+    return 'A service booking was refunded to the buyer after funds had already been released to you. StoreLink paid the buyer back. Repay this amount to restore full seller access.';
   }
   if (status === 'paid') {
     return 'You repaid this clawback balance. This booking dispute refund has been settled on your seller account.';

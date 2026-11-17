@@ -7,7 +7,7 @@ import { ShoppingBag } from 'lucide-react';
 import { useWebCartStore } from '@/store/useWebCartStore';
 
 /**
- * Mobile web: same entry as desktop — full cart page (`/app/cart`) with products + services,
+ * Mobile web: same entry as desktop - full cart page (`/app/cart`) with products + services,
  * address, coins, fulfillment, menu selection, checkout. No minimal modal.
  */
 export default function WebFloatingCart() {
@@ -27,7 +27,7 @@ export default function WebFloatingCart() {
   return (
     <Link
       href="/app/cart"
-      className="fixed bottom-24 right-5 z-95 flex h-14 w-14 items-center justify-center rounded-2xl bg-(--foreground) text-(--background) shadow-xl lg:hidden"
+      className="fixed bottom-24 right-5 z-95 flex h-14 w-14 items-center justify-center rounded-sl-2xl bg-(--foreground) text-(--background) shadow-lg lg:hidden"
       aria-label={`Open cart, ${total} items`}
     >
       <ShoppingBag className="shrink-0" size={24} strokeWidth={2.7} />

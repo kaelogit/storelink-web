@@ -23,7 +23,7 @@ export const SERVICE_BOOKING_POLICY_SNIPPETS: Record<ServicePolicyMoment, Servic
     intro: 'Sending a request opens chat with the seller. No payment is taken yet.',
     bullets: [
       'Confirm date, time, location, and what is included in chat before you pay.',
-      'Once you pay, there is no self-serve cancellation — changes and disputes go through StoreLink support.',
+      'Once you pay, there is no self-serve cancellation. Changes and disputes go through StoreLink support.',
       'Escrow holds your payment safely: up to 30% can release when work starts; the remaining 70% stays until you mark the job completed.',
       'No-shows and serious problems can be reported from the booking screen after payment.',
     ],
@@ -33,7 +33,7 @@ export const SERVICE_BOOKING_POLICY_SNIPPETS: Record<ServicePolicyMoment, Servic
     intro: 'Your card charge moves funds into StoreLink escrow for this booking.',
     bullets: [
       'Confirm the exact date, time, and scope of work with the seller in chat before you pay.',
-      'Once you pay, there is no cancellation button — agree any changes in chat before the job starts.',
+      'Once you pay, there is no cancellation button. Agree any changes in chat before the job starts.',
       'Escrow breakdown: up to 30% may release when the seller marks the job started; the remaining 70% releases when you mark it completed.',
       'If the seller no-shows or work is not done, report it from the booking screen. Valid cases can pause payouts and refund from escrow.',
     ],
@@ -44,8 +44,8 @@ export const SERVICE_BOOKING_POLICY_SNIPPETS: Record<ServicePolicyMoment, Servic
     bullets: [
       'Confirm date, time, and scope with the provider in chat before you pay.',
       'The deposit holds your booking; the balance is due before work can start.',
-      'Funds stay in StoreLink escrow — the seller still gets paid on start/complete, not instantly.',
-      'Once you pay, there is no self-serve cancel — changes and disputes go through StoreLink support.',
+      'Funds stay in StoreLink escrow. The seller still gets paid on start/complete, not instantly.',
+      'Once you pay, there is no self-serve cancel. Changes and disputes go through StoreLink support.',
     ],
   },
   pay_balance: {
@@ -63,7 +63,7 @@ export const SERVICE_BOOKING_POLICY_SNIPPETS: Record<ServicePolicyMoment, Servic
     intro: 'This tells StoreLink that work has truly begun.',
     bullets: [
       'Up to 30% of funds held in escrow queues for payout to your account when you mark the job started.',
-      'The buyer does not need to confirm the start — only mark started when work has actually begun.',
+      'The buyer does not need to confirm the start. Only mark started when work has actually begun.',
       'The remaining held funds stay in escrow until the buyer marks the job completed.',
       'If a dispute is opened later, payouts can be paused and funds may be clawed back per StoreLink service policies.',
     ],

@@ -464,7 +464,7 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
             className="flex h-full w-full items-center justify-center px-8 text-center text-lg leading-snug"
             style={{ backgroundColor: bgHex, color: textHex, ...storyFontStyle(current.story_font) }}
           >
-            {current.story_text || '—'}
+            {current.story_text || '-'}
           </div>
         ) : current.type === 'video' && current.media_url ? (
           <video
@@ -690,7 +690,7 @@ export default function ClientStoryViewer({ storyId }: { storyId: string }) {
                   {service.from_price_label ||
                     (serviceFromPriceMinor != null && serviceFromPriceMinor > 0
                       ? `From ${formatCurrency(serviceFromPriceMinor, serviceCurrencyCode)}`
-                      : 'From —')}
+                      : 'From -')}
                 </span>
                 {serviceCoinReward > 0 ? (
                   <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-500/20 px-1.5 py-0.5 text-[10px] font-black text-amber-300">

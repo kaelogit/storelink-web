@@ -63,7 +63,7 @@ export default function SystemNoticeClient() {
   const related = notice ? noticeRelatedHref(notice) : null;
   const isWarning = notice?.severity === 'warning' || notice?.severity === 'critical';
   const appealHref = notice
-    ? `/app/activity/support-new?category=GENERAL&subject=${encodeURIComponent(`Appeal — ${notice.title}`)}&prefilledMessage=${encodeURIComponent(
+    ? `/app/activity/support-new?category=GENERAL&subject=${encodeURIComponent(`Appeal, ${notice.title}`)}&prefilledMessage=${encodeURIComponent(
         `I would like to appeal this notice.\n\nNotice: ${notice.title}\n${notice.body || ''}`,
       )}`
     : '/app/activity/support-new';

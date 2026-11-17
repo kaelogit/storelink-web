@@ -10,7 +10,7 @@ import {
   hydrateHiddenAdCampaigns,
 } from '@/lib/adWhyThis';
 
-/** AD-22: global host for “Why this ad?” — mount once under the app shell. */
+/** AD-22: global host for “Why this ad?” - mount once under the app shell. */
 export default function WhyThisAdHost() {
   const open = useWhyThisAdStore((s) => s.open);
   const payload = useWhyThisAdStore((s) => s.payload);

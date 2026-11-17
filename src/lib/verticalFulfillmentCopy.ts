@@ -166,7 +166,7 @@ const BY_GROUP: Partial<Record<ServiceCategoryGroup | 'food', VerticalFulfillmen
     addressNeededAlert: 'Please select or add a home address for this job.',
     fulfillmentHint: 'Choose shop vs home on each row below.',
   },
-  /** Food leaf override — catering uses this even though group is `home`. */
+  /** Food leaf override - catering uses this even though group is `home`. */
   food: {
     ...DEFAULT_COPY,
     atMyPlace: 'Pickup',

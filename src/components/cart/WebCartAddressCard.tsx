@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useCallback, useState } from 'react';
 import { ChevronDown, MapPin, Plus, X } from 'lucide-react';
+import { Sheet } from '@/components/ui/Sheet';
 
 export type WebCartSavedAddress = {
   id?: string;
@@ -83,70 +84,69 @@ export function WebCartAddressCard({
         </Link>
       </p>
 
-      {pickerOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="web-cart-address-picker-title"
-        >
-          <div className="flex max-h-[min(70vh,440px)] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-(--border) bg-(--background) shadow-xl">
-            <div className="flex items-center justify-between border-b border-(--border) px-4 py-3">
-              <p id="web-cart-address-picker-title" className="text-sm font-black text-(--foreground)">
-                Select address
-              </p>
-              <button
-                type="button"
-                onClick={() => setPickerOpen(false)}
-                className="rounded-lg p-1 text-(--muted) hover:bg-(--surface)"
-                aria-label="Close"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-3">
-              {savedAddresses.length === 0 ? (
-                <p className="px-2 py-6 text-center text-sm text-(--muted)">No saved addresses yet.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {savedAddresses.map((addr, idx) => {
-                    const id = String(addr?.id || `addr-${idx}`);
-                    const isSelected = id === selectedAddressId;
-                    return (
-                      <li key={id}>
-                        <button
-                          type="button"
-                          onClick={() => pick(addr, idx)}
-                          className={`w-full rounded-xl border px-3 py-3 text-left transition-colors ${
-                            isSelected
-                              ? 'border-emerald-600 bg-emerald-500/10'
-                              : 'border-(--border) bg-(--surface) hover:border-emerald-500/60'
-                          }`}
-                        >
-                          <p className="text-xs font-black text-(--foreground)">{addr.label || 'Address'}</p>
-                          <p className="mt-1 text-[12px] font-medium text-(--muted)">
-                            {addr.street_address}, {addr.city}
-                          </p>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </div>
-            <div className="border-t border-(--border) p-3">
-              <Link
-                href="/app/settings"
-                className="flex items-center justify-center gap-2 rounded-xl border border-(--border) py-3 text-xs font-black text-emerald-600 hover:bg-(--surface)"
-                onClick={() => setPickerOpen(false)}
-              >
-                <Plus className="h-4 w-4" aria-hidden />
-                Add new address in settings
-              </Link>
-            </div>
-          </div>
+      <Sheet
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        titleId="web-cart-address-picker-title"
+        className="max-w-md"
+        zClassName="z-50"
+        panelClassName="max-h-[min(70vh,440px)] overflow-hidden flex flex-col"
+        showHandle={false}
+      >
+        <div className="flex items-center justify-between border-b border-(--border) px-4 py-3">
+          <p id="web-cart-address-picker-title" className="text-sm font-black text-(--foreground)">
+            Select address
+          </p>
+          <button
+            type="button"
+            onClick={() => setPickerOpen(false)}
+            className="rounded-lg p-1 text-(--muted) hover:bg-(--surface)"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
         </div>
-      ) : null}
+        <div className="min-h-0 flex-1 overflow-y-auto p-3">
+          {savedAddresses.length === 0 ? (
+            <p className="px-2 py-6 text-center text-sm text-(--muted)">No saved addresses yet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {savedAddresses.map((addr, idx) => {
+                const id = String(addr?.id || `addr-${idx}`);
+                const isSelected = id === selectedAddressId;
+                return (
+                  <li key={id}>
+                    <button
+                      type="button"
+                      onClick={() => pick(addr, idx)}
+                      className={`w-full rounded-xl border px-3 py-3 text-left transition-colors ${
+                        isSelected
+                          ? 'border-emerald-600 bg-emerald-500/10'
+                          : 'border-(--border) bg-(--surface) hover:border-emerald-500/60'
+                      }`}
+                    >
+                      <p className="text-xs font-black text-(--foreground)">{addr.label || 'Address'}</p>
+                      <p className="mt-1 text-[12px] font-medium text-(--muted)">
+                        {addr.street_address}, {addr.city}
+                      </p>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+        <div className="border-t border-(--border) p-3">
+          <Link
+            href="/app/settings"
+            className="flex items-center justify-center gap-2 rounded-xl border border-(--border) py-3 text-xs font-black text-emerald-600 hover:bg-(--surface)"
+            onClick={() => setPickerOpen(false)}
+          >
+            <Plus className="h-4 w-4" aria-hidden />
+            Add new address in settings
+          </Link>
+        </div>
+      </Sheet>
     </div>
   );
 }

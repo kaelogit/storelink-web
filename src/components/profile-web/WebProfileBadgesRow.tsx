@@ -22,7 +22,7 @@ const COLORS: Record<ProfileBadgeKey, string> = {
 type Props = {
   profile: ProfileLike | null | undefined;
   isSelf?: boolean;
-  onBadgePress: (key: ProfileBadgeKey) => void;
+  onBadgePress?: (key: ProfileBadgeKey) => void;
   onAboutPress?: () => void;
 };
 
@@ -41,7 +41,8 @@ export default function WebProfileBadgesRow({ profile, isSelf, onBadgePress, onA
           <button
             key={badge.key}
             type="button"
-            onClick={() => onBadgePress(badge.key)}
+            disabled={!onBadgePress}
+            onClick={() => onBadgePress?.(badge.key)}
             className="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[11px] font-bold transition-opacity hover:opacity-90"
             style={{
               color: mark,
@@ -49,7 +50,12 @@ export default function WebProfileBadgesRow({ profile, isSelf, onBadgePress, onA
               backgroundColor: filled ? color : `${color}14`,
             }}
           >
-            <Icon size={13} strokeWidth={2.2} />
+            <Icon
+              size={13}
+              strokeWidth={2.2}
+              className={badge.key === 'diamond' ? 'animate-[soft-enter_400ms_var(--ease-out-expo)]' : undefined}
+              fill={badge.key === 'diamond' && filled ? 'currentColor' : 'none'}
+            />
             {badge.label}
             <BadgeCheck size={11} />
           </button>

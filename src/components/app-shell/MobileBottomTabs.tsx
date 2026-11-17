@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { createBrowserClient } from '@/lib/supabase';
 import { guestSignInHref, isGuestAuthRequiredNavHref } from '@/lib/guestAppRoutes';
 import { isShellNavActive, mobileTabItems } from './shellConfig';
+import { ICON_SIZE, ICON_STROKE } from '@/lib/iconChrome';
 
 export default function MobileBottomTabs() {
   const pathname = usePathname();
@@ -45,10 +46,11 @@ export default function MobileBottomTabs() {
                 active ? 'text-emerald-600' : 'text-(--muted) hover:text-(--foreground)'
               }`}
             >
-              <div className={`w-9 h-9 rounded-xl border flex items-center justify-center ${
-                active ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-transparent border-transparent'
-              }`}>
-                <Icon size={20} strokeWidth={active ? 2.5 : 2} />
+              <div className="flex h-9 w-9 items-center justify-center">
+                <Icon
+                  size={ICON_SIZE.tab}
+                  strokeWidth={active ? ICON_STROKE.chromeActive : ICON_STROKE.chromeIdle}
+                />
               </div>
               <span className="text-[10px] font-bold leading-none">{item.label}</span>
             </Link>

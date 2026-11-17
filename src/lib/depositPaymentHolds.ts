@@ -1,5 +1,5 @@
 /**
- * Deposit payment holds — pure math / validation (Phase 0).
+ * Deposit payment holds - pure math / validation (Phase 0).
  * No Paystack or RPC side effects. See store-link-mobile/docs/DEPOSIT_PAYMENT_HOLDS_PLAN.md.
  */
 
@@ -11,7 +11,7 @@ export type DepositMode = 'percent' | 'fixed';
 export type DepositConfig = {
   enabled: boolean;
   mode?: DepositMode | null;
-  /** 1–90 when mode is percent */
+  /** 1-90 when mode is percent */
   percent?: number | null;
   /** Fixed deposit in minor units when mode is fixed */
   fixedMinor?: number | null;
@@ -38,7 +38,7 @@ function asNonNegInt(n: unknown): number {
 
 /**
  * Validate seller listing deposit config (before save).
- * Does not consider booking total — fixed vs total is checked at resolve time.
+ * Does not consider booking total - fixed vs total is checked at resolve time.
  */
 export function isDepositConfigValid(config: DepositConfig | null | undefined): boolean {
   if (!config || !config.enabled) return true;
@@ -401,7 +401,7 @@ export function serviceCartReviewTrustLine(opts: {
     chargesEnabled: opts.chargesEnabled,
     listing: { deposit_enabled: opts.listingDepositEnabled },
   })) {
-    return 'Sends a booking request. After they confirm, Paystack opens for the deposit first — balance is due before work starts.';
+    return 'Sends a booking request. After they confirm, Paystack opens for the deposit first. Balance is due before work starts.';
   }
   return 'Sends a booking request. Pay via Paystack after they confirm.';
 }

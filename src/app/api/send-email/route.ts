@@ -54,8 +54,8 @@ function getWelcomeHtml() {
     <h1 style="${headingStyle}">Welcome to StoreLink</h1>
     <p style="${textStyle}">You're in. Next, choose how you want to use the marketplace:</p>
     <ul style="${textStyle} padding-left: 20px;">
-      <li><strong>As a buyer</strong> – Discover brands, shop, and get orders delivered with escrow protection.</li>
-      <li><strong>As a seller</strong> – List items, sell to buyers, and get paid securely.</li>
+      <li><strong>As a buyer</strong>, discover brands, shop, and get orders delivered with escrow protection.</li>
+      <li><strong>As a seller</strong>, list items, sell to buyers, and get paid securely.</li>
     </ul>
     <p style="${textStyle}">You can pick one path now and switch anytime: buyers can become sellers later in the app.</p>
     <p style="${textStyle}">Open the StoreLink app to continue.</p>
@@ -92,7 +92,7 @@ function getOrderShippedBuyerHtml(orderId: string) {
 
 function getOrderDeliveredSellerHtml(orderId: string, totalAmount: string) {
   return wrapBody(`
-    <h1 style="${headingStyle}">Order delivered – payout on the way</h1>
+    <h1 style="${headingStyle}">Order delivered. Payout on the way</h1>
     <p style="${textStyle}">Order #${orderId} (${totalAmount}) was marked delivered. Your payout becomes eligible in 6 hours, then we send it to your bank.</p>
     <p style="${textStyle}">Open the app to see your earnings.</p>
     <a href="${SITE}/download" style="${btnStyle}">Open StoreLink</a>
@@ -275,7 +275,7 @@ export async function POST(req: NextRequest) {
             { status: 400 },
           );
         }
-        subject = `Order #${String(orderId).slice(0, 8)} delivered – payout on the way`;
+        subject = `Order #${String(orderId).slice(0, 8)} delivered. Payout on the way`;
         html = getOrderDeliveredSellerHtml(String(orderId), String(totalAmount));
         break;
       default:

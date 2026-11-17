@@ -1,5 +1,5 @@
 /**
- * Dual-URL reel playback preference (web) — mirrors mobile resolveReelPlaybackSource.
+ * Dual-URL reel playback preference (web) - mirrors mobile resolveReelPlaybackSource.
  */
 
 export type ReelPlaybackFields = {

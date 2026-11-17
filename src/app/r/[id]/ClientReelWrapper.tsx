@@ -84,7 +84,9 @@ export default function ClientReelWrapper({ reel }: any) {
   const syncLikeCount = useCallback(async () => {
     if (productId) {
       const { count } = await supabase.from('product_likes').select('id', { count: 'exact', head: true }).eq('product_id', productId);
-      if (typeof count === 'number' && !Number.isNaN(count)) setLikesCount(count);
+      if (typeof count === 'number' && !Number.isNaN(count)) {
+        setLikesCount((prev) => (count <= 1 && prev > count ? prev : count));
+      }
       return;
     }
     if (serviceListingId) {

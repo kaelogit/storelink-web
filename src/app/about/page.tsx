@@ -140,7 +140,7 @@ export default function AboutPage() {
                <ValueCard 
                  icon={<TrendingUp size={24} className="text-purple-400" />}
                  title="Growth for Everyone"
-                 desc="We provide the tools—AI, Analytics, Logistics—that were previously only available to giant retailers."
+                 desc="We provide the tools-AI, Analytics, Logistics-that were previously only available to giant retailers."
                />
             </div>
          </div>
@@ -180,7 +180,7 @@ export default function AboutPage() {
                                 Abdulkareem is engineering the <strong>Nervous System</strong> for trust-powered commerce. Sitting at the intersection of high-fidelity product design and sovereign financial infrastructure, he architected StoreLink to solve the critical trust and transaction fragmentation in the African digital marketplace.
                             </p>
                             <p>
-                                As CTO, he built the proprietary <strong>Speed Engine</strong>—a mobile experience that feels as instant as a social feed but operates with the security of a bank. He led the engineering of a reactive backend, ensuring real-time trade confirmations across devices without latency.
+                                As CTO, he built the proprietary <strong>Speed Engine</strong>-a mobile experience that feels as instant as a social feed but operates with the security of a bank. He led the engineering of a reactive backend, ensuring real-time trade confirmations across devices without latency.
                             </p>
                             <p>
                                 As Founder, he strategized the economic model, conceptualizing the tiered prestige system that gamifies trust. He introduced the <strong>Secure Messenger Handshake</strong>, a protocol that binds chat interactions to financial triggers, effectively eliminating scams.

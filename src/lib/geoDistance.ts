@@ -1,5 +1,5 @@
 /**
- * Haversine distance helpers — shipping pin ↔ delivery axis / shop pin.
+ * Haversine distance helpers - shipping pin ↔ delivery axis / shop pin.
  */
 
 const EARTH_RADIUS_KM = 6371;

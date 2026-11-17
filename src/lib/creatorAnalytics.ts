@@ -555,10 +555,10 @@ export function formatTopReelsSectionSubtitle(analytics: SellerCreatorAnalytics)
       ? analytics.lifetime_reel_views
       : sumTopReelLifetimeViews(analytics.top_reels);
   if (lifetimeViews > 0) {
-    return `Quiet week — ${formatCompactCount(lifetimeViews)} all-time views on your clips`;
+    return `Quiet week. ${formatCompactCount(lifetimeViews)} all-time views on your clips`;
   }
   if (analytics.top_reels.length > 0) {
-    return 'Quiet week — your reels are live, share to get plays';
+    return 'Quiet week. Your reels are live, share to get plays';
   }
   return null;
 }

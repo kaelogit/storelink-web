@@ -42,7 +42,7 @@ export function PostPublishingOverlay({
         <div className="mt-5 h-1.5 w-full overflow-hidden rounded-full bg-(--surface)">
           <div className={`h-full rounded-full transition-[width] duration-300 ${bar}`} style={{ width: `${Math.max(1, Math.min(100, progress))}%` }} />
         </div>
-        <p className="mt-4 text-xs font-medium text-(--muted)">Hang tight — do not close this tab.</p>
+        <p className="mt-4 text-xs font-medium text-(--muted)">Hang tight. Do not close this tab.</p>
       </div>
     </div>
   );

@@ -141,7 +141,7 @@ function parseHm(hm: string): { h: number; m: number } {
 
 /**
  * Next N bookable slot starts (local device time), respecting weekdays, window, blackouts, lead time.
- * Does not subtract live capacity — use `filterSlotsByDayCapacity` after counting bookings.
+ * Does not subtract live capacity - use `filterSlotsByDayCapacity` after counting bookings.
  */
 export function suggestAvailabilitySlots(opts: {
   settings: ServiceAvailabilitySettings | null;
@@ -320,7 +320,7 @@ export function formatAvailabilitySummary(settings: ServiceAvailabilitySettings 
     parts.push(labels.join('·'));
   }
   if (settings.window_start && settings.window_end) {
-    parts.push(`${settings.window_start}–${settings.window_end}`);
+    parts.push(`${settings.window_start}-${settings.window_end}`);
   }
   if (settings.blackout_dates?.length) {
     parts.push(`${settings.blackout_dates.length} closed day${settings.blackout_dates.length === 1 ? '' : 's'}`);

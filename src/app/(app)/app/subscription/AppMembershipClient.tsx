@@ -80,15 +80,15 @@ export default function AppMembershipClient() {
     if (diamondUi) {
       return profile.is_seller
         ? "You're on Diamond for your store (active)."
-        : "You're on Diamond (active) — your profile uses the Diamond badge and halo where applicable.";
+        : "You're on Diamond (active). Your profile uses the Diamond badge and halo where applicable.";
     }
     if (ps.plan === 'diamond' && ps.isExpired) {
       return 'Your Diamond membership has expired. Renew below or continue on Standard (free).';
     }
     if (profile.is_seller) {
-      return "You're on Standard for selling — the default free tier. Upgrade to Diamond below for extra visibility and AI listing tools.";
+      return "You're on Standard for selling, the default free tier. Upgrade to Diamond below for extra visibility and AI listing tools.";
     }
-    return "You're a Standard shopper. Diamond is optional — upgrade below if you want Spotlight reach and the Diamond badge.";
+    return "You're a Standard shopper. Diamond is optional. Upgrade below if you want Spotlight reach and the Diamond badge.";
   }, [profile]);
 
   const handleRequestDiamondPay = useCallback((months: number) => {
@@ -109,7 +109,7 @@ export default function AppMembershipClient() {
       try {
         await confirmSubscriptionPayment(reference, billingCurrency);
         await load();
-        toast.success('Upgrade successful — you are now on Diamond.');
+        toast.success('Upgrade successful. You are now on Diamond.');
       } catch (e: unknown) {
         const msg = e instanceof Error ? e.message : 'Payment may have succeeded but upgrade failed. Contact support.';
         toast.error(msg);

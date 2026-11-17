@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   AlertCircle,
   AlertTriangle,
@@ -24,6 +24,7 @@ import { createBrowserClient } from '@/lib/supabase';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { isServiceOnlyPlaceholderOrder } from '@/lib/orderPlaceholders';
 import { withDrawerParam } from '@/components/profile-web/profileHubPaths';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 type ProductOrder = {
   id: string;
@@ -129,6 +130,7 @@ function bookingStatusMeta(status?: string | null) {
 }
 
 export default function OrdersClient() {
+  const router = useRouter();
   const supabase = useMemo(() => createBrowserClient(), []);
   const searchParams = useSearchParams();
   const fromDrawer = searchParams.get('fromDrawer') === '1';
@@ -277,23 +279,23 @@ export default function OrdersClient() {
       <div className="space-y-3 px-4 pt-4">
         {loading ? (
           [0, 1, 2, 3].map((k) => (
-            <div key={k} className="animate-pulse overflow-hidden rounded-[24px] border border-(--border) bg-(--card) p-4">
+            <div key={k} className="animate-pulse overflow-hidden rounded-sl-2xl border border-(--border) bg-(--card) p-4">
               <div className="flex items-center justify-between border-b border-(--surface) pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-11 w-11 rounded-[16px] bg-(--border)" />
+                  <div className="h-11 w-11 rounded-sl-xl bg-(--border)" />
                   <div className="space-y-2">
                     <div className="h-3 w-32 rounded bg-(--border)" />
                     <div className="h-2.5 w-24 rounded bg-(--border)" />
                   </div>
                 </div>
-                <div className="h-6 w-24 rounded-[8px] bg-(--border)" />
+                <div className="h-6 w-24 rounded-sl-md bg-(--border)" />
               </div>
               <div className="mt-4 flex items-center justify-between">
                 <div className="space-y-2">
                   <div className="h-2.5 w-12 rounded bg-(--border)" />
                   <div className="h-4 w-24 rounded bg-(--border)" />
                 </div>
-                <div className="h-9 w-28 rounded-[14px] bg-(--border)" />
+                <div className="h-9 w-28 rounded-sl-lg bg-(--border)" />
               </div>
             </div>
           ))
@@ -313,15 +315,13 @@ export default function OrdersClient() {
             </button>
           </div>
         ) : entries.length === 0 ? (
-          <div className="mt-20 flex flex-col items-center gap-3 text-center">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-(--surface)">
-              <Package size={32} className="text-(--muted)" strokeWidth={1.5} />
-            </div>
-            <p className="text-sm font-black text-(--foreground)">No purchases yet</p>
-            <p className="max-w-xs text-sm text-(--muted)">
-              Product orders and service bookings you make as a buyer will show up here.
-            </p>
-          </div>
+          <EmptyState
+            className="mt-20"
+            icon={<Package size={28} className="text-(--muted)" strokeWidth={1.5} />}
+            title="No purchases yet"
+            message="Product orders and service bookings you make as a buyer will show up here."
+            primaryCta={{ label: 'Start shopping', onClick: () => router.push('/app/explore') }}
+          />
         ) : (
           entries.map((entry) => {
             if (entry.kind === 'booking') {
@@ -336,11 +336,11 @@ export default function OrdersClient() {
               const title = b.service_listing?.title?.trim() || 'Service booking';
 
               return (
-                <article key={`booking-${b.id}`} className="overflow-hidden rounded-[24px] border border-(--border) bg-(--card) p-4">
+                <article key={`booking-${b.id}`} className="overflow-hidden rounded-sl-2xl border border-(--border) bg-(--card) p-4">
                   <div className="flex items-start justify-between border-b border-(--surface) pb-4">
                     <div className="flex min-w-0 items-center gap-3">
                       <div
-                        className={`flex h-11 w-11 items-center justify-center overflow-hidden rounded-[16px] ${
+                        className={`flex h-11 w-11 items-center justify-center overflow-hidden rounded-sl-xl ${
                           isDiamond ? 'border-2 border-violet-500' : 'border border-(--border)'
                         }`}
                       >
@@ -357,12 +357,12 @@ export default function OrdersClient() {
                       </div>
                     </div>
                     <div className="flex shrink-0 flex-col items-end gap-1">
-                      <span className={`inline-flex items-center rounded-[8px] px-2 py-1 text-[10px] font-black tracking-[0.04em] ${meta.bg} ${meta.text}`}>
+                      <span className={`inline-flex items-center rounded-sl-md px-2 py-1 text-[10px] font-black tracking-[0.04em] ${meta.bg} ${meta.text}`}>
                         <Wand2 size={10} className="mr-1" />
                         {meta.label}
                       </span>
                       {b.is_custom_quote ? (
-                        <span className="inline-flex items-center rounded-[8px] bg-violet-500/10 px-2 py-1 text-[10px] font-black tracking-[0.04em] text-violet-600">
+                        <span className="inline-flex items-center rounded-sl-md bg-violet-500/10 px-2 py-1 text-[10px] font-black tracking-[0.04em] text-violet-600">
                           Custom quote
                         </span>
                       ) : null}
@@ -376,20 +376,20 @@ export default function OrdersClient() {
                     </div>
                     <Link
                       href={wrap(`/app/bookings/${b.id}`)}
-                      className="inline-flex items-center gap-1 rounded-[14px] bg-(--surface) px-3 py-2 text-[12px] font-bold text-(--foreground)"
+                      className="inline-flex items-center gap-1 rounded-sl-lg bg-(--surface) px-3 py-2 text-[12px] font-bold text-(--foreground)"
                     >
                       View booking <ChevronRight size={14} />
                     </Link>
                   </div>
 
                   {st === 'requested' ? (
-                    <div className="mt-3 inline-flex items-center gap-2 rounded-[14px] bg-(--surface) px-3 py-2">
+                    <div className="mt-3 inline-flex items-center gap-2 rounded-sl-lg bg-(--surface) px-3 py-2">
                       <Clock size={14} className="text-amber-600" />
                       <span className="text-[12px] font-medium text-(--foreground)">Waiting for provider confirmation.</span>
                     </div>
                   ) : null}
                   {st === 'confirmed' ? (
-                    <div className="mt-3 inline-flex items-center gap-2 rounded-[14px] bg-emerald-500/10 px-3 py-2">
+                    <div className="mt-3 inline-flex items-center gap-2 rounded-sl-lg bg-emerald-500/10 px-3 py-2">
                       <CreditCard size={14} className="text-emerald-600" />
                       <span className="text-[12px] font-medium text-emerald-600">Open details to complete payment.</span>
                     </div>
@@ -422,11 +422,11 @@ export default function OrdersClient() {
             const meta = productStatusMeta(item.status, item.payout_status);
 
             return (
-              <article key={`product-${item.id}`} className="overflow-hidden rounded-[24px] border border-(--border) bg-(--card) p-4">
+              <article key={`product-${item.id}`} className="overflow-hidden rounded-sl-2xl border border-(--border) bg-(--card) p-4">
                 <div className="flex items-start justify-between border-b border-(--surface) pb-4">
                   <div className="flex min-w-0 items-center gap-3">
                     <div
-                      className={`flex h-11 w-11 items-center justify-center overflow-hidden rounded-[16px] ${
+                      className={`flex h-11 w-11 items-center justify-center overflow-hidden rounded-sl-xl ${
                         isDiamond ? 'border-2 border-violet-500' : 'border border-(--border)'
                       }`}
                     >
@@ -453,7 +453,7 @@ export default function OrdersClient() {
                       </div>
                     </div>
                   </div>
-                  <span className={`inline-flex items-center rounded-[8px] px-2 py-1 text-[10px] font-black tracking-[0.04em] ${meta.bg} ${meta.text}`}>
+                  <span className={`inline-flex items-center rounded-sl-md px-2 py-1 text-[10px] font-black tracking-[0.04em] ${meta.bg} ${meta.text}`}>
                     <meta.Icon size={10} className="mr-1" />
                     {meta.label}
                   </span>
@@ -466,7 +466,7 @@ export default function OrdersClient() {
                   </div>
                   <Link
                     href={wrap(`/app/orders/${item.id}`)}
-                    className="inline-flex items-center gap-1 rounded-[14px] bg-(--surface) px-3 py-2 text-[12px] font-bold text-(--foreground)"
+                    className="inline-flex items-center gap-1 rounded-sl-lg bg-(--surface) px-3 py-2 text-[12px] font-bold text-(--foreground)"
                   >
                     View details <ChevronRight size={14} />
                   </Link>
@@ -477,7 +477,7 @@ export default function OrdersClient() {
                     type="button"
                     disabled={busyConfirmOrderId === item.id}
                     onClick={() => void confirmReceipt(item.id)}
-                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-[16px] bg-(--foreground) px-4 py-3 text-sm font-black text-(--background) disabled:opacity-50"
+                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-sl-xl bg-(--foreground) px-4 py-3 text-sm font-black text-(--background) disabled:opacity-50"
                   >
                     <PackageCheck size={18} />
                     {busyConfirmOrderId === item.id ? 'Processing...' : 'Confirm receipt'}
@@ -485,25 +485,25 @@ export default function OrdersClient() {
                 ) : null}
 
                 {isRefundProcessing ? (
-                  <div className="mt-3 inline-flex items-center gap-2 rounded-[14px] bg-red-500/10 px-3 py-2">
+                  <div className="mt-3 inline-flex items-center gap-2 rounded-sl-lg bg-red-500/10 px-3 py-2">
                     <RefreshCcw size={14} className="text-red-500" />
                     <span className="text-[12px] font-medium text-red-500">Sending money to your bank...</span>
                   </div>
                 ) : null}
                 {isDisputed ? (
-                  <div className="mt-3 inline-flex items-center gap-2 rounded-[14px] border border-red-500 bg-red-500/10 px-3 py-2">
+                  <div className="mt-3 inline-flex items-center gap-2 rounded-sl-lg border border-red-500 bg-red-500/10 px-3 py-2">
                     <AlertTriangle size={14} className="text-red-500" />
                     <span className="text-[12px] font-medium text-red-500">Funds are under review due to dispute.</span>
                   </div>
                 ) : null}
                 {isPending ? (
-                  <div className="mt-3 inline-flex items-center gap-2 rounded-[14px] bg-(--surface) px-3 py-2">
+                  <div className="mt-3 inline-flex items-center gap-2 rounded-sl-lg bg-(--surface) px-3 py-2">
                     <Clock size={14} className="text-amber-600" />
                     <span className="text-[12px] font-medium text-(--foreground)">Waiting for store acceptance.</span>
                   </div>
                 ) : null}
                 {isAwaitingPay ? (
-                  <div className="mt-3 inline-flex items-center gap-2 rounded-[14px] bg-emerald-500/10 px-3 py-2">
+                  <div className="mt-3 inline-flex items-center gap-2 rounded-sl-lg bg-emerald-500/10 px-3 py-2">
                     <CreditCard size={14} className="text-emerald-600" />
                     <span className="text-[12px] font-medium text-emerald-600">Accepted. Tap details to pay.</span>
                   </div>

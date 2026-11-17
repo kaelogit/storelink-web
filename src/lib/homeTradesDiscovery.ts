@@ -1,5 +1,5 @@
 /**
- * Home trades discovery helpers (Phase 5) — Home chip badges + filters.
+ * Home trades discovery helpers (Phase 5) - Home chip badges + filters.
  * Reuses food capacity / distance helpers; shop vs at-your-home language.
  * Excludes catering (Food vertical).
  */

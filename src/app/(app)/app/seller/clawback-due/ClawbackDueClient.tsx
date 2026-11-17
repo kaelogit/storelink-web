@@ -115,7 +115,7 @@ export default function ClawbackDueClient() {
     try {
       await load();
     } catch {
-      // ignore — unlock flag already set
+      // ignore - unlock flag already set
     }
     setVerifyingPayment(false);
     if (unlocked) router.replace('/app/seller/clawback-success');
@@ -134,7 +134,7 @@ export default function ClawbackDueClient() {
       <GateShell title="Account status" onClose={leave}>
         <div className="mx-auto mb-4 h-12 w-12 animate-pulse rounded-full bg-emerald-500/20" />
         <p className="text-center text-lg font-black text-(--foreground)">Checking account status</p>
-        <p className="mt-2 text-center text-sm text-(--muted)">Hang tight — we’re confirming your seller account standing.</p>
+        <p className="mt-2 text-center text-sm text-(--muted)">Hang tight. We’re confirming your seller account standing.</p>
       </GateShell>
     );
   }
@@ -150,7 +150,7 @@ export default function ClawbackDueClient() {
           We couldn’t confirm your repayment status right now. Check your connection and try again.
         </p>
         <p className="mt-4 rounded-2xl border border-(--border) bg-(--surface) px-4 py-3 text-center text-sm text-(--muted)">
-          If this keeps happening, message support — you can still get help while we retry.
+          If this keeps happening, message support. You can still get help while we retry.
         </p>
         <Button className="mt-5 w-full" onClick={() => void retry()} disabled={fetching}>
           <span className="inline-flex items-center gap-2">
@@ -208,12 +208,12 @@ export default function ClawbackDueClient() {
         <p className="text-sm font-black text-(--foreground)">Your options</p>
         <div className="mt-3 flex gap-3">
           <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-500/20 text-[11px] font-black text-emerald-600">1</span>
-          <p className="text-sm text-(--muted)">Pay now with Paystack — access restores automatically once payment confirms.</p>
+          <p className="text-sm text-(--muted)">Pay now with Paystack. Access restores automatically once payment confirms.</p>
         </div>
         <div className="mt-2 flex gap-3">
           <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-amber-500/20 text-[11px] font-black text-amber-600">2</span>
           <p className="text-sm text-(--muted)">
-            Questions or disagreement? Open a support ticket — you can reply here while your account stays paused.
+            Questions or disagreement? Open a support ticket. You can reply here while your account stays paused.
           </p>
         </div>
       </div>
@@ -223,7 +223,7 @@ export default function ClawbackDueClient() {
           <Headphones size={18} className="text-emerald-600" />
           <p className="text-sm font-black text-(--foreground)">Support</p>
         </div>
-        <p className="mb-3 text-sm text-(--muted)">Need help understanding this charge? Message our team — support stays available during repayment.</p>
+        <p className="mb-3 text-sm text-(--muted)">Need help understanding this charge? Message our team. Support stays available during repayment.</p>
         {tickets.length > 0 ? (
           <div className="mb-2 space-y-2">
             {tickets.map((ticket) => (

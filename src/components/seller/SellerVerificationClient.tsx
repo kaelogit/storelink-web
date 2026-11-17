@@ -151,7 +151,7 @@ export default function SellerVerificationClient() {
     }
     lastToastRef.current = s;
     if (s === 'verified') setSuccessMsg('Verification approved');
-    else if (s === 'rejected') setSuccessMsg('Verification rejected — you can resubmit');
+    else if (s === 'rejected') setSuccessMsg('Verification rejected. You can resubmit');
     else if (s === 'pending') setSuccessMsg('Verification under review');
     const t = setTimeout(() => setSuccessMsg(null), 3200);
     return () => clearTimeout(t);

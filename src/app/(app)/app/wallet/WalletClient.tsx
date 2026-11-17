@@ -102,7 +102,7 @@ function txConfig(item: CoinTx, isDark: boolean) {
       bg: 'bg-violet-500/15',
       sign: '+',
       title: "Founder's gift",
-      fullTitle: (item.description || '').trim() || "1,000 coins — Founder's welcome gift from StoreLink",
+      fullTitle: (item.description || '').trim() || "1,000 coins, Founder's welcome gift from StoreLink",
       isGift: true,
     };
   }
@@ -124,7 +124,7 @@ function txConfig(item: CoinTx, isDark: boolean) {
       bg: 'bg-amber-500/15',
       sign: '+',
       title: 'Referral: signup',
-      fullTitle: '2,500 coins — signup via your invite link',
+      fullTitle: '2,500 coins, signup via your invite link',
       isGift: false,
     };
   }
@@ -135,7 +135,7 @@ function txConfig(item: CoinTx, isDark: boolean) {
       bg: 'bg-amber-500/15',
       sign: '+',
       title: 'Referral: first order',
-      fullTitle: '1,000 coins — first completed order from someone you referred',
+      fullTitle: '1,000 coins, first completed order from someone you referred',
       isGift: false,
     };
   }
@@ -146,7 +146,7 @@ function txConfig(item: CoinTx, isDark: boolean) {
       bg: 'bg-amber-500/15',
       sign: '+',
       title: 'Referral: order',
-      fullTitle: '250 coins — completed order from someone you referred (within first 2 months)',
+      fullTitle: '250 coins, completed order from someone you referred (within first 2 months)',
       isGift: false,
     };
   }

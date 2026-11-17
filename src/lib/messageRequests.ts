@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-export const MESSAGE_REQUEST_PREVIEW = 'Message request — tap to view';
+export const MESSAGE_REQUEST_PREVIEW = 'Message request. Tap to view';
 
 export const MESSAGE_REQUEST_BODY =
   'Accept to reply and move this chat to Primary. Delete stops them messaging you here.';
@@ -71,7 +71,7 @@ export function inboxThreadHasVisibleMessage(thread: {
   return !INBOX_GHOST_PREVIEW.has(text.toLowerCase());
 }
 
-/** Inbox list preview — never leak message body for unknown senders. */
+/** Inbox list preview - never leak message body for unknown senders. */
 export function getMessageRequestInboxPreview(messageType?: string | null): string {
   const type = String(messageType || 'TEXT').toUpperCase();
   if (type === 'IMAGE') return 'Sent a photo';
@@ -200,7 +200,7 @@ export async function submitMessageRequestReport(
     p_reporter_id: reporterId,
     p_subject_user_id: subjectUserId,
     p_category: 'SAFETY',
-    p_details: detailParts.join(' — '),
+    p_details: detailParts.join(', '),
     p_source: 'chat_request',
     p_target_id: chatId,
   });

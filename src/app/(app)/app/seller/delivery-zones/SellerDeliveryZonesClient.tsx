@@ -353,7 +353,7 @@ export default function SellerDeliveryZonesClient() {
     }
   };
 
-  const outsideLabel = outside === 'block' ? 'Block — listed zones only' : 'Allow quote in chat';
+  const outsideLabel = outside === 'block' ? 'Block, listed zones only' : 'Allow quote in chat';
 
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-6">
@@ -486,7 +486,7 @@ export default function SellerDeliveryZonesClient() {
                 onChange={(e) => setPickupNote(e.target.value.slice(0, 300))}
                 maxLength={300}
                 className="mt-3 w-full rounded-xl border border-(--border) bg-(--background) px-3 py-2.5 text-sm font-semibold text-(--foreground)"
-                placeholder="Pickup note (e.g. Lekki Phase 1 · Mon–Sat 10–6)"
+                placeholder="Pickup note (e.g. Lekki Phase 1 · Mon-Sat 10-6)"
               />
             ) : null}
           </section>
@@ -564,7 +564,7 @@ export default function SellerDeliveryZonesClient() {
                         className="w-20 rounded-lg border border-(--border) bg-(--background) px-3 py-2 text-sm font-semibold"
                       />
                       <span className="text-xs text-(--muted)">
-                        {MIN_ZONE_RADIUS_KM}–{MAX_ZONE_RADIUS_KM}
+                        {MIN_ZONE_RADIUS_KM}-{MAX_ZONE_RADIUS_KM}
                       </span>
                     </div>
 
@@ -588,7 +588,7 @@ export default function SellerDeliveryZonesClient() {
                       }`}
                     >
                       <MapPin size={14} />
-                      {hasPin ? 'Pin set — click to change' : 'Add map pin (required)'}
+                      {hasPin ? 'Pin set. Click to change' : 'Add map pin (required)'}
                     </button>
 
                     {pinOpen ? (

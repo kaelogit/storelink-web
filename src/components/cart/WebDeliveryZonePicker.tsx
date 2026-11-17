@@ -94,7 +94,7 @@ export function WebDeliveryZonePicker({
                 <p className="mt-0.5 truncate text-[11px] font-semibold text-(--muted)">{z.note}</p>
               ) : (
                 <p className="mt-0.5 truncate text-[11px] font-semibold text-(--muted)">
-                  Name only — pick if it matches your area
+                  Name only. Pick if it matches your area
                 </p>
               )}
             </button>

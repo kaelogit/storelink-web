@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, CalendarClock, RefreshCcw, User, Wand2 } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 type Perspective = 'buyer' | 'seller';
 
@@ -64,6 +65,7 @@ function statusMeta(status?: string | null) {
 }
 
 export default function BookingsClient() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const initialPerspective: Perspective = searchParams.get('perspective') === 'seller' ? 'seller' : 'buyer';
   const [perspective, setPerspective] = useState<Perspective>(initialPerspective);
@@ -150,14 +152,14 @@ export default function BookingsClient() {
           <button
             type="button"
             onClick={() => setPerspective('buyer')}
-            className={`rounded-[12px] px-3 py-2.5 text-[11px] font-black tracking-[0.04em] ${perspective === 'buyer' ? 'bg-(--foreground) text-(--background)' : 'bg-(--surface) text-(--foreground)'}`}
+            className={`rounded-sl-lg px-3 py-2.5 text-[11px] font-black tracking-[0.04em] ${perspective === 'buyer' ? 'bg-(--foreground) text-(--background)' : 'bg-(--surface) text-(--foreground)'}`}
           >
             Buyer
           </button>
           <button
             type="button"
             onClick={() => setPerspective('seller')}
-            className={`rounded-[12px] px-3 py-2.5 text-[11px] font-black tracking-[0.04em] ${perspective === 'seller' ? 'bg-(--foreground) text-(--background)' : 'bg-(--surface) text-(--foreground)'}`}
+            className={`rounded-sl-lg px-3 py-2.5 text-[11px] font-black tracking-[0.04em] ${perspective === 'seller' ? 'bg-(--foreground) text-(--background)' : 'bg-(--surface) text-(--foreground)'}`}
           >
             Seller
           </button>
@@ -167,10 +169,10 @@ export default function BookingsClient() {
       <div className="space-y-3 px-4 pt-4">
         {loading ? (
           [0, 1, 2].map((k) => (
-            <div key={k} className="animate-pulse overflow-hidden rounded-[24px] border border-(--border) bg-(--card) p-[16px]">
+            <div key={k} className="animate-pulse overflow-hidden rounded-sl-2xl border border-(--border) bg-(--card) p-[16px]">
               <div className="flex items-center justify-between border-b border-(--surface) pb-[15px]">
                 <div className="flex items-center gap-3">
-                  <div className="h-11 w-11 rounded-[16px] bg-(--border)" />
+                  <div className="h-11 w-11 rounded-sl-xl bg-(--border)" />
                   <div className="space-y-2">
                     <div className="h-3 w-32 rounded bg-(--border)" />
                     <div className="h-2.5 w-24 rounded bg-(--border)" />
@@ -196,21 +198,21 @@ export default function BookingsClient() {
             </button>
           </div>
         ) : bookings.length === 0 ? (
-          <div className="mt-20 text-center">
-            <p className="text-sm font-black text-(--foreground)">
-              {perspective === 'buyer' ? 'No bookings yet' : 'No service bookings'}
-            </p>
-            <p className="mt-2 text-sm text-(--muted)">
-              {perspective === 'buyer'
+          <EmptyState
+            className="mt-20"
+            icon={<CalendarClock size={28} className="text-(--muted)" strokeWidth={1.5} />}
+            title={perspective === 'buyer' ? 'No bookings yet' : 'No service bookings'}
+            message={
+              perspective === 'buyer'
                 ? 'When you request a service, your bookings will show up here.'
-                : 'When buyers request your services, bookings will appear here.'}
-            </p>
-            {perspective === 'seller' ? (
-              <Link href="/app/orders" className="mt-4 inline-flex text-sm font-bold text-emerald-600">
-                To see services you booked as a customer, open My purchases.
-              </Link>
-            ) : null}
-          </div>
+                : 'When buyers request your services, bookings will appear here.'
+            }
+            primaryCta={
+              perspective === 'buyer'
+                ? { label: 'Explore services', onClick: () => router.push('/app/explore') }
+                : { label: 'My purchases', onClick: () => router.push('/app/orders') }
+            }
+          />
         ) : (
           bookings.map((item) => {
             const counterpart = perspective === 'buyer' ? item.seller : item.buyer;
@@ -223,11 +225,11 @@ export default function BookingsClient() {
               <Link
                 key={item.id}
                 href={`/app/bookings/${item.id}`}
-                className="block overflow-hidden rounded-[24px] border border-(--border) bg-(--card) p-[16px]"
+                className="block overflow-hidden rounded-sl-2xl border border-(--border) bg-(--card) p-[16px]"
               >
                 <div className="flex items-start justify-between border-b border-(--surface) pb-[15px]">
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-[16px] border border-(--border)">
+                    <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-sl-xl border border-(--border)">
                       {logo ? <img src={logo} alt="" className="h-full w-full object-cover" /> : <User size={20} className="text-(--muted)" />}
                     </div>
                     <div className="min-w-0">

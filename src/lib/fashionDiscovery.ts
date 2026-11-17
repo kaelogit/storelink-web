@@ -1,5 +1,5 @@
 /**
- * Fashion discovery helpers (Phase 5) — Home Fashion chip badges + filters.
+ * Fashion discovery helpers (Phase 5) - Home Fashion chip badges + filters.
  * Reuses food capacity / distance helpers; workshop vs home fitting language.
  */
 
@@ -240,7 +240,7 @@ export function filterFashionDiscoveryItems<T extends FashionDiscoverableItem>(
   return items.filter((item) => passesFashionDiscoveryFilters(item, filters, nearMeKm));
 }
 
-/** @deprecated Phase 2 helper — prefer fetch + applyFashionDiscoveryMetaToItems. */
+/** @deprecated Phase 2 helper - prefer fetch + applyFashionDiscoveryMetaToItems. */
 export async function enrichFashionDiscoveryMenuMeta<
   T extends FashionDiscoverableItem,
 >(items: T[]): Promise<T[]> {

@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 
 /**
- * POST /api/revalidate — purge sitemap cache.
+ * POST /api/revalidate - purge sitemap cache.
  * Auth: x-revalidate-secret header only (no query-string secret).
  * Soft rate limit per IP (best-effort per instance).
  */

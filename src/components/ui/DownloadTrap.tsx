@@ -1,9 +1,10 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Smartphone, Apple, Play } from 'lucide-react';
-import Link from 'next/link';
+import { X, Smartphone, Apple, Play, Bell } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import { useStoreListingUrls } from '@/lib/useStoreUrls';
+import { STORE_UPDATES_MAILTO, downloadFunnelHref } from '@/lib/storeUrls';
 
 // Expanded triggers to cover all actions
 export type TrapTrigger = 'buy' | 'book' | 'view' | 'chat' | 'like' | 'comment' | 'save' | 'explore';
@@ -20,15 +21,19 @@ interface AppTrapModalProps {
 }
 
 export default function AppTrapModal({ isOpen, onClose, sellerName, trigger, intentPath, continueHref }: AppTrapModalProps) {
-  const downloadHref = intentPath ? `/download?intent=${encodeURIComponent(intentPath)}` : '/download';
-  
+  const stores = useStoreListingUrls();
+  const downloadHref = downloadFunnelHref(intentPath);
+  const hasIos = Boolean(stores.ios);
+  const hasAndroid = Boolean(stores.android);
+  const hasAnyStore = hasIos || hasAndroid;
+
   // Dynamic messaging based on what the user tried to do
   const content = {
     buy: {
       title: `Buy from ${sellerName}?`,
       desc: continueHref
         ? 'Pay with escrow on the web, or download the app for the full StoreLink checkout experience.'
-        : 'Create a free account to pay with escrow — on the web or in the StoreLink app.',
+        : 'Create a free account to pay with escrow, on the web or in the StoreLink app.',
     },
     book: {
       title: `Book with ${sellerName}?`,
@@ -77,69 +82,119 @@ export default function AppTrapModal({ isOpen, onClose, sellerName, trigger, int
       {isOpen && (
         <div className="fixed inset-0 z-[100] flex items-end md:items-center justify-center sm:px-4">
           {/* Backdrop */}
-          <motion.div 
-            initial={{ opacity: 0 }} 
-            animate={{ opacity: 1 }} 
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
             className="absolute inset-0 bg-(--pitch-black)/60 backdrop-blur-sm"
           />
 
           {/* Modal */}
-          <motion.div 
-            initial={{ y: "100%" }}
+          <motion.div
+            initial={{ y: '100%' }}
             animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             className="relative w-full max-w-sm z-10 rounded-t-3xl md:rounded-3xl p-8 shadow-2xl bg-(--card) border border-(--border)"
           >
-             <div className="w-12 h-1.5 rounded-full mx-auto mb-6 md:hidden bg-(--border)" />
+            <div className="w-12 h-1.5 rounded-full mx-auto mb-6 md:hidden bg-(--border)" />
 
-             <button 
-               onClick={onClose}
-               aria-label="Close"
-               className="absolute top-6 right-6 p-2 rounded-full bg-(--surface) text-(--muted) hover:bg-(--border) transition-colors duration-(--duration-150)"
-             >
-               <X size={20} />
-             </button>
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              className="absolute top-6 right-6 p-2 rounded-full bg-(--surface) text-(--muted) hover:bg-(--border) transition-colors duration-(--duration-150)"
+            >
+              <X size={20} />
+            </button>
 
-             <div className="text-center">
-                <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 transition-colors duration-(--duration-150) ${trigger === 'buy' || trigger === 'explore' ? 'bg-red-100 text-red-600' : 'bg-(--emerald)/10 text-(--emerald)'}`}>
-                    <Smartphone size={40} strokeWidth={1.5} />
-                </div>
-                
-                <h3 className="text-(--text-heading) font-black text-(--foreground) mb-3 leading-tight">
-                  {activeContent.title}
-                </h3>
-                <p className="text-(--muted) text-(--text-body-md) mb-10 leading-relaxed font-medium">
-                  {activeContent.desc}
-                </p>
+            <div className="text-center">
+              <div
+                className={`w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 transition-colors duration-(--duration-150) ${
+                  trigger === 'buy' || trigger === 'explore'
+                    ? 'bg-red-100 text-red-600'
+                    : 'bg-(--emerald)/10 text-(--emerald)'
+                }`}
+              >
+                <Smartphone size={40} strokeWidth={1.5} />
+              </div>
 
-                <div className="space-y-3">
-                   {continueHref ? (
-                     <Button href={continueHref} variant="primary" size="lg" className="w-full">
-                       Continue on web
-                     </Button>
-                   ) : null}
-                   <Button href={downloadHref} variant="secondary" size="lg" className="w-full">
-                     <Apple size={20} className="mb-0.5" />
-                     Download on App Store
-                   </Button>
-                   <Button href={downloadHref} variant="outline" size="lg" className="w-full">
-                     <div className="w-5 h-5 rounded-sm bg-(--charcoal) flex items-center justify-center">
-                        <Play size={10} className="text-white fill-white ml-0.5" />
-                     </div>
-                     Get it on Google Play
-                   </Button>
-                </div>
+              <h3 className="text-(--text-heading) font-black text-(--foreground) mb-3 leading-tight">
+                {activeContent.title}
+              </h3>
+              <p className="text-(--muted) text-(--text-body-md) mb-10 leading-relaxed font-medium">
+                {activeContent.desc}
+              </p>
 
-                <button 
-                  onClick={onClose}
-                  className="mt-6 text-(--text-label) font-bold text-(--muted) uppercase tracking-widest hover:text-(--foreground) transition-colors duration-(--duration-150)"
-                >
-                  Maybe Later
-                </button>
-             </div>
+              <div className="space-y-3">
+                {continueHref ? (
+                  <Button href={continueHref} variant="primary" size="lg" className="w-full">
+                    Continue on web
+                  </Button>
+                ) : null}
+
+                {hasAnyStore ? (
+                  <>
+                    {hasIos ? (
+                      <Button
+                        href={stores.ios!}
+                        variant="secondary"
+                        size="lg"
+                        className="w-full"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <Apple size={20} className="mb-0.5" />
+                        Download on App Store
+                      </Button>
+                    ) : null}
+                    {hasAndroid ? (
+                      <Button
+                        href={stores.android!}
+                        variant="outline"
+                        size="lg"
+                        className="w-full"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        <div className="w-5 h-5 rounded-sm bg-(--charcoal) flex items-center justify-center">
+                          <Play size={10} className="text-white fill-white ml-0.5" />
+                        </div>
+                        Get it on Google Play
+                      </Button>
+                    ) : null}
+                    {/* Keep intent funnel reachable when only one store is live */}
+                    {(!hasIos || !hasAndroid) && (
+                      <Button href={downloadHref} variant="outline" size="md" className="w-full text-sm">
+                        More download options
+                      </Button>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {!continueHref ? (
+                      <Button href="/app" variant="primary" size="lg" className="w-full">
+                        Continue on web
+                      </Button>
+                    ) : null}
+                    <Button href={STORE_UPDATES_MAILTO} variant="secondary" size="lg" className="w-full gap-2">
+                      <Bell size={18} />
+                      Notify me when the app is out
+                    </Button>
+                    <Button href={downloadHref} variant="outline" size="md" className="w-full text-sm">
+                      Open download page
+                    </Button>
+                  </>
+                )}
+              </div>
+
+              <button
+                onClick={onClose}
+                className="mt-6 text-(--text-label) font-bold text-(--muted) uppercase tracking-widest hover:text-(--foreground) transition-colors duration-(--duration-150)"
+              >
+                Maybe Later
+              </button>
+            </div>
           </motion.div>
         </div>
       )}

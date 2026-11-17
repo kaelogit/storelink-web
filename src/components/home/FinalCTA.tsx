@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 import Button from '@/components/ui/Button';
-import { storeCtaHref } from '@/lib/storeUrls';
+import { iosBadgeCopy, androidBadgeCopy } from '@/lib/storeUrls';
 import { useStoreListingUrls } from '@/lib/useStoreUrls';
 
 // Custom SVGs for Authenticity
@@ -20,8 +20,9 @@ const PlayStoreLogo = () => (
 
 export default function FinalCTA() {
   const stores = useStoreListingUrls();
-  const iosHref = storeCtaHref(stores.ios);
-  const androidHref = storeCtaHref(stores.android);
+  const ios = iosBadgeCopy(stores);
+  const android = androidBadgeCopy(stores);
+  const hasAnyStore = Boolean(stores.ios || stores.android);
 
   return (
     <section className="section-dark py-40 md:py-56 flex items-center justify-center border-t border-white/5" aria-label="Final call to action">
@@ -29,7 +30,7 @@ export default function FinalCTA() {
       <div className="section-spotlight-violet" aria-hidden />
 
       <div className="max-w-5xl mx-auto px-6 relative z-10 text-center">
-        
+
         <motion.div
            initial={{ opacity: 0, y: 30 }}
            whileInView={{ opacity: 1, y: 0 }}
@@ -41,38 +42,81 @@ export default function FinalCTA() {
                 Is More Trust.
               </span>
             </h2>
-            
+
             <p className="text-xl md:text-2xl text-(--muted) mb-12 leading-relaxed max-w-2xl mx-auto font-medium">
               <span className="text-white font-bold">StoreLink protects every transaction with escrow.</span> <br/>
-              Join the trust-powered commerce platform where buyers pay safely and sellers earn with confidence.
+              {hasAnyStore
+                ? 'Join the trust-powered commerce platform where buyers pay safely and sellers earn with confidence.'
+                : 'Shop and sell on the web today. Native apps will show up here once they are published.'}
             </p>
 
             <div className="flex flex-col sm:flex-row items-center gap-5 justify-center">
-              <Button
-                href={iosHref}
-                size="lg"
-                className="w-full sm:w-auto justify-center gap-3 bg-(--card)! text-black! hover:bg-emerald-50! hover:scale-105 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]"
-                {...(stores.ios ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-              >
-                <AppleLogo />
-                <div className="text-left leading-none">
-                  <p className="text-[10px] font-bold uppercase tracking-wider mb-1 text-(--muted) group-hover:text-(--foreground)">Download on the</p>
-                  <p className="text-lg font-black tracking-wide">App Store</p>
-                </div>
-              </Button>
-              <Button
-                href={androidHref}
-                variant="outline"
-                size="lg"
-                className="w-full sm:w-auto justify-center gap-3 bg-(--card)/5! border-white/10! text-white! hover:bg-(--card)/10! hover:border-white/20! hover:scale-105 backdrop-blur-md"
-                {...(stores.android ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-              >
-                <PlayStoreLogo />
-                <div className="text-left leading-none">
-                  <p className="text-[10px] font-bold uppercase tracking-wider mb-1 text-(--muted)">Get it on</p>
-                  <p className="text-lg font-black tracking-wide">Google Play</p>
-                </div>
-              </Button>
+              {hasAnyStore ? (
+                <>
+                  {stores.ios ? (
+                    <Button
+                      href={ios.href}
+                      size="lg"
+                      className="w-full sm:w-auto justify-center gap-3 bg-(--card)! text-black! hover:bg-emerald-50! hover:scale-105 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <AppleLogo />
+                      <div className="text-left leading-none">
+                        <p className="text-[10px] font-bold uppercase tracking-wider mb-1 text-(--muted) group-hover:text-(--foreground)">{ios.eyebrow}</p>
+                        <p className="text-lg font-black tracking-wide">{ios.title}</p>
+                      </div>
+                    </Button>
+                  ) : null}
+                  {stores.android ? (
+                    <Button
+                      href={android.href}
+                      variant="outline"
+                      size="lg"
+                      className="w-full sm:w-auto justify-center gap-3 bg-(--card)/5! border-white/10! text-white! hover:bg-(--card)/10! hover:border-white/20! hover:scale-105 backdrop-blur-md"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <PlayStoreLogo />
+                      <div className="text-left leading-none">
+                        <p className="text-[10px] font-bold uppercase tracking-wider mb-1 text-(--muted)">{android.eyebrow}</p>
+                        <p className="text-lg font-black tracking-wide">{android.title}</p>
+                      </div>
+                    </Button>
+                  ) : null}
+                  {(!stores.ios || !stores.android) && (
+                    <Button
+                      href="/app"
+                      variant="outline"
+                      size="lg"
+                      className="w-full sm:w-auto justify-center gap-3 bg-(--card)/5! border-white/10! text-white! hover:bg-(--card)/10! hover:border-white/20! hover:scale-105 backdrop-blur-md"
+                    >
+                      Continue on web
+                    </Button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <Button
+                    href="/app"
+                    size="lg"
+                    className="w-full sm:w-auto justify-center gap-3 bg-(--card)! text-black! hover:bg-emerald-50! hover:scale-105 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)]"
+                  >
+                    Continue on web
+                  </Button>
+                  <Button
+                    href={ios.href}
+                    variant="outline"
+                    size="lg"
+                    className="w-full sm:w-auto justify-center gap-3 bg-(--card)/5! border-white/10! text-white! hover:bg-(--card)/10! hover:border-white/20! hover:scale-105 backdrop-blur-md"
+                  >
+                    <div className="text-left leading-none">
+                      <p className="text-[10px] font-bold uppercase tracking-wider mb-1 text-(--muted)">App coming soon</p>
+                      <p className="text-lg font-black tracking-wide">Get updates</p>
+                    </div>
+                  </Button>
+                </>
+              )}
             </div>
 
             <p className="mt-8 text-sm text-(--muted) font-medium">

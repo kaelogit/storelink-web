@@ -3,7 +3,7 @@ import { platformsForSurface } from '@/lib/sharePlatforms';
 import type { ShareType } from '@/lib/shareDm';
 import { useShareSheetStore } from '@/store/useShareSheetStore';
 
-/** StoreLink surfaces — drives which external apps appear. */
+/** StoreLink surfaces - drives which external apps appear. */
 export type ShareSurface =
   | 'reel'
   | 'spotlight'

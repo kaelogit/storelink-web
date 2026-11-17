@@ -271,7 +271,7 @@ export default function ProfileHubMenuContent({
               <MenuRow
                 href={businessVerificationHref(profile)}
                 label="Business verification"
-                sub="Nigeria CAC — RC number & certificate"
+                sub="Nigeria CAC, RC number & certificate"
                 onNavigate={onNavigate}
                 icon={<Building2 size={20} className="text-emerald-600" strokeWidth={2.2} />}
               />

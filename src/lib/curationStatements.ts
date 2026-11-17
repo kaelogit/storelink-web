@@ -50,7 +50,7 @@ export function getServiceCurationStatement(args: {
   const seed = `${args.listingId || ''}:${args.curatorId || ''}:${title}`.length;
   const pools: Record<string, string[]> = {
     beauty: [
-      `${title} is one of the cleanest beauty experiences I have booked recently — ${provider} is consistent and detail-focused.`,
+      `${title} is one of the cleanest beauty experiences I have booked recently. ${provider} is consistent and detail-focused.`,
       `${provider} delivers ${title} with a calm, premium workflow from start to finish.`,
       `If you want reliable results, ${title} with ${provider} is a strong pick.`,
     ],

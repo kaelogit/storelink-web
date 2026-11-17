@@ -14,6 +14,7 @@ import {
   Clock3,
   Flag,
   Image as ImageIcon,
+  MessageCircle,
   Mic,
   MoreHorizontal,
   Package,
@@ -34,6 +35,10 @@ import { ChatMessageComposer } from '@/components/chat/ChatMessageComposer';
 import { CommerceCardMessage } from '@/components/chat/CommerceCardMessage';
 import { MessageRequestBanner } from '@/components/chat/MessageRequestBanner';
 import { MessageRequestHero } from '@/components/chat/MessageRequestHero';
+import { Avatar } from '@/components/ui/Avatar';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Skeleton } from '@/components/ui/Skeleton';
+import { LocationShareCard } from '@/components/chat/LocationShareCard';
 import {
   buildActiveCommerceChatIds,
   fetchActiveCommerceForChat,
@@ -175,6 +180,7 @@ function renderBubbleBody(m: ChatMessage) {
   if (kind === 'VIDEO') return m.text?.trim() ? `🎥 ${m.text}` : '🎥 Video';
   if (kind === 'VOICE' || kind === 'AUDIO') return '🎤 Voice message';
   if (kind === 'DOCUMENT') return m.text?.trim() ? `📄 ${m.text}` : '📄 Document';
+  if (kind === 'LOCATION' || kind === 'LOCATION_SHARE') return m.text?.trim() || 'Shared location';
   return String(m.text || '');
 }
 
@@ -280,7 +286,7 @@ export default function MessagesClient() {
       if (m.image_url) {
         out.push({
           id: `${m.id}-img`,
-          label: m.text?.trim() ? `Photo — ${m.text.trim().slice(0, 40)}` : 'Photo',
+          label: m.text?.trim() ? `Photo, ${m.text.trim().slice(0, 40)}` : 'Photo',
           href: m.image_url,
           kind: 'image',
         });
@@ -289,7 +295,7 @@ export default function MessagesClient() {
       if (m.document_url) {
         out.push({
           id: `${m.id}-doc`,
-          label: m.document_name ? `Document — ${m.document_name}` : 'Document',
+          label: m.document_name ? `Document, ${m.document_name}` : 'Document',
           href: m.document_url,
           kind: 'document',
         });
@@ -656,7 +662,7 @@ export default function MessagesClient() {
     }
   };
 
-  const sendImage = async (file: File) => {
+  const sendImage = async (file: File, caption?: string) => {
     if (!selectedChatId || !currentUserId || uploadingImage) return;
     if (!allowsRichDm) {
       toast.error(MESSAGE_REQUEST_PLAIN_TEXT_HINT);
@@ -664,10 +670,11 @@ export default function MessagesClient() {
     }
     setUploadingImage(true);
     const tempId = `temp-img-${Date.now()}`;
+    const optimisticText = caption?.trim() || 'Sent a photo';
     const optimistic: ChatMessage = {
       id: tempId,
       sender_id: currentUserId,
-      text: 'Sent a photo',
+      text: optimisticText,
       created_at: new Date().toISOString(),
       type: 'IMAGE',
       is_optimistic: true,
@@ -679,6 +686,7 @@ export default function MessagesClient() {
         chatId: selectedChatId,
         userId: currentUserId,
         file,
+        caption,
       });
       setMessages((old) =>
         old.map((m) =>
@@ -1040,20 +1048,37 @@ export default function MessagesClient() {
                 </>
               )
             ) : loadingThreads ? (
-              <p className="p-4 text-sm text-(--muted)">Loading messages...</p>
+              <div className="space-y-3 p-4">
+                {[0, 1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Skeleton avatarSize={44} />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <Skeleton className="h-3 w-1/3" />
+                      <Skeleton className="h-3 w-2/3" />
+                    </div>
+                  </div>
+                ))}
+              </div>
             ) : filteredThreads.length === 0 ? (
-              <p className="p-4 text-sm text-(--muted)">
-                {activeTab === 'requests'
-                  ? 'Requests from people you don’t follow appear here. Decline a request to stop them messaging you; previews stay hidden until you open the chat.'
-                  : activeTab === 'primary'
-                    ? 'No primary messages yet.'
-                    : 'No conversations yet.'}
-              </p>
+              <EmptyState
+                icon={<MessageCircle size={28} className="text-(--muted)" strokeWidth={2.2} />}
+                title={
+                  activeTab === 'requests'
+                    ? 'No requests'
+                    : activeTab === 'primary'
+                      ? 'No primary messages yet'
+                      : 'No conversations yet'
+                }
+                message={
+                  activeTab === 'requests'
+                    ? 'Requests from people you don’t follow appear here. Decline a request to stop them messaging you; previews stay hidden until you open the chat.'
+                    : 'Start a conversation from a product or profile. Your chats will show up here.'
+                }
+              />
             ) : (
               filteredThreads.map((thread) => {
                 const active = thread.chat_id === selectedChatId;
                 const unread = Number(thread.unread_count || 0);
-                const avatar = normalizeWebMediaUrl(thread.partner?.logo_url || '');
                 const isMuted = mutedSet.has(thread.chat_id);
                 const hasActiveOrder = activeOrderChatIds.has(thread.chat_id);
                 const threadFolder = effectiveThreadFolder(thread);
@@ -1064,8 +1089,13 @@ export default function MessagesClient() {
                 return (
                   <div key={thread.chat_id} className={`relative border-b border-(--border) ${active ? 'bg-emerald-500/8' : 'hover:bg-(--surface)'}`}>
                     <button type="button" onClick={() => updateQueryChat(thread.chat_id)} className="flex w-full items-center gap-3 px-4 py-3 text-left">
-                      <div className="relative h-11 w-11 overflow-hidden rounded-xl border border-(--border) bg-(--surface)">
-                        {avatar ? <img src={avatar} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center"><User size={18} className="text-(--muted)" /></div>}
+                      <div className="relative shrink-0">
+                        <Avatar
+                          uri={thread.partner?.logo_url}
+                          size={44}
+                          isSeller={!!thread.partner?.is_seller}
+                          alt={thread.partner?.display_name || thread.partner?.slug || 'User'}
+                        />
                         {isPartnerOnline ? <span className="absolute right-0.5 top-0.5 h-2.5 w-2.5 rounded-full border border-white bg-emerald-500" /> : null}
                       </div>
                       <div className="min-w-0 flex-1">
@@ -1177,20 +1207,13 @@ export default function MessagesClient() {
                     className="flex min-w-0 flex-1 items-center gap-2 rounded-2xl py-1 text-left hover:bg-(--surface) disabled:opacity-60"
                     disabled={!selectedThread?.partner?.id}
                   >
-                    <div
-                      className={`relative h-10 w-10 shrink-0 overflow-hidden rounded-2xl border border-(--border) bg-(--surface) ${
-                        selectedThread?.partner?.subscription_plan === 'diamond' ? 'ring-2 ring-violet-500' : ''
-                      }`}
-                    >
-                      {selectedThread && normalizeWebMediaUrl(selectedThread.partner?.logo_url || '') ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={normalizeWebMediaUrl(selectedThread.partner?.logo_url || '')} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center">
-                          <User size={18} className="text-(--muted)" />
-                        </div>
-                      )}
-                    </div>
+                    <Avatar
+                      uri={selectedThread?.partner?.logo_url}
+                      size={40}
+                      isSeller={!!selectedThread?.partner?.is_seller}
+                      diamond={selectedThread?.partner?.subscription_plan === 'diamond'}
+                      alt={selectedThread?.partner?.display_name || selectedThread?.partner?.slug || 'Conversation'}
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1">
                         <p className="truncate text-[17px] font-semibold tracking-tight text-(--foreground)">
@@ -1274,10 +1297,9 @@ export default function MessagesClient() {
                 ref={messagesScrollRef}
                 className="min-h-0 flex-1 overflow-y-auto bg-(--surface) px-4 py-4"
               >
-                {selectedThread?.partner ? (
+                {selectedThread?.partner && messages.length === 0 && !loadingMessages ? (
                   <MessageRequestHero
                     partner={selectedThread.partner}
-                    showViewProfile
                     onViewProfile={() => {
                       const slug = selectedThread.partner?.slug;
                       if (slug) router.push(`/${encodeURIComponent(slug)}`);
@@ -1394,6 +1416,19 @@ export default function MessagesClient() {
                             ) : null}
                             {isCommerceCardMessage(m) ? (
                               <CommerceCardMessage message={m} isSellerView={paneIsSeller} />
+                            ) : String(m.type || '').toUpperCase() === 'LOCATION' ||
+                              String(m.type || '').toUpperCase() === 'LOCATION_SHARE' ? (
+                              <LocationShareCard
+                                label={(m.metadata as { label?: string } | null)?.label || 'Shared location'}
+                                address={
+                                  (m.metadata as { address?: string } | null)?.address ||
+                                  String(m.text || '').trim() ||
+                                  null
+                                }
+                                linkedOrderHint={
+                                  (m.metadata as { order_label?: string } | null)?.order_label || null
+                                }
+                              />
                             ) : (
                               <>
                             {m.image_url ? (
@@ -1463,7 +1498,7 @@ export default function MessagesClient() {
                 draft={draft}
                 onDraftChange={setDraft}
                 onSendText={() => void sendMessage()}
-                onPickImage={(file) => void sendImage(file)}
+                onPickImage={(file, caption) => void sendImage(file, caption)}
                 uploadingImage={uploadingImage}
                 replyTo={replyTo}
                 onClearReply={() => setReplyTo(null)}

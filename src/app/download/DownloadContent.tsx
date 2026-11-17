@@ -3,18 +3,24 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
+import QRCode from 'react-qr-code';
 import {
   Apple, Menu, Users, Gem, MapPin, Edit3, Share2,
   Package, Video, Layers, CheckCircle2, ShieldCheck, Zap, Sparkles,
-  MessageCircle, Play, Star, Lock
+  MessageCircle, Play, Star, Lock, Bell
 } from 'lucide-react';
 import Footer from '../../components/home/Footer';
 import Image from 'next/image';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
+import { Avatar } from '@/components/ui/Avatar';
 import { continueOnWebHref } from '@/lib/shareContinue';
 import { useStoreListingUrls } from '@/lib/useStoreUrls';
-import type { StoreListingUrls } from '@/lib/storeUrls';
+import {
+  STORE_UPDATES_MAILTO,
+  downloadFunnelHref,
+  type StoreListingUrls,
+} from '@/lib/storeUrls';
 
 const AppleLogo = () => (
   <svg viewBox="0 0 384 512" fill="currentColor" className="w-6 h-6 mb-1">
@@ -32,7 +38,7 @@ const REASONS = [
   { icon: ShieldCheck, title: 'Pay with escrow', desc: 'Money is held until you receive your order. No scams, no fear.' },
   { icon: Play, title: 'Shoppable reels & stories', desc: 'Watch, tap, and buy. The feed is your storefront.' },
   { icon: CheckCircle2, title: 'Verified sellers', desc: 'Blue tick means real ID and face verification. Know who you\'re buying from.' },
-  { icon: MessageCircle, title: 'Chat in-app', desc: 'Negotiate, confirm orders, and track delivery—all inside the app.' },
+  { icon: MessageCircle, title: 'Chat in-app', desc: 'Negotiate, confirm orders, and track delivery-all inside the app.' },
   { icon: Zap, title: 'Instant payouts', desc: 'Sellers get paid the moment the buyer confirms delivery. Naira to your bank.' },
   { icon: Sparkles, title: 'AI that sells', desc: 'Gemini writes captions; Magic Studio removes backgrounds. Pro listings in seconds.' },
   { icon: Star, title: 'Store Coins & loyalty', desc: 'Earn coins on every purchase. Sellers reward their best customers.' },
@@ -46,10 +52,12 @@ export default function DownloadContent({
 }) {
   const searchParams = useSearchParams();
   const intentPath = searchParams.get('intent') ?? null;
-  const continueHref = continueOnWebHref(intentPath);
+  const continueHref = continueOnWebHref(intentPath) || '/app';
+  const funnelPath = downloadFunnelHref(intentPath);
   const { ios: APP_STORE_URL, android: PLAY_STORE_URL } = useStoreListingUrls(initialStoreUrls);
   const HAS_APP_LINKS = Boolean(APP_STORE_URL || PLAY_STORE_URL);
   const [os, setOS] = useState<'ios' | 'android' | 'desktop'>('desktop');
+  const [qrHref, setQrHref] = useState('https://storelink.ng/download');
 
   useEffect(() => {
     if (intentPath && typeof window !== 'undefined') {
@@ -69,6 +77,11 @@ export default function DownloadContent({
       setOS('desktop');
     }
   }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setQrHref(`${window.location.origin}${funnelPath}`);
+  }, [funnelPath]);
 
   return (
     <main className="min-h-dvh font-sans flex flex-col relative bg-(--background) text-(--foreground) selection:bg-emerald-100">
@@ -107,28 +120,29 @@ export default function DownloadContent({
                   After you install and open the app, we&apos;ll take you straight back to this product, service, or profile.
                 </p>
               )}
-              {intentPath ? (
-                <p className="mb-6 max-w-md">
-                  <Button href={continueHref} variant="primary" size="md" className="font-bold">
-                    Continue on web
-                  </Button>
-                </p>
-              ) : null}
 
               <Card className="p-2 rounded-4xl w-full max-w-md inline-block border-2 border-(--border) shadow-xl shadow-(--charcoal)/5">
                 {os === 'desktop' && (
                   <div className="flex gap-6 p-5 items-center">
-                    <div className="bg-slate-900 p-3 rounded-2xl shrink-0">
-                      <img
-                        src="https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https%3A%2F%2Fstorelink.ng%2Fdownload&color=ffffff&bgcolor=0f172a"
-                        alt="Scan to get the app"
-                        className="w-28 h-28 rounded-lg"
-                      />
+                    <div className="bg-slate-900 p-3 rounded-2xl shrink-0" aria-hidden={false}>
+                      <div className="w-28 h-28 rounded-lg bg-slate-900 flex items-center justify-center p-1">
+                        <QRCode
+                          value={qrHref}
+                          size={104}
+                          bgColor="#0f172a"
+                          fgColor="#ffffff"
+                          aria-label="Scan to open this download page on your phone"
+                        />
+                      </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-black text-(--foreground) text-lg mb-1 tracking-tight">Get the app</h3>
+                      <h3 className="font-black text-(--foreground) text-lg mb-1 tracking-tight">
+                        {HAS_APP_LINKS ? 'Get the app' : 'Use StoreLink today'}
+                      </h3>
                       <p className="text-sm text-(--muted) mb-4 leading-snug">
-                        Scan with your phone or choose your store below. Free on iOS & Android.
+                        {HAS_APP_LINKS
+                          ? 'Scan with your phone or choose your store below.'
+                          : 'Native apps are coming to the App Store and Google Play. Shop and sell on the web now.'}
                       </p>
                       {HAS_APP_LINKS ? (
                         <div className="flex flex-col gap-2">
@@ -144,7 +158,14 @@ export default function DownloadContent({
                           )}
                         </div>
                       ) : (
-                        <p className="text-sm text-(--muted)">Available on App Store and Google Play.</p>
+                        <div className="flex flex-col gap-2">
+                          <Button href={continueHref} variant="primary" size="md" className="w-full justify-center gap-2 font-bold">
+                            Continue on web
+                          </Button>
+                          <Button href={STORE_UPDATES_MAILTO} variant="secondary" size="md" className="w-full justify-center gap-2 font-bold">
+                            <Bell size={18} /> Notify me
+                          </Button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -165,13 +186,27 @@ export default function DownloadContent({
                           </Button>
                         )}
                         {((os === 'ios' && !APP_STORE_URL) || (os === 'android' && !PLAY_STORE_URL)) && (
-                          <p className="text-center text-sm text-(--muted)">Scan the QR code at storelink.ng/download on a computer, or open this page on the other device.</p>
+                          <div className="flex flex-col gap-3">
+                            <Button href={continueHref} variant="primary" size="lg" className="w-full justify-center font-black">
+                              Continue on web
+                            </Button>
+                            <Button href={STORE_UPDATES_MAILTO} variant="secondary" size="md" className="w-full justify-center gap-2 font-bold">
+                              <Bell size={18} /> Notify me when the app is out
+                            </Button>
+                          </div>
                         )}
                       </div>
                     ) : (
-                      <div className="text-center py-2">
-                        <p className="font-bold text-(--foreground) mb-1">Get the app</p>
-                        <p className="text-sm text-(--muted)">Open storelink.ng/download on a computer and scan the QR code, or download from the App Store or Google Play.</p>
+                      <div className="flex flex-col gap-3">
+                        <Button href={continueHref} variant="primary" size="lg" className="w-full justify-center font-black">
+                          Continue on web
+                        </Button>
+                        <Button href={STORE_UPDATES_MAILTO} variant="secondary" size="md" className="w-full justify-center gap-2 font-bold">
+                          <Bell size={18} /> Notify me when the app is out
+                        </Button>
+                        <p className="text-center text-sm text-(--muted)">
+                          StoreLink is live on the web. Native apps will appear here once published.
+                        </p>
                       </div>
                     )}
                   </div>
@@ -184,7 +219,7 @@ export default function DownloadContent({
             </motion.div>
           </div>
 
-          {/* Phone mockup — app profile */}
+          {/* Phone mockup - app profile */}
           <div className="order-1 lg:order-2 flex justify-center lg:justify-end">
             <motion.div
               initial={{ opacity: 0, scale: 0.92, rotate: -8 }}
@@ -211,15 +246,7 @@ export default function DownloadContent({
                     <div className="px-5 flex flex-col items-center mt-4">
                       <div className="relative mb-4">
                         <div className="p-1 rounded-[36px] border-2 border-purple-500 shadow-[0_0_24px_rgba(168,85,247,0.25)] bg-(--card)">
-                          <div className="w-24 h-24 rounded-[30px] overflow-hidden relative">
-                            <Image
-                              src="https://ui-avatars.com/api/?name=Store&background=000&color=fff&size=128"
-                              alt=""
-                              width={96}
-                              height={96}
-                              className="object-cover w-full h-full"
-                            />
-                          </div>
+                          <Avatar uri={null} size={96} isSeller diamond={false} alt="Store" />
                         </div>
                         <div className="absolute -bottom-2 -right-2 bg-(--card) p-1.5 rounded-xl shadow-lg border border-(--border)">
                           <Gem size={14} className="text-purple-600 fill-purple-600" />
@@ -243,17 +270,17 @@ export default function DownloadContent({
                       </div>
                       <div className="flex items-center justify-between w-full px-4 mb-6">
                         <div className="text-center">
-                          <p className="text-lg font-black text-(--foreground) leading-none">—</p>
+                          <p className="text-lg font-black text-(--foreground) leading-none">-</p>
                           <p className="text-[9px] font-bold text-(--muted) tracking-widest mt-1">DROPS</p>
                         </div>
                         <div className="w-px h-8 bg-(--border)" />
                         <div className="text-center">
-                          <p className="text-lg font-black text-purple-600 leading-none">—</p>
+                          <p className="text-lg font-black text-purple-600 leading-none">-</p>
                           <p className="text-[9px] font-bold text-(--muted) tracking-widest mt-1">FOLLOWERS</p>
                         </div>
                         <div className="w-px h-8 bg-(--border)" />
                         <div className="text-center">
-                          <p className="text-lg font-black text-(--foreground) leading-none">—</p>
+                          <p className="text-lg font-black text-(--foreground) leading-none">-</p>
                           <p className="text-[9px] font-bold text-(--muted) tracking-widest mt-1">FOLLOWING</p>
                         </div>
                       </div>
@@ -298,7 +325,7 @@ export default function DownloadContent({
         </div>
       </section>
 
-      {/* Why download — many reasons */}
+      {/* Why download - many reasons */}
       <section className="py-24 md:py-32 border-t border-(--border) relative overflow-hidden bg-(--background)">
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808006_1px,transparent_1px),linear-gradient(to_bottom,#80808006_1px,transparent_1px)] bg-size-[32px_32px] pointer-events-none" />
         <div className="max-w-6xl mx-auto px-6 relative z-10">
@@ -307,7 +334,7 @@ export default function DownloadContent({
               One app. <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-600 to-emerald-500">Every reason to join.</span>
             </h2>
             <p className="text-lg text-(--muted) max-w-2xl mx-auto font-medium">
-              Built for Nigeria. Escrow, reels, verification, chat, and payouts—all in one place.
+              Built for Nigeria. Escrow, reels, verification, chat, and payouts-all in one place.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
@@ -331,7 +358,7 @@ export default function DownloadContent({
         </div>
       </section>
 
-      {/* One app, everything — 3 pillars */}
+      {/* One app, everything - 3 pillars */}
       <section className="py-24 md:py-32 border-t border-(--border) relative overflow-hidden bg-(--surface)/50">
         <div className="section-orb section-orb-emerald section-orb-bl" aria-hidden />
         <div className="section-orb section-orb-violet section-orb-tr" aria-hidden />
@@ -370,25 +397,38 @@ export default function DownloadContent({
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-5" />
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
           <h2 className="text-2xl md:text-3xl font-display font-black mb-4 tracking-tight">
-            Ready to sell—or shop—without fear?
+            Ready to sell-or shop-without fear?
           </h2>
           <p className="text-white/70 font-medium mb-8 max-w-xl mx-auto">
-            Download StoreLink free. Buyers browse and pay with protection. Sellers start on free Standard and can optionally upgrade to Diamond for extra visibility.
+            {HAS_APP_LINKS
+              ? 'Download StoreLink free. Buyers browse and pay with protection. Sellers start on free Standard and can optionally upgrade to Diamond for extra visibility.'
+              : 'Shop and sell on the web today with escrow protection. We will post App Store and Google Play links here once the apps are published.'}
           </p>
-          {HAS_APP_LINKS && (
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              {APP_STORE_URL && (
-                <Button href={APP_STORE_URL} className="bg-(--card)! text-(--charcoal)! hover:bg-(--card)/90! font-black gap-2" target="_blank" rel="noopener noreferrer">
-                  <Apple size={22} /> App Store
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            {HAS_APP_LINKS ? (
+              <>
+                {APP_STORE_URL && (
+                  <Button href={APP_STORE_URL} className="bg-(--card)! text-(--charcoal)! hover:bg-(--card)/90! font-black gap-2" target="_blank" rel="noopener noreferrer">
+                    <Apple size={22} /> App Store
+                  </Button>
+                )}
+                {PLAY_STORE_URL && (
+                  <Button href={PLAY_STORE_URL} className="bg-(--card)! text-(--charcoal)! hover:bg-(--card)/90! font-black gap-2" target="_blank" rel="noopener noreferrer">
+                    <PlayStoreLogo /> Google Play
+                  </Button>
+                )}
+              </>
+            ) : (
+              <>
+                <Button href={continueHref} className="bg-(--card)! text-(--charcoal)! hover:bg-(--card)/90! font-black gap-2">
+                  Continue on web
                 </Button>
-              )}
-              {PLAY_STORE_URL && (
-                <Button href={PLAY_STORE_URL} className="bg-(--card)! text-(--charcoal)! hover:bg-(--card)/90! font-black gap-2" target="_blank" rel="noopener noreferrer">
-                  <PlayStoreLogo /> Google Play
+                <Button href={STORE_UPDATES_MAILTO} variant="outline" className="border-white/30! text-white! hover:bg-white/10! font-black gap-2">
+                  <Bell size={18} /> Notify me
                 </Button>
-              )}
-            </div>
-          )}
+              </>
+            )}
+          </div>
         </div>
       </section>
 

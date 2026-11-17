@@ -1,13 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Store, User } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import { formatMessageRequestStats } from '@/lib/messageRequests';
-import { normalizeWebMediaUrl } from '@/lib/media-url';
+import { Avatar } from '@/components/ui/Avatar';
 
 const AVATAR = 96;
-const RADIUS = Math.round(AVATAR * 0.3);
 
 type PartnerSeed = {
   id?: string | null;
@@ -22,10 +20,11 @@ type PartnerSeed = {
 type Props = {
   partner: PartnerSeed;
   onViewProfile: () => void;
+  /** Mobile default: no View profile pill (avatar + name already open profile). */
   showViewProfile?: boolean;
 };
 
-export function MessageRequestHero({ partner, onViewProfile, showViewProfile = true }: Props) {
+export function MessageRequestHero({ partner, onViewProfile, showViewProfile = false }: Props) {
   const [stats, setStats] = useState<string | null>(
     formatMessageRequestStats(partner.following_count, partner.follower_count),
   );
@@ -51,26 +50,15 @@ export function MessageRequestHero({ partner, onViewProfile, showViewProfile = t
       });
   }, [partner.id]);
 
-  const src = normalizeWebMediaUrl(logo || '');
-
   return (
     <div className="flex flex-col items-center px-6 pb-4 pt-6 text-center">
-      <button
-        type="button"
+      <Avatar
+        uri={logo}
+        size={AVATAR}
+        isSeller={isSeller}
+        alt={`View ${name}`}
         onClick={onViewProfile}
-        className="overflow-hidden bg-(--muted)/20"
-        style={{ width: AVATAR, height: AVATAR, borderRadius: RADIUS }}
-        aria-label={`View ${name}`}
-      >
-        {src ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={src} alt="" className="h-full w-full object-cover" />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center text-(--muted)">
-            {isSeller ? <Store size={40} strokeWidth={1.75} /> : <User size={40} strokeWidth={1.75} />}
-          </div>
-        )}
-      </button>
+      />
       <button type="button" onClick={onViewProfile} className="mt-3 text-xl font-black tracking-tight text-(--foreground)">
         {name}
       </button>

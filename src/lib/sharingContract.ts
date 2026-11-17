@@ -218,7 +218,7 @@ export function resolveSharePathname(pathname: string): ResolvedShareTarget {
     return { kind: 'profile', slug: decodeURIComponent(stripApp[1]).trim().toLowerCase() };
   }
 
-  // Single segment username path /{slug} — reserved slugs excluded at route level
+  // Single segment username path /{slug} - reserved slugs excluded at route level
   if (stripApp.length === 1 && !stripApp[0].includes('.')) {
     return { kind: 'profile', slug: decodeURIComponent(stripApp[0]).trim().toLowerCase() };
   }

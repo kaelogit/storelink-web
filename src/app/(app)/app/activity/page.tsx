@@ -109,7 +109,7 @@ function rowVisual(item: GroupedActivity, profileId: string | undefined, currenc
       const ev = (item.booking_event || '').toLowerCase();
       if (ev === 'requested') label = 'New booking request';
       else if (ev === 'confirmed') label = 'Booking confirmed';
-      else if (ev === 'paid') label = 'Booking paid – in escrow';
+      else if (ev === 'paid') label = 'Booking paid, in escrow';
       else if (ev === 'in_progress') label = 'Booking in progress';
       else if (ev === 'completed') label = 'Booking completed';
       else label = 'Booking update';

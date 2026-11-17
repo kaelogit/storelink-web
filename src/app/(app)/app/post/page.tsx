@@ -166,7 +166,7 @@ export default function AppPostPage() {
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2.5 py-1 text-[11px] font-black tracking-wider text-emerald-700 dark:text-emerald-300">
               <Store size={13} /> BECOME A SELLER
             </span>
-            <h2 className="mt-3 text-xl font-black text-(--foreground)">Open a real shop — not just another post</h2>
+            <h2 className="mt-3 text-xl font-black text-(--foreground)">Open a real shop, not just another post</h2>
             <p className="mt-2 text-sm text-(--muted)">
               Spotlight is for showing what you bought. Selling unlocks products, services, bookings, buyer chat, and protected payouts.
             </p>

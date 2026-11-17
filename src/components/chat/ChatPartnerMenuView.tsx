@@ -18,10 +18,10 @@ import {
   Trash2,
   User,
 } from 'lucide-react';
-import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { findLatestRatablePurchase } from '@/lib/ratingEligibility';
 import { createBrowserClient } from '@/lib/supabase';
 import { RateSellerModal, type RateSellerPending } from '@/components/ratings/RateSellerModal';
+import { Avatar } from '@/components/ui/Avatar';
 import { toast } from 'sonner';
 
 function withQueryParam(returnTo: string, key: string, value: string) {
@@ -60,7 +60,7 @@ export type ChatPartnerMenuViewProps = {
   returnTo: string;
   currentUserId: string | null;
   partner: SheetPartner | null;
-  /** Message request folder — blocks calls until accepted (matches app). */
+  /** Message request folder - blocks calls until accepted (matches app). */
   isRequest?: boolean;
   onMutedChange?: (muted: boolean) => void;
 };
@@ -356,14 +356,13 @@ export function ChatPartnerMenuView({
           </button>
         </div>
         <div className="mt-2 flex flex-col items-center gap-2 pb-1">
-          <div
-            className={`relative h-[76px] w-[76px] overflow-hidden rounded-[26px] border border-(--border) bg-(--surface) ${isDiamond ? 'ring-2 ring-violet-500' : ''}`}
-          >
-            {normalizeWebMediaUrl(profile?.logo_url || '') ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={normalizeWebMediaUrl(profile?.logo_url || '')} alt="" className="h-full w-full object-cover" />
-            ) : null}
-          </div>
+          <Avatar
+            uri={profile?.logo_url}
+            size={76}
+            isSeller={partnerIsSeller}
+            diamond={isDiamond}
+            alt={displayName}
+          />
           <Link href={profileHref} className="text-center">
             <p className="text-lg font-black tracking-tight text-(--foreground)">{displayName}</p>
             <p className="mt-0.5 text-sm font-medium text-(--muted)">@{slug}</p>
@@ -413,9 +412,9 @@ export function ChatPartnerMenuView({
                 </p>
               </div>
               <div className="mt-2 flex justify-between gap-2 text-xs font-semibold text-(--muted)">
-                <span>{reputation?.rating_count != null ? `${reputation.rating_count} reviews` : '—'}</span>
+                <span>{reputation?.rating_count != null ? `${reputation.rating_count} reviews` : '-'}</span>
                 <span>
-                  {reputation?.seller_dispute_count != null ? `${reputation.seller_dispute_count} disputes` : '—'}
+                  {reputation?.seller_dispute_count != null ? `${reputation.seller_dispute_count} disputes` : '-'}
                 </span>
               </div>
               <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-(--muted)">
@@ -436,7 +435,7 @@ export function ChatPartnerMenuView({
                 <span className="text-(--foreground)">
                   {reputation?.joined_at
                     ? new Date(reputation.joined_at).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })
-                    : '—'}
+                    : '-'}
                 </span>
               </div>
               <div className="mt-1 flex justify-between gap-2 text-xs font-semibold">

@@ -120,17 +120,17 @@ export function resolveRefundTimeline(input: RefundTimelineInput): RefundTimelin
   const detail = (() => {
     if (isComplete) {
       if (hasPaystackRefund) {
-        return 'Money was returned to your original payment method. Banks can take up to 15–30 minutes to show it.';
+        return 'Money was returned to your original payment method. Banks can take up to 15-30 minutes to show it.';
       }
       if (hasCoins) return 'Store Coins from this order are back in your wallet.';
       return 'Your refund is complete.';
     }
     if (isFailed) {
-      return 'We hit a temporary payment-provider snag sending your refund. We’ll retry automatically — you don’t need to do anything.';
+      return 'We hit a temporary payment-provider snag sending your refund. We’ll retry automatically. You don’t need to do anything.';
     }
     if (currentStep === 'processing') {
       return hasPaystackRefund
-        ? 'Your refund is processing now. This usually completes within 15–30 minutes.'
+        ? 'Your refund is processing now. This usually completes within 15-30 minutes.'
         : 'We’re reversing Store Coins and any eligible payment amounts.';
     }
     return 'We’ve got your cancellation. Your refund will start shortly.';

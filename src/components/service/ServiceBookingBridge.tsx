@@ -93,7 +93,7 @@ export default function ServiceBookingBridge({
                 {prefill.menuName ? (
                   <p className="mt-1 text-xs font-bold text-(--foreground)">
                     {prefill.menuName}
-                    {menuPriceLabel ? ` — ${menuPriceLabel}` : ''}
+                    {menuPriceLabel ? `, ${menuPriceLabel}` : ''}
                   </p>
                 ) : null}
                 {fulfillmentLabel ? (
@@ -117,7 +117,7 @@ export default function ServiceBookingBridge({
           </div>
 
           <p className="mt-5 text-center text-[11px] leading-relaxed text-(--muted)">
-            Already installed? Tap continue above. After installing, open this link again or use download — we&apos;ll return you to booking with the same menu and visit mode.
+            Already installed? Tap continue above. After installing, open this link again or use download. We&apos;ll return you to booking with the same menu and visit mode.
           </p>
 
           <p className="mt-3 break-all text-center text-[10px] font-semibold text-(--muted)">{universalHref}</p>

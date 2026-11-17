@@ -1,8 +1,8 @@
-# Deep links & “open in app” — StoreLink
+# Deep links & “open in app” - StoreLink
 
 ## 1. User **has** the app installed → tap shared link
 
-**Intended behavior:** Tapping a shared link (e.g. from WhatsApp) to `https://storelink.ng/p/slug`, `/r/short_code`, or `/@username` should open the **app** directly to that product, reel, or profile — not the website.
+**Intended behavior:** Tapping a shared link (e.g. from WhatsApp) to `https://storelink.ng/p/slug`, `/r/short_code`, or `/@username` should open the **app** directly to that product, reel, or profile - not the website.
 
 ### What’s in place
 

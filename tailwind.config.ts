@@ -32,6 +32,9 @@ const config: Config = {
         gold: "#f59e0b",
         charcoal: "#111827",
         pitch: "#000000",
+        "sl-chip": "var(--chip)",
+        "sl-grouped": "var(--grouped-background)",
+        "sl-ios-blue": "var(--ios-blue)",
       },
       borderRadius: {
         "sl-sm": "var(--radius-sm)",

@@ -84,7 +84,7 @@ export default function SellerCommunitiesClient() {
       </header>
 
       <p className="px-4 pt-4 text-sm text-(--muted)">
-        Invite followers to join — they accept before the group appears in their inbox.
+        Invite followers to join. They accept before the group appears in their inbox.
       </p>
 
       <div className="mt-4 px-4">
@@ -96,7 +96,7 @@ export default function SellerCommunitiesClient() {
             <p className="mt-3 text-sm font-black text-(--foreground)">No communities yet</p>
             <p className="mt-1 text-sm text-(--muted)">
               {hostEligible
-                ? 'Create a group for VIP buyers, drop alerts, or restock hype — then send invites.'
+                ? 'Create a group for VIP buyers, drop alerts, or restock hype, then send invites.'
                 : 'Verified sellers with an active subscription can create communities.'}
             </p>
             {hostEligible ? (

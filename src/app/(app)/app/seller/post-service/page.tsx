@@ -444,7 +444,7 @@ function PostServiceForm() {
             fixedMinor: depositFields.deposit_minor,
           })
         ) {
-          setError('Deposit incomplete: set a percent (1–90) or a fixed amount greater than 0.');
+          setError('Deposit incomplete: set a percent (1-90) or a fixed amount greater than 0.');
           setLoading(false);
           setPublishStage(null);
           return;
@@ -578,7 +578,7 @@ function PostServiceForm() {
           ),
         })
       ) {
-        setError('Deposit incomplete: set a percent (1–90) or a fixed amount greater than 0.');
+        setError('Deposit incomplete: set a percent (1-90) or a fixed amount greater than 0.');
         setLoading(false);
         setPublishStage(null);
         return;

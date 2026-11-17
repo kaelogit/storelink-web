@@ -1,4 +1,4 @@
-/** Begin escrow Paystack checkout — reserves reference and freezes order totals. */
+/** Begin escrow Paystack checkout - reserves reference and freezes order totals. */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 

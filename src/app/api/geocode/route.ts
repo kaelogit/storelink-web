@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@/lib/supabase-server';
 
 /**
- * POST /api/geocode — Google Geocoding proxy (Gap 6).
+ * POST /api/geocode - Google Geocoding proxy (Gap 6).
  * - Requires signed-in session (cookie or Bearer JWT)
  * - In-memory rate limit per IP + user (best-effort per instance)
  * - Query length capped; NG-biased Google lookup only

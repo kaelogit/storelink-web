@@ -55,7 +55,7 @@ export default function CommunityPage() {
               </span>
             </h1>
             <p className="text-xl text-(--muted) leading-relaxed font-medium mb-10 max-w-lg">
-              Stop paying for ads to reach the same people. On StoreLink, when a buyer follows you, they join your tribe. Your drops appear in their feed—for free, forever.
+              Stop paying for ads to reach the same people. On StoreLink, when a buyer follows you, they join your tribe. Your drops appear in their feed-for free, forever.
             </p>
 
             <Button href="/download" size="lg" variant="secondary" className="gap-3 !rounded-2xl font-black text-lg shadow-xl">
@@ -142,7 +142,7 @@ export default function CommunityPage() {
                   </div>
                   <h3 className="text-xl font-bold text-(--foreground) mb-3">Social Validation</h3>
                   <p className="text-(--muted) leading-relaxed font-medium">
-                     A high follower count isn't just a number—it's trust. It tells new buyers, "12,000 people trust this vendor." It converts strangers into customers faster.
+                     A high follower count isn't just a number-it's trust. It tells new buyers, "12,000 people trust this vendor." It converts strangers into customers faster.
                   </p>
                </div>
 

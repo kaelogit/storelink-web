@@ -1,4 +1,4 @@
-# Deploy and Monitor — StoreLink Web
+# Deploy and Monitor - StoreLink Web
 
 ## Before you deploy
 
@@ -29,7 +29,7 @@ npm run start
 
 ## Core Web Vitals (CWV) in Google Analytics 4
 
-1. **GA4 property** — Ensure the site has the GA4 ID in layout (e.g. `G-LC8PN9CT62` via `@next/third-parties/google`).
+1. **GA4 property** - Ensure the site has the GA4 ID in layout (e.g. `G-LC8PN9CT62` via `@next/third-parties/google`).
 2. **Enable CWV in GA4:**
    - Admin → Data display → **Engagement** → **Events** (or use the **Web Vitals** report if available).
    - Or use **Google Search Console** → **Experience** → **Core Web Vitals** for real-user data once the site is indexed.

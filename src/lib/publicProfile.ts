@@ -12,6 +12,8 @@ export const PUBLIC_PROFILE_COLUMNS = [
   'service_category',
   'is_store_open',
   'subscription_plan',
+  'subscription_status',
+  'subscription_expiry',
   'prestige_weight',
   'follower_count',
   'following_count',
@@ -31,6 +33,7 @@ export const PUBLIC_PROFILE_COLUMNS = [
   'verification_status',
   'business_verification_status',
   'is_verified',
+  'phone_verified',
   'is_wardrobe_private',
   'public_wardrobe',
   'share_online_status',
@@ -56,6 +59,8 @@ export type PublicProfileRow = {
   service_category: string | null;
   is_store_open: boolean | null;
   subscription_plan: string | null;
+  subscription_status: string | null;
+  subscription_expiry: string | null;
   prestige_weight: number | null;
   follower_count: number | null;
   following_count: number | null;
@@ -75,6 +80,7 @@ export type PublicProfileRow = {
   verification_status: string | null;
   business_verification_status: string | null;
   is_verified: boolean | null;
+  phone_verified: boolean | null;
   is_wardrobe_private: boolean | null;
   public_wardrobe: boolean | null;
   share_online_status: boolean | null;

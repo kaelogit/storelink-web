@@ -373,7 +373,7 @@ export default function SellerAnalyticsClient() {
                 )}
                 {viewerMode === 'hours' && viewers.active_hours.length > 0 ? (
                   <p className="mt-2 text-center text-[10px] text-(--muted)">
-                    {formatHourLabel(viewers.active_hours[0]?.hour || 0)} – {formatHourLabel(viewers.active_hours[viewers.active_hours.length - 1]?.hour || 23)}
+                    {formatHourLabel(viewers.active_hours[0]?.hour || 0)} - {formatHourLabel(viewers.active_hours[viewers.active_hours.length - 1]?.hour || 23)}
                   </p>
                 ) : null}
               </div>

@@ -26,7 +26,7 @@ export type ServiceTrustPaymentSheetProps = {
   onDepositPolicyChange: (value: string) => void;
 };
 
-/** Nested editor for cancellation + deposit — keeps post-service main canvas clean. */
+/** Nested editor for cancellation + deposit - keeps post-service main canvas clean. */
 export function ServiceTrustPaymentSheet({
   open,
   onClose,
@@ -98,7 +98,7 @@ export function ServiceTrustPaymentSheet({
             </label>
             <p className="mt-1 text-xs text-(--muted)">
               Buyers pay this deposit into escrow after you confirm to hold the booking. The balance is
-              due before work can start. You still get paid on start/complete — not when the deposit lands.
+              due before work can start. You still get paid on start/complete, not when the deposit lands.
             </p>
             <label className="mt-3 flex items-center justify-between rounded-2xl border border-(--border) bg-(--surface) px-4 py-3">
               <span className="text-sm font-bold text-(--foreground)">Require a deposit</span>

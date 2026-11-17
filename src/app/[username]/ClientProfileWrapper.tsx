@@ -401,7 +401,11 @@ export default function ClientProfileWrapper({ profile, products, services = [],
             </button>
             <div className="flex min-w-0 items-center gap-1.5">
               <span className="truncate text-base font-black text-(--foreground)">@{profile.slug}</span>
-              {isDiamond ? <Gem size={13} className="shrink-0 text-violet-500" fill="currentColor" /> : null}
+              {isDiamond ? (
+                <button type="button" onClick={() => badgeSheetRef.current?.open('diamond')} aria-label="About Diamond badge">
+                  <Gem size={13} className="shrink-0 text-violet-500" fill="currentColor" />
+                </button>
+              ) : null}
             </div>
             <div className="flex items-center gap-1">
               <button

@@ -512,7 +512,7 @@ export default function AppSellerPostStoryPage() {
         </div>
 
         <p className="mt-2 text-sm text-(--muted)">
-          12-hour story drops — photo, short video (up to {STORY_VIDEO_MAX_SEC}s), or text. Link a catalog item so shoppers can tap through.
+          12-hour story drops with photo, short video (up to {STORY_VIDEO_MAX_SEC}s), or text. Link a catalog item so shoppers can tap through.
         </p>
 
         <div className="mt-5 grid grid-cols-3 gap-2 rounded-2xl border border-(--border) bg-(--surface) p-1.5">
@@ -694,7 +694,7 @@ export default function AppSellerPostStoryPage() {
 
         <div className="mt-4 rounded-2xl border border-amber-300/40 bg-amber-50/70 p-4 text-sm text-amber-950 dark:border-amber-800/50 dark:bg-amber-950/25 dark:text-amber-200">
           <p className="font-black">Stories expire after 12 hours</p>
-          <p className="mt-1 text-xs opacity-90">Same behavior as the mobile app — link stays tappable while the story is live.</p>
+          <p className="mt-1 text-xs opacity-90">Same behavior as the mobile app. The link stays tappable while the story is live.</p>
         </div>
 
         {error ? <p className="mt-4 text-sm font-semibold text-red-500">{error}</p> : null}

@@ -128,7 +128,7 @@ export default function RefundPage() {
         {order && refundTimeline.visible ? <RefundStatusTimelineWeb timeline={refundTimeline} /> : null}
 
         {order ? (
-          <div className="rounded-[20px] border border-(--border) bg-(--surface) p-4">
+          <div className="rounded-sl-2xl border border-(--border) bg-(--surface) p-4">
             <div className="mb-3 flex items-center gap-3">
               <div className="rounded-xl bg-(--background) p-2">
                 <FileText size={18} />
@@ -181,7 +181,7 @@ export default function RefundPage() {
           </div>
         </div>
 
-        <div className="rounded-[20px] border border-(--border) bg-(--card) p-4">
+        <div className="rounded-sl-2xl border border-(--border) bg-(--card) p-4">
           {!orderId ? (
             <p className="mb-3 rounded-xl border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-500">
               Missing order reference. Go back to your orders and retry.
@@ -195,7 +195,7 @@ export default function RefundPage() {
                 type="button"
                 onClick={() => setSelectedIssue(it)}
                 disabled={!eligible}
-                className={`rounded-[14px] border px-3 py-2.5 text-left text-[13px] font-semibold ${
+                className={`rounded-sl-lg border px-3 py-2.5 text-left text-[13px] font-semibold ${
                   selectedIssue === it
                     ? 'border-emerald-600 bg-emerald-500/10 text-emerald-700'
                     : 'border-(--border) bg-(--surface) text-(--foreground)'
@@ -210,13 +210,13 @@ export default function RefundPage() {
             onChange={(e) => setReason(e.target.value)}
             placeholder="Additional notes (optional)"
             disabled={!eligible}
-            className="mt-3 h-24 w-full rounded-[14px] border border-(--border) bg-(--surface) p-3 text-[13px] text-(--foreground) outline-none disabled:opacity-60"
+            className="mt-3 h-24 w-full rounded-sl-lg border border-(--border) bg-(--surface) p-3 text-[13px] text-(--foreground) outline-none disabled:opacity-60"
           />
           <button
             type="button"
             onClick={() => void submit()}
             disabled={busy || !eligible || !orderId}
-            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[16px] bg-red-500 px-4 py-3 text-sm font-black text-white disabled:opacity-50"
+            className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-sl-xl bg-red-500 px-4 py-3 text-sm font-black text-white disabled:opacity-50"
           >
             {busy ? <Loader2 size={16} className="animate-spin" /> : null}
             {busy ? 'Submitting…' : REFUND_REQUEST_COPY.confirmAction}

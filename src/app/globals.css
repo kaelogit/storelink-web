@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* =============================================================================
-   STORELINK WEB — DESIGN TOKENS (aligned with app: Colors.ts, Typography.ts)
+   STORELINK WEB - DESIGN TOKENS (aligned with app: Colors.ts, Typography.ts)
    Single source of truth for color, type, radius, motion. Use these everywhere.
    ============================================================================= */
 
@@ -34,6 +34,11 @@
     --border: #e5e7eb;
     --surface: #f9fafb;
     --card: #ffffff;
+
+    /* ---- App chrome (Colors.ts chip / grouped / iosBlue) ---- */
+    --chip: #f2f2f7;
+    --grouped-background: #f2f2f7;
+    --ios-blue: #007aff;
 
     /* ---- Radius scale (no random values) ---- */
     --radius-sm: 0.375rem;
@@ -73,6 +78,9 @@
     --border: #262626;
     --surface: #111111;
     --card: #111111;
+    --chip: #111111;
+    --grouped-background: #000000;
+    --ios-blue: #0a84ff;
   }
 
   * {
@@ -126,7 +134,28 @@
   scrollbar-width: none;
 }
 
-/* App `(tabs)/profile` nav — Lobster + titleLg (26px), matches mobile `slugHeaderTitle`. */
+@keyframes soft-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.soft-enter {
+  animation: soft-enter 250ms var(--ease-out-expo) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .soft-enter {
+    animation: none !important;
+  }
+}
+
+/* App `(tabs)/profile` nav - Lobster + titleLg (26px), matches mobile `slugHeaderTitle`. */
 .font-app-profile-slug {
   font-family: var(--font-app-profile-slug), ui-serif, Georgia, "Times New Roman", serif;
   font-weight: 400;
@@ -149,15 +178,15 @@
   background: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--border);
   border-radius: 10px;
 }
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: var(--muted);
 }
 
 /* =============================================================================
-   SECTION SYSTEM — Four types only. Use one per section for consistency.
+   SECTION SYSTEM - Four types only. Use one per section for consistency.
    ============================================================================= */
 
 /* ---- Hero: full-bleed dark, glow, grid (home hero, page heroes) ---- */
@@ -308,34 +337,34 @@
 }
 
 /* =============================================================================
-   DARK-MODE COMPATIBILITY LAYER
-   Ensures legacy hardcoded Tailwind slate/white classes remain readable.
+   DARK-MODE COMPATIBILITY (legacy marketing / pre-token classes)
+   Prefer CSS vars in product shell. No !important - tokens win when set.
    ============================================================================= */
 
 .dark .text-black,
 .dark .text-slate-900,
 .dark .text-slate-800,
 .dark .text-slate-700 {
-  color: #f3f4f6 !important;
+  color: var(--foreground);
 }
 
 .dark .text-slate-600,
 .dark .text-slate-500,
 .dark .text-slate-400 {
-  color: var(--muted) !important;
+  color: var(--muted);
 }
 
 .dark .bg-white {
-  background-color: var(--card) !important;
+  background-color: var(--card);
 }
 
 .dark .bg-slate-50,
 .dark .bg-slate-100 {
-  background-color: var(--surface) !important;
+  background-color: var(--surface);
 }
 
 .dark .border-slate-100,
 .dark .border-slate-200,
 .dark .border-slate-300 {
-  border-color: var(--border) !important;
+  border-color: var(--border);
 }

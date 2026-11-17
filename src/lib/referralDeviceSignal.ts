@@ -1,6 +1,6 @@
 /**
  * Lightweight web device signal for referral fraud checks.
- * Not as strong as native install id — still helps catch repeat browsers.
+ * Not as strong as native install id - still helps catch repeat browsers.
  */
 export function getWebReferralDeviceSignal(): {
   fingerprint: string | null;

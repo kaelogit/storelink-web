@@ -102,7 +102,7 @@ export default function SupportHistoryClient() {
         {tickets.map((item) => {
           const badge = statusBadge(item.status);
           const priority = priorityBadge(item.priority);
-          const date = item.updated_at ? new Date(item.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '—';
+          const date = item.updated_at ? new Date(item.updated_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '-';
           return (
             <Link key={item.id} href={wrap(`/app/activity/support-detail?ticketId=${encodeURIComponent(item.id)}`)} className="block rounded-2xl border border-(--border) bg-(--surface) p-4">
               <div className="mb-2 flex items-center justify-between gap-2">

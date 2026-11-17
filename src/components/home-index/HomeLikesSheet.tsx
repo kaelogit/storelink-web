@@ -1,12 +1,12 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
 import { Heart, Sparkles, X } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import { firstNonEmptyId } from '@/lib/firstNonEmptyId';
-import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { toggleFollowRateLimited } from '@/lib/rateLimitedSocial';
+import { Avatar } from '@/components/ui/Avatar';
+import { Sheet } from '@/components/ui/Sheet';
 
 export default function HomeLikesSheet({
   open,
@@ -51,7 +51,7 @@ export default function HomeLikesSheet({
       if (userIds.length > 0) {
         const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, slug, display_name, logo_url')
+          .select('id, slug, display_name, logo_url, subscription_plan')
           .in('id', userIds);
         profileById = new Map((profiles || []).map((p: any) => [p.id, p]));
       }
@@ -167,19 +167,21 @@ export default function HomeLikesSheet({
     onClose();
     window.location.assign(`/${slug}`);
   };
-  if (!open) return null;
+
   return (
-    <div className="fixed inset-0 z-90 bg-black/45 flex items-end sm:items-center sm:justify-center">
-      <button type="button" aria-label="Close likes" className="absolute inset-0" onClick={onClose} />
-      <div className="relative w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl bg-(--card) border border-(--border) max-h-[81vh] overflow-hidden flex flex-col">
-        <div className="py-3">
-          <div className="w-10 h-1 rounded-full bg-(--border) mx-auto" />
-        </div>
+    <>
+      <Sheet
+        open={open}
+        onClose={onClose}
+        titleId="likes-sheet-title"
+        zClassName="z-90"
+        panelClassName="max-h-[81vh] overflow-hidden flex flex-col"
+      >
         <div className="relative border-b border-(--border) pb-3 px-4">
-          <h3 className="text-base font-black text-(--foreground) text-center">
+          <h3 id="likes-sheet-title" className="text-base font-black text-(--foreground) text-center">
             {rows.length} {rows.length === 1 ? 'Like' : 'Likes'}
           </h3>
-          <button type="button" onClick={onClose} className="absolute right-4 top-0 text-(--foreground)">
+          <button type="button" onClick={onClose} className="absolute right-4 top-0 text-(--foreground)" aria-label="Close likes">
             <X size={20} />
           </button>
         </div>
@@ -191,61 +193,60 @@ export default function HomeLikesSheet({
               <p className="text-sm text-(--muted) mt-2">No likes yet</p>
             </div>
           ) : null}
-          {rows.map((row, index) => (
-            <div
-              key={`${row.user_id}-${index}`}
-              onClick={() => openUserProfile(row)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  openUserProfile(row);
-                }
-              }}
-              role="button"
-              tabIndex={0}
-              className="w-full text-left flex items-center gap-3 rounded-xl p-1.5 hover:bg-(--surface) cursor-pointer"
-            >
-              <div className={`relative h-[34px] w-[34px] overflow-hidden rounded-xl border ${String(row.profile?.subscription_plan || '').toLowerCase() === 'diamond' ? 'border-violet-500' : 'border-(--border)'}`}>
-                <Image
-                  src={
-                    normalizeWebMediaUrl(row.profile?.logo_url) ||
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(row.profile?.display_name || row.profile?.slug || 'User')}`
+          {rows.map((row, index) => {
+            const isDiamond = String(row.profile?.subscription_plan || '').toLowerCase() === 'diamond';
+            return (
+              <div
+                key={`${row.user_id}-${index}`}
+                onClick={() => openUserProfile(row)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openUserProfile(row);
                   }
+                }}
+                role="button"
+                tabIndex={0}
+                className="w-full text-left flex items-center gap-3 rounded-xl p-1.5 hover:bg-(--surface) cursor-pointer"
+              >
+                <Avatar
+                  uri={row.profile?.logo_url}
+                  size={34}
+                  isSeller={false}
+                  diamond={isDiamond}
                   alt={row.profile?.display_name || row.profile?.slug || 'User'}
-                  fill
-                  className="object-cover"
-                  unoptimized
                 />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-black text-(--foreground) truncate inline-flex items-center gap-1">
+                    {row.profile?.display_name || 'User'}
+                    {isDiamond ? <Sparkles size={10} className="text-violet-500 fill-violet-500" /> : null}
+                  </p>
+                  <p className="text-xs text-(--muted) truncate">@{row.profile?.slug || 'storelink'}</p>
+                </div>
+                {viewerId && row.user_id !== viewerId ? (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void toggleFollow(row.user_id, row.profile?.slug || row.profile?.display_name || 'user');
+                    }}
+                    disabled={pendingFollowIds.has(row.user_id)}
+                    className={`ml-2 h-8 px-3 rounded-[8px] text-xs font-semibold border ${
+                      followingIds.has(row.user_id)
+                        ? 'bg-(--surface) border-(--border) text-(--foreground)'
+                        : 'bg-(--foreground) border-(--foreground) text-(--background)'
+                    }`}
+                  >
+                    {getFollowLabel(row.user_id)}
+                  </button>
+                ) : null}
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-black text-(--foreground) truncate inline-flex items-center gap-1">
-                  {row.profile?.display_name || 'User'}
-                  {String(row.profile?.subscription_plan || '').toLowerCase() === 'diamond' ? (
-                    <Sparkles size={10} className="text-violet-500 fill-violet-500" />
-                  ) : null}
-                </p>
-                <p className="text-xs text-(--muted) truncate">@{row.profile?.slug || 'storelink'}</p>
-              </div>
-              {viewerId && row.user_id !== viewerId ? (
-                <button
-                  type="button"
-                  onClick={() => toggleFollow(row.user_id, row.profile?.slug || row.profile?.display_name || 'user')}
-                  disabled={pendingFollowIds.has(row.user_id)}
-                  className={`ml-2 h-8 px-3 rounded-[8px] text-xs font-semibold border ${
-                    followingIds.has(row.user_id)
-                      ? 'bg-(--surface) border-(--border) text-(--foreground)'
-                      : 'bg-(--foreground) border-(--foreground) text-(--background)'
-                  }`}
-                >
-                  {getFollowLabel(row.user_id)}
-                </button>
-              ) : null}
-            </div>
-          ))}
+            );
+          })}
         </div>
-      </div>
+      </Sheet>
       {pendingReciprocalUnfollow ? (
-        <div className="absolute inset-0 z-120 flex items-end sm:items-center sm:justify-center bg-black/50">
+        <div className="fixed inset-0 z-[210] flex items-end sm:items-center sm:justify-center bg-black/50">
           <div className="w-full sm:max-w-sm rounded-t-2xl sm:rounded-2xl border border-(--border) bg-(--card) p-4">
             <h4 className="text-sm font-black text-(--foreground)">Unfollow @{pendingReciprocalUnfollow.slug}?</h4>
             <p className="text-xs text-(--muted) mt-1">You follow each other. Unfollowing will remove them from your Following.</p>
@@ -268,7 +269,6 @@ export default function HomeLikesSheet({
           </div>
         </div>
       ) : null}
-    </div>
+    </>
   );
 }
-

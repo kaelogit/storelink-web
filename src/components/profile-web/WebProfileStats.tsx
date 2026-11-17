@@ -82,7 +82,7 @@ function Divider() {
 }
 
 /**
- * Web port of mobile `ProfileStats` — seller vs buyer layouts, service count fetch,
+ * Web port of mobile `ProfileStats` - seller vs buyer layouts, service count fetch,
  * follow counts fetch, wardrobe lock for private collection (non-self), diamond follower tint.
  */
 export default function WebProfileStats({ profileId, profileData, isDiamond }: WebProfileStatsProps) {

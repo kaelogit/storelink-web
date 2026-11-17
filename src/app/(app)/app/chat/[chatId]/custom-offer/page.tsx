@@ -101,7 +101,7 @@ export default function ChatCustomOfferPage() {
       </Link>
       <h1 className="text-2xl font-black text-(--foreground)">Custom offer</h1>
       <p className="mt-2 text-sm text-(--muted)">
-        Send a priced offer in this chat. Buyer can pay before work starts — same escrow as a booking.
+        Send a priced offer in this chat. Buyer can pay before work starts, same escrow as a booking.
       </p>
       <label className="mt-6 block text-[10px] font-black tracking-wide text-(--muted)">
         WHAT IS INCLUDED

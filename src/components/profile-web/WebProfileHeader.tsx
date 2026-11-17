@@ -1,15 +1,14 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
-import { AlertCircle, Clock, MapPin, Sparkles, User } from 'lucide-react';
-import { normalizeWebMediaUrl } from '@/lib/media-url';
+import { useCallback } from 'react';
+import { AlertCircle, Clock, MapPin, Sparkles } from 'lucide-react';
 import { getFollowButtonLabel } from '@/lib/followButtonLabel';
 import { getSellerPlanState, showDiamondBadge as computeDiamondBadge } from '@/lib/sellerStatus';
 import WebProfileBadgesRow from '@/components/profile-web/WebProfileBadgesRow';
 import type { ProfileBadgeKey } from '@/lib/profileBadges';
 import { formatServiceCategoryLabel } from '@/constants/ServiceCategories';
+import { Avatar } from '@/components/ui/Avatar';
 
 /** Mirrors mobile `ProfileHeader` `formatName`. */
 export function formatProfileDisplayName(name?: string | null) {
@@ -47,7 +46,7 @@ function calendarDaysBetween(from: Date, to: Date): number {
 }
 
 /**
- * Web port of mobile `ProfileHeader` — avatar, name, meta, bio, plan countdown (self), action bar.
+ * Web port of mobile `ProfileHeader` - avatar, name, meta, bio, plan countdown (self), action bar.
  */
 export default function WebProfileHeader({
   profileData,
@@ -67,12 +66,6 @@ export default function WebProfileHeader({
   onBadgePress,
   onAboutBadgesPress,
 }: WebProfileHeaderProps) {
-  const [avatarFailed, setAvatarFailed] = useState(false);
-
-  useEffect(() => {
-    setAvatarFailed(false);
-  }, [profileData?.logo_url]);
-
   const toggleBio = useCallback(() => {
     onBioExpandedChange?.(!bioExpanded);
   }, [bioExpanded, onBioExpandedChange]);
@@ -95,7 +88,7 @@ export default function WebProfileHeader({
     if (plan === 'diamond') {
       if (isActuallyExpired) {
         showCountdown = true;
-        countdownLabel = 'Diamond expired - renew';
+        countdownLabel = 'Diamond expired. Renew';
         isUrgent = true;
       } else if (!targetDate) {
         showCountdown = false;
@@ -118,42 +111,23 @@ export default function WebProfileHeader({
 
   const bioText = profileData?.bio || '';
   const shouldTruncate = bioText.length > BIO_THRESHOLD;
-  const avatarUrl =
-    normalizeWebMediaUrl(profileData?.logo_url) ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData?.display_name || 'User')}&background=334155&color=fff`;
 
   return (
     <div className="flex w-full flex-col items-center px-6 pt-2 pb-4">
-      <div className="mb-4 mt-2">
-        <button
-          type="button"
-          className={`relative rounded-[36px] p-0.5 ${isDiamond ? 'border-2 border-violet-500 shadow-lg shadow-violet-500/25' : ''} ${onAvatarPress ? 'cursor-pointer' : 'cursor-default'}`}
+      <div className="relative mb-4 mt-2">
+        <Avatar
+          uri={profileData?.logo_url}
+          size={100}
+          isSeller={isSeller}
+          diamond={isDiamond && !isActuallyExpired}
+          alt={onAvatarPress ? 'View profile photo' : formatProfileDisplayName(profileData?.display_name) || 'Profile'}
           onClick={onAvatarPress}
-          disabled={!onAvatarPress}
-          aria-label={onAvatarPress ? 'View profile photo' : undefined}
-        >
-          <div className="relative h-[100px] w-[100px] overflow-hidden rounded-[30px] bg-(--surface)">
-            {!avatarFailed ? (
-              <Image
-                src={avatarUrl}
-                alt=""
-                fill
-                className="object-cover"
-                unoptimized
-                onError={() => setAvatarFailed(true)}
-              />
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-(--surface)">
-                <User size={44} className="text-(--muted)" strokeWidth={1.5} />
-              </div>
-            )}
+        />
+        {isDiamond && !isActuallyExpired ? (
+          <div className="absolute -bottom-1.5 -right-1.5 rounded-xl border border-(--border) bg-(--card) p-1.5 shadow-sm">
+            <Sparkles size={14} className="text-violet-500" fill="currentColor" />
           </div>
-          {isDiamond && !isActuallyExpired && (
-            <div className="absolute -bottom-1.5 -right-1.5 rounded-xl border border-(--border) bg-(--card) p-1.5 shadow-sm">
-              <Sparkles size={14} className="text-violet-500" fill="currentColor" />
-            </div>
-          )}
-        </button>
+        ) : null}
       </div>
 
       <div className="mb-4 flex w-full max-w-[360px] flex-col items-center">
@@ -163,14 +137,12 @@ export default function WebProfileHeader({
           </h1>
         </div>
 
-        {onBadgePress ? (
-          <WebProfileBadgesRow
-            profile={profileData}
-            isSelf={isSelf}
-            onBadgePress={onBadgePress}
-            onAboutPress={onAboutBadgesPress}
-          />
-        ) : null}
+        <WebProfileBadgesRow
+          profile={profileData}
+          isSelf={isSelf}
+          onBadgePress={onBadgePress}
+          onAboutPress={onAboutBadgesPress}
+        />
 
         {(profileData?.category || profileData?.service_category || profileData?.location_city || profileData?.location_state) && (
           <div className="mb-4 flex flex-wrap items-center justify-center gap-2 opacity-80">

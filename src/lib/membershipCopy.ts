@@ -28,7 +28,7 @@ export const SELLER_STANDARD = {
     'Appear in Home & Explore (baseline discovery; no extra paid boost)',
     'Reels, store stories, flash drops, and loyalty where enabled',
     'Sales tools: dashboard, inventory, and listing management',
-    '4% total fee on completed sales (2.5% platform + 1.5% processing) — only when you sell',
+    '4% total fee on completed sales (2.5% platform + 1.5% processing), only when you sell',
   ] as const,
 } as const;
 
@@ -37,7 +37,7 @@ export const SELLER_DIAMOND = {
   description: 'Standard, plus growth and premium listing tools',
   features: [
     'Everything in Standard',
-    'Diamond profile & product styling (violet halo) — a visible trust & quality signal',
+    'Diamond profile & product styling (violet halo), a visible trust & quality signal',
     'Extra discovery visibility in Home & Explore (placement is algorithmic, not a fixed #1 spot)',
     'Gemini AI product descriptions & AI background cleanup in product studio',
     'Renews on your billing cycle; manage from Membership',
@@ -59,7 +59,7 @@ export const BUYER_DIAMOND = {
   description: 'Stand out, with more reach in Spotlight',
   features: [
     'Everything in Standard',
-    'Diamond badge & halo on your profile — trust and community presence, not just aesthetics',
+    'Diamond badge & halo on your profile, trust and community presence, not just aesthetics',
     'More visibility for your Spotlight content where ranking applies',
     'Sellers can see a Diamond signal on your account in order views',
   ] as const,
@@ -76,8 +76,8 @@ export const SELLER_COMPARISON_ROWS: { label: string; standard: string; diamond:
   { label: 'Price (NGN / month, before term discounts)', standard: 'Free', diamond: `₦${DIAMOND_PRICES_NGN.seller.toLocaleString()}` },
   { label: 'List products & services', standard: 'Included', diamond: 'Included' },
   { label: 'Home & Explore discovery', standard: 'Baseline', diamond: 'Extra visibility (weighted)' },
-  { label: 'Gemini & AI image tools in listing flow', standard: '—', diamond: 'Included' },
-  { label: 'Diamond badge / halo (profile & cards)', standard: '—', diamond: 'Included' },
+  { label: 'Gemini & AI image tools in listing flow', standard: '-', diamond: 'Included' },
+  { label: 'Diamond badge / halo (profile & cards)', standard: '-', diamond: 'Included' },
   { label: 'Identity verified badge (KYC)', standard: 'If you complete verification*', diamond: 'If you complete verification*' },
 ];
 
@@ -85,7 +85,7 @@ export const BUYER_COMPARISON_ROWS: { label: string; standard: string; diamond: 
   { label: 'Price (NGN / month, before term discounts)', standard: 'Free', diamond: `₦${DIAMOND_PRICES_NGN.buyer.toLocaleString()}` },
   { label: 'Shop & use core features', standard: 'Included', diamond: 'Included' },
   { label: 'Spotlight (visibility of your content)', standard: 'Baseline', diamond: 'More visibility (weighted)' },
-  { label: 'Diamond badge & profile halo', standard: '—', diamond: 'Included' },
+  { label: 'Diamond badge & profile halo', standard: '-', diamond: 'Included' },
 ];
 
 export function formatMembershipMoney(amount: number, currencyCode: string) {
@@ -105,7 +105,7 @@ export const BILLING_DURATIONS = [
 ] as const;
 
 /**
- * Diamond total in `currencyCode` (major units) for the term — same formula as the mobile app.
+ * Diamond total in `currencyCode` (major units) for the term - same formula as the mobile app.
  */
 export function calculateDiamondPrice(role: 'seller' | 'buyer', selectedMonths: number, currencyCode = 'NGN') {
   const code = currencyCode.toUpperCase();

@@ -228,7 +228,7 @@ function BookingTimeline({ status }: { status: string }) {
   return (
     <section className="space-y-2">
       <p className="text-[11px] font-bold uppercase tracking-wide text-(--muted)">Status timeline</p>
-      <div className="rounded-[20px] border border-(--border) bg-(--card) p-4">
+      <div className="rounded-sl-2xl border border-(--border) bg-(--card) p-4">
         <div className="space-y-0">
           {TIMELINE_STEPS.map((step, index) => {
             const reached = timelineReached(current, step.key);
@@ -937,7 +937,7 @@ export default function BookingDetailClient() {
       </header>
 
       <div className="space-y-4 px-4 pt-4">
-        <div className="overflow-hidden rounded-[22px] border border-(--border) bg-(--card) shadow-sm">
+        <div className="overflow-hidden rounded-sl-2xl border border-(--border) bg-(--card) shadow-sm">
           {hero ? (
             <div className="relative h-48 w-full">
               <img src={hero} alt="" className="h-full w-full object-cover" />
@@ -974,11 +974,11 @@ export default function BookingDetailClient() {
         </div>
 
         <div className="grid grid-cols-2 gap-2">
-          <div className="rounded-[16px] border border-(--border) bg-(--surface) p-3">
+          <div className="rounded-sl-xl border border-(--border) bg-(--surface) p-3">
             <p className="text-[10px] font-bold uppercase tracking-wide text-(--muted)">Schedule</p>
             <p className="mt-1 truncate text-xs font-black text-(--foreground)">{when}</p>
           </div>
-          <div className={`rounded-[16px] border p-3 ${meta.bg} border-(--border)`}>
+          <div className={`rounded-sl-xl border p-3 ${meta.bg} border-(--border)`}>
             <p className={`text-[10px] font-bold uppercase tracking-wide ${meta.text}`}>Status</p>
             <p className={`mt-1 truncate text-xs font-black ${meta.text}`}>{meta.label}</p>
           </div>
@@ -992,7 +992,7 @@ export default function BookingDetailClient() {
         ) : null}
 
         {booking?.payment_state === 'deposit_paid' && status === 'confirmed' && isBuyer ? (
-          <div className="flex gap-2 rounded-[16px] border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-800">
+          <div className="flex gap-2 rounded-sl-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm text-emerald-800">
             <Lock size={18} className="shrink-0" />
             <p>{balanceDueBannerCopy('buyer')}</p>
           </div>
@@ -1025,7 +1025,7 @@ export default function BookingDetailClient() {
               <Lock size={12} />
               Payment preview
             </div>
-            <div className="rounded-[20px] border border-(--border) bg-(--surface) p-4 space-y-2">
+            <div className="rounded-sl-2xl border border-(--border) bg-(--surface) p-4 space-y-2">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-(--muted)">Service total</span>
                 <span className="font-black text-(--foreground)">{moneyMajor(subtotalMajor, currency)}</span>
@@ -1124,8 +1124,8 @@ export default function BookingDetailClient() {
             <CircleUserRound size={12} />
             {isBuyer ? 'Provider' : 'Buyer'}
           </div>
-          <div className="flex items-center gap-3 rounded-[20px] border border-(--border) bg-(--surface) p-3">
-            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-[14px] border border-(--border)">
+          <div className="flex items-center gap-3 rounded-sl-2xl border border-(--border) bg-(--surface) p-3">
+            <div className="h-12 w-12 shrink-0 overflow-hidden rounded-sl-lg border border-(--border)">
               {logo ? <img src={logo} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center"><User size={20} className="text-(--muted)" /></div>}
             </div>
             <div className="min-w-0 flex-1">
@@ -1161,9 +1161,9 @@ export default function BookingDetailClient() {
               </button>
             ) : null}
           </div>
-          <div className="rounded-[20px] border border-(--border) bg-(--surface) p-4">
+          <div className="rounded-sl-2xl border border-(--border) bg-(--surface) p-4">
             <p className="text-sm font-black text-(--foreground)">{when}</p>
-            <p className="mt-1 text-xs text-(--muted)">Local time — both parties see this in their own timezone.</p>
+            <p className="mt-1 text-xs text-(--muted)">Local time. Both parties see this in their own timezone.</p>
           </div>
         </section>
 
@@ -1172,7 +1172,7 @@ export default function BookingDetailClient() {
             <Timer size={12} />
             Escrow &amp; payout
           </div>
-          <div className="rounded-[20px] border border-(--border) bg-(--surface) p-4 text-sm text-(--muted) leading-relaxed">
+          <div className="rounded-sl-2xl border border-(--border) bg-(--surface) p-4 text-sm text-(--muted) leading-relaxed">
             <p className="font-black text-(--foreground)">{moneyFromMinor(heroPriceMinor, currency)}</p>
             <p className="mt-2">
               About 30% is queued when the seller marks the job as started; the rest when the buyer marks it completed. Transfers are automatic and may take a short time to reach
@@ -1193,7 +1193,7 @@ export default function BookingDetailClient() {
           clawbackDebt ? (
             <ClawbackExplanationCard debt={clawbackDebt} variant="compact" showRepayAction={clawbackDebt.status === 'open'} />
           ) : (
-            <div className="flex gap-2 rounded-[16px] border border-red-500/30 bg-red-500/10 p-3 text-sm text-(--foreground)">
+            <div className="flex gap-2 rounded-sl-xl border border-red-500/30 bg-red-500/10 p-3 text-sm text-(--foreground)">
               <ShieldAlert size={18} className="shrink-0 text-red-500" />
               <p>
                 This booking is {status === 'disputed' ? 'currently in dispute' : 'already refunded after a dispute'}. Our
@@ -1213,7 +1213,7 @@ export default function BookingDetailClient() {
               </div>
               <span className="rounded-full bg-violet-500/15 px-2 py-0.5 text-[10px] font-black text-violet-600">From chat</span>
             </div>
-            <div className="rounded-[20px] border border-(--border) bg-(--surface) p-4 text-sm text-(--foreground)">
+            <div className="rounded-sl-2xl border border-(--border) bg-(--surface) p-4 text-sm text-(--foreground)">
               {booking.custom_description || 'Custom project agreed between you and the provider.'}
             </div>
           </section>
@@ -1222,7 +1222,7 @@ export default function BookingDetailClient() {
         {(listing?.service_address || (listing?.service_areas && listing.service_areas.length > 0)) ? (
           <section className="space-y-2">
             <p className="text-[11px] font-bold uppercase tracking-wide text-(--muted)">Location</p>
-            <div className="rounded-[20px] border border-(--border) bg-(--surface) p-4 text-sm text-(--foreground)">
+            <div className="rounded-sl-2xl border border-(--border) bg-(--surface) p-4 text-sm text-(--foreground)">
               {listing?.service_address ? <p className="font-semibold">{listing.service_address}</p> : null}
               {listing?.service_areas && listing.service_areas.length > 0 ? (
                 <p className={`text-(--muted) ${listing?.service_address ? 'mt-2' : ''}`}>Areas: {listing.service_areas.join(', ')}</p>
@@ -1235,7 +1235,7 @@ export default function BookingDetailClient() {
           String(listing?.deposit_policy || '').trim()) ? (
           <section className="space-y-2">
             <p className="text-[11px] font-bold uppercase tracking-wide text-(--muted)">Seller policies</p>
-            <div className="rounded-[20px] border border-(--border) bg-(--surface) p-4 text-sm text-(--foreground) space-y-3">
+            <div className="rounded-sl-2xl border border-(--border) bg-(--surface) p-4 text-sm text-(--foreground) space-y-3">
               {String(listing?.cancellation_policy || '').trim() ? (
                 <div>
                   <p className="text-xs font-black">Cancellation</p>
@@ -1259,14 +1259,14 @@ export default function BookingDetailClient() {
         {booking.notes ? (
           <section className="space-y-2">
             <p className="text-[11px] font-bold uppercase tracking-wide text-(--muted)">Notes</p>
-            <div className="rounded-[20px] border border-(--border) bg-(--surface) p-4 text-sm text-(--foreground)">{booking.notes}</div>
+            <div className="rounded-sl-2xl border border-(--border) bg-(--surface) p-4 text-sm text-(--foreground)">{booking.notes}</div>
           </section>
         ) : null}
 
         {isBuyer && status === 'completed' ? (
           <section className="space-y-2">
             <p className="text-[11px] font-bold uppercase tracking-wide text-(--muted)">Rebook reminder</p>
-            <div className="rounded-[20px] border border-(--border) bg-(--surface) p-4">
+            <div className="rounded-sl-2xl border border-(--border) bg-(--surface) p-4">
               <p className="text-sm font-black text-(--foreground)">Book this provider again</p>
               <p className="mt-1 text-xs text-(--muted)">We&apos;ll nudge you when it&apos;s time for a refresh.</p>
               <div className="mt-3 flex flex-wrap gap-2">
@@ -1287,7 +1287,7 @@ export default function BookingDetailClient() {
         ) : null}
 
         {isSeller && status === 'confirmed' ? (
-          <div className="flex gap-2 rounded-[16px] border border-(--border) bg-(--surface) p-3 text-sm text-(--muted)">
+          <div className="flex gap-2 rounded-sl-xl border border-(--border) bg-(--surface) p-3 text-sm text-(--muted)">
             <Lock size={18} className="shrink-0" />
             <p>
               {booking?.payment_state === 'deposit_paid'
@@ -1298,7 +1298,7 @@ export default function BookingDetailClient() {
         ) : null}
 
         {isSeller && status === 'in_progress' ? (
-          <div className="flex gap-2 rounded-[16px] border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-(--foreground)">
+          <div className="flex gap-2 rounded-sl-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-(--foreground)">
             <Clock size={18} className="shrink-0 text-amber-600" />
             <p>
               Waiting for the buyer to confirm the work is done. The remaining escrow releases when they tap{' '}
@@ -1308,7 +1308,7 @@ export default function BookingDetailClient() {
         ) : null}
 
         {isBuyer && status === 'confirmed' && linkedOrderStatus === 'paid_or_beyond' ? (
-          <div className="flex gap-2 rounded-[16px] border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm font-semibold text-emerald-700">
+          <div className="flex gap-2 rounded-sl-xl border border-emerald-500/30 bg-emerald-500/10 p-3 text-sm font-semibold text-emerald-700">
             <CheckCircle2 size={18} className="shrink-0" />
             Payment received. Syncing booking status…
           </div>
@@ -1317,7 +1317,7 @@ export default function BookingDetailClient() {
         {canReportIssue ? (
           <Link
             href={`/app/bookings/dispute?serviceOrderId=${encodeURIComponent(booking.id)}`}
-            className="block w-full rounded-[16px] border border-(--border) bg-(--surface) py-3 text-center text-sm font-black text-(--foreground)"
+            className="block w-full rounded-sl-xl border border-(--border) bg-(--surface) py-3 text-center text-sm font-black text-(--foreground)"
           >
             Report an issue
           </Link>
@@ -1330,7 +1330,7 @@ export default function BookingDetailClient() {
           {canSellerRevisePrice ? (
             <Link
               href={`/app/bookings/revise-price?serviceOrderId=${encodeURIComponent(booking!.id)}`}
-              className="flex w-full items-center justify-center gap-2 rounded-[16px] border border-(--border) bg-(--surface) py-3 text-sm font-black text-(--foreground)"
+              className="flex w-full items-center justify-center gap-2 rounded-sl-xl border border-(--border) bg-(--surface) py-3 text-sm font-black text-(--foreground)"
             >
               <Pencil size={16} /> Update price
             </Link>
@@ -1349,7 +1349,7 @@ export default function BookingDetailClient() {
                 if (!window.confirm(msg)) return;
                 void runStatusChange('cancelled');
               }}
-              className="w-full rounded-[16px] border border-(--border) bg-(--surface) py-3 text-sm font-black text-(--foreground) disabled:opacity-50"
+              className="w-full rounded-sl-xl border border-(--border) bg-(--surface) py-3 text-sm font-black text-(--foreground) disabled:opacity-50"
             >
               {isSeller && status === 'requested' ? 'Decline request' : 'Cancel booking'}
             </button>
@@ -1360,7 +1360,7 @@ export default function BookingDetailClient() {
               type="button"
               disabled={busy}
               onClick={() => openSchedule('confirm')}
-              className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-(--foreground) py-3 text-sm font-black text-(--background) disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-sl-xl bg-(--foreground) py-3 text-sm font-black text-(--background) disabled:opacity-50"
             >
               <CheckCircle2 size={18} /> Confirm booking
             </button>
@@ -1377,7 +1377,7 @@ export default function BookingDetailClient() {
                 if (!ok) return;
                 void runStatusChange('in_progress');
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-emerald-600 py-3 text-sm font-black text-white disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-sl-xl bg-emerald-600 py-3 text-sm font-black text-white disabled:opacity-50"
             >
               <Clock size={18} /> Confirm job started
             </button>
@@ -1394,7 +1394,7 @@ export default function BookingDetailClient() {
                 if (!ok) return;
                 void runStatusChange('completed');
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-emerald-600 py-3 text-sm font-black text-white disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-sl-xl bg-emerald-600 py-3 text-sm font-black text-white disabled:opacity-50"
             >
               <CheckCircle2 size={18} /> Confirm work completed
             </button>
@@ -1405,7 +1405,7 @@ export default function BookingDetailClient() {
               type="button"
               disabled={busy || payCreating}
               onClick={() => void handlePayNow()}
-              className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-emerald-600 py-3 text-sm font-black text-white disabled:opacity-50"
+              className="flex w-full items-center justify-center gap-2 rounded-sl-xl bg-emerald-600 py-3 text-sm font-black text-white disabled:opacity-50"
             >
               <CreditCard size={18} /> {payCreating ? '…' : payCtaLabelForLeg(activePaymentLeg || payLegHint)}
             </button>
@@ -1416,20 +1416,20 @@ export default function BookingDetailClient() {
 
       {scheduleOpen ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
-          <div className="w-full max-w-md rounded-[20px] border border-(--border) bg-(--card) p-5 shadow-xl">
+          <div className="w-full max-w-md rounded-sl-2xl border border-(--border) bg-(--card) p-5 shadow-xl">
             <h3 className="text-lg font-black text-(--foreground)">{scheduleMode === 'reschedule' ? 'Reschedule' : 'Confirm time'}</h3>
             <p className="mt-1 text-sm text-(--muted)">Pick a future date and time for this booking.</p>
             <input
               type="datetime-local"
               value={scheduleInput}
               onChange={(e) => setScheduleInput(e.target.value)}
-              className="mt-4 w-full rounded-[14px] border border-(--border) bg-(--surface) px-3 py-2 text-sm text-(--foreground)"
+              className="mt-4 w-full rounded-sl-lg border border-(--border) bg-(--surface) px-3 py-2 text-sm text-(--foreground)"
             />
             <div className="mt-4 flex justify-end gap-2">
-              <button type="button" onClick={() => setScheduleOpen(false)} className="rounded-[14px] px-4 py-2 text-sm font-bold text-(--foreground)">
+              <button type="button" onClick={() => setScheduleOpen(false)} className="rounded-sl-lg px-4 py-2 text-sm font-bold text-(--foreground)">
                 Close
               </button>
-              <button type="button" disabled={busy} onClick={() => void submitSchedule()} className="rounded-[14px] bg-emerald-600 px-4 py-2 text-sm font-black text-white disabled:opacity-50">
+              <button type="button" disabled={busy} onClick={() => void submitSchedule()} className="rounded-sl-lg bg-emerald-600 px-4 py-2 text-sm font-black text-white disabled:opacity-50">
                 Save
               </button>
             </div>

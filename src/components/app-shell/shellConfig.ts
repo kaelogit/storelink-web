@@ -20,7 +20,7 @@ export type ShellNavItem = {
   icon: LucideIcon;
 };
 
-/** Search is a screen (`/app/search`), not a tab — same as mobile. */
+/** Search is a screen (`/app/search`), not a tab - same as mobile. */
 export const SEARCH_HREF = '/app/search';
 
 export const primaryNavItems: ShellNavItem[] = [

@@ -1,13 +1,12 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Play, Plus } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createBrowserClient } from '@/lib/supabase';
 import { fetchDiscoveryStoriesFlat } from '@/lib/discovery-stories';
-import { normalizeWebMediaUrl } from '@/lib/media-url';
+import { Avatar } from '@/components/ui/Avatar';
 
 const GRAY_RING_HIDE_AFTER_MS = 15 * 60 * 1000;
 
@@ -203,9 +202,7 @@ export default function StoryRowWeb({ seed }: { seed: string; compact?: boolean 
 
   if (stories.length === 0 && !isSeller) return null;
 
-  const leadAvatarSrc =
-    normalizeWebMediaUrl(myStory?.logo_url || profileLogo) ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(myStory?.display_name || profileName || 'You')}`;
+  const leadAvatarUri = myStory?.logo_url || profileLogo || null;
 
   return (
     <div className="border-b border-(--border) bg-(--background) pb-0 pt-0.5">
@@ -237,13 +234,11 @@ export default function StoryRowWeb({ seed }: { seed: string; compact?: boolean 
                   }}
                 >
                   <div className="relative box-border flex h-[62px] w-[62px] shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-(--background)">
-                    <Image
-                      src={leadAvatarSrc}
-                      alt=""
-                      width={56}
-                      height={56}
-                      className="block h-14 w-14 shrink-0 rounded-[16px] object-cover"
-                      unoptimized
+                    <Avatar
+                      uri={leadAvatarUri}
+                      size={56}
+                      isSeller
+                      alt={myStory?.display_name || profileName || 'You'}
                     />
                     {myStory.has_video ? (
                       <span className="pointer-events-none absolute bottom-0.5 right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-white/30 bg-black">
@@ -256,13 +251,11 @@ export default function StoryRowWeb({ seed }: { seed: string; compact?: boolean 
                 <>
                   <div className="box-border flex h-full w-full items-center justify-center rounded-[20px] border-2 border-dashed border-(--muted)/50 p-[2px]">
                     <div className="relative box-border flex h-[62px] w-[62px] shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-(--surface)">
-                      <Image
-                        src={leadAvatarSrc}
-                        alt=""
-                        width={56}
-                        height={56}
-                        className="block h-14 w-14 shrink-0 rounded-[16px] object-cover"
-                        unoptimized
+                      <Avatar
+                        uri={leadAvatarUri}
+                        size={56}
+                        isSeller
+                        alt={profileName || 'You'}
                       />
                     </div>
                   </div>
@@ -305,16 +298,11 @@ export default function StoryRowWeb({ seed }: { seed: string; compact?: boolean 
                   }}
                 >
                   <div className="relative box-border flex h-[62px] w-[62px] shrink-0 items-center justify-center overflow-hidden rounded-[18px] bg-(--background)">
-                    <Image
-                      src={
-                        normalizeWebMediaUrl(story.logo_url) ||
-                        `https://ui-avatars.com/api/?name=${encodeURIComponent(story.display_name || 'Store')}`
-                      }
-                      alt=""
-                      width={56}
-                      height={56}
-                      className="block h-14 w-14 shrink-0 rounded-[16px] object-cover"
-                      unoptimized
+                    <Avatar
+                      uri={story.logo_url}
+                      size={56}
+                      isSeller
+                      alt={story.display_name || 'Store'}
                     />
                     {story.has_video ? (
                       <span className="pointer-events-none absolute bottom-0.5 right-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full border border-white/30 bg-black">

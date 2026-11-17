@@ -1,5 +1,5 @@
 /**
- * Discover tab — ranking & layout policy (keep in sync with store-link-mobile).
+ * Discover tab - ranking & layout policy (keep in sync with store-link-mobile).
  *
  * Diamond cap: max share of tiles on one screen that may receive a diamond-plan
  * layout boost. Paid members should win visibility, but capping avoids an ad-only grid.

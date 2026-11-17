@@ -7,7 +7,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return buildStoryShareMetadata(id);
 }
 
-/** Universal / shared link — same OG as `/app/story-viewer/...`, then send users into the app shell viewer. */
+/** Universal / shared link - same OG as `/app/story-viewer/...`, then send users into the app shell viewer. */
 export default async function PublicStoryViewerRedirect({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const raw = String(id || '').trim();

@@ -231,7 +231,7 @@ export default function AppSpotlightPostPage() {
             <div className="mt-3 rounded-2xl border border-violet-200/90 bg-violet-50/90 p-4 dark:border-violet-800/60 dark:bg-violet-950/35">
               <p className="text-sm font-bold text-(--foreground)">No sellers to tag yet</p>
               <p className="mt-2 text-sm leading-relaxed text-(--muted)">
-                Spotlights are for stores you have already bought from or booked with—after checkout completes, they appear here so you can tag them. Explore products or services and come back once you have a completed order or booking.
+                Spotlights are for stores you have already bought from or booked with-after checkout completes, they appear here so you can tag them. Explore products or services and come back once you have a completed order or booking.
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 <Link

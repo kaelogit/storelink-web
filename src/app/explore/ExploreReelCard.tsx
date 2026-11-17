@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Bookmark, Coins, Eye, Heart, MessageCircle, Music, Pause, Play, Share2, ShoppingBag, Sparkles, Volume2, VolumeX, Wrench, Zap } from 'lucide-react';
+import { ICON_SIZE, ICON_STROKE } from '@/lib/iconChrome';
 import { createBrowserClient } from '@/lib/supabase';
 import HomeCommentsSheet from '@/components/home-index/HomeCommentsSheet';
 import HomeLikesSheet from '@/components/home-index/HomeLikesSheet';
@@ -22,6 +23,7 @@ import AdaptiveVideo from '@/components/media/AdaptiveVideo';
 import { logAdClick, logAdImpression } from '@/lib/adDeliveryLogging';
 import { useWhyThisAdStore } from '@/store/useWhyThisAdStore';
 import { defaultFulfillmentMode } from '@/lib/verticalCheckout';
+import { Avatar } from '@/components/ui/Avatar';
 
 function sellerIdFromReelItem(item: any): string {
   const flat = item?.seller_id;
@@ -235,9 +237,6 @@ export default function ExploreReelCard({
       : `/${encodeURIComponent(sellerSlug)}`
     : null;
   const sellerDisplayName = String(posterProfile?.display_name || 'Store').toUpperCase();
-  const sellerLogo =
-    normalizeWebMediaUrl(posterProfile?.logo_url) ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(posterProfile?.display_name || 'Store')}`;
   const serviceMedia = current?.service?.media;
   const serviceThumb = Array.isArray(serviceMedia)
     ? (typeof serviceMedia[0] === 'string' ? serviceMedia[0] : serviceMedia?.[0]?.url)
@@ -432,10 +431,10 @@ export default function ExploreReelCard({
       ]);
       setCurrent((prev: any) => ({
         ...prev,
-        likes_count: Number(likesRes.count || 0),
-        comments_count: Number(commentsRes.count || 0),
-        comment_count: Number(commentsRes.count || 0),
-        wishlist_count: Number(wishlistRes.count || 0),
+        likes_count: Math.max(Number(prev?.likes_count || 0), Number(likesRes.count || 0)),
+        comments_count: Math.max(Number(prev?.comments_count ?? prev?.comment_count ?? 0), Number(commentsRes.count || 0)),
+        comment_count: Math.max(Number(prev?.comment_count ?? prev?.comments_count ?? 0), Number(commentsRes.count || 0)),
+        wishlist_count: Math.max(Number(prev?.wishlist_count || 0), Number(wishlistRes.count || 0)),
         is_liked: Boolean((likedRes as any).data),
         is_wishlisted: Boolean((wishRes as any).data),
       }));
@@ -454,10 +453,10 @@ export default function ExploreReelCard({
     ]);
     setCurrent((prev: any) => ({
       ...prev,
-      likes_count: Number(likesRes.count || 0),
-      comments_count: Number(commentsRes.count || 0),
-      comment_count: Number(commentsRes.count || 0),
-      wishlist_count: Number(wishlistRes.count || 0),
+      likes_count: Math.max(Number(prev?.likes_count || 0), Number(likesRes.count || 0)),
+      comments_count: Math.max(Number(prev?.comments_count ?? prev?.comment_count ?? 0), Number(commentsRes.count || 0)),
+      comment_count: Math.max(Number(prev?.comment_count ?? prev?.comments_count ?? 0), Number(commentsRes.count || 0)),
+      wishlist_count: Math.max(Number(prev?.wishlist_count || 0), Number(wishlistRes.count || 0)),
       is_liked: Boolean((likedRes as any).data),
       is_wishlisted: Boolean((wishRes as any).data),
     }));
@@ -1017,8 +1016,11 @@ export default function ExploreReelCard({
 
   return (
     <>
-      <article ref={cardRef as any} className={`relative mx-auto mb-4 w-full max-w-md overflow-hidden rounded-3xl border border-(--border) bg-black ${className}`}>
-        <div className="relative aspect-9/16 w-full h-full min-h-[560px]">
+      <article
+        ref={cardRef as any}
+        className={`relative mx-auto w-full overflow-hidden bg-black max-md:mb-0 max-md:min-h-[100dvh] max-md:max-w-none max-md:rounded-none max-md:border-0 md:mb-4 md:max-w-md md:rounded-sl-3xl md:border md:border-(--border) ${className}`}
+      >
+        <div className="relative aspect-9/16 h-full w-full min-h-[560px] max-md:min-h-[100dvh] max-md:aspect-auto">
           {videoSrc ? (
             <AdaptiveVideo
               key={videoSrc}
@@ -1090,9 +1092,14 @@ export default function ExploreReelCard({
             <div className="pr-[68px]">
               {sellerProfileHref ? (
               <Link href={sellerProfileHref} className="mb-1 inline-flex max-w-full items-center gap-2.5">
-                <div className={`relative h-10 w-10 overflow-hidden rounded-[16px] border-[1.5px] ${isDiamond ? 'border-violet-500' : 'border-white'}`}>
-                  <Image src={sellerLogo} alt="" fill className="object-cover" unoptimized />
-                </div>
+                <Avatar
+                  uri={posterProfile?.logo_url}
+                  size={40}
+                  isSeller
+                  diamond={isDiamond}
+                  alt={sellerDisplayName}
+                  className={isDiamond ? '' : 'border-[1.5px] border-white'}
+                />
                 <div className="min-w-0">
                   <p className="truncate text-[13px] font-black leading-[1.05] tracking-[0.015em] text-white">{sellerDisplayName}</p>
                   <p className="mt-[2px] flex items-center gap-1 truncate text-[11px] font-semibold leading-none text-white/80">
@@ -1103,9 +1110,14 @@ export default function ExploreReelCard({
               </Link>
               ) : (
               <div className="mb-1 inline-flex max-w-full items-center gap-2.5">
-                <div className={`relative h-10 w-10 overflow-hidden rounded-[16px] border-[1.5px] ${isDiamond ? 'border-violet-500' : 'border-white'}`}>
-                  <Image src={sellerLogo} alt="" fill className="object-cover" unoptimized />
-                </div>
+                <Avatar
+                  uri={posterProfile?.logo_url}
+                  size={40}
+                  isSeller
+                  diamond={isDiamond}
+                  alt={sellerDisplayName}
+                  className={isDiamond ? '' : 'border-[1.5px] border-white'}
+                />
                 <div className="min-w-0">
                   <p className="truncate text-[13px] font-black leading-[1.05] tracking-[0.015em] text-white">{sellerDisplayName}</p>
                 </div>
@@ -1262,7 +1274,11 @@ export default function ExploreReelCard({
             <div className="absolute right-0 bottom-3 flex shrink-0 flex-col items-center gap-2.5">
               <div className="flex flex-col items-center text-white">
                 <button type="button" onClick={() => void handleToggleLike()} aria-label="Like">
-                  <Heart size={22} className={(spotlightLiveLiked ?? current?.is_liked) ? 'fill-emerald-500 text-emerald-500' : ''} />
+                  <Heart
+                    size={ICON_SIZE.rail}
+                    strokeWidth={ICON_STROKE.reelRail}
+                    className={(spotlightLiveLiked ?? current?.is_liked) ? 'fill-emerald-500 text-emerald-500' : ''}
+                  />
                 </button>
                 <button type="button" className="text-[10px] font-bold" onClick={() => setLikesOpen(true)} aria-label="Open likes">
                   {likesCount}
@@ -1279,7 +1295,7 @@ export default function ExploreReelCard({
                   setCommentsOpen(true);
                 }}
               >
-                <MessageCircle size={22} />
+                <MessageCircle size={ICON_SIZE.rail} strokeWidth={ICON_STROKE.reelRail} />
                 <span className="text-[10px] font-bold">{commentCount}</span>
               </button>
               {!isSpotlight ? (
@@ -1336,15 +1352,23 @@ export default function ExploreReelCard({
                     }
                   }}
                 >
-                  {isService ? <Wrench size={18} /> : <ShoppingBag size={18} />}
+                  {isService ? (
+                    <Wrench size={ICON_SIZE.bag} strokeWidth={ICON_STROKE.reelBag} />
+                  ) : (
+                    <ShoppingBag size={ICON_SIZE.bag} strokeWidth={ICON_STROKE.reelBag} />
+                  )}
                 </button>
               ) : null}
               <button type="button" className="flex items-center justify-center text-white" onClick={() => void handleShare()}>
-                <Share2 size={22} />
+                <Share2 size={ICON_SIZE.rail} strokeWidth={ICON_STROKE.reelRail} />
               </button>
               {!isSpotlight ? (
                 <button type="button" className="flex flex-col items-center text-white" onClick={() => void handleToggleWishlist()}>
-                  <Bookmark size={21} className={current?.is_wishlisted ? 'fill-emerald-500 text-emerald-500' : ''} />
+                  <Bookmark
+                    size={ICON_SIZE.rail}
+                    strokeWidth={ICON_STROKE.reelRail}
+                    className={current?.is_wishlisted ? 'fill-emerald-500 text-emerald-500' : ''}
+                  />
                   <span className="text-[10px] font-bold">{wishlistCount}</span>
                 </button>
               ) : null}

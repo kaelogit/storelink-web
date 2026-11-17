@@ -26,6 +26,7 @@ import { useAdImpression } from '@/lib/useAdImpression';
 import { useWhyThisAdStore } from '@/store/useWhyThisAdStore';
 import { serviceDeliveryBadgeFromTypes } from '@/lib/verticalFulfillmentCopy';
 import { defaultFulfillmentMode } from '@/lib/verticalCheckout';
+import { Avatar } from '@/components/ui/Avatar';
 
 // --- HELPER 1: CURRENCY FORMATTER ---
 const formatMoney = (amount: number, currency: string) => {
@@ -105,9 +106,6 @@ export default function WebProductCard({
   const videoUrl = normalizeWebMediaUrl(item.video_url || item.video_url_720 || item.media_url);
   const isVideoCard = Boolean(videoUrl) && !isService;
   const isDiamond = String(item.seller?.subscription_plan || '').toLowerCase() === 'diamond';
-  const sellerLogoSrc =
-    normalizeWebMediaUrl(item.seller?.logo_url) ||
-    `https://ui-avatars.com/api/?name=${encodeURIComponent(item.seller?.display_name || 'Store')}`;
   const description = item.description || "";
   const isLongDescription = description.length > 90;
   const sellerCity = item?.seller?.location_city;
@@ -263,21 +261,18 @@ export default function WebProductCard({
   };
 
   return (
-    <div ref={impressionRef} className="bg-(--card) p-4 mb-4 rounded-none md:rounded-3xl border-b md:border border-(--border) md:shadow-sm">
+    <div ref={impressionRef} className="mb-4 border-b border-(--border) bg-(--card) p-4 md:rounded-sl-2xl md:border md:shadow-none">
       
-      {/* 🏛️ TOP SECTION: SELLER INFO */}
-      <div className="flex mb-3">
-        {/* Sidebar: Logo */}
-        <div className="w-[44px] shrink-0 flex flex-col items-center">
-           <Link href={`${isAppMode ? '/app/profile/' : '/'}${item.seller?.slug}`} className={`w-[34px] h-[34px] rounded-xl border-[1.5px] overflow-hidden relative ${isDiamond ? 'border-violet-500 ring-2 ring-violet-500/20' : 'border-(--border)'}`}>
-              <Image 
-                src={sellerLogoSrc} 
-                alt="Seller" 
-                fill 
-                className="object-cover"
-                sizes="34px"
-                loading="lazy"
-                unoptimized={true}
+      {/* TOP SECTION: SELLER INFO */}
+      <div className="mb-3 flex">
+        <div className="flex w-11 shrink-0 flex-col items-center">
+           <Link href={`${isAppMode ? '/app/profile/' : '/'}${item.seller?.slug}`} className="relative">
+              <Avatar
+                uri={item.seller?.logo_url}
+                size={34}
+                isSeller
+                diamond={isDiamond}
+                alt={item.seller?.display_name || 'Seller'}
               />
            </Link>
         </div>
@@ -290,6 +285,15 @@ export default function WebProductCard({
                     {item.seller?.display_name || 'Store'}
                  </h3>
                  {isDiamond && <Gem size={12} className="text-violet-500 fill-violet-500" />}
+                 {item.seller?.slug ? (
+                   <Link
+                     href={`${isAppMode ? '/app/profile/' : '/'}${item.seller.slug}`}
+                     className="inline-flex shrink-0 items-center rounded-full border border-(--border) px-2.5 py-0.5 text-[11px] font-black tracking-wide text-(--foreground) hover:bg-(--surface)"
+                     aria-label={`Follow ${item.seller?.display_name || 'store'}`}
+                   >
+                     Follow
+                   </Link>
+                 ) : null}
               </div>
               <div className="flex items-center gap-1">
                  <span className="text-[11px] font-bold text-(--muted)">@{item.seller?.slug}</span>
@@ -434,7 +438,7 @@ export default function WebProductCard({
         <div className="flex-1 ml-3">
            
            {/* Visual Hub (Carousel) */}
-           <div className={`relative aspect-4/5 w-full bg-(--surface) rounded-[24px] overflow-hidden border-[1.5px] border-(--border) mb-3 group ${isDiamond ? 'border-violet-200 dark:border-violet-800' : ''}`}>
+           <div className={`relative aspect-4/5 w-full bg-(--surface) rounded-sl-2xl overflow-hidden border-[1.5px] border-(--border) mb-3 group ${isDiamond ? 'border-violet-200 dark:border-violet-800' : ''}`}>
               
               {isVideoCard ? (
                 <Link href={detailHref} onClick={logSponsoredListingClick} className="block h-full w-full relative">
@@ -501,17 +505,15 @@ export default function WebProductCard({
               <div className="flex items-center gap-2 mb-2">
                  <div className="flex -space-x-2">
                     {item.latest_likers?.slice(0, 3).map((liker: any, i: number) => (
-                       <div key={i} className="w-4 h-4 rounded-full border border-white overflow-hidden relative z-3 first:z-4">
-                          <Image 
-                            src={
-                              normalizeWebMediaUrl(liker.logo_url) ||
-                              `https://ui-avatars.com/api/?name=${encodeURIComponent(liker.slug || 'user')}`
-                            } 
-                            alt="Liker" 
-                            fill 
-                            unoptimized={true} // 👈 ADDED HERE
-                          />
-                       </div>
+                       <Avatar
+                         key={i}
+                         uri={liker.logo_url}
+                         size={16}
+                         isSeller={false}
+                         shape="circle"
+                         alt={liker.slug || 'Liker'}
+                         className="relative z-3 border border-white first:z-4"
+                       />
                     ))}
                  </div>
                  <p className="text-[11px] font-medium text-(--foreground) cursor-pointer" onClick={handleLikes}>

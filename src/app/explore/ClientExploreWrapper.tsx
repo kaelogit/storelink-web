@@ -7,6 +7,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Search, Zap, X, Layers, Shirt, Smartphone, Sparkles, Home, Activity, Wrench, Building2, Car, Utensils, Calendar, Gem, ArrowRight, Smartphone as PhoneIcon } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import { guestSignInHref } from '@/lib/guestAppRoutes';
+import { EmptyState } from '@/components/ui/EmptyState';
 import AppTrapModal from '../../components/ui/DownloadTrap';
 const StoryRowWebLazy = dynamic(() => import('@/components/home-index/StoryRowWeb'), {
   ssr: false,
@@ -435,7 +436,10 @@ export default function ClientExploreWrapper({
               .eq('user_id', viewerId)
               .maybeSingle(),
           ]);
-          applyLocalState(Boolean(likedRow), Number(count || 0));
+          applyLocalState(
+            Boolean(likedRow),
+            Number(count || 0) <= 1 ? Math.max(Number(count || 0), optimisticLikes) : Number(count || 0),
+          );
         } else {
           await supabase.rpc('toggle_product_like', { p_product_id: itemId, p_user_id: viewerId });
           const [{ count }, { data: likedRow }] = await Promise.all([
@@ -447,7 +451,10 @@ export default function ClientExploreWrapper({
               .eq('user_id', viewerId)
               .maybeSingle(),
           ]);
-          applyLocalState(Boolean(likedRow), Number(count || 0));
+          applyLocalState(
+            Boolean(likedRow),
+            Number(count || 0) <= 1 ? Math.max(Number(count || 0), optimisticLikes) : Number(count || 0),
+          );
         }
       } catch {
         applyLocalState(wasLiked, Number(target?.likes_count || 0));
@@ -689,7 +696,7 @@ export default function ClientExploreWrapper({
     refreshSeedRef.current = Math.random().toString(36).slice(2);
   }, [surface, activeCategory, query, isFlashMode]);
 
-  /** Reel rows use `reels.id` (uuid) as `item.id` — never treat that as `product_id` for likes. */
+  /** Reel rows use `reels.id` (uuid) as `item.id` - never treat that as `product_id` for likes. */
   const productIdForFeedItem = (item: any, isService: boolean) => {
     if (isService) return null;
     if (item?.product_id) return item.product_id;
@@ -1890,7 +1897,7 @@ export default function ClientExploreWrapper({
     });
   }, [products, surface, activeCategory, query]);
 
-  // Simple Explore session logging (web) – fire-and-forget, no variant branching here.
+  // Simple Explore session logging (web) - fire-and-forget, no variant branching here.
   useEffect(() => {
     const cancelled = false;
     let sessionId: string | null = null;
@@ -2112,7 +2119,7 @@ export default function ClientExploreWrapper({
         (isBeautyContext && beautyDiscoveryFilters.size > 0) ||
         (isRealEstateContext && realEstateDiscoveryFilters.size > 0) ||
         (isFoodContext && foodDiscoveryFilters.size > 0)
-        ? 'Try clearing filters or pick another chip — listings may still be in this category.'
+        ? 'Try clearing filters or pick another chip. Listings may still be in this category.'
         : homeFeedEmptyMessage(homeFeedMode, decodedCategory.kind, isFlashMode)
       : surface === 'explore_for_you'
         ? query.trim()
@@ -2491,22 +2498,20 @@ export default function ClientExploreWrapper({
 
             </div>
          ) : (
-            <div className="flex flex-col items-center justify-center py-20 px-10 text-center">
-               <div className="w-16 h-16 bg-(--surface) rounded-full flex items-center justify-center mb-4 text-(--muted)">
-                  <Zap size={24} />
-               </div>
-               <h3 className="text-sm font-black text-(--foreground) mb-1">
-                 {emptyStateTitle}
-               </h3>
-               <p className="text-xs text-(--muted)">
-                 {surface === 'explore_for_you' && !viewerId
-                   ? 'Sign in to see reels from stores you follow.'
-                   : emptyStateSubtext}
-               </p>
+            <EmptyState
+              className="py-20"
+              icon={<Zap size={28} className="text-(--muted)" strokeWidth={2.2} />}
+              title={emptyStateTitle}
+              message={
+                surface === 'explore_for_you' && !viewerId
+                  ? 'Sign in to see reels from stores you follow.'
+                  : emptyStateSubtext
+              }
+            >
                {surface === 'explore_for_you' && !viewerId ? (
                  <Link
                    href={guestSignInHref('/app/explore?mode=for_you')}
-                   className="mt-4 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+                   className="mt-2 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
                  >
                    Sign in to see people you follow
                  </Link>
@@ -2514,7 +2519,7 @@ export default function ClientExploreWrapper({
                  <button
                    type="button"
                    onClick={() => setEventsDiscoveryFilters(new Set())}
-                   className="mt-4 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+                   className="mt-2 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
                  >
                    Clear events filters
                  </button>
@@ -2522,7 +2527,7 @@ export default function ClientExploreWrapper({
                  <button
                    type="button"
                    onClick={() => setElectronicsDiscoveryFilters(new Set())}
-                   className="mt-4 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+                   className="mt-2 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
                  >
                    Clear electronics filters
                  </button>
@@ -2530,7 +2535,7 @@ export default function ClientExploreWrapper({
                  <button
                    type="button"
                    onClick={() => setAutomotiveDiscoveryFilters(new Set())}
-                   className="mt-4 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+                   className="mt-2 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
                  >
                    Clear automotive filters
                  </button>
@@ -2538,33 +2543,33 @@ export default function ClientExploreWrapper({
                  <button
                    type="button"
                    onClick={() => setHomeTradesDiscoveryFilters(new Set())}
-                   className="mt-4 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+                   className="mt-2 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
                  >
                    Clear home filters
                  </button>
                ) : surface === 'home' && homeFeedMode === 'following' ? (
                  <Link
                    href="/app/search"
-                   className="mt-4 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+                   className="mt-2 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
                  >
                    Find stores to follow
                  </Link>
                ) : surface === 'home' ? (
                  <Link
                    href="/app/explore"
-                   className="mt-4 inline-flex items-center rounded-full border border-(--border) bg-(--card) px-4 py-2 text-xs font-black text-(--foreground)"
+                   className="mt-2 inline-flex items-center rounded-full border border-(--border) bg-(--card) px-4 py-2 text-xs font-black text-(--foreground)"
                  >
                    Open Explore
                  </Link>
                ) : surface === 'explore_for_you' ? (
                  <Link
                    href="/app/search"
-                   className="mt-4 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
+                   className="mt-2 inline-flex items-center rounded-full bg-emerald-600 px-4 py-2 text-xs font-black text-white"
                  >
                    Find people to follow
                  </Link>
                ) : null}
-            </div>
+            </EmptyState>
          )}
       </div>
 

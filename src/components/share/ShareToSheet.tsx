@@ -28,6 +28,7 @@ import {
 import type { ShareSurface } from '@/lib/openShareSheet';
 import type { ShareMenuAction, SharePayload } from '@/lib/shareTypes';
 import { useShareSheetStore } from '@/store/useShareSheetStore';
+import { Sheet } from '@/components/ui/Sheet';
 
 const SHARE_PLATFORMS = [
   { id: 'whatsapp' as const, label: 'WhatsApp', icon: MessageCircle, color: '#25D366', bg: 'rgba(37,211,102,0.2)' },
@@ -118,11 +119,16 @@ export default function ShareToSheet() {
     };
   }, [visible, supabase]);
 
+  const [composeFor, setComposeFor] = useState<any | null>(null);
+  const [composeNote, setComposeNote] = useState('');
+
   useEffect(() => {
     if (visible) return;
     setSearchOpen(false);
     setSearchQuery('');
     setSearchResults([]);
+    setComposeFor(null);
+    setComposeNote('');
   }, [visible]);
 
   const persistRecentRecipient = useCallback(async (recipient: any) => {
@@ -162,12 +168,14 @@ export default function ShareToSheet() {
   );
 
   const sendToUser = useCallback(
-    async (partnerId: string, recipient?: any) => {
+    async (partnerId: string, recipient?: any, note?: string) => {
       if (!viewerId || !payload) {
         window.location.href = `/auth/login?next=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname : '/app')}`;
         return;
       }
-      const outboundText = buildShareDmText(payload);
+      const base = buildShareDmText(payload);
+      const noteTrim = String(note || '').trim();
+      const outboundText = noteTrim ? `${noteTrim}\n\n${base}` : base;
       if (!outboundText.trim()) return;
 
       setSendingToId(partnerId);
@@ -200,6 +208,8 @@ export default function ShareToSheet() {
           });
         }
         toast.success('Sent in chat');
+        setComposeFor(null);
+        setComposeNote('');
         close();
       } catch (err) {
         toast.error(formatMessageRequestSendError(err) || 'Send failed');
@@ -279,20 +289,12 @@ export default function ShareToSheet() {
   const contactRail = contactSource.filter((p: any) => p?.id);
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-end justify-center">
-      <button
-        type="button"
-        aria-label="Close share sheet"
-        className="absolute inset-0 bg-black/50"
-        onClick={close}
-      />
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="share-sheet-title"
-        className="relative z-10 w-full max-w-lg rounded-t-2xl border border-(--border) bg-(--card) px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-3 shadow-2xl"
-      >
-        <div className="mx-auto mb-3 h-1 w-9 rounded-full bg-(--border)" />
+    <Sheet
+      open={visible && !!payload}
+      onClose={close}
+      titleId="share-sheet-title"
+      panelClassName="px-4 pb-[max(1rem,env(safe-area-inset-bottom,0px))] pt-1"
+    >
         <div className="mb-4 flex items-center justify-between">
           <button
             type="button"
@@ -338,7 +340,7 @@ export default function ShareToSheet() {
                 {viewerId
                   ? searchQuery.trim()
                     ? 'No users found.'
-                    : 'Send a link to someone — search above or share outside StoreLink.'
+                    : 'Send a link to someone. Search above or share outside StoreLink.'
                   : 'Sign in to send links in chat.'}
               </p>
             ) : (
@@ -351,7 +353,10 @@ export default function ShareToSheet() {
                       key={person.id}
                       type="button"
                       disabled={!!sendingToId}
-                      onClick={() => void sendToUser(String(person.id), person)}
+                      onClick={() => {
+                        setComposeFor(person);
+                        setComposeNote('');
+                      }}
                       className="flex w-16 shrink-0 flex-col items-center gap-1 disabled:opacity-60"
                     >
                       <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-(--surface) text-xs font-black text-(--muted)">
@@ -370,6 +375,41 @@ export default function ShareToSheet() {
                 })}
               </div>
             )}
+          </div>
+        ) : null}
+
+        {composeFor ? (
+          <div className="mb-4 rounded-sl-xl border border-(--border) bg-(--surface) p-3">
+            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-(--muted)">
+              Message to {composeFor.display_name || composeFor.slug || 'user'}
+            </p>
+            <textarea
+              value={composeNote}
+              onChange={(e) => setComposeNote(e.target.value)}
+              placeholder="Add a note (optional)…"
+              rows={2}
+              className="mt-2 w-full resize-none rounded-sl-lg border border-(--border) bg-(--card) px-3 py-2 text-sm text-(--foreground) outline-none placeholder:text-(--muted)"
+            />
+            <div className="mt-2 flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setComposeFor(null);
+                  setComposeNote('');
+                }}
+                className="flex-1 rounded-full border border-(--border) py-2 text-xs font-bold text-(--foreground)"
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                disabled={!!sendingToId}
+                onClick={() => void sendToUser(String(composeFor.id), composeFor, composeNote)}
+                className="flex-1 rounded-full bg-emerald-600 py-2 text-xs font-black text-white disabled:opacity-50"
+              >
+                {sendingToId === composeFor.id ? 'Sending…' : 'Send'}
+              </button>
+            </div>
           </div>
         ) : null}
 
@@ -430,7 +470,6 @@ export default function ShareToSheet() {
             </div>
           </div>
         ) : null}
-      </div>
-    </div>
+    </Sheet>
   );
 }

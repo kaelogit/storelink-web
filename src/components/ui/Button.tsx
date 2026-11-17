@@ -65,6 +65,15 @@ export default function Button(props: Props) {
 
   if (isLinkProps(props as Props)) {
     const { href, ...linkRest } = rest as Omit<ButtonLinkProps, 'variant' | 'size' | 'className' | 'children'>;
+    const external =
+      /^(https?:|mailto:|tel:)/i.test(href) || href.startsWith('//');
+    if (external) {
+      return (
+        <a href={href} className={combined} {...linkRest}>
+          {children}
+        </a>
+      );
+    }
     return (
       <Link href={href} className={combined} {...linkRest}>
         {children}

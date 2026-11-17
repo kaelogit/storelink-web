@@ -44,7 +44,7 @@ export default function EditPhoneClient() {
   return (
     <ProfileFieldEditor
       title="Phone"
-      description={`${prefix} — used for order updates. Checkout needs a verified number.`}
+      description={`${prefix}, used for order updates. Checkout needs a verified number.`}
       initialValue={initial}
       onSave={async (value) => {
         const digits = value.replace(/\D/g, '');

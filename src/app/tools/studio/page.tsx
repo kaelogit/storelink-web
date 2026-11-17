@@ -124,7 +124,7 @@ export default function StudioPage() {
             <div className="relative z-10">
                <h2 id="studio-engineered-heading" className="text-4xl font-display font-bold mb-6 text-white">Engineered for Commerce.</h2>
                <p className="text-(--muted) text-lg leading-relaxed mb-10">
-                  This isn't just a generic eraser. Our model is trained specifically on retail objects—perfumes, shoes, bags. It understands edges, shadows, and reflections to create a natural look.
+                  This isn't just a generic eraser. Our model is trained specifically on retail objects-perfumes, shoes, bags. It understands edges, shadows, and reflections to create a natural look.
                </p>
                
                <div className="space-y-8">

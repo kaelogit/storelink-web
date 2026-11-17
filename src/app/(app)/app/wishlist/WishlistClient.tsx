@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, BookmarkX, Coins, Gem, RefreshCcw, ShoppingBag, Trash2, Zap } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
 import { useWebCartStore } from '@/store/useWebCartStore';
@@ -11,6 +11,7 @@ import { withDrawerParam } from '@/components/profile-web/profileHubPaths';
 import { coinsToCurrency, formatCurrency } from '@/lib/activity-feed';
 import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { defaultFulfillmentMode, productCheckoutCtaWeb, serviceCheckoutCtaWeb } from '@/lib/verticalCheckout';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 type SellerMini = {
   id?: string | null;
@@ -57,6 +58,7 @@ type ServiceWish = {
 };
 
 export default function WishlistClient() {
+  const router = useRouter();
   const supabase = useMemo(() => createBrowserClient(), []);
   const searchParams = useSearchParams();
   const fromDrawer = searchParams.get('fromDrawer') === '1';
@@ -284,30 +286,22 @@ export default function WishlistClient() {
         {loading ? (
           <div className="grid grid-cols-2 gap-4">
             {[0, 1, 2, 3].map((k) => (
-              <div key={k} className="animate-pulse rounded-[20px] border border-(--border) bg-(--surface) p-3">
-                <div className="aspect-4/5 rounded-[16px] bg-(--border)" />
+              <div key={k} className="animate-pulse rounded-sl-2xl border border-(--border) bg-(--surface) p-3">
+                <div className="aspect-4/5 rounded-sl-xl bg-(--border)" />
                 <div className="mt-3 h-3 w-2/3 rounded bg-(--border)" />
                 <div className="mt-2 h-3 w-1/2 rounded bg-(--border)" />
-                <div className="mt-3 h-9 rounded-[12px] bg-(--border)" />
+                <div className="mt-3 h-9 rounded-sl-lg bg-(--border)" />
               </div>
             ))}
           </div>
         ) : totalSaved === 0 ? (
-          <div className="mt-16 flex flex-col items-center text-center">
-            <div className="mb-5 flex h-24 w-24 items-center justify-center rounded-[30px] bg-(--surface)">
-              <BookmarkX size={44} className="text-(--border)" strokeWidth={1.5} />
-            </div>
-            <p className="text-xl font-black text-(--foreground)">Your wishlist is empty</p>
-            <p className="mt-2 max-w-md text-sm font-medium text-(--muted)">
-              Save products and services you love from feed and profile pages to keep track of price and availability.
-            </p>
-            <Link
-              href="/app/explore"
-              className="mt-6 inline-flex rounded-2xl bg-(--foreground) px-6 py-3 text-sm font-black uppercase tracking-wide text-(--background)"
-            >
-              Start shopping
-            </Link>
-          </div>
+          <EmptyState
+            className="mt-16"
+            icon={<BookmarkX size={28} className="text-(--muted)" strokeWidth={1.5} />}
+            title="Your wishlist is empty"
+            message="Save products and services you love from feed and profile pages to keep track of price and availability."
+            primaryCta={{ label: 'Start shopping', onClick: () => router.push('/app/explore') }}
+          />
         ) : (
           <div className="grid grid-cols-2 gap-4">
             {mergedWishlist.map((entry) => {
@@ -327,8 +321,8 @@ export default function WishlistClient() {
                 const itemHref = item.slug ? wrap(`/app/p/${encodeURIComponent(item.slug)}`) : '/app/explore';
 
                 return (
-                  <article key={`w-p-${item.wishlist_entry_id}`} className="rounded-[20px] border border-(--border) bg-(--card) p-3">
-                    <div className="relative aspect-4/5 overflow-hidden rounded-[16px] border border-(--border) bg-(--surface)">
+                  <article key={`w-p-${item.wishlist_entry_id}`} className="rounded-sl-2xl border border-(--border) bg-(--card) p-3">
+                    <div className="relative aspect-4/5 overflow-hidden rounded-sl-xl border border-(--border) bg-(--surface)">
                       <Link href={itemHref} className="absolute inset-0">
                         {image ? (
                           <Image src={image} alt={item.name} fill className="object-cover" unoptimized />
@@ -391,7 +385,7 @@ export default function WishlistClient() {
                             requires_shipping: item.requires_shipping !== false,
                           })
                         }
-                        className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-[12px] bg-(--foreground) px-3 py-2 text-[11px] font-black uppercase tracking-wide text-(--background)"
+                        className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-sl-lg bg-(--foreground) px-3 py-2 text-[11px] font-black uppercase tracking-wide text-(--background)"
                       >
                         <ShoppingBag size={14} />
                         {productCheckoutCtaWeb(item.category)}
@@ -407,8 +401,8 @@ export default function WishlistClient() {
               const serviceHref = wrap(`/app/service/${slugOrId}`);
               const fromPrice = Number(item.hero_price_min || 0) / 100;
               return (
-                <article key={`w-s-${item.wishlist_id}`} className="rounded-[20px] border border-(--border) bg-(--card) p-3">
-                  <div className="relative aspect-4/5 overflow-hidden rounded-[16px] border border-(--border) bg-(--surface)">
+                <article key={`w-s-${item.wishlist_id}`} className="rounded-sl-2xl border border-(--border) bg-(--card) p-3">
+                  <div className="relative aspect-4/5 overflow-hidden rounded-sl-xl border border-(--border) bg-(--surface)">
                     <Link href={serviceHref} className="absolute inset-0">
                       {image ? (
                         <Image src={image} alt={item.title || 'Service'} fill className="object-cover" unoptimized />
@@ -459,7 +453,7 @@ export default function WishlistClient() {
                           seller_name: item.seller?.display_name || null,
                         })
                       }
-                      className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-[12px] bg-(--foreground) px-3 py-2 text-[11px] font-black uppercase tracking-wide text-(--background)"
+                      className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-sl-lg bg-(--foreground) px-3 py-2 text-[11px] font-black uppercase tracking-wide text-(--background)"
                     >
                       <ShoppingBag size={14} />
                       {serviceCheckoutCtaWeb(item.service_category)}

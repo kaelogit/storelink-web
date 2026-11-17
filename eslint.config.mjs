@@ -26,7 +26,7 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
-    // Local/debug scripts (CommonJS) — not app runtime
+    // Local/debug scripts (CommonJS) - not app runtime
     "debugGoogle.js",
     "scripts/**",
   ]),

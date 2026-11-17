@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 
 /**
  * Classic storefront (`/sell`) was spun out to Sellfolio.
- * Invite links (`/?ref=CODE`) must land on signup — not the marketing homepage.
+ * Invite links (`/?ref=CODE`) must land on signup - not the marketing homepage.
  */
 export function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl;

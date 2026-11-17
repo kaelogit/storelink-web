@@ -1,4 +1,4 @@
-/** AD-24 / AD-8 seller dashboard helpers — list / stats / pause / resume / end (web). */
+/** AD-24 / AD-8 seller dashboard helpers - list / stats / pause / resume / end (web). */
 
 import { createBrowserClient } from '@/lib/supabase';
 

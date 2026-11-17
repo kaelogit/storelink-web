@@ -10,7 +10,7 @@ export type ServiceMenuNormalizedItem = {
   description?: string;
   serves?: number;
   lead_time_hours?: number;
-  /** Beauty / timed services — appointment length */
+  /** Beauty / timed services - appointment length */
   duration_minutes?: number;
   photo_url?: string;
   add_ons?: Array<{ name: string; price_minor: number }>;

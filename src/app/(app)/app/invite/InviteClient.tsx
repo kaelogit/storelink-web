@@ -70,7 +70,7 @@ export default function InviteClient() {
 
   const share = async () => {
     if (!inviteUrl) return;
-    const text = `Join me on StoreLink - shop and sell in one place.\n${inviteUrl}`;
+    const text = `Join me on StoreLink. Shop and sell in one place.\n${inviteUrl}`;
     if (typeof navigator !== 'undefined' && 'share' in navigator) {
       try {
         await navigator.share({ title: 'Invite to StoreLink', text, url: inviteUrl });
@@ -141,7 +141,7 @@ export default function InviteClient() {
         <div className="mt-4 flex items-start gap-2 rounded-2xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
           <ShieldAlert size={16} className="mt-0.5 shrink-0 text-amber-600" />
           <p className="text-sm font-semibold text-amber-900 dark:text-amber-100">
-            {pending} referral{pending === 1 ? '' : 's'} under fraud review — signup coins release after StoreLink approves.
+            {pending} referral{pending === 1 ? '' : 's'} under fraud review. Signup coins release after StoreLink approves.
           </p>
         </div>
       ) : null}
@@ -149,7 +149,7 @@ export default function InviteClient() {
       <p className="mb-2 mt-6 text-[11px] font-semibold uppercase tracking-[0.16em] text-(--muted) opacity-70">Your invite link</p>
       <div className="rounded-2xl border border-(--border) bg-(--surface) px-4 py-3">
         <p className="break-all text-sm font-semibold text-(--foreground)">
-          {inviteUrl || 'No link yet — pull to refresh or reopen this page.'}
+          {inviteUrl || 'No link yet. Pull to refresh or reopen this page.'}
         </p>
       </div>
 

@@ -397,7 +397,7 @@ export default function SalesDashboardClient() {
             <div>
               <p className="text-[10px] font-semibold tracking-wide text-(--muted)">Avg watch</p>
               <p className="mt-1 text-xl font-black">
-                {isCreatorWeekQuiet(creatorAnalytics) ? '—' : formatWatchPct(creatorAnalytics.avg_reel_watch_pct)}
+                {isCreatorWeekQuiet(creatorAnalytics) ? '-' : formatWatchPct(creatorAnalytics.avg_reel_watch_pct)}
               </p>
             </div>
           </div>

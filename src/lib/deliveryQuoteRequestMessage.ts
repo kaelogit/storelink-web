@@ -14,7 +14,7 @@ export type DeliveryQuoteRequestMetadata = {
 
 export function buildDeliveryQuoteRequestText(address?: string | null): string {
   const label = String(address || '').trim() || 'my address';
-  return `Hi — I need a delivery quote for: ${label}. It's outside your listed zones.`;
+  return `Hi, I need a delivery quote for: ${label}. It's outside your listed zones.`;
 }
 
 export function buildDeliveryQuoteRequestMetadata(input: {
@@ -112,6 +112,6 @@ export function deliveryQuoteOfferedText(opts: {
     : 'a custom fee';
   const address = String(opts.address || '').trim();
   return address
-    ? `Delivery fee for ${address}: ${money}. Place your order when ready — I’ll apply this fee.`
-    : `Delivery fee: ${money}. Place your order when ready — I’ll apply this fee.`;
+    ? `Delivery fee for ${address}: ${money}. Place your order when ready. I’ll apply this fee.`
+    : `Delivery fee: ${money}. Place your order when ready. I’ll apply this fee.`;
 }

@@ -1,4 +1,4 @@
-# StoreLink Web — Full A–Z Rebuild Plan
+# StoreLink Web - Full A-Z Rebuild Plan
 
 **Goal:** Rebuild the marketing site so it feels **unique, high-end, and as polished as the StoreLink app**. Every file and section gets attention; performance and visual consistency with the app are non‑negotiable.
 
@@ -25,7 +25,7 @@
   - **Brand:** `--emerald: #10B981`, `--violet: #8B5CF6`, `--gold: #F59E0B` (coins/rewards)
   - **Neutrals:** `--charcoal: #111827`, `--pitch-black: #000000`, surfaces and borders from slate scale
 - **Typography** (from app `Typography.ts`):
-  - **Scale:** caption (10–12px), body (13–15px), subtitle (18px), title (24px), heading (28px), display (36–48px)
+  - **Scale:** caption (10-12px), body (13-15px), subtitle (18px), title (24px), heading (28px), display (36-48px)
   - **Weights:** regular 400, medium 500, semibold 600, bold 700, heavy 800, black 900
   - **Font stack:** Keep Inter for body; consider one display font that feels more “app” (e.g. same as app or a close web sibling) and use it for headlines only
 - **Radius:** `--radius-sm`, `--radius-md`, `--radius-lg`, `--radius-xl`, `--radius-2xl`, `--radius-3xl` (no random rounded-[18px])
@@ -34,8 +34,8 @@
 ### 2.2 Section system
 
 - **Hero:** Full-bleed dark (#050505 / pitch black), emerald/violet glow, grid/noise, one clear headline + CTA + device or feed preview.
-- **Light:** `section-bg-light` — soft gradient (e.g. slate-50 → white → emerald-50/5), optional orb.
-- **Dark band:** `section-bg-dark` — charcoal/pitch, emerald accent, optional spotlight.
+- **Light:** `section-bg-light` - soft gradient (e.g. slate-50 → white → emerald-50/5), optional orb.
+- **Dark band:** `section-bg-dark` - charcoal/pitch, emerald accent, optional spotlight.
 - **Card band:** White or slate-50, cards with consistent radius and shadow from tokens.
 
 Use only these section types so the whole site feels like one product.
@@ -44,7 +44,7 @@ Use only these section types so the whole site feels like one product.
 
 ## 3. File-by-File Rebuild Checklist
 
-### Phase A — Foundation (global + layout)
+### Phase A - Foundation (global + layout)
 
 | File | What to do |
 |------|------------|
@@ -52,7 +52,7 @@ Use only these section types so the whole site feels like one product.
 | `tailwind.config.ts` | Extend theme from CSS variables; add only the animations you keep; ensure content paths include all of `src`. |
 | `src/app/layout.tsx` | Apply font variables and token classes; keep GA and JSON-LD; optional: add a minimal “skip to content” and improve focus states for a11y. |
 
-### Phase B — Home page (one section per component)
+### Phase B - Home page (one section per component)
 
 | File | What to do |
 |------|------------|
@@ -69,7 +69,7 @@ Use only these section types so the whole site feels like one product.
 | `src/components/home/FinalCTA.tsx` | One bold CTA block; section-bg-dark + emerald. |
 | `src/components/home/Footer.tsx` | Token colors and typography; links and tag cloud; same column layout, cleaner spacing. |
 
-### Phase C — Inner pages (every page gets the system)
+### Phase C - Inner pages (every page gets the system)
 
 | Page | What to do |
 |------|------------|
@@ -93,7 +93,7 @@ Use only these section types so the whole site feels like one product.
 | `src/app/shop/*` (video, rewards, flash) | Same idea: hero + benefits + CTA; tokens. |
 | `src/app/admin/page.tsx` | Redirect or minimal “Admin” CTA; token styling if any UI. |
 
-### Phase D — Shared components and UI
+### Phase D - Shared components and UI
 
 | File | What to do |
 |------|------------|
@@ -103,7 +103,7 @@ Use only these section types so the whole site feels like one product.
 | **New** `src/components/ui/Card.tsx` | Container with radius and shadow from tokens. |
 | **New** `src/components/ui/Section.tsx` | Wrapper that applies section-bg-hero / light / dark / card + padding. |
 
-### Phase E — Performance and polish
+### Phase E - Performance and polish
 
 | Area | What to do |
 |------|------------|
@@ -125,11 +125,11 @@ Use only these section types so the whole site feels like one product.
 
 ## 5. Suggested Order of Work
 
-1. **Phase A** — globals.css + tailwind.config + layout (tokens and section system live).
-2. **Phase B** — Home: Navbar, Hero, then remaining home sections one by one.
-3. **Phase D** — Add `Button`, `Card`, `Section` and use them on home and pricing.
-4. **Phase C** — Inner pages in batches: download + explore; pricing (already done with tokens); about, contact, safety, help-center; then legal; then profile/reel/product; then tools and shop.
-5. **Phase E** — Performance pass: images, fonts, code-split, measure LCP and fix.
+1. **Phase A** - globals.css + tailwind.config + layout (tokens and section system live).
+2. **Phase B** - Home: Navbar, Hero, then remaining home sections one by one.
+3. **Phase D** - Add `Button`, `Card`, `Section` and use them on home and pricing.
+4. **Phase C** - Inner pages in batches: download + explore; pricing (already done with tokens); about, contact, safety, help-center; then legal; then profile/reel/product; then tools and shop.
+5. **Phase E** - Performance pass: images, fonts, code-split, measure LCP and fix.
 
 ---
 

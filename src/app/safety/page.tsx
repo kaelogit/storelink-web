@@ -13,7 +13,7 @@ import Button from '../../components/ui/Button';
 import Link from 'next/link';
 
 const ESCROW_STEPS = [
-  { step: 1, title: 'You pay', desc: 'Money goes to the StoreLink Vault—not to the seller. Both of you see that funds are secured.' },
+  { step: 1, title: 'You pay', desc: 'Money goes to the StoreLink Vault-not to the seller. Both of you see that funds are secured.' },
   { step: 2, title: 'Seller ships', desc: 'Seller ships and adds the tracking number in the app. You can follow the delivery in real time.' },
   { step: 3, title: 'You receive & verify', desc: 'When the item arrives, inspect it. Only when you tap "I Accept" do we release the funds to the seller.' },
   { step: 4, title: 'Funds released', desc: 'Seller gets paid to their verified Nigerian bank account. If there\'s an issue, you can raise a dispute before accepting.' },
@@ -38,7 +38,7 @@ const RED_FLAGS = [
 
 const SAFETY_FAQ = [
   { q: 'What if the item never arrives?', a: 'If the seller doesn\'t ship or the tracking shows a problem, you can raise a dispute before accepting. We review the case and can refund you from the Vault.' },
-  { q: 'Can I get a refund after I\'ve accepted?', a: 'Once you tap "I Accept", funds are released to the seller. We encourage you to inspect carefully first. For genuine issues after acceptance, contact support—we may still be able to help in some cases.' },
+  { q: 'Can I get a refund after I\'ve accepted?', a: 'Once you tap "I Accept", funds are released to the seller. We encourage you to inspect carefully first. For genuine issues after acceptance, contact support-we may still be able to help in some cases.' },
   { q: 'How long does a dispute take?', a: 'We aim to review disputes within a few business days. Having clear evidence (photos, chat history) speeds this up.' },
   { q: 'Is my payment info safe?', a: 'Yes. We don\'t store your card details. Payments are processed by Paystack, a PCI-DSS compliant provider. Data is encrypted in transit and at rest.' },
   { q: 'What does the blue Verified tick mean?', a: 'Sellers with the tick have passed our identity verification: valid government ID and facial recognition. It means we know who they are.' },
@@ -66,7 +66,7 @@ export default function SafetyPage() {
             <span className="text-transparent bg-clip-text bg-linear-to-r from-emerald-400 to-teal-300">Fear.</span>
           </h1>
           <p className="text-xl text-(--muted) max-w-2xl mx-auto leading-relaxed font-medium mb-10">
-            We built an operating system where trust isn't optional—it's hardcoded. Escrow, verification, disputes, and encryption work together so you can buy and sell with confidence.
+            We built an operating system where trust isn't optional-it's hardcoded. Escrow, verification, disputes, and encryption work together so you can buy and sell with confidence.
           </p>
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm font-semibold text-(--muted)">
             <span className="flex items-center gap-2"><CheckCircle2 size={18} className="text-emerald-400" /> Escrow on every order</span>
@@ -76,7 +76,7 @@ export default function SafetyPage() {
         </div>
       </section>
 
-      {/* How Escrow Works — step by step */}
+      {/* How Escrow Works - step by step */}
       <Section variant="light" padding="default" className="border-t border-(--border)">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
@@ -116,7 +116,7 @@ export default function SafetyPage() {
                   </div>
                   <h3 className="text-2xl font-bold text-(--foreground) mb-3">The StoreLink Vault (Escrow)</h3>
                   <p className="text-(--muted) leading-relaxed text-lg mb-4">
-                    We eliminated "pay and pray" anxiety. When you pay, the money doesn't go to the seller—it stays in our secure Vault. The seller sees that funds are secured and ships with confidence, but they can't touch a dime until <span className="font-bold text-emerald-700">you receive and tap "I Accept".</span>
+                    We eliminated "pay and pray" anxiety. When you pay, the money doesn't go to the seller-it stays in our secure Vault. The seller sees that funds are secured and ships with confidence, but they can't touch a dime until <span className="font-bold text-emerald-700">you receive and tap "I Accept".</span>
                   </p>
                   <p className="text-sm text-(--muted) font-medium">No acceptance, no release. You're in control.</p>
                 </div>
@@ -144,7 +144,7 @@ export default function SafetyPage() {
                 <div className="flex-1">
                   <h3 className="text-2xl font-bold text-(--foreground) mb-3">Fair disputes</h3>
                   <p className="text-(--muted) leading-relaxed mb-4">
-                    Item damaged? Wrong size? Didn't arrive? Raise a dispute in the app before you tap "I Accept". Our team reviews the evidence—chat history, photos, tracking—and decides: refund you from the Vault, release to the seller, or partial split. We act as the neutral judge so both sides get a fair outcome.
+                    Item damaged? Wrong size? Didn't arrive? Raise a dispute in the app before you tap "I Accept". Our team reviews the evidence-chat history, photos, tracking-and decides: refund you from the Vault, release to the seller, or partial split. We act as the neutral judge so both sides get a fair outcome.
                   </p>
                   <Link href="/help-center">
                     <Button variant="secondary" size="sm" className="gap-2">Learn more <ChevronRight size={16} /></Button>
@@ -218,7 +218,7 @@ export default function SafetyPage() {
         </div>
       </Section>
 
-      {/* Red flags — what to avoid */}
+      {/* Red flags - what to avoid */}
       <Section variant="light" padding="default" className="bg-(--surface)/50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">

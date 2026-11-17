@@ -1,4 +1,4 @@
-/** Platform / account notices — keep in sync with store-link-mobile/src/lib/systemNotifications.ts */
+/** Platform / account notices - keep in sync with store-link-mobile/src/lib/systemNotifications.ts */
 
 import { cleanNotificationBody, cleanNotificationTitle } from '@/lib/notificationCopy';
 import { resolveNotificationWebHref } from '@/lib/notificationRouting';

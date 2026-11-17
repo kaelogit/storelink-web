@@ -57,7 +57,7 @@ export default function ShareProfileModal({ isOpen, onClose, profile }: SharePro
             className="absolute inset-0 bg-(--pitch-black)/80 backdrop-blur-sm"
           />
 
-          {/* Modal panel — tokens: overlay, radius, shadow */}
+          {/* Modal panel - tokens: overlay, radius, shadow */}
           <motion.div 
             initial={{ scale: 0.9, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}

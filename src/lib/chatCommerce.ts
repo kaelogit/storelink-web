@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { isServiceOnlyPlaceholderOrder } from '@/lib/orderPlaceholders';
 
-/** Product `orders` rows that still need buyer/seller attention — matches mobile inbox / ActiveOrderHeader. */
+/** Product `orders` rows that still need buyer/seller attention - matches mobile inbox / ActiveOrderHeader. */
 export const PRODUCT_ORDER_ACTIVE_STATUS_LIST = [
   'AWAITING_PAYMENT',
   'PENDING',
@@ -107,7 +107,7 @@ export function filterServiceOrdersForChatHeader<T extends ChatServiceOrderRow>(
 }
 
 /**
- * Chat IDs that should show the commerce “Order” pill / active header — aligned with mobile `buildActiveCommerceChatIds`.
+ * Chat IDs that should show the commerce “Order” pill / active header - aligned with mobile `buildActiveCommerceChatIds`.
  */
 export async function buildActiveCommerceChatIds(supabase: SupabaseClient, chatIds: string[]): Promise<Set<string>> {
   if (chatIds.length === 0) return new Set();

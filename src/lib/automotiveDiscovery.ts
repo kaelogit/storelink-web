@@ -1,5 +1,5 @@
 /**
- * Automotive discovery helpers (Phase 5) — Home Automotive chip badges + filters.
+ * Automotive discovery helpers (Phase 5) - Home Automotive chip badges + filters.
  * Reuses food capacity / distance helpers; workshop vs mobile language.
  */
 

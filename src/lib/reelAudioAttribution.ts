@@ -46,7 +46,7 @@ export function resolveReelAudioLabel(item: ReelAudioAttributionRow | null | und
   );
 }
 
-/** Explore RPC rows may omit audio fields — batch-fill from reels table. */
+/** Explore RPC rows may omit audio fields - batch-fill from reels table. */
 export async function hydrateReelAudioAttribution<T extends ReelAudioAttributionRow>(
   supabase: SupabaseClient,
   rows: T[],

@@ -1,4 +1,4 @@
-/** Date of birth helpers — keep in sync with store-link-mobile/src/lib/dateOfBirth.ts */
+/** Date of birth helpers - keep in sync with store-link-mobile/src/lib/dateOfBirth.ts */
 
 export const MIN_AGE_YEARS = 13;
 

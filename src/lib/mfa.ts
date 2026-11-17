@@ -1,4 +1,4 @@
-/** TOTP + backup codes — keep in sync with store-link-mobile/src/lib/mfa.ts */
+/** TOTP + backup codes - keep in sync with store-link-mobile/src/lib/mfa.ts */
 
 import { createBrowserClient } from '@/lib/supabase';
 

@@ -8,7 +8,7 @@ type WebProfileNavBarProps = {
   isDiamond?: boolean;
   showOfflineBadge?: boolean;
   onDiamondPress?: () => void;
-  /** Left “suggestions” affordance — mobile `/profile/suggestions`. */
+  /** Left “suggestions” affordance - mobile `/profile/suggestions`. */
   suggestionsHref?: string;
   /** When false, no right control (e.g. app shell / desktop). */
   showRightMenu?: boolean;

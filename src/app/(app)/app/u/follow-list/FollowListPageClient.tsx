@@ -1,14 +1,13 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowLeft, Gem, Search, X } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase';
-import { normalizeWebMediaUrl } from '@/lib/media-url';
 import { getFollowButtonLabel, UNFOLLOW_RECIPROCAL_SUBTITLE } from '@/lib/followButtonLabel';
 import { toggleFollowRateLimited } from '@/lib/rateLimitedSocial';
+import { Avatar } from '@/components/ui/Avatar';
 
 type Tab = 'followers' | 'following' | 'mutuals';
 
@@ -228,15 +227,18 @@ export default function FollowListPageClient() {
             const isFollowing = myFollowingIds.includes(item.id);
             const followsMe = myFollowerIds.includes(item.id);
             const diamond = String(item.subscription_plan || '').toLowerCase() === 'diamond';
-            const avatar =
-              normalizeWebMediaUrl(item.logo_url) ||
-              `https://ui-avatars.com/api/?name=${encodeURIComponent(item.display_name || slug || 'U')}&background=334155&color=fff`;
 
             return (
               <li key={item.id} className="flex items-center gap-3 p-3">
                 <Link href={href} className="flex min-w-0 flex-1 items-center gap-3">
-                  <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-2xl border border-(--border) bg-(--surface)">
-                    <Image src={avatar} alt="" fill className="object-cover" unoptimized sizes="48px" />
+                  <div className="relative shrink-0">
+                    <Avatar
+                      uri={item.logo_url}
+                      size={48}
+                      isSeller={false}
+                      diamond={diamond}
+                      alt={item.display_name || slug || 'User'}
+                    />
                     {diamond ? (
                       <span className="absolute -right-0.5 -bottom-0.5 rounded-md border border-(--border) bg-(--card) p-0.5">
                         <Gem size={12} className="text-violet-500" fill="currentColor" />

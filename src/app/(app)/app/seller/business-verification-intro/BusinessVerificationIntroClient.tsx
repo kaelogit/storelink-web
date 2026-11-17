@@ -96,7 +96,7 @@ export default function BusinessVerificationIntroClient() {
       <h2 className="text-xl font-black tracking-tight text-(--foreground)">Build trust with buyers</h2>
       <p className="mt-2 text-sm leading-relaxed text-(--muted)">
         Show that your shop is a registered Nigerian business. Upload your CAC / RC details and certificate for a
-        StoreLink review. You must complete identity verification first — approval upgrades your Verified badge to
+        StoreLink review. You must complete identity verification first. Approval upgrades your Verified badge to
         Business (same chip, filled).
       </p>
 
@@ -104,7 +104,7 @@ export default function BusinessVerificationIntroClient() {
         {[
           'RC / CAC number and registered company name',
           'Clear photo of your CAC certificate',
-          'Manual review — usually within a few business days',
+          'Manual review, usually within a few business days',
         ].map((line) => (
           <li key={line} className="flex items-start gap-2 text-sm font-semibold text-(--foreground)">
             <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-emerald-600" />

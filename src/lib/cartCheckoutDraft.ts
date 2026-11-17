@@ -1,5 +1,5 @@
 /**
- * Cart checkout step draft — sessionStorage on web (mirrors mobile in-memory Map).
+ * Cart checkout step draft - sessionStorage on web (mirrors mobile in-memory Map).
  */
 
 import type { CartCheckoutStepId } from './cartCheckoutSteps';

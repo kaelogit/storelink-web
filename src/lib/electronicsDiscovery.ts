@@ -1,5 +1,5 @@
 /**
- * Electronics discovery helpers (Phase 5) — Home Electronics chip badges + filters.
+ * Electronics discovery helpers (Phase 5) - Home Electronics chip badges + filters.
  * Reuses food capacity / distance helpers; drop-off vs pickup / on-site language.
  */
 

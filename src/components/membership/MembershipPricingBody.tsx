@@ -253,7 +253,7 @@ export default function MembershipPricingBody({
       )}
       {appContext && lockedRole === 'buyer' && (
         <p className="text-center text-xs text-(--muted) max-w-lg mx-auto px-4 leading-relaxed mb-4">
-          Identity verification (KYC) is separate from Diamond: it applies if you open a store or are asked to verify — not the same as this membership.
+          Identity verification (KYC) is separate from Diamond: it applies if you open a store or are asked to verify, not the same as this membership.
         </p>
       )}
 
@@ -263,7 +263,7 @@ export default function MembershipPricingBody({
         <div className="text-center mb-8 px-2">
           <h2 className="text-2xl md:text-3xl font-display font-black text-(--foreground)">Compare at a glance</h2>
           <p className="mt-2 text-sm text-(--muted) max-w-lg mx-auto">
-            One free Standard tier, one optional Diamond upgrade. No legacy “shop tiers” — just membership.
+            One free Standard tier, one optional Diamond upgrade. No legacy “shop tiers”, just membership.
           </p>
         </div>
 

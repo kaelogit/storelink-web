@@ -6,7 +6,7 @@ export const ANDROID_PACKAGE = 'ng.storelink.app';
 /**
  * SHA-256 of the EAS upload key that signed production AAB 29
  * (`lbyxFSN6afW94MEjlIFClxqXq_GMhXMQJB-mV6dVsso.aab`).
- * Play-installed builds also need the Play App Signing cert — add it here
+ * Play-installed builds also need the Play App Signing cert - add it here
  * if Android still opens the website after deploy.
  */
 export const ANDROID_SHA256_FINGERPRINTS = [

@@ -436,15 +436,15 @@ export default function OrderDetailClient() {
             setRefreshing(true);
             void loadOrder();
           }}
-          className="inline-flex items-center gap-2 rounded-[14px] border border-(--border) px-3 py-2 text-xs font-bold text-(--foreground)"
+          className="inline-flex items-center gap-2 rounded-sl-lg border border-(--border) px-3 py-2 text-xs font-bold text-(--foreground)"
         >
           <RefreshCcw size={14} className={refreshing ? 'animate-spin' : ''} />
           Refresh
         </button>
 
         {targetProfileHref ? (
-          <Link href={targetProfileHref} className="flex items-center rounded-[20px] border border-(--border) bg-(--surface) p-[14px]">
-            <div className="h-12 w-12 overflow-hidden rounded-[14px] border border-(--border)">
+          <Link href={targetProfileHref} className="flex items-center rounded-sl-2xl border border-(--border) bg-(--surface) p-[14px]">
+            <div className="h-12 w-12 overflow-hidden rounded-sl-lg border border-(--border)">
               {normalizeWebMediaUrl(targetProfile?.logo_url || '') ? (
                 <img src={normalizeWebMediaUrl(targetProfile?.logo_url || '')} alt="" className="h-full w-full object-cover" />
               ) : (
@@ -461,8 +461,8 @@ export default function OrderDetailClient() {
             <ChevronRight size={16} className="text-(--muted)" />
           </Link>
         ) : (
-          <div className="flex items-center rounded-[20px] border border-(--border) bg-(--surface) p-[14px]">
-            <div className="h-12 w-12 overflow-hidden rounded-[14px] border border-(--border)">
+          <div className="flex items-center rounded-sl-2xl border border-(--border) bg-(--surface) p-[14px]">
+            <div className="h-12 w-12 overflow-hidden rounded-sl-lg border border-(--border)">
               {normalizeWebMediaUrl(targetProfile?.logo_url || '') ? (
                 <img src={normalizeWebMediaUrl(targetProfile?.logo_url || '')} alt="" className="h-full w-full object-cover" />
               ) : (
@@ -481,11 +481,11 @@ export default function OrderDetailClient() {
         )}
 
         <div className="flex flex-wrap gap-2">
-          <span className={`inline-flex items-center rounded-[8px] px-2 py-1 text-[10px] font-black tracking-[0.04em] ${meta.bg} ${meta.text}`}>
+          <span className={`inline-flex items-center rounded-sl-md px-2 py-1 text-[10px] font-black tracking-[0.04em] ${meta.bg} ${meta.text}`}>
             {meta.label}
           </span>
           <span
-            className={`inline-flex items-center gap-1 rounded-[8px] px-2 py-1 text-[10px] font-black tracking-[0.04em] ${
+            className={`inline-flex items-center gap-1 rounded-sl-md px-2 py-1 text-[10px] font-black tracking-[0.04em] ${
               hasServiceLinkedItem ? 'bg-violet-500/10 text-violet-600' : 'bg-emerald-500/10 text-emerald-600'
             }`}
           >
@@ -493,21 +493,21 @@ export default function OrderDetailClient() {
             {hasServiceLinkedItem ? 'Booking payment' : 'Product order'}
           </span>
           {isFlashDrop ? (
-            <span className="inline-flex items-center gap-1 rounded-[8px] bg-red-500/10 px-2 py-1 text-[10px] font-black tracking-[0.04em] text-red-500">
+            <span className="inline-flex items-center gap-1 rounded-sl-md bg-red-500/10 px-2 py-1 text-[10px] font-black tracking-[0.04em] text-red-500">
               <Zap size={10} /> Flash drop
             </span>
           ) : null}
           {usedCoins ? (
-            <span className="inline-flex items-center gap-1 rounded-[8px] bg-amber-500/10 px-2 py-1 text-[10px] font-black tracking-[0.04em] text-amber-600">
+            <span className="inline-flex items-center gap-1 rounded-sl-md bg-amber-500/10 px-2 py-1 text-[10px] font-black tracking-[0.04em] text-amber-600">
               Coins −{formatCurrency(coinDiscountMajor, String(order.currency_code || 'NGN'))}
             </span>
           ) : null}
         </div>
 
-        <div className="overflow-hidden rounded-[20px] border border-(--border) bg-(--card)">
+        <div className="overflow-hidden rounded-sl-2xl border border-(--border) bg-(--card)">
           {(order.order_items || []).map((it: any) => (
             <div key={it.id} className="flex items-center border-b border-(--border) px-4 py-3 last:border-b-0">
-              <div className="h-14 w-14 overflow-hidden rounded-[12px] bg-(--surface)">
+              <div className="h-14 w-14 overflow-hidden rounded-sl-lg bg-(--surface)">
                 {normalizeWebMediaUrl(it?.product?.image_urls?.[0] || '') ? (
                   <img src={normalizeWebMediaUrl(it?.product?.image_urls?.[0] || '')} alt="" className="h-full w-full object-cover" />
                 ) : null}
@@ -522,7 +522,7 @@ export default function OrderDetailClient() {
           ))}
         </div>
 
-        <div className="rounded-[20px] border border-(--border) bg-(--surface) p-4">
+        <div className="rounded-sl-2xl border border-(--border) bg-(--surface) p-4">
           <div className="mb-2 flex items-center gap-2">
             <MapPin size={14} className="text-(--foreground)" />
             <p className="text-[13px] font-black text-(--foreground)">
@@ -543,7 +543,7 @@ export default function OrderDetailClient() {
           ) : null}
         </div>
 
-        <div className="rounded-[20px] border border-(--border) bg-(--surface) p-4">
+        <div className="rounded-sl-2xl border border-(--border) bg-(--surface) p-4">
           {!isMerchant ? (
             <>
               <div className="flex items-center justify-between text-[13px]">
@@ -608,7 +608,7 @@ export default function OrderDetailClient() {
                   type="button"
                   disabled={busy || settlingPayment}
                   onClick={() => void handleOpenPaystackSafely()}
-                  className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-emerald-600 px-4 py-3 text-sm font-black text-white disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-sl-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white disabled:opacity-50"
                 >
                   <Lock size={18} /> Pay with card
                 </button>
@@ -618,7 +618,7 @@ export default function OrderDetailClient() {
                   type="button"
                   disabled={busy}
                   onClick={() => void runRpc('cancel_order_and_refund', { p_order_id: orderId, p_actor_id: profileId, p_reason: 'Buyer cancelled' })}
-                  className="w-full rounded-[16px] border border-red-500 px-4 py-3 text-sm font-black text-red-500 disabled:opacity-50"
+                  className="w-full rounded-sl-xl border border-red-500 px-4 py-3 text-sm font-black text-red-500 disabled:opacity-50"
                 >
                   Cancel order
                 </button>
@@ -626,7 +626,7 @@ export default function OrderDetailClient() {
               {canBuyerRequestRefund ? (
                 <Link
                   href={`/app/orders/refund?orderId=${encodeURIComponent(orderId)}`}
-                  className="block w-full rounded-[16px] border border-red-500 px-4 py-3 text-center text-sm font-black text-red-500"
+                  className="block w-full rounded-sl-xl border border-red-500 px-4 py-3 text-center text-sm font-black text-red-500"
                 >
                   Request refund
                 </Link>
@@ -637,7 +637,7 @@ export default function OrderDetailClient() {
                     type="button"
                     disabled={busy}
                     onClick={() => void handleBuyerConfirmReceipt()}
-                    className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-emerald-600 px-4 py-3 text-sm font-black text-white disabled:opacity-50"
+                    className="flex w-full items-center justify-center gap-2 rounded-sl-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white disabled:opacity-50"
                   >
                     <PackageCheck size={18} /> Confirm receipt
                   </button>
@@ -646,7 +646,7 @@ export default function OrderDetailClient() {
                   </p>
                   <Link
                     href={`/app/orders/dispute?orderId=${encodeURIComponent(orderId)}`}
-                    className="flex w-full items-center justify-center gap-2 rounded-[16px] border border-amber-500 px-4 py-3 text-sm font-black text-amber-600"
+                    className="flex w-full items-center justify-center gap-2 rounded-sl-xl border border-amber-500 px-4 py-3 text-sm font-black text-amber-600"
                   >
                     <AlertTriangle size={18} /> Report issue
                   </Link>
@@ -664,7 +664,7 @@ export default function OrderDetailClient() {
                       setCancelReason('');
                       setCancelModal(true);
                     }}
-                    className="col-span-1 flex items-center justify-center gap-2 rounded-[14px] bg-red-500 px-3 py-3 text-sm font-black text-white disabled:opacity-50"
+                    className="col-span-1 flex items-center justify-center gap-2 rounded-sl-lg bg-red-500 px-3 py-3 text-sm font-black text-white disabled:opacity-50"
                   >
                     <XCircle size={18} /> Decline
                   </button>
@@ -672,7 +672,7 @@ export default function OrderDetailClient() {
                     type="button"
                     disabled={busy}
                     onClick={() => void runRpc('handle_order_action', { p_order_id: orderId, p_action: 'ACCEPT' })}
-                    className="col-span-2 flex items-center justify-center gap-2 rounded-[14px] bg-(--foreground) px-3 py-3 text-sm font-black text-(--background) disabled:opacity-50"
+                    className="col-span-2 flex items-center justify-center gap-2 rounded-sl-lg bg-(--foreground) px-3 py-3 text-sm font-black text-(--background) disabled:opacity-50"
                   >
                     <CheckCircle2 size={18} /> Accept order
                   </button>
@@ -684,7 +684,7 @@ export default function OrderDetailClient() {
                     type="button"
                     disabled={busy}
                     onClick={() => void runRpc('mark_order_as_shipped', { p_order_id: orderId })}
-                    className="flex w-full items-center justify-center gap-2 rounded-[16px] bg-emerald-600 px-4 py-3 text-sm font-black text-white disabled:opacity-50"
+                    className="flex w-full items-center justify-center gap-2 rounded-sl-xl bg-emerald-600 px-4 py-3 text-sm font-black text-white disabled:opacity-50"
                   >
                     <Truck size={18} /> Mark as shipped
                   </button>
@@ -704,7 +704,7 @@ export default function OrderDetailClient() {
               {canSellerDispute ? (
                 <Link
                   href={`/app/orders/dispute?orderId=${encodeURIComponent(orderId)}&mode=seller`}
-                  className="flex w-full items-center justify-center gap-2 rounded-[16px] border border-amber-500 px-4 py-3 text-sm font-black text-amber-600"
+                  className="flex w-full items-center justify-center gap-2 rounded-sl-xl border border-amber-500 px-4 py-3 text-sm font-black text-amber-600"
                 >
                   <AlertTriangle size={18} /> Report unresponsive buyer
                 </Link>
@@ -721,7 +721,7 @@ export default function OrderDetailClient() {
 
       {cancelModal ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-4 sm:items-center">
-          <div className="w-full max-w-md rounded-[20px] border border-(--border) bg-(--card) p-5">
+          <div className="w-full max-w-md rounded-sl-2xl border border-(--border) bg-(--card) p-5">
             <h3 className="text-lg font-black text-(--foreground)">
               {status === 'PENDING' ? 'Reject Order' : 'Cancel & Refund'}
             </h3>
@@ -731,14 +731,14 @@ export default function OrderDetailClient() {
             <textarea
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}
-              className="mt-3 h-24 w-full rounded-[14px] border border-(--border) bg-(--surface) p-3 text-sm text-(--foreground) outline-none"
+              className="mt-3 h-24 w-full rounded-sl-lg border border-(--border) bg-(--surface) p-3 text-sm text-(--foreground) outline-none"
               placeholder="e.g., Item is out of stock..."
             />
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setCancelModal(false)}
-                className="rounded-[14px] px-4 py-2 text-sm font-bold text-(--foreground)"
+                className="rounded-sl-lg px-4 py-2 text-sm font-bold text-(--foreground)"
               >
                 Close
               </button>
@@ -753,7 +753,7 @@ export default function OrderDetailClient() {
                     p_reason: cancelReason.trim(),
                   });
                 }}
-                className="rounded-[14px] bg-red-500 px-4 py-2 text-sm font-black text-white disabled:opacity-50"
+                className="rounded-sl-lg bg-red-500 px-4 py-2 text-sm font-black text-white disabled:opacity-50"
               >
                 Confirm cancellation
               </button>
@@ -796,7 +796,7 @@ export default function OrderDetailClient() {
       ) : null}
 
       {error ? (
-        <div className="fixed bottom-4 right-4 rounded-[14px] border border-red-400 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-500">
+        <div className="fixed bottom-4 right-4 rounded-sl-lg border border-red-400 bg-red-500/10 px-4 py-3 text-sm font-semibold text-red-500">
           {error}
         </div>
       ) : null}

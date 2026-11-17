@@ -89,7 +89,10 @@ export default async function AppReelDetailPage({ params }: { params: Promise<{ 
     flash_price: reel?.product?.flash_price || null,
     flash_end_time: reel?.product?.flash_end_time || null,
     stock_quantity: isService ? 999 : Number(reel?.product?.stock_quantity ?? 999),
-    likes_count: Number((likesRes as any).count || 0),
+    likes_count: Math.max(
+      Number(reel?.likes_count || reel?.product?.likes_count || 0),
+      Number((likesRes as any).count || 0),
+    ),
     comments_count: Number((commentsRes as any).count || 0),
     comment_count: Number((commentsRes as any).count || 0),
     wishlist_count: Number((wishlistRes as any).count || 0),

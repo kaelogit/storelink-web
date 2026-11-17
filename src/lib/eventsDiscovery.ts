@@ -1,5 +1,5 @@
 /**
- * Events discovery helpers (Phase 5) — Home Events chip badges + filters.
+ * Events discovery helpers (Phase 5) - Home Events chip badges + filters.
  * Reuses food capacity / distance helpers; studio vs on-location language.
  */
 

@@ -129,7 +129,7 @@ export function productShippingCopy() {
     togglePickup: 'Pickup',
     toggleDelivery: 'Delivery',
     howTitle: 'How do you want it?',
-    pickupHint: 'Collect from the seller — no delivery fee.',
+    pickupHint: 'Collect from the seller, no delivery fee.',
     deliveryHint: 'Seller delivers to your address.',
   };
 }

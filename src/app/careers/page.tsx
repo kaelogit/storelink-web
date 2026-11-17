@@ -52,7 +52,7 @@ const JOBS = [
 const PERKS = [
     { title: "Remote First", desc: "Work from anywhere. We care about output, not hours in a chair.", icon: Globe },
     { title: "Competitive Equity", desc: "Don't just work here. Own a piece of the future unicorn.", icon: LineChart },
-    { title: "Top-Tier Gear", desc: "MacBook Pro, Noise Cancelling Headphones—whatever you need to ship.", icon: Zap },
+    { title: "Top-Tier Gear", desc: "MacBook Pro, Noise Cancelling Headphones-whatever you need to ship.", icon: Zap },
     { title: "Health & Wellness", desc: "Comprehensive HMO and mental health days. Burnout is the enemy.", icon: Coffee },
 ];
 

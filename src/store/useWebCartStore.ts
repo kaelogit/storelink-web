@@ -17,7 +17,7 @@ export interface WebProductCartItem {
   image_url?: string | null;
   seller_slug?: string | null;
   seller_name?: string | null;
-  /** false = digital / no ship — checkout skips Delivery */
+  /** false = digital / no ship - checkout skips Delivery */
   requires_shipping?: boolean;
   quantity: number;
 }

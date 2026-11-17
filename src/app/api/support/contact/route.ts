@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
 /**
- * POST /api/support/contact — public marketing contact.
+ * POST /api/support/contact - public marketing contact.
  * - IP + email rate limits (best-effort per instance)
  * - Cloudflare Turnstile required in production (fail-closed if secret unset)
  * - Honeypot field; HTML escaped before Resend
@@ -38,7 +38,7 @@ type ContactPayload = {
   topic?: string;
   message?: string;
   turnstileToken?: string;
-  /** Honeypot — must be empty */
+  /** Honeypot - must be empty */
   website?: string;
 };
 
@@ -86,7 +86,7 @@ function pruneBuckets() {
 
 async function verifyTurnstile(token: string, ip: string): Promise<boolean> {
   if (!TURNSTILE_SECRET) {
-    // Local/dev only — production rejects earlier when secret is missing.
+    // Local/dev only - production rejects earlier when secret is missing.
     return !IS_PROD;
   }
   if (!token) return false;
@@ -186,7 +186,7 @@ export async function POST(req: NextRequest) {
     const safeTopic = escapeHtml(topic);
     const safeMessage = escapeHtml(message);
 
-    const subject = `[Contact] ${topic} — ${firstName} ${lastName}`.slice(0, 200);
+    const subject = `[Contact] ${topic}, ${firstName} ${lastName}`.slice(0, 200);
     const html = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color:#111827; line-height:1.6;">
         <h2 style="margin: 0 0 12px 0;">StoreLink website contact message</h2>

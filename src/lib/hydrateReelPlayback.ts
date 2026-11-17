@@ -10,7 +10,7 @@ type PlaybackHydrateRow = {
 };
 
 /**
- * Explore RPCs omit pipeline columns — batch-fill so HLS / 720p can activate without rewriting RPCs.
+ * Explore RPCs omit pipeline columns - batch-fill so HLS / 720p can activate without rewriting RPCs.
  */
 export async function hydrateReelPlaybackFields<T extends PlaybackHydrateRow>(
   supabase: SupabaseClient,

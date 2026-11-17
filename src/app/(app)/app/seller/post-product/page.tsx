@@ -590,7 +590,7 @@ function PostProductForm() {
             <div>
               <p className="text-[10px] font-black tracking-widest text-(--muted)">SHIPPING</p>
               <p className="mt-0.5 text-sm font-semibold text-(--foreground)">
-                {requiresShipping ? 'Physical product — needs delivery' : 'Digital — no shipping'}
+                {requiresShipping ? 'Physical product, needs delivery' : 'Digital, no shipping'}
               </p>
             </div>
             <span
