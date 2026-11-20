@@ -1897,43 +1897,62 @@ export default function ClientExploreWrapper({
     });
   }, [products, surface, activeCategory, query]);
 
-  // Simple Explore session logging (web) - fire-and-forget, no variant branching here.
+  // Ranking experiment scoreboard (Admin → Experiments). Logged-in viewers only.
   useEffect(() => {
-    const cancelled = false;
-    let sessionId: string | null = null;
+    if (!viewerId || !surfaceActive) return;
+
+    let cancelled = false;
+    const sessionIdRef = { current: null as string | null };
     const startedAt = Date.now();
+    const isHome = surface === 'home';
+    const experimentKey = isHome ? 'home_feed_rank_v1' : 'explore_feed_rank_v1';
+    const startRpc = isHome ? 'start_home_session' : 'start_explore_session';
 
     const start = async () => {
       try {
-        const { data, error } = await supabase.rpc('start_explore_session', {
+        const { data, error } = await supabase.rpc(startRpc as 'start_home_session' | 'start_explore_session', {
           p_user_id: viewerId,
-          p_experiment_key: 'explore_feed_rank_v1',
+          p_experiment_key: experimentKey,
         });
         if (error || !data || cancelled) return;
         const row = Array.isArray(data) ? data[0] : data;
-        if (!row) return;
-        sessionId = String(row.session_id);
+        if (!row?.session_id) return;
+        sessionIdRef.current = String(row.session_id);
       } catch {
-        // ignore
+        // Best-effort; ignore
       }
     };
 
-    start();
+    void start();
 
     return () => {
+      cancelled = true;
+      const sessionId = sessionIdRef.current;
+      sessionIdRef.current = null;
       if (!sessionId) return;
       const durationMs = Date.now() - startedAt;
       const itemsSeen = productsRef.current.length;
       flushRankingEventQueueNowWeb();
-      supabase.rpc('end_explore_session', {
-        p_session_id: sessionId,
-        p_duration_ms: durationMs,
-        p_items_seen: itemsSeen,
-        p_profile_taps: null,
-        p_product_clicks: null,
-      });
+      if (isHome) {
+        void supabase.rpc('end_home_session', {
+          p_session_id: sessionId,
+          p_duration_ms: durationMs,
+          p_items_seen: itemsSeen,
+          p_clicks: null,
+          p_add_to_cart_count: null,
+          p_service_book_request_count: null,
+        });
+      } else {
+        void supabase.rpc('end_explore_session', {
+          p_session_id: sessionId,
+          p_duration_ms: durationMs,
+          p_items_seen: itemsSeen,
+          p_profile_taps: null,
+          p_product_clicks: null,
+        });
+      }
     };
-  }, [viewerId]);
+  }, [viewerId, surface, surfaceActive, supabase]);
 
   const decodedCategory = safeDecodeCategorySelectionKey(activeCategory);
   const discoveryDecoded = useMemo((): DecodedCategory => {
