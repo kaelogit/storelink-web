@@ -7,6 +7,7 @@ import { ReactQueryProvider } from "../components/providers/ReactQueryProvider";
 import ShareSheetHost from "../components/share/ShareSheetHost";
 import OpenInAppBar from "../components/share/OpenInAppBar";
 import WhyThisAdHost from "../components/ads/WhyThisAdHost";
+import MaintenanceGate from "../components/system/MaintenanceGate";
 import "./globals.css";
 
 // 1. Load the High-End Fonts
@@ -130,26 +131,28 @@ export default function RootLayout({
       >
         <ThemeProvider>
           <ReactQueryProvider>
-            {/* Skip to main content for keyboard/screen reader */}
-            <a
-              href="#main-content"
-              className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-100 focus:rounded-md focus:bg-emerald-500 focus:px-4 focus:py-2 focus:text-white focus:outline-none focus:ring-2 focus:ring-emerald-300"
-            >
-              Skip to main content
-            </a>
+            <MaintenanceGate>
+              {/* Skip to main content for keyboard/screen reader */}
+              <a
+                href="#main-content"
+                className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-100 focus:rounded-md focus:bg-emerald-500 focus:px-4 focus:py-2 focus:text-white focus:outline-none focus:ring-2 focus:ring-emerald-300"
+              >
+                Skip to main content
+              </a>
 
-            <div className="bg-noise" aria-hidden="true" />
+              <div className="bg-noise" aria-hidden="true" />
 
-            <Navbar />
+              <Navbar />
 
-            <main id="main-content" className="flex min-h-dvh flex-col relative w-full overflow-x-hidden">
-              {children}
-            </main>
+              <main id="main-content" className="flex min-h-dvh flex-col relative w-full overflow-x-hidden">
+                {children}
+              </main>
 
-            <GoogleAnalytics gaId="G-LC8PN9CT62" />
-            <ShareSheetHost />
-            <OpenInAppBar />
-            <WhyThisAdHost />
+              <GoogleAnalytics gaId="G-LC8PN9CT62" />
+              <ShareSheetHost />
+              <OpenInAppBar />
+              <WhyThisAdHost />
+            </MaintenanceGate>
           </ReactQueryProvider>
         </ThemeProvider>
       </body>
